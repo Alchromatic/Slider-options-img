@@ -255,7 +255,116 @@ canvas.picking { cursor: crosshair; }
     text-align: right;
     font-family: monospace;
 }
+/* Palette Preset Styles */
+.palette-preset-section {
+    margin: 15px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 2px solid #dee2e6;
+}
+.palette-preset-section h4 {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    color: #495057;
+}
+.palette-preset-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+.palette-preset-controls select {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 13px;
+    background: white;
+    cursor: pointer;
+}
+.palette-preset-controls select:focus {
+    outline: none;
+    border-color: #673AB7;
+    box-shadow: 0 0 0 2px rgba(103, 58, 183, 0.15);
+}
+.palette-preset-controls button {
+    background: #673AB7;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+}
+.palette-preset-controls button:hover {
+    background: #5E35B1;
+}
+.palette-preset-controls button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
 </style>
+<script type="application/json" id="colorsData">
+{
+    "Common Color Names & Values": [
+        [255, 127, 80], [178, 34, 34], [34, 139, 34], [255, 215, 0], [124, 252, 0],
+        [128, 0, 0], [25, 25, 112], [0, 0, 128], [128, 128, 0], [107, 142, 35],
+        [205, 133, 63], [139, 69, 19], [46, 139, 87]
+    ],
+    "Artisan - Winsor & Newton": [
+        [58, 22, 14], [50, 27, 15], [221, 63, 0], [171, 0, 5], [221, 63, 0],
+        [229, 42, 0], [166, 0, 9], [255, 139, 0], [255, 194, 0], [255, 161, 0],
+        [0, 97, 102], [0, 74, 91], [0, 39, 71], [21, 15, 17], [8, 8, 32],
+        [27, 28, 28], [21, 21, 20], [239, 173, 0], [98, 4, 32], [74, 1, 16],
+        [130, 0, 24], [28, 42, 10], [17, 12, 37], [0, 32, 24], [3, 26, 33],
+        [15, 11, 11], [117, 70, 17], [37, 26, 20], [0, 53, 40], [187, 128, 18]
+    ],
+    "Artists Oil - Winsor & Newton": [
+        [68, 2, 6], [255, 232, 0], [197, 0, 15], [82, 42, 31], [255, 222, 0],
+        [204, 12, 22], [255, 164, 0], [255, 127, 15], [0, 41, 117], [46, 90, 76],
+        [0, 99, 127], [78, 23, 80], [50, 61, 164], [168, 113, 37], [71, 74, 14],
+        [144, 87, 0], [119, 85, 26], [33, 23, 57], [16, 15, 17], [26, 27, 27],
+        [235, 215, 84], [39, 38, 39], [222, 156, 72], [47, 43, 32], [57, 95, 58],
+        [84, 2, 17], [71, 16, 26], [68, 50, 73], [34, 24, 24], [18, 28, 41],
+        [108, 8, 36], [144, 32, 40], [130, 83, 39], [64, 49, 35], [69, 53, 53],
+        [213, 33, 22], [146, 75, 63], [38, 59, 47], [149, 66, 40], [233, 162, 0],
+        [70, 21, 17], [62, 38, 126], [39, 27, 19], [127, 49, 29], [0, 62, 53],
+        [0, 134, 84], [0, 50, 40], [0, 60, 33], [248, 65, 0], [129, 0, 24],
+        [255, 204, 0], [255, 145, 0], [29, 23, 41], [151, 104, 47]
+    ],
+    "Createx Airbrush Colors": [
+        [164, 129, 99], [130, 107, 92], [120, 90, 76], [100, 74, 66], [133, 94, 41],
+        [119, 47, 47], [108, 45, 36], [61, 52, 50], [68, 57, 57], [55, 46, 59],
+        [85, 43, 36], [36, 31, 42], [91, 55, 54], [78, 56, 47], [42, 36, 49],
+        [71, 62, 62], [100, 79, 68], [53, 53, 63], [63, 58, 52], [114, 98, 98]
+    ],
+    "Sennelier": [
+        [68, 47, 38], [50, 42, 33], [125, 80, 35], [95, 40, 20], [168, 110, 40],
+        [235, 166, 51], [0, 90, 136], [36, 68, 131], [15, 12, 79], [22, 17, 54],
+        [35, 41, 42], [56, 55, 68], [66, 35, 26], [251, 214, 0], [255, 210, 0],
+        [255, 155, 0], [251, 223, 0], [255, 131, 0], [214, 159, 0], [230, 124, 0],
+        [202, 20, 19], [163, 0, 28], [178, 0, 18], [242, 76, 0], [206, 14, 7],
+        [131, 7, 23], [139, 16, 26], [78, 42, 43], [59, 29, 27], [25, 25, 24],
+        [22, 20, 18], [74, 112, 66], [0, 46, 37], [34, 45, 48], [8, 76, 60],
+        [0, 68, 59], [57, 20, 65], [28, 25, 41], [57, 57, 55], [73, 28, 39],
+        [65, 30, 69]
+    ],
+    "System 3 Original Acrylic - Dal": [
+        [51, 49, 50], [49, 49, 49], [43, 91, 192], [51, 48, 80], [46, 46, 60],
+        [49, 45, 81], [123, 62, 51], [75, 60, 55], [67, 60, 55], [46, 62, 52],
+        [38, 58, 58], [81, 117, 76], [42, 75, 49], [57, 51, 53], [138, 47, 68],
+        [189, 45, 44], [159, 43, 44], [210, 45, 37], [238, 139, 0], [227, 71, 37],
+        [241, 222, 0], [189, 137, 62], [163, 105, 59], [254, 208, 0]
+    ],
+    "Vallejo Acrylic Studio": [
+        [246, 226, 0], [172, 23, 28], [143, 27, 37], [42, 41, 77], [39, 33, 78],
+        [22, 47, 53], [194, 134, 33], [134, 55, 45], [48, 47, 47], [223, 132, 0],
+        [43, 38, 39], [220, 58, 34], [37, 52, 40], [96, 81, 62], [82, 59, 51],
+        [163, 109, 40], [131, 63, 45], [255, 187, 0], [125, 16, 61], [50, 97, 192],
+        [114, 29, 30], [251, 205, 0], [148, 43, 32], [40, 39, 51]
+    ]
+}
+</script>
 </head>
 
 <body>
@@ -359,6 +468,17 @@ canvas.picking { cursor: crosshair; }
             <div class="color-detail-item">
                 <label>Score</label>
                 <span id="scoreValue">-</span>
+            </div>
+        </div>
+        
+        <!-- Palette Preset Section -->
+        <div class="palette-preset-section">
+            <h4>Load Palette Preset</h4>
+            <div class="palette-preset-controls">
+                <select id="palettePresetSelect">
+                    <option value="">-- Select a palette --</option>
+                </select>
+                <button id="loadPaletteBtn" disabled>Load</button>
             </div>
         </div>
         
@@ -984,6 +1104,93 @@ canvas.addEventListener("click", e => {
         clearShapeHighlight();
     }
 });
+
+/* ==========================================================
+   PALETTE PRESET FUNCTIONALITY
+========================================================== */
+
+// Embedded palette data to avoid CORS issues with local files
+let palettePresetsData = null;
+
+// Load colors.json data
+async function loadPalettePresets() {
+    try {
+        // Try to fetch colors.json if server is available
+        const response = await fetch('colors.json');
+        palettePresetsData = await response.json();
+    } catch (error) {
+        console.warn('Could not fetch colors.json, using embedded fallback');
+        // Fallback: Load from embedded script tag or use default
+        const colorsScript = document.getElementById('colorsData');
+        if (colorsScript && colorsScript.textContent) {
+            try {
+                palettePresetsData = JSON.parse(colorsScript.textContent);
+            } catch (e) {
+                console.error('Error parsing embedded colors data:', e);
+                return;
+            }
+        } else {
+            console.error('No colors data available');
+            return;
+        }
+    }
+    
+    if (!palettePresetsData) return;
+    
+    const select = document.getElementById('palettePresetSelect');
+    
+    // Clear existing options except the first one
+    while (select.options.length > 1) {
+        select.remove(1);
+    }
+    
+    // Populate dropdown with palette names
+    Object.keys(palettePresetsData).forEach(paletteName => {
+        const option = document.createElement('option');
+        option.value = paletteName;
+        option.textContent = `${paletteName} (${palettePresetsData[paletteName].length} colors)`;
+        select.appendChild(option);
+    });
+    
+    console.log('Loaded palette presets:', Object.keys(palettePresetsData));
+}
+
+// Enable/disable load button based on selection
+document.getElementById('palettePresetSelect').addEventListener('change', (e) => {
+    document.getElementById('loadPaletteBtn').disabled = !e.target.value;
+});
+
+// Load selected palette into the color matcher input
+document.getElementById('loadPaletteBtn').addEventListener('click', () => {
+    const select = document.getElementById('palettePresetSelect');
+    const selectedPalette = select.value;
+    
+    if (!selectedPalette || !palettePresetsData[selectedPalette]) {
+        return;
+    }
+    
+    const colorArray = palettePresetsData[selectedPalette];
+    
+    // Convert RGB arrays to hex format
+    const hexColors = colorArray.map(rgb => {
+        const r = Math.round(rgb[0]);
+        const g = Math.round(rgb[1]);
+        const b = Math.round(rgb[2]);
+        return rgbToHex(r, g, b);
+    });
+    
+    // Populate the color matcher input textarea
+    const colorMatcherInput = document.getElementById('colorMatcherInput');
+    colorMatcherInput.value = hexColors.join('\n');
+    
+    // Update match button state
+    updateMatchButtonState();
+    
+    console.log(`Loaded ${hexColors.length} colors from "${selectedPalette}"`);
+});
+
+// Initialize palette presets on page load
+loadPalettePresets();
 
 /* ==========================================================
    COLOR MATCHER FUNCTIONALITY (via API)
