@@ -87,6 +87,39 @@ class ColorMatchResponse(BaseModel):
     has_matches: bool
     error: Optional[str] = None
 
+
+# ---------- Unmix / Get Recipe (like trycolors) ----------
+
+class PaletteColor(BaseModel):
+    hex: str
+    name: Optional[str] = None  # Optional paint name like "Cadmium Red"
+
+
+class UnmixRequest(BaseModel):
+    target_color: str  # The color you want to achieve
+    palette: List[PaletteColor]  # Available paints to mix from
+    max_colors: Optional[int] = 3  # Max colors in the recipe (1-5)
+    max_parts: Optional[int] = 10  # Max parts per color for ratio precision
+
+
+class RecipeComponent(BaseModel):
+    hex: str
+    name: Optional[str] = None
+    parts: int  # Number of parts (e.g., 3 parts of this color)
+    percentage: float  # Percentage of total mix
+
+
+class UnmixResponse(BaseModel):
+    target_color: str
+    recipe: List[RecipeComponent]
+    result_color: str  # The actual color you'll get from mixing
+    match_percentage: float  # How close the result is to target (0-100)
+    delta_e: float  # CIE Delta E for reference
+    total_parts: int
+    mix_method: Optional[str] = None  # 'kubelka_munk', 'linear', or 'exact'
+    error: Optional[str] = None
+
+
 # --------- Color Utilities -------------
 
 def clamp01(x: float) -> float:
@@ -240,6 +273,293 @@ def normalize_hex(hex_color: str) -> str:
     return hex_color.upper()
 
 
+# --------- Color Mixing Utilities (Kubelka-Munk) -------------
+
+def linear_to_srgb(c: float) -> float:
+    """Convert linear RGB to sRGB"""
+    c = clamp01(c)
+    if c <= 0.0031308:
+        return 12.92 * c
+    return 1.055 * (c ** (1 / 2.4)) - 0.055
+
+
+def linear_rgb_to_hex(rgb_lin: Tuple[float, float, float]) -> str:
+    """Convert linear RGB (0-1) to hex color"""
+    r_lin, g_lin, b_lin = rgb_lin
+    r = int(round(clamp01(linear_to_srgb(r_lin)) * 255))
+    g = int(round(clamp01(linear_to_srgb(g_lin)) * 255))
+    b = int(round(clamp01(linear_to_srgb(b_lin)) * 255))
+    return rgb255_to_hex(r, g, b)
+
+
+KS_EPS: float = 1e-6
+
+def _ks_from_R(R: float, eps: float = KS_EPS) -> float:
+    """Convert reflectance to K/S ratio (Kubelka-Munk)"""
+    R = max(R, eps)
+    return (1 - R) ** 2 / (2 * R)
+
+
+def _R_from_ks(KS: float) -> float:
+    """Convert K/S ratio back to reflectance"""
+    return max(0.0, (1 + KS) - math.sqrt(KS**2 + 2*KS))
+
+
+def mix_kubelka_munk(bases: List[Tuple[float, float, float]], weights: List[float]) -> Tuple[float, float, float]:
+    """
+    Mix colors using Kubelka-Munk theory (subtractive mixing like real paint).
+    bases: list of linear RGB tuples (0-1 range)
+    weights: list of weights (will be normalized)
+    """
+    # Normalize weights
+    total = sum(weights)
+    if total <= 1e-12:
+        return bases[0] if bases else (0.5, 0.5, 0.5)
+    w = [wi / total for wi in weights]
+    
+    def mix_channel(channel_idx: int) -> float:
+        KS = 0.0
+        for base, weight in zip(bases, w):
+            KS += _ks_from_R(base[channel_idx]) * weight
+        return clamp01(_R_from_ks(KS))
+    
+    return (mix_channel(0), mix_channel(1), mix_channel(2))
+
+
+def mix_kubelka_munk_yn(bases: List[Tuple[float, float, float]], weights: List[float], n: float = 1.5) -> Tuple[float, float, float]:
+    """
+    Mix colors using Yule-Nielsen modified Kubelka-Munk.
+    The n parameter (typically 1.0-2.0) adjusts for ink/paint layering effects.
+    n=1.0 is equivalent to standard KM; n=1.5-2.0 is more realistic for many paints.
+    """
+    if n <= 0:
+        return mix_kubelka_munk(bases, weights)
+    
+    def yn_fwd(R: float) -> float:
+        return R ** (1.0 / n)
+    
+    def yn_inv(Rp: float) -> float:
+        return clamp01(Rp) ** n
+    
+    # Transform bases through YN forward
+    bases_yn = [(yn_fwd(r), yn_fwd(g), yn_fwd(b)) for (r, g, b) in bases]
+    
+    # Mix in transformed space using KM
+    mix_yn = mix_kubelka_munk(bases_yn, weights)
+    
+    # Transform back
+    return (yn_inv(mix_yn[0]), yn_inv(mix_yn[1]), yn_inv(mix_yn[2]))
+
+
+def mix_linear_rgb(bases: List[Tuple[float, float, float]], weights: List[float]) -> Tuple[float, float, float]:
+    """
+    Mix colors using simple weighted average in linear RGB space.
+    This is additive mixing (like light mixing).
+    """
+    total = sum(weights)
+    if total <= 1e-12:
+        return bases[0] if bases else (0.5, 0.5, 0.5)
+    w = [wi / total for wi in weights]
+    
+    r = sum(base[0] * weight for base, weight in zip(bases, w))
+    g = sum(base[1] * weight for base, weight in zip(bases, w))
+    b = sum(base[2] * weight for base, weight in zip(bases, w))
+    
+    return (clamp01(r), clamp01(g), clamp01(b))
+
+
+def mix_colors_hex(hex_colors: List[str], weights: List[float], method: str = "kubelka_munk", yn_n: float = 1.5) -> str:
+    """
+    Mix hex colors and return result as hex. 
+    Methods: 'kubelka_munk', 'yn_km' (Yule-Nielsen KM), or 'linear'
+    """
+    bases = [hex_to_linear_rgb(h) for h in hex_colors]
+    if method == "linear":
+        mixed_lin = mix_linear_rgb(bases, weights)
+    elif method == "yn_km":
+        mixed_lin = mix_kubelka_munk_yn(bases, weights, n=yn_n)
+    else:  # kubelka_munk
+        mixed_lin = mix_kubelka_munk(bases, weights)
+    return linear_rgb_to_hex(mixed_lin)
+
+
+# --------- Unmix Algorithm (Find Recipe) -------------
+
+def find_best_recipe(
+    target_hex: str,
+    palette: List[PaletteColor],
+    max_colors: int = 3,
+    max_parts: int = 10
+) -> Tuple[List[Tuple[int, int]], str, float, float, str]:
+    """
+    Find the best combination of palette colors to achieve target color.
+    
+    Uses optimized search:
+    1. Pre-filter palette to most promising colors
+    2. Use coarse-to-fine search for ratios
+    3. Early termination when good match found
+    
+    Returns: (recipe as [(palette_idx, parts), ...], result_hex, match_pct, delta_e, mix_method)
+    """
+    from itertools import combinations, product
+    
+    target_rgb = hex_to_rgb255(target_hex)
+    target_lab = rgb_to_lab(*target_rgb)
+    
+    best_recipe = []
+    best_result_hex = target_hex
+    best_delta_e = float('inf')
+    best_method = "kubelka_munk"
+    
+    palette_hexes = [normalize_hex(p.hex) for p in palette]
+    n_palette = len(palette_hexes)
+    
+    if n_palette == 0:
+        return [], target_hex, 0.0, 100.0, "none"
+    
+    # Pre-compute LAB values for all palette colors
+    palette_labs = []
+    for hex_color in palette_hexes:
+        rgb = hex_to_rgb255(hex_color)
+        palette_labs.append(rgb_to_lab(*rgb))
+    
+    # Step 1: Find single color matches and rank palette by proximity
+    color_distances = []
+    for i, lab in enumerate(palette_labs):
+        de = delta_e_cie76(target_lab, lab)
+        color_distances.append((i, de))
+        if de < best_delta_e:
+            best_delta_e = de
+            best_recipe = [(i, max_parts)]
+            best_result_hex = palette_hexes[i]
+    
+    # If exact match found, return early
+    if best_delta_e < 1.0:
+        return best_recipe, best_result_hex, delta_e_to_match_percentage(best_delta_e), best_delta_e, "exact"
+    
+    # Sort by distance - focus on closest colors
+    color_distances.sort(key=lambda x: x[1])
+    
+    # Take top N most promising colors (limit search space)
+    top_n = min(12, n_palette)  # Use at most 12 closest colors
+    promising_indices = [idx for idx, _ in color_distances[:top_n]]
+    
+    # Mixing methods to try
+    mixing_methods = ["kubelka_munk", "yn_km", "linear"]
+    
+    # Step 2: Coarse search with fewer parts first
+    coarse_parts = list(range(1, min(max_parts + 1, 6)))  # 1-5 for coarse
+    
+    # Try 2-color combinations (most common case)
+    for method in mixing_methods:
+        for i, j in combinations(promising_indices, 2):
+            for p1, p2 in product(coarse_parts, repeat=2):
+                try:
+                    colors = [palette_hexes[i], palette_hexes[j]]
+                    weights = [p1, p2]
+                    mixed_hex = mix_colors_hex(colors, weights, method=method)
+                    mixed_rgb = hex_to_rgb255(mixed_hex)
+                    mixed_lab = rgb_to_lab(*mixed_rgb)
+                    de = delta_e_cie76(target_lab, mixed_lab)
+                    
+                    if de < best_delta_e:
+                        best_delta_e = de
+                        best_recipe = [(i, p1), (j, p2)]
+                        best_result_hex = mixed_hex
+                        best_method = method
+                        
+                        if de < 2.0:  # Good enough for coarse search
+                            break
+                except:
+                    continue
+            if best_delta_e < 2.0:
+                break
+        if best_delta_e < 2.0:
+            break
+    
+    # Step 3: Fine-tune the best 2-color recipe with more precision
+    if len(best_recipe) == 2 and best_delta_e > 1.0:
+        i, p1 = best_recipe[0]
+        j, p2 = best_recipe[1]
+        
+        # Search around the coarse solution
+        fine_range = range(max(1, p1 - 2), min(max_parts + 1, p1 + 3))
+        fine_range2 = range(max(1, p2 - 2), min(max_parts + 1, p2 + 3))
+        
+        for method in mixing_methods:
+            for fp1, fp2 in product(fine_range, fine_range2):
+                try:
+                    colors = [palette_hexes[i], palette_hexes[j]]
+                    weights = [fp1, fp2]
+                    mixed_hex = mix_colors_hex(colors, weights, method=method)
+                    mixed_rgb = hex_to_rgb255(mixed_hex)
+                    mixed_lab = rgb_to_lab(*mixed_rgb)
+                    de = delta_e_cie76(target_lab, mixed_lab)
+                    
+                    if de < best_delta_e:
+                        best_delta_e = de
+                        best_recipe = [(i, fp1), (j, fp2)]
+                        best_result_hex = mixed_hex
+                        best_method = method
+                except:
+                    continue
+    
+    # Step 4: Try 3-color only if 2-color match is poor
+    if max_colors >= 3 and best_delta_e > 5.0:
+        top_8 = promising_indices[:8]  # Even smaller set for 3-color
+        coarse_3 = [1, 2, 3, 4]  # Very coarse for 3-color
+        
+        for method in mixing_methods:
+            for indices in combinations(top_8, 3):
+                for parts in product(coarse_3, repeat=3):
+                    try:
+                        colors = [palette_hexes[idx] for idx in indices]
+                        weights = list(parts)
+                        mixed_hex = mix_colors_hex(colors, weights, method=method)
+                        mixed_rgb = hex_to_rgb255(mixed_hex)
+                        mixed_lab = rgb_to_lab(*mixed_rgb)
+                        de = delta_e_cie76(target_lab, mixed_lab)
+                        
+                        if de < best_delta_e:
+                            best_delta_e = de
+                            best_recipe = list(zip(indices, parts))
+                            best_result_hex = mixed_hex
+                            best_method = method
+                            
+                            if de < 3.0:
+                                break
+                    except:
+                        continue
+                if best_delta_e < 3.0:
+                    break
+            if best_delta_e < 3.0:
+                break
+    
+    match_pct = delta_e_to_match_percentage(best_delta_e)
+    return best_recipe, best_result_hex, match_pct, best_delta_e, best_method
+
+
+def simplify_recipe(recipe: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+    """Combine duplicate colors and simplify ratios using GCD"""
+    from collections import defaultdict
+    
+    # Combine same colors
+    combined = defaultdict(int)
+    for idx, parts in recipe:
+        combined[idx] += parts
+    
+    # Convert back to list and simplify with GCD
+    parts_list = list(combined.values())
+    if parts_list:
+        gcd = parts_list[0]
+        for p in parts_list[1:]:
+            gcd = math.gcd(gcd, p)
+        if gcd > 1:
+            combined = {idx: parts // gcd for idx, parts in combined.items()}
+    
+    return [(idx, parts) for idx, parts in combined.items()]
+
+
 @app.post("/color_match", response_model=ColorMatchResponse)
 def color_match(req: ColorMatchRequest):
     """
@@ -327,6 +647,147 @@ def color_match(req: ColorMatchRequest):
         has_matches=True,
         error=None
     )
+
+
+@app.post("/unmix", response_model=UnmixResponse)
+def unmix_color(req: UnmixRequest):
+    """
+    Find a mixing recipe to achieve a target color from your palette.
+    
+    This is like trycolors.com's "Get Mix" feature - given a target color and
+    available paints, it calculates the optimal mix proportions.
+    
+    **Request:**
+    - `target_color`: The hex color you want to achieve (e.g., "#8B4513")
+    - `palette`: List of available paints with hex and optional name
+    - `max_colors`: Maximum colors to use in recipe (1-5, default 3)
+    - `max_parts`: Maximum parts per color for ratio precision (1-20, default 10)
+    
+    **Response:**
+    - `recipe`: List of colors with parts and percentage
+    - `result_color`: The actual color from mixing the recipe
+    - `match_percentage`: How close the result matches target (0-100%)
+    - `delta_e`: CIE Delta E value for technical reference
+    
+    **Example usage:**
+    ```json
+    {
+        "target_color": "#8B4513",
+        "palette": [
+            {"hex": "#FF0000", "name": "Cadmium Red"},
+            {"hex": "#FFFF00", "name": "Cadmium Yellow"},
+            {"hex": "#0000FF", "name": "Ultramarine Blue"},
+            {"hex": "#FFFFFF", "name": "Titanium White"},
+            {"hex": "#000000", "name": "Ivory Black"}
+        ],
+        "max_colors": 3,
+        "max_parts": 10
+    }
+    ```
+    """
+    # Validate target color
+    try:
+        target_normalized = normalize_hex(req.target_color)
+        _ = hex_to_rgb255(target_normalized)
+    except Exception as e:
+        return UnmixResponse(
+            target_color=req.target_color,
+            recipe=[],
+            result_color=req.target_color,
+            match_percentage=0.0,
+            delta_e=100.0,
+            total_parts=0,
+            error=f"Invalid target color: {req.target_color}"
+        )
+    
+    # Validate palette
+    if not req.palette:
+        return UnmixResponse(
+            target_color=target_normalized,
+            recipe=[],
+            result_color=target_normalized,
+            match_percentage=0.0,
+            delta_e=100.0,
+            total_parts=0,
+            error="No palette colors provided"
+        )
+    
+    # Validate and normalize palette colors
+    valid_palette = []
+    for p in req.palette:
+        try:
+            normalized = normalize_hex(p.hex)
+            _ = hex_to_rgb255(normalized)
+            valid_palette.append(PaletteColor(hex=normalized, name=p.name))
+        except:
+            continue
+    
+    if not valid_palette:
+        return UnmixResponse(
+            target_color=target_normalized,
+            recipe=[],
+            result_color=target_normalized,
+            match_percentage=0.0,
+            delta_e=100.0,
+            total_parts=0,
+            error="No valid palette colors"
+        )
+    
+    # Clamp parameters
+    max_colors = max(1, min(5, req.max_colors or 3))
+    max_parts = max(1, min(20, req.max_parts or 10))
+    
+    # Find best recipe
+    try:
+        raw_recipe, result_hex, match_pct, delta_e, mix_method = find_best_recipe(
+            target_normalized,
+            valid_palette,
+            max_colors=max_colors,
+            max_parts=max_parts
+        )
+        
+        # Simplify recipe (combine duplicates, reduce ratios)
+        simplified = simplify_recipe(raw_recipe)
+        
+        # Build response recipe
+        total_parts = sum(parts for _, parts in simplified)
+        recipe_components = []
+        for idx, parts in simplified:
+            palette_item = valid_palette[idx]
+            pct = (parts / total_parts * 100) if total_parts > 0 else 0
+            recipe_components.append(RecipeComponent(
+                hex=palette_item.hex,
+                name=palette_item.name,
+                parts=parts,
+                percentage=round(pct, 1)
+            ))
+        
+        # Sort by parts (largest first)
+        recipe_components.sort(key=lambda x: x.parts, reverse=True)
+        
+        return UnmixResponse(
+            target_color=target_normalized,
+            recipe=recipe_components,
+            result_color=result_hex,
+            match_percentage=round(match_pct, 1),
+            delta_e=round(delta_e, 2),
+            total_parts=total_parts,
+            mix_method=mix_method,
+            error=None
+        )
+    
+    except Exception as e:
+        return UnmixResponse(
+            target_color=target_normalized,
+            recipe=[],
+            result_color=target_normalized,
+            match_percentage=0.0,
+            delta_e=100.0,
+            total_parts=0,
+            mix_method=None,
+            error=f"Error finding recipe: {str(e)}"
+        )
+
 
 # ------------ Original Shape Processing Code ------------
 

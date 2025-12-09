@@ -303,6 +303,209 @@ canvas.picking { cursor: crosshair; }
     background: #ccc;
     cursor: not-allowed;
 }
+
+/* Unmix / Recipe Styles */
+.unmix-section {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 2px solid #4CAF50;
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, rgba(76, 175, 80, 0.02) 100%);
+    padding: 15px;
+    border-radius: 0 0 8px 8px;
+    margin: 0 -15px -15px -15px;
+}
+.unmix-section h5 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    color: #2E7D32;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.unmix-section h5::before {
+    content: "🎨";
+}
+.unmix-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+.unmix-control-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.unmix-control-item label {
+    font-size: 11px;
+    color: #666;
+    font-weight: 600;
+}
+.unmix-control-item input[type="number"] {
+    padding: 6px 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 13px;
+    width: 100%;
+    box-sizing: border-box;
+}
+.unmix-control-item input[type="number"]:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.15);
+}
+#getRecipeBtn {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    width: 100%;
+    transition: background 0.2s;
+}
+#getRecipeBtn:hover { background: #43A047; }
+#getRecipeBtn:disabled { background: #ccc; cursor: not-allowed; }
+
+.recipe-results {
+    margin-top: 12px;
+}
+.recipe-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e0e0e0;
+}
+.recipe-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.recipe-target-swatch {
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    border: 2px solid #333;
+}
+.recipe-result-swatch {
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    border: 2px solid #333;
+}
+.recipe-arrow {
+    font-size: 20px;
+    color: #666;
+}
+.recipe-match-info {
+    text-align: right;
+}
+.recipe-match-value {
+    font-size: 24px;
+    font-weight: bold;
+}
+.recipe-match-value.high { color: #4CAF50; }
+.recipe-match-value.medium { color: #FF9800; }
+.recipe-match-value.low { color: #f44336; }
+.recipe-match-label {
+    font-size: 10px;
+    color: #888;
+}
+.recipe-method {
+    font-size: 10px;
+    color: #666;
+    background: #f0f0f0;
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin-top: 2px;
+}
+.recipe-components {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.recipe-component {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    transition: border-color 0.2s;
+}
+.recipe-component:hover {
+    border-color: #4CAF50;
+}
+.recipe-component-swatch {
+    width: 44px;
+    height: 44px;
+    border-radius: 4px;
+    border: 2px solid #333;
+    flex-shrink: 0;
+}
+.recipe-component-info {
+    flex: 1;
+    min-width: 0;
+}
+.recipe-component-name {
+    font-weight: 600;
+    font-size: 13px;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.recipe-component-hex {
+    font-family: monospace;
+    font-size: 11px;
+    color: #666;
+}
+.recipe-component-amount {
+    text-align: right;
+    flex-shrink: 0;
+}
+.recipe-component-parts {
+    font-size: 20px;
+    font-weight: bold;
+    color: #333;
+}
+.recipe-component-parts-label {
+    font-size: 10px;
+    color: #888;
+}
+.recipe-component-percent {
+    font-size: 12px;
+    color: #4CAF50;
+    font-weight: 600;
+}
+.recipe-total {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed #ccc;
+    font-size: 12px;
+    color: #666;
+    text-align: center;
+}
+.recipe-empty {
+    text-align: center;
+    padding: 20px;
+    color: #888;
+    font-size: 12px;
+}
+.recipe-error {
+    background: #ffebee;
+    border: 1px solid #ffcdd2;
+    color: #c62828;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    text-align: center;
+}
 </style>
 <script type="application/json" id="colorsData">
 {
@@ -499,6 +702,28 @@ canvas.picking { cursor: crosshair; }
                 <div class="match-empty">Select a shape and enter palette colors to compare</div>
             </div>
         </div>
+        
+        <!-- Unmix / Get Recipe Section -->
+        <div class="unmix-section">
+            <h5>Get Mix Recipe (Unmix)</h5>
+            <p style="font-size: 11px; color: #666; margin: 0 0 12px 0;">
+                Find which paints to mix (and in what proportions) to recreate the selected color.
+            </p>
+            <div class="unmix-controls">
+                <div class="unmix-control-item">
+                    <label>Max Colors in Recipe</label>
+                    <input type="number" id="maxColorsInput" value="3" min="1" max="5">
+                </div>
+                <div class="unmix-control-item">
+                    <label>Max Parts (Precision)</label>
+                    <input type="number" id="maxPartsInput" value="10" min="2" max="20">
+                </div>
+            </div>
+            <button id="getRecipeBtn" disabled>Get Mix Recipe</button>
+            <div id="recipeResults" class="recipe-results">
+                <div class="recipe-empty">Select a shape and load a palette to get a mixing recipe</div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -546,8 +771,8 @@ canvas.picking { cursor: crosshair; }
 </div>
 
 <script>
-//const API_BASE = "http://127.0.0.1:8000";
-const API_BASE = "https://slider-options-img-production.up.railway.app";
+const API_BASE = "http://127.0.0.1:8000";
+//const API_BASE = "https://slider-options-img-production.up.railway.app";
 
 let baseShapes = [];
 let detailShapes = [];
@@ -601,6 +826,12 @@ const matchThreshold = document.getElementById("matchThreshold");
 const matchThresholdValue = document.getElementById("matchThresholdValue");
 const matchColorsBtn = document.getElementById("matchColorsBtn");
 const matchResults = document.getElementById("matchResults");
+
+// Unmix / Recipe elements
+const maxColorsInput = document.getElementById("maxColorsInput");
+const maxPartsInput = document.getElementById("maxPartsInput");
+const getRecipeBtn = document.getElementById("getRecipeBtn");
+const recipeResults = document.getElementById("recipeResults");
 
 let isSelecting = false;
 let startX = 0, startY = 0;
@@ -1207,6 +1438,12 @@ function updateMatchButtonState() {
     const hasColor = currentSelectedColor !== null;
     const hasPalette = colorMatcherInput.value.trim().length > 0;
     matchColorsBtn.disabled = !(hasColor && hasPalette);
+    // Also update recipe button
+    if (typeof updateRecipeButtonState === 'function') {
+        updateRecipeButtonState();
+    } else {
+        getRecipeBtn.disabled = !(hasColor && hasPalette);
+    }
 }
 
 function parsePaletteColors(input) {
@@ -1321,6 +1558,169 @@ matchColorsBtn.addEventListener("click", async () => {
         matchResults.innerHTML = `<div class="match-error">⚠️ API Error: ${error.message}. Make sure the backend is running.</div>`;
     } finally {
         updateMatchButtonState();
+    }
+});
+
+/* ==========================================================
+   UNMIX / GET RECIPE FUNCTIONALITY (via API)
+========================================================== */
+
+// Update recipe button state
+function updateRecipeButtonState() {
+    const hasColor = currentSelectedColor !== null;
+    const hasPalette = colorMatcherInput.value.trim().length > 0;
+    getRecipeBtn.disabled = !(hasColor && hasPalette);
+}
+
+// Also update recipe button when palette changes
+colorMatcherInput.addEventListener("input", updateRecipeButtonState);
+
+function getRecipeMatchClass(percentage) {
+    if (percentage >= 70) return 'high';
+    if (percentage >= 40) return 'medium';
+    return 'low';
+}
+
+function formatMixMethod(method) {
+    const methods = {
+        'kubelka_munk': 'Kubelka-Munk (Paint)',
+        'yn_km': 'Yule-Nielsen KM',
+        'linear': 'Linear RGB (Light)',
+        'exact': 'Exact Match'
+    };
+    return methods[method] || method;
+}
+
+function renderRecipeResults(data) {
+    if (data.error) {
+        recipeResults.innerHTML = `<div class="recipe-error">⚠️ ${data.error}</div>`;
+        return;
+    }
+    
+    if (!data.recipe || data.recipe.length === 0) {
+        recipeResults.innerHTML = `<div class="recipe-empty">No recipe found for this color</div>`;
+        return;
+    }
+    
+    const matchClass = getRecipeMatchClass(data.match_percentage);
+    
+    let html = `
+        <div class="recipe-header">
+            <div class="recipe-header-left">
+                <div class="recipe-target-swatch" style="background: ${data.target_color}" title="Target"></div>
+                <div class="recipe-arrow">→</div>
+                <div class="recipe-result-swatch" style="background: ${data.result_color}" title="Result"></div>
+            </div>
+            <div class="recipe-match-info">
+                <div class="recipe-match-value ${matchClass}">${data.match_percentage}%</div>
+                <div class="recipe-match-label">match</div>
+                <div class="recipe-method">${formatMixMethod(data.mix_method)}</div>
+            </div>
+        </div>
+        <div class="recipe-components">
+    `;
+    
+    data.recipe.forEach(comp => {
+        const displayName = comp.name || comp.hex;
+        html += `
+            <div class="recipe-component">
+                <div class="recipe-component-swatch" style="background: ${comp.hex}"></div>
+                <div class="recipe-component-info">
+                    <div class="recipe-component-name" title="${displayName}">${displayName}</div>
+                    <div class="recipe-component-hex">${comp.hex}</div>
+                </div>
+                <div class="recipe-component-amount">
+                    <div class="recipe-component-parts">${comp.parts}</div>
+                    <div class="recipe-component-parts-label">parts</div>
+                    <div class="recipe-component-percent">${comp.percentage}%</div>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += `</div>`;
+    html += `<div class="recipe-total">Total: ${data.total_parts} parts · ΔE: ${data.delta_e}</div>`;
+    
+    recipeResults.innerHTML = html;
+}
+
+// Build palette with names for the unmix request
+function buildPaletteWithNames(hexColors) {
+    // Try to get names from the loaded palette preset
+    const select = document.getElementById('palettePresetSelect');
+    const selectedPalette = select.value;
+    
+    if (selectedPalette && palettePresetsData && palettePresetsData[selectedPalette]) {
+        const colorArray = palettePresetsData[selectedPalette];
+        const paletteMap = new Map();
+        
+        // Build map of hex -> name
+        colorArray.forEach((rgb, idx) => {
+            const r = Math.round(rgb[0]);
+            const g = Math.round(rgb[1]);
+            const b = Math.round(rgb[2]);
+            const hex = rgbToHex(r, g, b).toUpperCase();
+            paletteMap.set(hex, `${selectedPalette} #${idx + 1}`);
+        });
+        
+        // Return palette with names where available
+        return hexColors.map(hex => ({
+            hex: hex,
+            name: paletteMap.get(hex.toUpperCase()) || null
+        }));
+    }
+    
+    // No preset loaded, return without names
+    return hexColors.map(hex => ({ hex: hex, name: null }));
+}
+
+getRecipeBtn.addEventListener("click", async () => {
+    if (!currentSelectedColor) {
+        alert("Please select a shape first using the color picker.");
+        return;
+    }
+    
+    const paletteColors = parsePaletteColors(colorMatcherInput.value);
+    
+    if (paletteColors.length === 0) {
+        recipeResults.innerHTML = `<div class="recipe-error">⚠️ Please enter valid hex colors in the palette</div>`;
+        return;
+    }
+    
+    const maxColors = parseInt(maxColorsInput.value) || 3;
+    const maxParts = parseInt(maxPartsInput.value) || 10;
+    
+    // Build palette with names
+    const paletteWithNames = buildPaletteWithNames(paletteColors);
+    
+    // Show loading state
+    recipeResults.innerHTML = `<div class="recipe-empty">⏳ Finding best recipe...</div>`;
+    getRecipeBtn.disabled = true;
+    
+    try {
+        const response = await fetch(`${API_BASE}/unmix`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                target_color: currentSelectedColor,
+                palette: paletteWithNames,
+                max_colors: maxColors,
+                max_parts: maxParts
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        renderRecipeResults(data);
+        
+    } catch (error) {
+        console.error("Unmix API error:", error);
+        recipeResults.innerHTML = `<div class="recipe-error">⚠️ API Error: ${error.message}. Make sure the backend is running.</div>`;
+    } finally {
+        updateRecipeButtonState();
     }
 });
 
