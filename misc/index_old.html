@@ -692,7 +692,12 @@ canvas.picking { cursor: crosshair; }
 #FF5733
 #3498DB
 #2ECC71"></textarea>
-
+            <div class="threshold-control">
+                <label>Min Match %:</label>
+                <input type="range" id="matchThreshold" min="0" max="100" value="0">
+                <span id="matchThresholdValue">0%</span>
+            </div>
+            <button id="matchColorsBtn" disabled>Match Against Palette</button>
             <div id="matchResults" class="match-results">
                 <div class="match-empty">Select a shape and enter palette colors to compare</div>
             </div>
@@ -817,6 +822,9 @@ const scoreValue = document.getElementById("scoreValue");
 
 // Color Matcher elements
 const colorMatcherInput = document.getElementById("colorMatcherInput");
+const matchThreshold = document.getElementById("matchThreshold");
+const matchThresholdValue = document.getElementById("matchThresholdValue");
+const matchColorsBtn = document.getElementById("matchColorsBtn");
 const matchResults = document.getElementById("matchResults");
 
 // Unmix / Recipe elements
@@ -1213,6 +1221,9 @@ function displayShapeInfo(shape, index) {
     currentSelectedColor = rgbToHex(r, g, b);
     updateMatchButtonState();
     
+    // Reset match results when selecting new shape
+    matchResults.innerHTML = `<div class="match-empty">Click "Match Against Palette" to compare</div>`;
+    
     colorPickerPanel.classList.add("active");
     colorPreviewBox.style.backgroundColor = `rgba(${r},${g},${b},${a/255})`;
     
@@ -1416,11 +1427,17 @@ loadPalettePresets();
    COLOR MATCHER FUNCTIONALITY (via API)
 ========================================================== */
 
+// Update match button state and threshold display
+matchThreshold.addEventListener("input", () => {
+    matchThresholdValue.textContent = matchThreshold.value + "%";
+});
+
 colorMatcherInput.addEventListener("input", updateMatchButtonState);
 
 function updateMatchButtonState() {
     const hasColor = currentSelectedColor !== null;
     const hasPalette = colorMatcherInput.value.trim().length > 0;
+    matchColorsBtn.disabled = !(hasColor && hasPalette);
     // Also update recipe button
     if (typeof updateRecipeButtonState === 'function') {
         updateRecipeButtonState();
@@ -1499,7 +1516,50 @@ function renderMatchItem(match, isBest) {
     `;
 }
 
-
+matchColorsBtn.addEventListener("click", async () => {
+    if (!currentSelectedColor) {
+        alert("Please select a shape first using the color picker.");
+        return;
+    }
+    
+    const paletteColors = parsePaletteColors(colorMatcherInput.value);
+    
+    if (paletteColors.length === 0) {
+        matchResults.innerHTML = `<div class="match-error">⚠️ Please enter valid hex colors</div>`;
+        return;
+    }
+    
+    const threshold = parseFloat(matchThreshold.value);
+    
+    // Show loading state
+    matchResults.innerHTML = `<div class="match-empty">⏳ Matching colors...</div>`;
+    matchColorsBtn.disabled = true;
+    
+    try {
+        const response = await fetch(`${API_BASE}/color_match`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                selected_color: currentSelectedColor,
+                palette_colors: paletteColors,
+                threshold: threshold
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        renderMatchResults(data);
+        
+    } catch (error) {
+        console.error("Color match API error:", error);
+        matchResults.innerHTML = `<div class="match-error">⚠️ API Error: ${error.message}. Make sure the backend is running.</div>`;
+    } finally {
+        updateMatchButtonState();
+    }
+});
 
 /* ==========================================================
    UNMIX / GET RECIPE FUNCTIONALITY (via API)
