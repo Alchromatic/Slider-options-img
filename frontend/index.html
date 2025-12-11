@@ -573,6 +573,72 @@ canvas.picking { cursor: crosshair; }
 <body>
 <h2>Art-AI Renderer - Selective Resolution</h2>
 
+<!-- ========================== GEOMETRIZE ========================= -->
+<div class="section" style="background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%); padding: 20px; border-radius: 8px; border: 2px solid #7c4dff;">
+    <h3 style="color: #512da8; margin-top: 0;">Generate from Image (Geometrize)</h3>
+    <div class="info" style="margin-bottom: 15px;">Upload an image to convert it into geometric shapes automatically.</div>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+        <div>
+            <label style="font-weight: bold; font-size: 12px; color: #666;">Image File:</label>
+            <input type="file" id="geometrizeInput" accept="image/*" style="width: 100%; margin-top: 5px;">
+        </div>
+        <div>
+            <label style="font-weight: bold; font-size: 12px; color: #666;">Shape Type:</label>
+            <select id="geometrizeShapeType" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;">
+                <option value="triangle">Triangle</option>
+                <option value="circle">Circle</option>
+                <option value="ellipse">Ellipse</option>
+                <option value="rotated_ellipse">Rotated Ellipse</option>
+                <option value="rectangle">Rectangle</option>
+                <option value="rotated_rectangle">Rotated Rectangle</option>
+            </select>
+        </div>
+        <div>
+            <label style="font-weight: bold; font-size: 12px; color: #666;">Number of Shapes:</label>
+            <input type="number" id="geometrizeShapeCount" value="200" min="10" max="5000" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;">
+        </div>
+        <div>
+            <label style="font-weight: bold; font-size: 12px; color: #666;">Opacity (0-255):</label>
+            <input type="number" id="geometrizeOpacity" value="128" min="1" max="255" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;">
+        </div>
+        <div>
+            <label style="font-weight: bold; font-size: 12px; color: #666;">Processing Mode:</label>
+            <div style="display: flex; gap: 15px; margin-top: 8px;">
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                    <input type="radio" name="geometrizeMode" value="fast" checked>
+                    <span>Fast (seconds)</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                    <input type="radio" name="geometrizeMode" value="quality">
+                    <span>Quality (slower)</span>
+                </label>
+            </div>
+        </div>
+        <div>
+            <label style="font-weight: bold; font-size: 12px; color: #666;">Load Result As:</label>
+            <div style="display: flex; gap: 15px; margin-top: 8px;">
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                    <input type="radio" name="geometrizeTarget" value="base" checked>
+                    <span>Base (Low-res)</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                    <input type="radio" name="geometrizeTarget" value="detail">
+                    <span>Detail (High-res)</span>
+                </label>
+            </div>
+        </div>
+    </div>
+    
+    <button id="geometrizeBtn" style="background: #7c4dff; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: bold; width: 100%;">
+        Generate Shapes
+    </button>
+    <button id="downloadJsonBtn" style="background: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; margin-top: 10px; width: 100%;" disabled>
+        Download JSON
+    </button>
+    <div id="geometrizeStatus" class="info" style="margin-top: 10px; text-align: center;"></div>
+</div>
+
 <!-- ========================== LOAD JSON ========================= -->
 <div class="section">
     <h3>Load JSON Files</h3>
@@ -833,6 +899,126 @@ let isPickingColor = false;
 let selectedShapeIndex = null;
 let currentSelectedColor = null;
 
+// Geometrize elements
+const geometrizeInput = document.getElementById("geometrizeInput");
+const geometrizeShapeType = document.getElementById("geometrizeShapeType");
+const geometrizeShapeCount = document.getElementById("geometrizeShapeCount");
+const geometrizeOpacity = document.getElementById("geometrizeOpacity");
+const geometrizeBtn = document.getElementById("geometrizeBtn");
+const geometrizeStatus = document.getElementById("geometrizeStatus");
+const downloadJsonBtn = document.getElementById("downloadJsonBtn");
+
+/* ==========================================================
+   DOWNLOAD JSON
+========================================================== */
+
+downloadJsonBtn.addEventListener("click", () => {
+    if (!currentShapes.length) {
+        alert("No shapes to download. Generate or load shapes first.");
+        return;
+    }
+    
+    const json = JSON.stringify(currentShapes, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "shapes.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+});
+
+/* ==========================================================
+   GEOMETRIZE - Generate shapes from image
+========================================================== */
+
+geometrizeBtn.addEventListener("click", async () => {
+    const file = geometrizeInput.files[0];
+    if (!file) {
+        geometrizeStatus.textContent = "Please select an image file first.";
+        geometrizeStatus.style.color = "#f44336";
+        return;
+    }
+
+    const shapeCount = parseInt(geometrizeShapeCount.value) || 200;
+    const shapeType = geometrizeShapeType.value;
+    const opacity = parseInt(geometrizeOpacity.value) || 128;
+    const target = document.querySelector('input[name="geometrizeTarget"]:checked').value;
+    const mode = document.querySelector('input[name="geometrizeMode"]:checked').value;
+
+    geometrizeBtn.disabled = true;
+    
+    if (mode === "fast") {
+        geometrizeStatus.textContent = `Processing in fast mode...`;
+    } else {
+        const estimatedTime = Math.ceil(shapeCount / 10);
+        geometrizeStatus.textContent = `Processing in quality mode... Estimated ${estimatedTime}+ seconds.`;
+    }
+    geometrizeStatus.style.color = "#666";
+
+    try {
+        const formData = new FormData();
+        formData.append("image", file);
+        formData.append("shape_count", shapeCount);
+        formData.append("shape_type", shapeType);
+        formData.append("opacity", opacity);
+        formData.append("mode", mode);
+
+        const res = await fetch(`${API_BASE}/geometrize`, {
+            method: "POST",
+            body: formData
+        });
+
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.detail || "Geometrize failed");
+        }
+
+        const data = await res.json();
+
+        if (target === "base") {
+            // Load as base (low-res)
+            baseShapes = data.shapes;
+            currentShapes = [...baseShapes];
+            groupedShapes = [...currentShapes];
+            
+            // Store original canvas size for proper scaling
+            window.sourceWidth = data.canvas_width;
+            window.sourceHeight = data.canvas_height;
+
+            baseFileStatus.textContent = `Geometrized (${data.total_shapes} shapes)`;
+            
+            slider.max = data.total_shapes;
+            slider.value = data.total_shapes;
+            sliderLabel.textContent = `Shapes: ${data.total_shapes} / ${data.total_shapes}`;
+
+            drawCanvas(currentShapes);
+            
+            downloadJsonBtn.disabled = false;
+            
+            geometrizeStatus.textContent = `Generated ${data.total_shapes} shapes as Base (${data.canvas_width}x${data.canvas_height})`;
+        } else {
+            // Load as detail (high-res)
+            detailShapes = data.shapes;
+            detailFileStatus.textContent = `Geometrized (${data.total_shapes} shapes)`;
+            
+            geometrizeStatus.textContent = `Generated ${data.total_shapes} shapes as Detail (${data.canvas_width}x${data.canvas_height})`;
+        }
+        
+        geometrizeStatus.style.color = "#4CAF50";
+
+    } catch (err) {
+        console.error("Geometrize error:", err);
+        geometrizeStatus.textContent = `Error: ${err.message}`;
+        geometrizeStatus.style.color = "#f44336";
+    } finally {
+        geometrizeBtn.disabled = false;
+    }
+});
+
 /* ==========================================================
    LOAD JSON
 ========================================================== */
@@ -846,8 +1032,13 @@ baseFileInput.addEventListener("change", async e => {
 
     currentShapes = [...baseShapes];
     groupedShapes = [...currentShapes];
+    
+    // Clear stored dimensions so getImageRect uses background shape
+    window.sourceWidth = null;
+    window.sourceHeight = null;
 
-    baseFileStatus.textContent = `✓ Loaded (${baseShapes.length} shapes)`;
+    baseFileStatus.textContent = `Loaded (${baseShapes.length} shapes)`;
+    downloadJsonBtn.disabled = false;
 
     updateRender();
 });
@@ -858,7 +1049,7 @@ detailFileInput.addEventListener("change", async e => {
 
     const text = await file.text();
     detailShapes = JSON.parse(text);
-    detailFileStatus.textContent = `✓ Loaded (${detailShapes.length} shapes)`;
+    detailFileStatus.textContent = `Loaded (${detailShapes.length} shapes)`;
 });
 
 /* ==========================================================
@@ -994,8 +1185,14 @@ function getImageRect() {
 
     if (bg) {
         const [x1, y1, x2, y2] = bg.data;
-        w = Math.abs(x2 - x1);
-        h = Math.abs(y2 - y1);
+        w = Math.abs(x2 - x1) || x2 || 600;
+        h = Math.abs(y2 - y1) || y2 || 600;
+    }
+    
+    // Use stored source dimensions if available (from geometrize)
+    if (window.sourceWidth && window.sourceHeight) {
+        w = window.sourceWidth;
+        h = window.sourceHeight;
     }
 
     const scale = Math.min(canvas.width / w, canvas.height / h);
