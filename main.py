@@ -853,12 +853,35 @@ def get_canvas_size(shapes: List[ShapeModel]) -> CanvasSize:
 
 
 def shape_center(shape: ShapeModel, canvas: CanvasSize) -> Tuple[float, float]:
-    if shape.type == 0 and len(shape.data) >= 4:
+    if shape.type == 0 and len(shape.data) >= 4:  # Background rectangle
         x1, y1, x2, y2 = shape.data[:4]
         return (0.5 * (x1 + x2), 0.5 * (y1 + y2))
-    if shape.type == 4 and len(shape.data) >= 2:
-        cx, cy = shape.data[:2]
-        return (cx, cy)
+    
+    if shape.type == 1 and len(shape.data) >= 2:  # Circle: [cx, cy, r]
+        return (shape.data[0], shape.data[1])
+    
+    if shape.type == 2 and len(shape.data) >= 6:  # Triangle: [x1, y1, x2, y2, x3, y3]
+        x1, y1, x2, y2, x3, y3 = shape.data[:6]
+        return ((x1 + x2 + x3) / 3.0, (y1 + y2 + y3) / 3.0)
+    
+    if shape.type == 3 and len(shape.data) >= 2:  # Ellipse: [cx, cy, rx, ry]
+        return (shape.data[0], shape.data[1])
+    
+    if shape.type == 4 and len(shape.data) >= 2:  # Rotated ellipse: [cx, cy, rx, ry, angle]
+        return (shape.data[0], shape.data[1])
+    
+    if shape.type == 5 and len(shape.data) >= 2:  # Circle
+        return (shape.data[0], shape.data[1])
+    
+    if shape.type == 6 and len(shape.data) >= 4:  # Line: [x1, y1, x2, y2]
+        x1, y1, x2, y2 = shape.data[:4]
+        return (0.5 * (x1 + x2), 0.5 * (y1 + y2))
+    
+    if shape.type == 7 and len(shape.data) >= 6:  # Quadratic bezier: [x1, y1, cx, cy, x2, y2]
+        x1, y1, cx, cy, x2, y2 = shape.data[:6]
+        return ((x1 + cx + x2) / 3.0, (y1 + cy + y2) / 3.0)
+    
+    # Fallback
     return (canvas.width / 2.0, canvas.height / 2.0)
 
 

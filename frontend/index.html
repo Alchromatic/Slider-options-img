@@ -602,7 +602,7 @@ canvas.picking { cursor: crosshair; }
 <!-- ========================== GEOMETRIZE (Client-Side) ========================= -->
 <div class="section" style="background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%); padding: 20px; border-radius: 8px; border: 2px solid #7c4dff;">
     <h3 style="color: #512da8; margin-top: 0;">Generate from Image</h3>
-    <div class="info" style="margin-bottom: 15px;">Upload an image to convert it into geometric shapes</div>
+    <div class="info" style="margin-bottom: 15px;">Upload an image to convert it into geometric shapes.</div>
     
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
         <div>
@@ -617,7 +617,7 @@ canvas.picking { cursor: crosshair; }
     
     <!-- Advanced Settings Panel -->
     <div style="background: #f0f4f8; border: 1px solid #d0d7de; border-radius: 6px; padding: 12px; margin: 12px 0;">
-        <h4 style="margin: 0 0 10px 0; font-size: 13px; color: #495057;">⚙️ Advanced Settings</h4>
+        <h4 style="margin: 0 0 10px 0; font-size: 13px; color: #495057;">Advanced Settings</h4>
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
             <!-- Shape Types -->
             <div style="grid-column: span 2;">
@@ -882,8 +882,8 @@ canvas.picking { cursor: crosshair; }
 </div>
 
 <script>
-const API_BASE = "http://127.0.0.1:8000";
-//const API_BASE = "https://slider-options-img-production.up.railway.app";
+//const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "https://slider-options-img-production.up.railway.app";
 
 let baseShapes = [];
 let detailShapes = [];
@@ -986,22 +986,27 @@ geometrizeMutations.addEventListener("input", () => {
 ========================================================== */
 
 downloadJsonBtn.addEventListener("click", () => {
-    if (!currentShapes.length) {
+    // Use generatedShapes if available (from generation), otherwise currentShapes (from upload)
+    const shapesToDownload = (generatedShapes && generatedShapes.length > 0) ? generatedShapes : currentShapes;
+    
+    if (!shapesToDownload.length) {
         alert("No shapes to download. Generate or load shapes first.");
         return;
     }
     
-    const json = JSON.stringify(currentShapes, null, 2);
+    const json = JSON.stringify(shapesToDownload, null, 2);
     const blob = new Blob([json], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     
     const a = document.createElement("a");
     a.href = url;
-    a.download = "shapes.json";
+    a.download = `shapes_${shapesToDownload.length}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    
+    console.log(`Downloaded ${shapesToDownload.length} shapes`);
 });
 
 /* ==========================================================
@@ -1090,54 +1095,53 @@ function parseAndScaleShapes(jsonString, scaleX, scaleY) {
             let scaledData;
             
             switch(type) {
-                case 0: // Rectangle
+                case 0: // Rectangle: [x1, y1, x2, y2]
                     scaledData = [
                         Math.round(data[0] * scaleX), Math.round(data[1] * scaleY),
                         Math.round(data[2] * scaleX), Math.round(data[3] * scaleY)
                     ];
                     break;
-                case 1: // Rotated Rectangle
+                case 1: // Rotated Rectangle: [x1, y1, x2, y2, angle]
                     scaledData = [
                         Math.round(data[0] * scaleX), Math.round(data[1] * scaleY),
                         Math.round(data[2] * scaleX), Math.round(data[3] * scaleY),
-                        data[4]
+                        data[4] // angle stays same
                     ];
                     break;
-                case 2: // Triangle
+                case 2: // Triangle: [x1, y1, x2, y2, x3, y3]
                     scaledData = [
                         Math.round(data[0] * scaleX), Math.round(data[1] * scaleY),
                         Math.round(data[2] * scaleX), Math.round(data[3] * scaleY),
                         Math.round(data[4] * scaleX), Math.round(data[5] * scaleY)
                     ];
                     break;
-                case 3: // Ellipse -> convert to type 4 format
-                    scaledData = [
-                        Math.round(data[0] * scaleX), Math.round(data[1] * scaleY),
-                        Math.round(data[2] * scaleX), Math.round(data[3] * scaleY),
-                        0
-                    ];
-                    return { type: 4, data: scaledData, color: shape.color, score: shape.score };
-                case 4: // Rotated Ellipse
-                    scaledData = [
-                        Math.round(data[0] * scaleX), Math.round(data[1] * scaleY),
-                        Math.round(data[2] * scaleX), Math.round(data[3] * scaleY),
-                        data[4]
-                    ];
-                    break;
-                case 5: // Circle -> convert to type 1 format
-                    const avgScale = (scaleX + scaleY) / 2;
-                    scaledData = [
-                        Math.round(data[0] * scaleX), Math.round(data[1] * scaleY),
-                        Math.round(data[2] * avgScale)
-                    ];
-                    return { type: 1, data: scaledData, color: shape.color, score: shape.score };
-                case 6: // Line
+                case 3: // Ellipse: [cx, cy, rx, ry]
                     scaledData = [
                         Math.round(data[0] * scaleX), Math.round(data[1] * scaleY),
                         Math.round(data[2] * scaleX), Math.round(data[3] * scaleY)
                     ];
                     break;
-                case 7: // Quadratic Bezier
+                case 4: // Rotated Ellipse: [cx, cy, rx, ry, angle]
+                    scaledData = [
+                        Math.round(data[0] * scaleX), Math.round(data[1] * scaleY),
+                        Math.round(data[2] * scaleX), Math.round(data[3] * scaleY),
+                        data[4] // angle stays same
+                    ];
+                    break;
+                case 5: // Circle: [cx, cy, r]
+                    const avgScale = (scaleX + scaleY) / 2;
+                    scaledData = [
+                        Math.round(data[0] * scaleX), Math.round(data[1] * scaleY),
+                        Math.round(data[2] * avgScale)
+                    ];
+                    break;
+                case 6: // Line: [x1, y1, x2, y2]
+                    scaledData = [
+                        Math.round(data[0] * scaleX), Math.round(data[1] * scaleY),
+                        Math.round(data[2] * scaleX), Math.round(data[3] * scaleY)
+                    ];
+                    break;
+                case 7: // Quadratic Bezier: [x1, y1, cx, cy, x2, y2]
                     scaledData = [
                         Math.round(data[0] * scaleX), Math.round(data[1] * scaleY),
                         Math.round(data[2] * scaleX), Math.round(data[3] * scaleY),
@@ -1222,9 +1226,22 @@ geometrizeBtn.addEventListener("click", async () => {
         
         geometrizeStatus.textContent = `Processing: 0 / ${shapeCount} shapes`;
         
-        // Create worker using the embedded geometrize library directly
-        // The library is designed to be used as a worker - it sets onmessage automatically
-        const geometrizeLibCode = document.getElementById('geometrize-lib').textContent;
+        // Create worker with proper message handling
+        // The library's onmessage handler loses 'this' context, so we need to patch it
+        let geometrizeLibCode = document.getElementById('geometrize-lib').textContent;
+        
+        // Patch the library: replace the broken onmessage assignment with a working one
+        // Original: onmessage = GeometrizeWorker.prototype.messageHandler;
+        // This loses 'this' context. We need to create an instance and bind properly.
+        geometrizeLibCode = geometrizeLibCode.replace(
+            'onmessage = GeometrizeWorker.prototype.messageHandler;',
+            `
+            var _geometrizeWorkerInstance = new GeometrizeWorker();
+            _geometrizeWorkerInstance.postMessage = function(msg) { self.postMessage(msg); };
+            onmessage = function(e) { _geometrizeWorkerInstance.messageHandler(e); };
+            `
+        );
+        
         const workerBlob = new Blob([geometrizeLibCode], { type: 'application/javascript' });
         geometrizeWorker = new Worker(URL.createObjectURL(workerBlob));
         
@@ -1244,9 +1261,17 @@ geometrizeBtn.addEventListener("click", async () => {
                     }
                     
                     // Parse the JSON string and scale coordinates
-                    if (msg.jsonData) {
-                        const newShapes = parseAndScaleShapes(msg.jsonData, scaleX, scaleY);
-                        generatedShapes.push(...newShapes);
+                    if (msg.jsonData && msg.jsonData.length > 0) {
+                        console.log("Raw jsonData:", msg.jsonData);
+                        try {
+                            const newShapes = parseAndScaleShapes(msg.jsonData, scaleX, scaleY);
+                            console.log("Parsed shapes:", newShapes);
+                            generatedShapes.push(...newShapes);
+                        } catch(parseErr) {
+                            console.error("Parse error:", parseErr);
+                        }
+                    } else {
+                        console.log("Empty or missing jsonData");
                     }
                     
                     currentStep++;
@@ -1303,31 +1328,28 @@ geometrizeBtn.addEventListener("click", async () => {
         geometrizeBtn.disabled = false;
         stopGeometrizeBtn.style.display = "none";
         
-        // Load results
+        // Auto-load generated shapes
         if (target === "base") {
             baseShapes = [...generatedShapes];
             currentShapes = [...baseShapes];
             groupedShapes = [...currentShapes];
             
-            window.sourceWidth = originalWidth;
-            window.sourceHeight = originalHeight;
+            window.sourceWidth = null;
+            window.sourceHeight = null;
             
-            baseFileStatus.textContent = `Generated (${generatedShapes.length} shapes)`;
-            
-            slider.max = generatedShapes.length;
-            slider.value = generatedShapes.length;
-            sliderLabel.textContent = `Shapes: ${generatedShapes.length} / ${generatedShapes.length}`;
-            
-            drawCanvas(currentShapes);
+            baseFileStatus.textContent = `✓ Loaded ${generatedShapes.length} shapes`;
             downloadJsonBtn.disabled = false;
+            
+            updateRender();
             
             geometrizeStatus.textContent = `✓ Generated ${generatedShapes.length} shapes as Base (${originalWidth}x${originalHeight})`;
         } else {
             detailShapes = [...generatedShapes];
-            detailFileStatus.textContent = `Generated (${generatedShapes.length} shapes)`;
+            detailFileStatus.textContent = `✓ Loaded ${generatedShapes.length} shapes`;
             
             geometrizeStatus.textContent = `✓ Generated ${generatedShapes.length} shapes as Detail (${originalWidth}x${originalHeight})`;
         }
+        downloadJsonBtn.disabled = false;
         
         geometrizeStatus.style.color = "#4CAF50";
         
@@ -1356,16 +1378,30 @@ function drawPreview(shapes, srcWidth, srcHeight) {
     shapes.forEach(s => {
         const [r, g, b, a] = s.color;
         previewCtx.fillStyle = `rgba(${r},${g},${b},${a / 255})`;
+        previewCtx.strokeStyle = `rgba(${r},${g},${b},${a / 255})`;
         
         if (s.type === 0) {
-            previewCtx.fillRect(0, 0, geometrizePreview.width, geometrizePreview.height);
+            // Rectangle
+            const [x1, y1, x2, y2] = s.data;
+            const rx = Math.min(x1, x2) * scale;
+            const ry = Math.min(y1, y2) * scale;
+            const rw = Math.abs(x2 - x1) * scale;
+            const rh = Math.abs(y2 - y1) * scale;
+            previewCtx.fillRect(rx, ry, rw, rh);
         }
         else if (s.type === 1) {
-            // Circle
-            const [cx, cy, rad] = s.data;
-            previewCtx.beginPath();
-            previewCtx.arc(cx * scale, cy * scale, rad * scale, 0, Math.PI * 2);
-            previewCtx.fill();
+            // Rotated Rectangle
+            const [x1, y1, x2, y2, angle] = s.data;
+            const cx = ((x1 + x2) / 2) * scale;
+            const cy = ((y1 + y2) / 2) * scale;
+            const w = Math.abs(x2 - x1) * scale;
+            const h = Math.abs(y2 - y1) * scale;
+            
+            previewCtx.save();
+            previewCtx.translate(cx, cy);
+            previewCtx.rotate((angle || 0) * Math.PI / 180);
+            previewCtx.fillRect(-w / 2, -h / 2, w, h);
+            previewCtx.restore();
         }
         else if (s.type === 2) {
             // Triangle
@@ -1375,6 +1411,13 @@ function drawPreview(shapes, srcWidth, srcHeight) {
             previewCtx.lineTo(C * scale, D * scale);
             previewCtx.lineTo(E * scale, F * scale);
             previewCtx.closePath();
+            previewCtx.fill();
+        }
+        else if (s.type === 3) {
+            // Ellipse
+            const [cx, cy, rx, ry] = s.data;
+            previewCtx.beginPath();
+            previewCtx.ellipse(cx * scale, cy * scale, rx * scale, ry * scale, 0, 0, Math.PI * 2);
             previewCtx.fill();
         }
         else if (s.type === 4) {
@@ -1387,6 +1430,31 @@ function drawPreview(shapes, srcWidth, srcHeight) {
             previewCtx.ellipse(0, 0, rx * scale, ry * scale, 0, 0, Math.PI * 2);
             previewCtx.fill();
             previewCtx.restore();
+        }
+        else if (s.type === 5) {
+            // Circle
+            const [cx, cy, rad] = s.data;
+            previewCtx.beginPath();
+            previewCtx.arc(cx * scale, cy * scale, rad * scale, 0, Math.PI * 2);
+            previewCtx.fill();
+        }
+        else if (s.type === 6) {
+            // Line
+            const [x1, y1, x2, y2] = s.data;
+            previewCtx.lineWidth = 1;
+            previewCtx.beginPath();
+            previewCtx.moveTo(x1 * scale, y1 * scale);
+            previewCtx.lineTo(x2 * scale, y2 * scale);
+            previewCtx.stroke();
+        }
+        else if (s.type === 7) {
+            // Quadratic Bezier
+            const [x1, y1, cx, cy, x2, y2] = s.data;
+            previewCtx.lineWidth = 1;
+            previewCtx.beginPath();
+            previewCtx.moveTo(x1 * scale, y1 * scale);
+            previewCtx.quadraticCurveTo(cx * scale, cy * scale, x2 * scale, y2 * scale);
+            previewCtx.stroke();
         }
     });
 }
@@ -1450,6 +1518,22 @@ clearRegionsBtn.addEventListener("click", () => {
     updateRender();
 });
 
+// Draw region overlay on canvas during selection
+// function drawRegionOverlay(region, isSelecting = false) {
+//     if (!region) return;
+//     
+//     ctx.save();
+//     ctx.strokeStyle = isSelecting ? "#7c4dff" : "#4CAF50";
+//     ctx.lineWidth = 2;
+//     ctx.setLineDash([5, 5]);
+//     ctx.fillStyle = isSelecting ? "rgba(124, 77, 255, 0.1)" : "rgba(76, 175, 80, 0.1)";
+//     
+//     ctx.fillRect(region.x, region.y, region.width, region.height);
+//     ctx.strokeRect(region.x, region.y, region.width, region.height);
+//     
+//     ctx.restore();
+// }
+
 canvas.addEventListener("mousedown", e => {
     if (!isSelecting) return;
 
@@ -1471,7 +1555,7 @@ canvas.addEventListener("mousemove", e => {
     currentRegion.height = y - startY;
 
     drawCanvas();
-    drawRegionOverlay(currentRegion, true);
+    // drawRegionOverlay(currentRegion, true); // REMOVED
 });
 
 canvas.addEventListener("mouseup", e => {
@@ -2313,20 +2397,35 @@ function drawCanvas(shapes = currentShapes) {
     shapes.forEach(s => {
         const [r, g, b, a] = s.color;
         o.fillStyle = `rgba(${r},${g},${b},${a / 255})`;
+        o.strokeStyle = `rgba(${r},${g},${b},${a / 255})`;
 
         if (s.type === 0) {
+            // Rectangle: [x1, y1, x2, y2]
             const [x1, y1, x2, y2] = s.data;
-            o.fillRect(0, 0, img.w, img.h);
+            const rx = Math.min(x1, x2);
+            const ry = Math.min(y1, y2);
+            const rw = Math.abs(x2 - x1);
+            const rh = Math.abs(y2 - y1);
+            o.fillRect(rx, ry, rw, rh);
         }
 
         else if (s.type === 1) {
-            const [cx, cy, rad] = s.data;
-            o.beginPath();
-            o.arc(cx, cy, rad, 0, Math.PI * 2);
-            o.fill();
+            // Rotated Rectangle: [x1, y1, x2, y2, angle]
+            const [x1, y1, x2, y2, angle] = s.data;
+            const cx = (x1 + x2) / 2;
+            const cy = (y1 + y2) / 2;
+            const w = Math.abs(x2 - x1);
+            const h = Math.abs(y2 - y1);
+            
+            o.save();
+            o.translate(cx, cy);
+            o.rotate((angle || 0) * Math.PI / 180);
+            o.fillRect(-w / 2, -h / 2, w, h);
+            o.restore();
         }
 
         else if (s.type === 2) {
+            // Triangle: [x1, y1, x2, y2, x3, y3]
             const [A, B, C, D, E, F] = s.data;
             o.beginPath();
             o.moveTo(A, B);
@@ -2336,15 +2435,52 @@ function drawCanvas(shapes = currentShapes) {
             o.fill();
         }
 
+        else if (s.type === 3) {
+            // Ellipse (non-rotated): [cx, cy, rx, ry]
+            const [cx, cy, rx, ry] = s.data;
+            o.beginPath();
+            o.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+            o.fill();
+        }
+
         else if (s.type === 4) {
+            // Rotated Ellipse: [cx, cy, rx, ry, angle]
             const [cx, cy, rx, ry, ang] = s.data;
             o.save();
             o.translate(cx, cy);
-            o.rotate((ang * Math.PI) / 180);
+            o.rotate((ang || 0) * Math.PI / 180);
             o.beginPath();
             o.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
             o.fill();
             o.restore();
+        }
+
+        else if (s.type === 5) {
+            // Circle: [cx, cy, r]
+            const [cx, cy, rad] = s.data;
+            o.beginPath();
+            o.arc(cx, cy, rad, 0, Math.PI * 2);
+            o.fill();
+        }
+
+        else if (s.type === 6) {
+            // Line: [x1, y1, x2, y2]
+            const [x1, y1, x2, y2] = s.data;
+            o.lineWidth = 1;
+            o.beginPath();
+            o.moveTo(x1, y1);
+            o.lineTo(x2, y2);
+            o.stroke();
+        }
+
+        else if (s.type === 7) {
+            // Quadratic Bezier: [x1, y1, cx, cy, x2, y2]
+            const [x1, y1, cx, cy, x2, y2] = s.data;
+            o.lineWidth = 1;
+            o.beginPath();
+            o.moveTo(x1, y1);
+            o.quadraticCurveTo(cx, cy, x2, y2);
+            o.stroke();
         }
     });
 
