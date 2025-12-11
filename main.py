@@ -1145,25 +1145,29 @@ def get_primitive_binary() -> str:
     if path_result:
         return path_result
 
-    # Windows-specific paths
+    # Common paths to check (including Railway/Nixpacks paths)
+    paths_to_check = [
+        "/root/go/bin/primitive",
+        "/home/go/bin/primitive",
+        os.path.expanduser("~/go/bin/primitive"),
+        "/usr/local/go/bin/primitive",
+        "/usr/local/bin/primitive",
+        "/usr/bin/primitive",
+        "/home/ubuntu/go/bin/primitive",
+        "/app/go/bin/primitive",
+        "./primitive",
+    ]
+    
+    # Windows paths
     if system == "Windows":
-        windows_paths = [
+        paths_to_check = [
             os.path.expanduser("~/go/bin/primitive.exe"),
             "C:\\Users\\User\\go\\bin\\primitive.exe",
         ]
-        for path in windows_paths:
-            if os.path.exists(path):
-                return path
-    else:
-        unix_paths = [
-            "/home/ubuntu/go/bin/primitive",
-            os.path.expanduser("~/go/bin/primitive"),
-            "/usr/local/bin/primitive",
-            "/usr/bin/primitive",
-        ]
-        for path in unix_paths:
-            if os.path.exists(path):
-                return path
+    
+    for path in paths_to_check:
+        if os.path.exists(path):
+            return path
 
     raise RuntimeError(
         "Primitive binary not found. Install with: go install github.com/fogleman/primitive@latest"

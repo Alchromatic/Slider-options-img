@@ -2,7 +2,14 @@
 nixPkgs = ["go"]
 
 [phases.build]
-cmds = ["pip install -r requirements.txt", "go install github.com/fogleman/primitive@latest"]
+cmds = [
+    "pip install -r requirements.txt",
+    "export GOPATH=/root/go && go install github.com/fogleman/primitive@latest"
+]
 
 [start]
-cmd = "export PATH=$PATH:/root/go/bin && uvicorn main:app --host 0.0.0.0 --port $PORT"
+cmd = "PATH=$PATH:/root/go/bin uvicorn main:app --host 0.0.0.0 --port $PORT"
+
+[variables]
+GOPATH = "/root/go"
+PATH = "/root/go/bin:/usr/local/bin:/usr/bin:/bin"
