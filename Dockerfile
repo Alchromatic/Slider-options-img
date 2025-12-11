@@ -1,11 +1,11 @@
 FROM python:3.11-slim
 
-# Install Go
+# Install Go 1.24
 RUN apt-get update && \
     apt-get install -y wget && \
-    wget https://go.dev/dl/go1.21.5.linux-amd64.tar.gz && \
-    tar -C /usr/local -xzf go1.21.5.linux-amd64.tar.gz && \
-    rm go1.21.5.linux-amd64.tar.gz && \
+    wget https://go.dev/dl/go1.24.0.linux-amd64.tar.gz && \
+    tar -C /usr/local -xzf go1.24.0.linux-amd64.tar.gz && \
+    rm go1.24.0.linux-amd64.tar.gz && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
