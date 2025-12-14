@@ -506,6 +506,32 @@ canvas.picking { cursor: crosshair; }
     font-size: 12px;
     text-align: center;
 }
+
+/* Shape Checkbox Styles */
+.shape-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: #333;
+    cursor: pointer;
+    padding: 4px 8px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+.shape-checkbox:hover {
+    border-color: #7c4dff;
+}
+.shape-checkbox input:checked + span {
+    color: #7c4dff;
+    font-weight: 600;
+}
+.shape-checkbox:has(input:checked) {
+    border-color: #7c4dff;
+    background: #f3e5f5;
+}
 </style>
 <script type="application/json" id="colorsData">
 {
@@ -573,10 +599,10 @@ canvas.picking { cursor: crosshair; }
 <body>
 <h2>Art-AI Renderer - Selective Resolution</h2>
 
-<!-- ========================== GEOMETRIZE ========================= -->
+<!-- ========================== GEOMETRIZE (Client-Side) ========================= -->
 <div class="section" style="background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%); padding: 20px; border-radius: 8px; border: 2px solid #7c4dff;">
-    <h3 style="color: #512da8; margin-top: 0;">Generate from Image (Geometrize)</h3>
-    <div class="info" style="margin-bottom: 15px;">Upload an image to convert it into geometric shapes automatically.</div>
+    <h3 style="color: #512da8; margin-top: 0;">Generate from Image</h3>
+    <div class="info" style="margin-bottom: 15px;">Upload an image to convert it into geometric shapes.</div>
     
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
         <div>
@@ -584,48 +610,57 @@ canvas.picking { cursor: crosshair; }
             <input type="file" id="geometrizeInput" accept="image/*" style="width: 100%; margin-top: 5px;">
         </div>
         <div>
-            <label style="font-weight: bold; font-size: 12px; color: #666;">Shape Type:</label>
-            <select id="geometrizeShapeType" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;">
-                <option value="triangle">Triangle</option>
-                <option value="circle">Circle</option>
-                <option value="ellipse">Ellipse</option>
-                <option value="rotated_ellipse">Rotated Ellipse</option>
-                <option value="rectangle">Rectangle</option>
-                <option value="rotated_rectangle">Rotated Rectangle</option>
-            </select>
-        </div>
-        <div>
             <label style="font-weight: bold; font-size: 12px; color: #666;">Number of Shapes:</label>
-            <input type="number" id="geometrizeShapeCount" value="200" min="10" max="5000" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;">
+            <input type="number" id="geometrizeShapeCount" value="200" min="10" max="2000" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;">
         </div>
-        <div>
-            <label style="font-weight: bold; font-size: 12px; color: #666;">Opacity (0-255):</label>
-            <input type="number" id="geometrizeOpacity" value="128" min="1" max="255" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;">
-        </div>
-        <div>
-            <label style="font-weight: bold; font-size: 12px; color: #666;">Processing Mode:</label>
-            <div style="display: flex; gap: 15px; margin-top: 8px;">
-                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                    <input type="radio" name="geometrizeMode" value="fast" checked>
-                    <span>Fast (seconds)</span>
-                </label>
-                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                    <input type="radio" name="geometrizeMode" value="quality">
-                    <span>Quality (slower)</span>
-                </label>
+    </div>
+    
+    <!-- Advanced Settings Panel -->
+    <div style="background: #f0f4f8; border: 1px solid #d0d7de; border-radius: 6px; padding: 12px; margin: 12px 0;">
+        <h4 style="margin: 0 0 10px 0; font-size: 13px; color: #495057;">Advanced Settings</h4>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+            <!-- Shape Types -->
+            <div style="grid-column: span 2;">
+                <label style="font-size: 11px; color: #666; font-weight: 600;">Shape Types (select multiple):</label>
+                <div id="shapeTypeCheckboxes" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px;">
+                    <label class="shape-checkbox"><input type="checkbox" name="shapeType" value="0"> <span>Rectangle</span></label>
+                    <label class="shape-checkbox"><input type="checkbox" name="shapeType" value="1"> <span>Rotated Rect</span></label>
+                    <label class="shape-checkbox"><input type="checkbox" name="shapeType" value="2" checked> <span>Triangle</span></label>
+                    <label class="shape-checkbox"><input type="checkbox" name="shapeType" value="3"> <span>Ellipse</span></label>
+                    <label class="shape-checkbox"><input type="checkbox" name="shapeType" value="4"> <span>Rotated Ellipse</span></label>
+                    <label class="shape-checkbox"><input type="checkbox" name="shapeType" value="5"> <span>Circle</span></label>
+                    <label class="shape-checkbox"><input type="checkbox" name="shapeType" value="6"> <span>Line</span></label>
+                    <label class="shape-checkbox"><input type="checkbox" name="shapeType" value="7"> <span>Bezier</span></label>
+                </div>
             </div>
-        </div>
-        <div>
-            <label style="font-weight: bold; font-size: 12px; color: #666;">Load Result As:</label>
-            <div style="display: flex; gap: 15px; margin-top: 8px;">
-                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                    <input type="radio" name="geometrizeTarget" value="base" checked>
-                    <span>Base (Low-res)</span>
-                </label>
-                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                    <input type="radio" name="geometrizeTarget" value="detail">
-                    <span>Detail (High-res)</span>
-                </label>
+            <!-- Alpha -->
+            <div>
+                <label style="font-size: 11px; color: #666; font-weight: 600;">Alpha (Opacity): <span id="alphaDisplayValue" style="font-family: monospace;">128</span></label>
+                <input type="range" id="geometrizeAlpha" min="1" max="255" value="128" style="width: 100%;">
+            </div>
+            <!-- Candidates Per Step -->
+            <div>
+                <label style="font-size: 11px; color: #666; font-weight: 600;">Candidates Per Step: <span id="candidatesValue" style="font-family: monospace;">50</span></label>
+                <input type="range" id="geometrizeCandidates" min="10" max="500" value="50" style="width: 100%;">
+            </div>
+            <!-- Mutations Per Step -->
+            <div>
+                <label style="font-size: 11px; color: #666; font-weight: 600;">Mutations Per Step: <span id="mutationsValue" style="font-family: monospace;">100</span></label>
+                <input type="range" id="geometrizeMutations" min="10" max="500" value="100" style="width: 100%;">
+            </div>
+            <!-- Load Result As -->
+            <div>
+                <label style="font-size: 11px; color: #666; font-weight: 600;">Load Result As:</label>
+                <div style="display: flex; gap: 15px; margin-top: 4px;">
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px;">
+                        <input type="radio" name="geometrizeTarget" value="base" checked>
+                        <span>Base (Low-res)</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px;">
+                        <input type="radio" name="geometrizeTarget" value="detail">
+                        <span>Detail (High-res)</span>
+                    </label>
+                </div>
             </div>
         </div>
     </div>
@@ -633,6 +668,21 @@ canvas.picking { cursor: crosshair; }
     <button id="geometrizeBtn" style="background: #7c4dff; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: bold; width: 100%;">
         Generate Shapes
     </button>
+    <button id="stopGeometrizeBtn" style="background: #f44336; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; margin-top: 10px; width: 100%; display: none;">
+        Stop Processing
+    </button>
+    
+    <!-- Progress Bar -->
+    <div id="progressContainer" style="margin-top: 10px; display: none;">
+        <div style="width: 100%; height: 20px; background: #e0e0e0; border-radius: 10px; overflow: hidden;">
+            <div id="progressFill" style="height: 100%; background: linear-gradient(90deg, #7c4dff, #b388ff); border-radius: 10px; transition: width 0.1s ease; width: 0%;"></div>
+        </div>
+        <div id="progressText" style="text-align: center; font-size: 12px; color: #666; margin-top: 5px;">Processing: 0 / 0 shapes</div>
+    </div>
+    
+    <!-- Live Preview -->
+    <canvas id="geometrizePreview" width="300" height="300" style="border: 1px solid #ccc; border-radius: 4px; margin-top: 10px; max-width: 100%; display: none;"></canvas>
+    
     <button id="downloadJsonBtn" style="background: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; margin-top: 10px; width: 100%;" disabled>
         Download JSON
     </button>
@@ -899,42 +949,232 @@ let isPickingColor = false;
 let selectedShapeIndex = null;
 let currentSelectedColor = null;
 
-// Geometrize elements
+// Geometrize elements (Client-Side)
 const geometrizeInput = document.getElementById("geometrizeInput");
-const geometrizeShapeType = document.getElementById("geometrizeShapeType");
 const geometrizeShapeCount = document.getElementById("geometrizeShapeCount");
-const geometrizeOpacity = document.getElementById("geometrizeOpacity");
+const geometrizeAlpha = document.getElementById("geometrizeAlpha");
+const geometrizeCandidates = document.getElementById("geometrizeCandidates");
+const geometrizeMutations = document.getElementById("geometrizeMutations");
 const geometrizeBtn = document.getElementById("geometrizeBtn");
+const stopGeometrizeBtn = document.getElementById("stopGeometrizeBtn");
+const progressContainer = document.getElementById("progressContainer");
+const progressFill = document.getElementById("progressFill");
+const progressText = document.getElementById("progressText");
+const geometrizePreview = document.getElementById("geometrizePreview");
 const geometrizeStatus = document.getElementById("geometrizeStatus");
 const downloadJsonBtn = document.getElementById("downloadJsonBtn");
+
+// Geometrize state
+let geometrizeWorker = null;
+let isGeometrizing = false;
+let generatedShapes = [];
+let previewCtx = geometrizePreview.getContext("2d");
+
+// Update slider display values
+geometrizeAlpha.addEventListener("input", () => {
+    document.getElementById("alphaDisplayValue").textContent = geometrizeAlpha.value;
+});
+geometrizeCandidates.addEventListener("input", () => {
+    document.getElementById("candidatesValue").textContent = geometrizeCandidates.value;
+});
+geometrizeMutations.addEventListener("input", () => {
+    document.getElementById("mutationsValue").textContent = geometrizeMutations.value;
+});
 
 /* ==========================================================
    DOWNLOAD JSON
 ========================================================== */
 
 downloadJsonBtn.addEventListener("click", () => {
-    if (!currentShapes.length) {
+    // Use generatedShapes if available (from generation), otherwise currentShapes (from upload)
+    const shapesToDownload = (generatedShapes && generatedShapes.length > 0) ? generatedShapes : currentShapes;
+    
+    if (!shapesToDownload.length) {
         alert("No shapes to download. Generate or load shapes first.");
         return;
     }
     
-    const json = JSON.stringify(currentShapes, null, 2);
+    const json = JSON.stringify(shapesToDownload, null, 2);
     const blob = new Blob([json], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     
     const a = document.createElement("a");
     a.href = url;
-    a.download = "shapes.json";
+    a.download = `shapes_${shapesToDownload.length}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    
+    console.log(`Downloaded ${shapesToDownload.length} shapes`);
 });
 
 /* ==========================================================
-   GEOMETRIZE - Generate shapes from image
+   GEOMETRIZE - Client-Side Shape Generation
 ========================================================== */
 
+// Get selected shape types from checkboxes
+function getSelectedShapeTypes() {
+    const checkboxes = document.querySelectorAll('input[name="shapeType"]:checked');
+    const types = Array.from(checkboxes).map(cb => parseInt(cb.value));
+    return types.length > 0 ? types : [2]; // Default to triangle
+}
+
+// Convert image to bitmap data for worker
+async function imageToBitmapData(imageFile) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+            // Resize if too large for performance
+            let width = img.width;
+            let height = img.height;
+            const maxDim = 256;
+            
+            if (width > maxDim || height > maxDim) {
+                const ratio = Math.min(maxDim / width, maxDim / height);
+                width = Math.floor(width * ratio);
+                height = Math.floor(height * ratio);
+            }
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            const imageData = ctx.getImageData(0, 0, width, height);
+            const pixels = imageData.data;
+            
+            // Convert to format expected by geometrize (RGBA packed into 32-bit integers)
+            const data = new Array(width * height);
+            let rSum = 0, gSum = 0, bSum = 0;
+            
+            for (let i = 0; i < width * height; i++) {
+                const r = pixels[i * 4];
+                const g = pixels[i * 4 + 1];
+                const b = pixels[i * 4 + 2];
+                const a = pixels[i * 4 + 3];
+                
+                rSum += r;
+                gSum += g;
+                bSum += b;
+                
+                // Pack as RGBA (r in high bits)
+                data[i] = ((r & 255) << 24) | ((g & 255) << 16) | ((b & 255) << 8) | (a & 255);
+            }
+            
+            const avgR = Math.round(rSum / (width * height));
+            const avgG = Math.round(gSum / (width * height));
+            const avgB = Math.round(bSum / (width * height));
+            
+            resolve({
+                width: width,
+                height: height,
+                data: data,
+                originalWidth: img.width,
+                originalHeight: img.height,
+                avgColor: [avgR, avgG, avgB, 255]
+            });
+        };
+        img.onerror = reject;
+        img.src = URL.createObjectURL(imageFile);
+    });
+}
+
+// Parse the JSON string returned by geometrize library and scale coordinates
+function parseAndScaleShapes(jsonString, scaleX, scaleY) {
+    // The library returns a JSON string like: "    {\n        \"type\":4,\n..."
+    // We need to parse it as JSON array
+    try {
+        const fullJson = "[\n" + jsonString + "\n]";
+        const shapes = JSON.parse(fullJson);
+        
+        return shapes.map(shape => {
+            const type = shape.type;
+            const data = shape.data;
+            let scaledData;
+            
+            switch(type) {
+                case 0: // Rectangle: [x1, y1, x2, y2]
+                    scaledData = [
+                        Math.round(data[0] * scaleX), Math.round(data[1] * scaleY),
+                        Math.round(data[2] * scaleX), Math.round(data[3] * scaleY)
+                    ];
+                    break;
+                case 1: // Rotated Rectangle: [x1, y1, x2, y2, angle]
+                    scaledData = [
+                        Math.round(data[0] * scaleX), Math.round(data[1] * scaleY),
+                        Math.round(data[2] * scaleX), Math.round(data[3] * scaleY),
+                        data[4] // angle stays same
+                    ];
+                    break;
+                case 2: // Triangle: [x1, y1, x2, y2, x3, y3]
+                    scaledData = [
+                        Math.round(data[0] * scaleX), Math.round(data[1] * scaleY),
+                        Math.round(data[2] * scaleX), Math.round(data[3] * scaleY),
+                        Math.round(data[4] * scaleX), Math.round(data[5] * scaleY)
+                    ];
+                    break;
+                case 3: // Ellipse: [cx, cy, rx, ry]
+                    scaledData = [
+                        Math.round(data[0] * scaleX), Math.round(data[1] * scaleY),
+                        Math.round(data[2] * scaleX), Math.round(data[3] * scaleY)
+                    ];
+                    break;
+                case 4: // Rotated Ellipse: [cx, cy, rx, ry, angle]
+                    scaledData = [
+                        Math.round(data[0] * scaleX), Math.round(data[1] * scaleY),
+                        Math.round(data[2] * scaleX), Math.round(data[3] * scaleY),
+                        data[4] // angle stays same
+                    ];
+                    break;
+                case 5: // Circle: [cx, cy, r]
+                    const avgScale = (scaleX + scaleY) / 2;
+                    scaledData = [
+                        Math.round(data[0] * scaleX), Math.round(data[1] * scaleY),
+                        Math.round(data[2] * avgScale)
+                    ];
+                    break;
+                case 6: // Line: [x1, y1, x2, y2]
+                    scaledData = [
+                        Math.round(data[0] * scaleX), Math.round(data[1] * scaleY),
+                        Math.round(data[2] * scaleX), Math.round(data[3] * scaleY)
+                    ];
+                    break;
+                case 7: // Quadratic Bezier: [x1, y1, cx, cy, x2, y2]
+                    scaledData = [
+                        Math.round(data[0] * scaleX), Math.round(data[1] * scaleY),
+                        Math.round(data[2] * scaleX), Math.round(data[3] * scaleY),
+                        Math.round(data[4] * scaleX), Math.round(data[5] * scaleY)
+                    ];
+                    break;
+                default:
+                    scaledData = data;
+            }
+            
+            return { type: type, data: scaledData, color: shape.color, score: shape.score };
+        });
+    } catch (e) {
+        console.error("Error parsing shapes:", e, jsonString);
+        return [];
+    }
+}
+
+// Stop processing
+stopGeometrizeBtn.addEventListener("click", () => {
+    if (geometrizeWorker) {
+        geometrizeWorker.terminate();
+        geometrizeWorker = null;
+    }
+    isGeometrizing = false;
+    geometrizeBtn.disabled = false;
+    stopGeometrizeBtn.style.display = "none";
+    progressContainer.style.display = "none";
+    geometrizeStatus.textContent = "Processing stopped.";
+    geometrizeStatus.style.color = "#f44336";
+});
+
+// Main geometrize function
 geometrizeBtn.addEventListener("click", async () => {
     const file = geometrizeInput.files[0];
     if (!file) {
@@ -942,82 +1182,282 @@ geometrizeBtn.addEventListener("click", async () => {
         geometrizeStatus.style.color = "#f44336";
         return;
     }
-
-    const shapeCount = parseInt(geometrizeShapeCount.value) || 200;
-    const shapeType = geometrizeShapeType.value;
-    const opacity = parseInt(geometrizeOpacity.value) || 128;
-    const target = document.querySelector('input[name="geometrizeTarget"]:checked').value;
-    const mode = document.querySelector('input[name="geometrizeMode"]:checked').value;
-
-    geometrizeBtn.disabled = true;
     
-    if (mode === "fast") {
-        geometrizeStatus.textContent = `Processing in fast mode...`;
-    } else {
-        const estimatedTime = Math.ceil(shapeCount / 10);
-        geometrizeStatus.textContent = `Processing in quality mode... Estimated ${estimatedTime}+ seconds.`;
-    }
+    const shapeCount = parseInt(geometrizeShapeCount.value) || 200;
+    const alpha = parseInt(geometrizeAlpha.value) || 128;
+    const candidatesPerStep = parseInt(geometrizeCandidates.value) || 50;
+    const mutationsPerStep = parseInt(geometrizeMutations.value) || 100;
+    const shapeTypes = getSelectedShapeTypes();
+    const target = document.querySelector('input[name="geometrizeTarget"]:checked').value;
+    
+    geometrizeBtn.disabled = true;
+    stopGeometrizeBtn.style.display = "block";
+    progressContainer.style.display = "block";
+    geometrizePreview.style.display = "block";
+    geometrizeStatus.textContent = "Loading image...";
     geometrizeStatus.style.color = "#666";
-
+    
     try {
-        const formData = new FormData();
-        formData.append("image", file);
-        formData.append("shape_count", shapeCount);
-        formData.append("shape_type", shapeType);
-        formData.append("opacity", opacity);
-        formData.append("mode", mode);
-
-        const res = await fetch(`${API_BASE}/geometrize`, {
-            method: "POST",
-            body: formData
+        // Load and convert image
+        const bitmapData = await imageToBitmapData(file);
+        const { width, height, data, originalWidth, originalHeight, avgColor } = bitmapData;
+        
+        // Calculate scale factors
+        const scaleX = originalWidth / width;
+        const scaleY = originalHeight / height;
+        
+        // Setup preview canvas
+        const previewScale = Math.min(300 / originalWidth, 300 / originalHeight);
+        geometrizePreview.width = Math.floor(originalWidth * previewScale);
+        geometrizePreview.height = Math.floor(originalHeight * previewScale);
+        previewCtx.fillStyle = `rgb(${avgColor[0]},${avgColor[1]},${avgColor[2]})`;
+        previewCtx.fillRect(0, 0, geometrizePreview.width, geometrizePreview.height);
+        
+        // Initialize shapes with background using average color
+        generatedShapes = [{
+            type: 0,
+            data: [0, 0, originalWidth, originalHeight],
+            color: avgColor,
+            score: 0
+        }];
+        
+        isGeometrizing = true;
+        let currentStep = 0;
+        
+        geometrizeStatus.textContent = `Processing: 0 / ${shapeCount} shapes`;
+        
+        // Create worker with proper message handling
+        // The library's onmessage handler loses 'this' context, so we need to patch it
+        let geometrizeLibCode = document.getElementById('geometrize-lib').textContent;
+        
+        // Patch the library: replace the broken onmessage assignment with a working one
+        // Original: onmessage = GeometrizeWorker.prototype.messageHandler;
+        // This loses 'this' context. We need to create an instance and bind properly.
+        geometrizeLibCode = geometrizeLibCode.replace(
+            'onmessage = GeometrizeWorker.prototype.messageHandler;',
+            `
+            var _geometrizeWorkerInstance = new GeometrizeWorker();
+            _geometrizeWorkerInstance.postMessage = function(msg) { self.postMessage(msg); };
+            onmessage = function(e) { _geometrizeWorkerInstance.messageHandler(e); };
+            `
+        );
+        
+        const workerBlob = new Blob([geometrizeLibCode], { type: 'application/javascript' });
+        geometrizeWorker = new Worker(URL.createObjectURL(workerBlob));
+        
+        // Process step by step
+        await new Promise((resolve, reject) => {
+            geometrizeWorker.onmessage = (e) => {
+                const msg = e.data;
+                
+                if (msg.id === "did_set_target_image") {
+                    // Start stepping
+                    doStep();
+                }
+                else if (msg.id === "did_step") {
+                    if (!isGeometrizing) {
+                        resolve();
+                        return;
+                    }
+                    
+                    // Parse the JSON string and scale coordinates
+                    if (msg.jsonData && msg.jsonData.length > 0) {
+                        console.log("Raw jsonData:", msg.jsonData);
+                        try {
+                            const newShapes = parseAndScaleShapes(msg.jsonData, scaleX, scaleY);
+                            console.log("Parsed shapes:", newShapes);
+                            generatedShapes.push(...newShapes);
+                        } catch(parseErr) {
+                            console.error("Parse error:", parseErr);
+                        }
+                    } else {
+                        console.log("Empty or missing jsonData");
+                    }
+                    
+                    currentStep++;
+                    
+                    // Update progress
+                    const progress = (currentStep / shapeCount) * 100;
+                    progressFill.style.width = progress + "%";
+                    progressText.textContent = `Processing: ${currentStep} / ${shapeCount} shapes`;
+                    
+                    // Update preview every 10 steps for performance
+                    if (currentStep % 10 === 0 || currentStep >= shapeCount) {
+                        drawPreview(generatedShapes, originalWidth, originalHeight);
+                    }
+                    
+                    if (currentStep >= shapeCount) {
+                        resolve();
+                    } else {
+                        doStep();
+                    }
+                }
+            };
+            
+            geometrizeWorker.onerror = (err) => {
+                console.error("Worker error:", err);
+                reject(err);
+            };
+            
+            function doStep() {
+                geometrizeWorker.postMessage({
+                    id: "should_step",
+                    data: {
+                        shapeTypes: shapeTypes,
+                        alpha: alpha,
+                        candidateShapesPerStep: candidatesPerStep,
+                        shapeMutationsPerStep: mutationsPerStep
+                    }
+                });
+            }
+            
+            // Send target image to worker
+            geometrizeWorker.postMessage({
+                id: "should_set_target_image",
+                data: { width, height, data }
+            });
         });
-
-        if (!res.ok) {
-            const err = await res.json();
-            throw new Error(err.detail || "Geometrize failed");
+        
+        // Processing complete
+        if (geometrizeWorker) {
+            geometrizeWorker.terminate();
+            geometrizeWorker = null;
         }
-
-        const data = await res.json();
-
+        
+        isGeometrizing = false;
+        geometrizeBtn.disabled = false;
+        stopGeometrizeBtn.style.display = "none";
+        
+        // Auto-load generated shapes
         if (target === "base") {
-            // Load as base (low-res)
-            baseShapes = data.shapes;
+            baseShapes = [...generatedShapes];
             currentShapes = [...baseShapes];
             groupedShapes = [...currentShapes];
             
-            // Store original canvas size for proper scaling
-            window.sourceWidth = data.canvas_width;
-            window.sourceHeight = data.canvas_height;
-
-            baseFileStatus.textContent = `Geometrized (${data.total_shapes} shapes)`;
+            window.sourceWidth = null;
+            window.sourceHeight = null;
             
-            slider.max = data.total_shapes;
-            slider.value = data.total_shapes;
-            sliderLabel.textContent = `Shapes: ${data.total_shapes} / ${data.total_shapes}`;
-
-            drawCanvas(currentShapes);
-            
+            baseFileStatus.textContent = `✓ Loaded ${generatedShapes.length} shapes`;
             downloadJsonBtn.disabled = false;
             
-            geometrizeStatus.textContent = `Generated ${data.total_shapes} shapes as Base (${data.canvas_width}x${data.canvas_height})`;
-        } else {
-            // Load as detail (high-res)
-            detailShapes = data.shapes;
-            detailFileStatus.textContent = `Geometrized (${data.total_shapes} shapes)`;
+            updateRender();
             
-            geometrizeStatus.textContent = `Generated ${data.total_shapes} shapes as Detail (${data.canvas_width}x${data.canvas_height})`;
+            geometrizeStatus.textContent = `✓ Generated ${generatedShapes.length} shapes as Base (${originalWidth}x${originalHeight})`;
+        } else {
+            detailShapes = [...generatedShapes];
+            detailFileStatus.textContent = `✓ Loaded ${generatedShapes.length} shapes`;
+            
+            geometrizeStatus.textContent = `✓ Generated ${generatedShapes.length} shapes as Detail (${originalWidth}x${originalHeight})`;
         }
+        downloadJsonBtn.disabled = false;
         
         geometrizeStatus.style.color = "#4CAF50";
-
+        
     } catch (err) {
         console.error("Geometrize error:", err);
         geometrizeStatus.textContent = `Error: ${err.message}`;
         geometrizeStatus.style.color = "#f44336";
-    } finally {
+        
+        if (geometrizeWorker) {
+            geometrizeWorker.terminate();
+            geometrizeWorker = null;
+        }
+        isGeometrizing = false;
         geometrizeBtn.disabled = false;
+        stopGeometrizeBtn.style.display = "none";
     }
 });
+
+// Draw preview of generated shapes
+function drawPreview(shapes, srcWidth, srcHeight) {
+    const scale = Math.min(geometrizePreview.width / srcWidth, geometrizePreview.height / srcHeight);
+    
+    previewCtx.fillStyle = "white";
+    previewCtx.fillRect(0, 0, geometrizePreview.width, geometrizePreview.height);
+    
+    shapes.forEach(s => {
+        const [r, g, b, a] = s.color;
+        previewCtx.fillStyle = `rgba(${r},${g},${b},${a / 255})`;
+        previewCtx.strokeStyle = `rgba(${r},${g},${b},${a / 255})`;
+        
+        if (s.type === 0) {
+            // Rectangle
+            const [x1, y1, x2, y2] = s.data;
+            const rx = Math.min(x1, x2) * scale;
+            const ry = Math.min(y1, y2) * scale;
+            const rw = Math.abs(x2 - x1) * scale;
+            const rh = Math.abs(y2 - y1) * scale;
+            previewCtx.fillRect(rx, ry, rw, rh);
+        }
+        else if (s.type === 1) {
+            // Rotated Rectangle
+            const [x1, y1, x2, y2, angle] = s.data;
+            const cx = ((x1 + x2) / 2) * scale;
+            const cy = ((y1 + y2) / 2) * scale;
+            const w = Math.abs(x2 - x1) * scale;
+            const h = Math.abs(y2 - y1) * scale;
+            
+            previewCtx.save();
+            previewCtx.translate(cx, cy);
+            previewCtx.rotate((angle || 0) * Math.PI / 180);
+            previewCtx.fillRect(-w / 2, -h / 2, w, h);
+            previewCtx.restore();
+        }
+        else if (s.type === 2) {
+            // Triangle
+            const [A, B, C, D, E, F] = s.data;
+            previewCtx.beginPath();
+            previewCtx.moveTo(A * scale, B * scale);
+            previewCtx.lineTo(C * scale, D * scale);
+            previewCtx.lineTo(E * scale, F * scale);
+            previewCtx.closePath();
+            previewCtx.fill();
+        }
+        else if (s.type === 3) {
+            // Ellipse
+            const [cx, cy, rx, ry] = s.data;
+            previewCtx.beginPath();
+            previewCtx.ellipse(cx * scale, cy * scale, rx * scale, ry * scale, 0, 0, Math.PI * 2);
+            previewCtx.fill();
+        }
+        else if (s.type === 4) {
+            // Rotated Ellipse
+            const [cx, cy, rx, ry, ang] = s.data;
+            previewCtx.save();
+            previewCtx.translate(cx * scale, cy * scale);
+            previewCtx.rotate((ang || 0) * Math.PI / 180);
+            previewCtx.beginPath();
+            previewCtx.ellipse(0, 0, rx * scale, ry * scale, 0, 0, Math.PI * 2);
+            previewCtx.fill();
+            previewCtx.restore();
+        }
+        else if (s.type === 5) {
+            // Circle
+            const [cx, cy, rad] = s.data;
+            previewCtx.beginPath();
+            previewCtx.arc(cx * scale, cy * scale, rad * scale, 0, Math.PI * 2);
+            previewCtx.fill();
+        }
+        else if (s.type === 6) {
+            // Line
+            const [x1, y1, x2, y2] = s.data;
+            previewCtx.lineWidth = 1;
+            previewCtx.beginPath();
+            previewCtx.moveTo(x1 * scale, y1 * scale);
+            previewCtx.lineTo(x2 * scale, y2 * scale);
+            previewCtx.stroke();
+        }
+        else if (s.type === 7) {
+            // Quadratic Bezier
+            const [x1, y1, cx, cy, x2, y2] = s.data;
+            previewCtx.lineWidth = 1;
+            previewCtx.beginPath();
+            previewCtx.moveTo(x1 * scale, y1 * scale);
+            previewCtx.quadraticCurveTo(cx * scale, cy * scale, x2 * scale, y2 * scale);
+            previewCtx.stroke();
+        }
+    });
+}
 
 /* ==========================================================
    LOAD JSON
@@ -1078,6 +1518,22 @@ clearRegionsBtn.addEventListener("click", () => {
     updateRender();
 });
 
+// Draw region overlay on canvas during selection
+// function drawRegionOverlay(region, isSelecting = false) {
+//     if (!region) return;
+//     
+//     ctx.save();
+//     ctx.strokeStyle = isSelecting ? "#7c4dff" : "#4CAF50";
+//     ctx.lineWidth = 2;
+//     ctx.setLineDash([5, 5]);
+//     ctx.fillStyle = isSelecting ? "rgba(124, 77, 255, 0.1)" : "rgba(76, 175, 80, 0.1)";
+//     
+//     ctx.fillRect(region.x, region.y, region.width, region.height);
+//     ctx.strokeRect(region.x, region.y, region.width, region.height);
+//     
+//     ctx.restore();
+// }
+
 canvas.addEventListener("mousedown", e => {
     if (!isSelecting) return;
 
@@ -1099,7 +1555,7 @@ canvas.addEventListener("mousemove", e => {
     currentRegion.height = y - startY;
 
     drawCanvas();
-    drawRegionOverlay(currentRegion, true);
+    // drawRegionOverlay(currentRegion, true); // REMOVED
 });
 
 canvas.addEventListener("mouseup", e => {
@@ -1941,20 +2397,35 @@ function drawCanvas(shapes = currentShapes) {
     shapes.forEach(s => {
         const [r, g, b, a] = s.color;
         o.fillStyle = `rgba(${r},${g},${b},${a / 255})`;
+        o.strokeStyle = `rgba(${r},${g},${b},${a / 255})`;
 
         if (s.type === 0) {
+            // Rectangle: [x1, y1, x2, y2]
             const [x1, y1, x2, y2] = s.data;
-            o.fillRect(0, 0, img.w, img.h);
+            const rx = Math.min(x1, x2);
+            const ry = Math.min(y1, y2);
+            const rw = Math.abs(x2 - x1);
+            const rh = Math.abs(y2 - y1);
+            o.fillRect(rx, ry, rw, rh);
         }
 
         else if (s.type === 1) {
-            const [cx, cy, rad] = s.data;
-            o.beginPath();
-            o.arc(cx, cy, rad, 0, Math.PI * 2);
-            o.fill();
+            // Rotated Rectangle: [x1, y1, x2, y2, angle]
+            const [x1, y1, x2, y2, angle] = s.data;
+            const cx = (x1 + x2) / 2;
+            const cy = (y1 + y2) / 2;
+            const w = Math.abs(x2 - x1);
+            const h = Math.abs(y2 - y1);
+            
+            o.save();
+            o.translate(cx, cy);
+            o.rotate((angle || 0) * Math.PI / 180);
+            o.fillRect(-w / 2, -h / 2, w, h);
+            o.restore();
         }
 
         else if (s.type === 2) {
+            // Triangle: [x1, y1, x2, y2, x3, y3]
             const [A, B, C, D, E, F] = s.data;
             o.beginPath();
             o.moveTo(A, B);
@@ -1964,15 +2435,52 @@ function drawCanvas(shapes = currentShapes) {
             o.fill();
         }
 
+        else if (s.type === 3) {
+            // Ellipse (non-rotated): [cx, cy, rx, ry]
+            const [cx, cy, rx, ry] = s.data;
+            o.beginPath();
+            o.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+            o.fill();
+        }
+
         else if (s.type === 4) {
+            // Rotated Ellipse: [cx, cy, rx, ry, angle]
             const [cx, cy, rx, ry, ang] = s.data;
             o.save();
             o.translate(cx, cy);
-            o.rotate((ang * Math.PI) / 180);
+            o.rotate((ang || 0) * Math.PI / 180);
             o.beginPath();
             o.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
             o.fill();
             o.restore();
+        }
+
+        else if (s.type === 5) {
+            // Circle: [cx, cy, r]
+            const [cx, cy, rad] = s.data;
+            o.beginPath();
+            o.arc(cx, cy, rad, 0, Math.PI * 2);
+            o.fill();
+        }
+
+        else if (s.type === 6) {
+            // Line: [x1, y1, x2, y2]
+            const [x1, y1, x2, y2] = s.data;
+            o.lineWidth = 1;
+            o.beginPath();
+            o.moveTo(x1, y1);
+            o.lineTo(x2, y2);
+            o.stroke();
+        }
+
+        else if (s.type === 7) {
+            // Quadratic Bezier: [x1, y1, cx, cy, x2, y2]
+            const [x1, y1, cx, cy, x2, y2] = s.data;
+            o.lineWidth = 1;
+            o.beginPath();
+            o.moveTo(x1, y1);
+            o.quadraticCurveTo(cx, cy, x2, y2);
+            o.stroke();
         }
     });
 
@@ -2172,6 +2680,1812 @@ window.onclick = e => {
 /* ==========================================================
    END SCRIPT
 ========================================================== */
+</script>
+
+<!-- Embedded Geometrize Library -->
+<script type="text/javascript" id="geometrize-lib">
+(function ($hx_exports, $global) { "use strict";
+$hx_exports["geometrize"] = $hx_exports["geometrize"] || {};
+$hx_exports["geometrize"]["bitmap"] = $hx_exports["geometrize"]["bitmap"] || {};
+;$hx_exports["geometrize"]["exporter"] = $hx_exports["geometrize"]["exporter"] || {};
+;$hx_exports["geometrize"]["runner"] = $hx_exports["geometrize"]["runner"] || {};
+;$hx_exports["geometrize"]["shape"] = $hx_exports["geometrize"]["shape"] || {};
+function $extend(from, fields) {
+    var proto = Object.create(from);
+    for (var name in fields) proto[name] = fields[name];
+    if( fields.toString !== Object.prototype.toString ) proto.toString = fields.toString;
+    return proto;
+}
+var GeometrizeWorker = function() { };
+GeometrizeWorker.prototype = {
+    messageHandler: function(event) {
+        if(event == null || event.data == null) {
+            return;
+        }
+        var message = event.data;
+        switch(message.id) {
+        case "should_set_target_image":
+            var target = message.data;
+            this.runner = new geometrize_runner_ImageRunner(target,geometrize_Util.getAverageImageColor(target));
+            this.postMessage({ id : "did_set_target_image"});
+            break;
+        case "should_step":
+            var options = message.data;
+            var results = this.runner.step(options);
+            var svgData = geometrize_exporter_SvgExporter.exportShapes(results);
+            var jsonData = geometrize_exporter_ShapeJsonExporter.exportShapes(results);
+            this.postMessage({ id : "did_step", svgData : svgData, jsonData : jsonData});
+            break;
+        }
+    }
+    ,postMessage: function(message) {
+    }
+};
+var Std = function() { };
+Std.random = function(x) {
+    if(x <= 0) {
+        return 0;
+    } else {
+        return Math.floor(Math.random() * x);
+    }
+};
+var StringTools = function() { };
+StringTools.replace = function(s,sub,by) {
+    return s.split(sub).join(by);
+};
+var UInt = {};
+UInt.toFloat = function(this1) {
+    var int = this1;
+    if(int < 0) {
+        return 4294967296.0 + int;
+    } else {
+        return int + 0.0;
+    }
+};
+var geometrize_ArraySet = {};
+geometrize_ArraySet.create = function(array) {
+    if(array == null) {
+        var this1 = [];
+        return this1;
+    }
+    return geometrize_ArraySet.toSet(array);
+};
+geometrize_ArraySet.add = function(this1,element) {
+    if(element == null) {
+        throw haxe_Exception.thrown("FAIL: element != null");
+    }
+    if(geometrize_ArraySet.contains(this1,element)) {
+        return false;
+    }
+    this1.push(element);
+    return true;
+};
+geometrize_ArraySet.contains = function(this1,element) {
+    var _g = 0;
+    while(_g < this1.length) {
+        var i = this1[_g];
+        ++_g;
+        if(i == element) {
+            return true;
+        }
+    }
+    return false;
+};
+geometrize_ArraySet.toArray = function(this1) {
+    return this1.slice();
+};
+geometrize_ArraySet.toSet = function(array) {
+    var this1 = [];
+    var set = this1;
+    var _g = 0;
+    while(_g < array.length) {
+        var v = array[_g];
+        ++_g;
+        geometrize_ArraySet.add(set,v);
+    }
+    return set;
+};
+var geometrize_Core = function() { };
+geometrize_Core.computeColor = function(target,current,lines,alpha) {
+    if(target == null) {
+        throw haxe_Exception.thrown("FAIL: target != null");
+    }
+    if(current == null) {
+        throw haxe_Exception.thrown("FAIL: current != null");
+    }
+    if(lines == null) {
+        throw haxe_Exception.thrown("FAIL: lines != null");
+    }
+    if(alpha < 0) {
+        throw haxe_Exception.thrown("FAIL: alpha >= 0");
+    }
+    var totalRed = 0;
+    var totalGreen = 0;
+    var totalBlue = 0;
+    var count = 0;
+    var f = 65535 / alpha;
+    var a = f | 0;
+    var _g = 0;
+    while(_g < lines.length) {
+        var line = lines[_g];
+        ++_g;
+        var y = line.y;
+        var _g1 = line.x1;
+        var _g2 = line.x2 + 1;
+        while(_g1 < _g2) {
+            var x = _g1++;
+            var t = target.data[target.width * y + x];
+            var c = current.data[current.width * y + x];
+            totalRed += ((t >> 24 & 255) - (c >> 24 & 255)) * a + (c >> 24 & 255) * 257;
+            totalGreen += ((t >> 16 & 255) - (c >> 16 & 255)) * a + (c >> 16 & 255) * 257;
+            totalBlue += ((t >> 8 & 255) - (c >> 8 & 255)) * a + (c >> 8 & 255) * 257;
+            ++count;
+        }
+    }
+    if(count == 0) {
+        return 0;
+    }
+    var value = (totalRed / count | 0) >> 8;
+    var r = value < 0 ? 0 : value > 255 ? 255 : value;
+    var value = (totalGreen / count | 0) >> 8;
+    var g = value < 0 ? 0 : value > 255 ? 255 : value;
+    var value = (totalBlue / count | 0) >> 8;
+    var b = value < 0 ? 0 : value > 255 ? 255 : value;
+    return ((r < 0 ? 0 : r > 255 ? 255 : r) << 24) + ((g < 0 ? 0 : g > 255 ? 255 : g) << 16) + ((b < 0 ? 0 : b > 255 ? 255 : b) << 8) + (alpha < 0 ? 0 : alpha > 255 ? 255 : alpha);
+};
+geometrize_Core.differenceFull = function(first,second) {
+    if(first == null) {
+        throw haxe_Exception.thrown("FAIL: first != null");
+    }
+    if(second == null) {
+        throw haxe_Exception.thrown("FAIL: second != null");
+    }
+    if(first.width == 0) {
+        throw haxe_Exception.thrown("FAIL: first.width != 0");
+    }
+    if(first.height == 0) {
+        throw haxe_Exception.thrown("FAIL: first.height != 0");
+    }
+    if(second.width == 0) {
+        throw haxe_Exception.thrown("FAIL: second.width != 0");
+    }
+    if(second.height == 0) {
+        throw haxe_Exception.thrown("FAIL: second.height != 0");
+    }
+    var actual = first.width;
+    var expected = second.width;
+    if(actual != expected) {
+        throw haxe_Exception.thrown("FAIL: values are not equal (expected: " + expected + ", actual: " + actual + ")");
+    }
+    var actual = first.height;
+    var expected = second.height;
+    if(actual != expected) {
+        throw haxe_Exception.thrown("FAIL: values are not equal (expected: " + expected + ", actual: " + actual + ")");
+    }
+    var total = 0;
+    var width = first.width;
+    var height = first.height;
+    var _g = 0;
+    var _g1 = height;
+    while(_g < _g1) {
+        var y = _g++;
+        var _g2 = 0;
+        var _g3 = width;
+        while(_g2 < _g3) {
+            var x = _g2++;
+            var f = first.data[first.width * y + x];
+            var s = second.data[second.width * y + x];
+            var dr = (f >> 24 & 255) - (s >> 24 & 255);
+            var dg = (f >> 16 & 255) - (s >> 16 & 255);
+            var db = (f >> 8 & 255) - (s >> 8 & 255);
+            var da = (f & 255) - (s & 255);
+            total += dr * dr + dg * dg + db * db + da * da;
+        }
+    }
+    var result = Math.sqrt(total / (width * height * 4.0)) / 255;
+    if(!isFinite(result)) {
+        throw haxe_Exception.thrown("FAIL: Math.isFinite(result)");
+    }
+    return result;
+};
+geometrize_Core.differencePartial = function(target,before,after,score,lines) {
+    if(target == null) {
+        throw haxe_Exception.thrown("FAIL: target != null");
+    }
+    if(before == null) {
+        throw haxe_Exception.thrown("FAIL: before != null");
+    }
+    if(after == null) {
+        throw haxe_Exception.thrown("FAIL: after != null");
+    }
+    if(lines == null) {
+        throw haxe_Exception.thrown("FAIL: lines != null");
+    }
+    if(lines.length == 0) {
+        throw haxe_Exception.thrown("FAIL: lines.length != 0");
+    }
+    var width = target.width;
+    var height = target.height;
+    var rgbaCount = width * height * 4;
+    var total = Math.pow(score * 255,2) * rgbaCount;
+    var _g = 0;
+    while(_g < lines.length) {
+        var line = lines[_g];
+        ++_g;
+        var y = line.y;
+        var _g1 = line.x1;
+        var _g2 = line.x2 + 1;
+        while(_g1 < _g2) {
+            var x = _g1++;
+            var t = target.data[target.width * y + x];
+            var b = before.data[before.width * y + x];
+            var a = after.data[after.width * y + x];
+            var dtbr = (t >> 24 & 255) - (b >> 24 & 255);
+            var dtbg = (t >> 16 & 255) - (b >> 16 & 255);
+            var dtbb = (t >> 8 & 255) - (b >> 8 & 255);
+            var dtba = (t & 255) - (b & 255);
+            var dtar = (t >> 24 & 255) - (a >> 24 & 255);
+            var dtag = (t >> 16 & 255) - (a >> 16 & 255);
+            var dtab = (t >> 8 & 255) - (a >> 8 & 255);
+            var dtaa = (t & 255) - (a & 255);
+            total -= dtbr * dtbr + dtbg * dtbg + dtbb * dtbb + dtba * dtba;
+            total += dtar * dtar + dtag * dtag + dtab * dtab + dtaa * dtaa;
+        }
+    }
+    var result = Math.sqrt(total / rgbaCount) / 255;
+    if(!isFinite(result)) {
+        throw haxe_Exception.thrown("FAIL: Math.isFinite(result)");
+    }
+    return result;
+};
+geometrize_Core.bestRandomState = function(shapes,alpha,n,target,current,buffer,lastScore) {
+    var bestEnergy = 0;
+    var bestState = null;
+    var _g = 0;
+    var _g1 = n;
+    while(_g < _g1) {
+        var i = _g++;
+        var state = new geometrize_State(geometrize_shape_ShapeFactory.randomShapeOf(shapes,current.width,current.height),alpha,target,current,buffer);
+        var energy = state.energy(lastScore);
+        if(i == 0 || energy < bestEnergy) {
+            bestEnergy = energy;
+            bestState = state;
+        }
+    }
+    return bestState;
+};
+geometrize_Core.bestHillClimbState = function(shapes,alpha,n,age,target,current,buffer,lastScore) {
+    var state = geometrize_Core.bestRandomState(shapes,alpha,n,target,current,buffer,lastScore);
+    state = geometrize_Core.hillClimb(state,age,lastScore);
+    return state;
+};
+geometrize_Core.hillClimb = function(state,maxAge,lastScore) {
+    if(state == null) {
+        throw haxe_Exception.thrown("FAIL: state != null");
+    }
+    if(maxAge < 0) {
+        throw haxe_Exception.thrown("FAIL: maxAge >= 0");
+    }
+    var state1 = state.clone();
+    var bestState = state1.clone();
+    var bestEnergy = state1.energy(lastScore);
+    var age = 0;
+    while(age < maxAge) {
+        var undo = state1.mutate();
+        var energy = state1.energy(lastScore);
+        if(energy >= bestEnergy) {
+            state1 = undo;
+        } else {
+            bestEnergy = energy;
+            bestState = state1.clone();
+            age = -1;
+        }
+        ++age;
+    }
+    return bestState;
+};
+geometrize_Core.energy = function(shape,alpha,target,current,buffer,score) {
+    if(shape == null) {
+        throw haxe_Exception.thrown("FAIL: shape != null");
+    }
+    if(target == null) {
+        throw haxe_Exception.thrown("FAIL: target != null");
+    }
+    if(current == null) {
+        throw haxe_Exception.thrown("FAIL: current != null");
+    }
+    if(buffer == null) {
+        throw haxe_Exception.thrown("FAIL: buffer != null");
+    }
+    var lines = shape.rasterize();
+    if(lines == null) {
+        throw haxe_Exception.thrown("FAIL: lines != null");
+    }
+    if(lines.length == 0) {
+        throw haxe_Exception.thrown("FAIL: lines.length != 0");
+    }
+    var color = geometrize_Core.computeColor(target,current,lines,alpha);
+    geometrize_rasterizer_Rasterizer.copyLines(buffer,current,lines);
+    geometrize_rasterizer_Rasterizer.drawLines(buffer,color,lines);
+    return geometrize_Core.differencePartial(target,current,buffer,score,lines);
+};
+var geometrize_Model = function(target,backgroundColor) {
+    if(target == null) {
+        throw haxe_Exception.thrown("FAIL: target != null");
+    }
+    this.width = target.width;
+    this.height = target.height;
+    this.target = target;
+    var w = target.width;
+    var h = target.height;
+    var bitmap = new geometrize_bitmap_Bitmap();
+    bitmap.width = w;
+    bitmap.height = h;
+    var this1 = new Array(w * h);
+    bitmap.data = this1;
+    var i = 0;
+    while(i < bitmap.data.length) {
+        bitmap.data[i] = backgroundColor;
+        ++i;
+    }
+    this.current = bitmap;
+    var w = target.width;
+    var h = target.height;
+    var bitmap = new geometrize_bitmap_Bitmap();
+    bitmap.width = w;
+    bitmap.height = h;
+    var this1 = new Array(w * h);
+    bitmap.data = this1;
+    var i = 0;
+    while(i < bitmap.data.length) {
+        bitmap.data[i] = backgroundColor;
+        ++i;
+    }
+    this.buffer = bitmap;
+    this.score = geometrize_Core.differenceFull(target,this.current);
+};
+geometrize_Model.prototype = {
+    step: function(shapeTypes,alpha,n,age) {
+        var state = geometrize_Core.bestHillClimbState(shapeTypes,alpha,n,age,this.target,this.current,this.buffer,this.score);
+        var results = [this.addShape(state.shape,state.alpha)];
+        return results;
+    }
+    ,addShape: function(shape,alpha) {
+        if(shape == null) {
+            throw haxe_Exception.thrown("FAIL: shape != null");
+        }
+        var _this = this.current;
+        var bitmap = new geometrize_bitmap_Bitmap();
+        bitmap.width = _this.width;
+        bitmap.height = _this.height;
+        var this1 = new Array(_this.data.length);
+        bitmap.data = this1;
+        var _g = 0;
+        var _g1 = _this.data.length;
+        while(_g < _g1) {
+            var i = _g++;
+            bitmap.data[i] = _this.data[i];
+        }
+        var before = bitmap;
+        var lines = shape.rasterize();
+        var color = geometrize_Core.computeColor(this.target,this.current,lines,alpha);
+        geometrize_rasterizer_Rasterizer.drawLines(this.current,color,lines);
+        this.score = geometrize_Core.differencePartial(this.target,before,this.current,this.score,lines);
+        var result = { score : this.score, color : color, shape : shape};
+        return result;
+    }
+};
+var geometrize_State = function(shape,alpha,target,current,buffer) {
+    if(shape == null) {
+        throw haxe_Exception.thrown("FAIL: shape != null");
+    }
+    this.shape = shape;
+    this.alpha = alpha;
+    this.score = -1;
+    this.target = target;
+    this.current = current;
+    this.buffer = buffer;
+};
+geometrize_State.prototype = {
+    energy: function(lastScore) {
+        if(this.score < 0) {
+            this.score = geometrize_Core.energy(this.shape,this.alpha,this.target,this.current,this.buffer,lastScore);
+        }
+        return this.score;
+    }
+    ,mutate: function() {
+        var oldState = this.clone();
+        this.shape.mutate();
+        return oldState;
+    }
+    ,clone: function() {
+        return new geometrize_State(this.shape.clone(),this.alpha,this.target,this.current,this.buffer);
+    }
+};
+var geometrize_Util = function() { };
+geometrize_Util.getAverageImageColor = function(image,alpha) {
+    if(alpha == null) {
+        alpha = 255;
+    }
+    if(image == null) {
+        throw haxe_Exception.thrown("FAIL: image != null");
+    }
+    var totalRed = 0;
+    var totalGreen = 0;
+    var totalBlue = 0;
+    var _g = 0;
+    var _g1 = image.width;
+    while(_g < _g1) {
+        var x = _g++;
+        var _g2 = 0;
+        var _g3 = image.height;
+        while(_g2 < _g3) {
+            var y = _g2++;
+            var pixel = image.data[image.width * y + x];
+            totalRed += pixel >> 24 & 255;
+            totalGreen += pixel >> 16 & 255;
+            totalBlue += pixel >> 8 & 255;
+        }
+    }
+    var size = image.width * image.height;
+    var red = totalRed / size | 0;
+    var green = totalGreen / size | 0;
+    var blue = totalBlue / size | 0;
+    return ((red < 0 ? 0 : red > 255 ? 255 : red) << 24) + ((green < 0 ? 0 : green > 255 ? 255 : green) << 16) + ((blue < 0 ? 0 : blue > 255 ? 255 : blue) << 8) + (alpha < 0 ? 0 : alpha > 255 ? 255 : alpha);
+};
+var geometrize_bitmap_Bitmap = $hx_exports["geometrize"]["bitmap"]["Bitmap"] = function() {
+};
+geometrize_bitmap_Bitmap.create = function(w,h,color) {
+    var bitmap = new geometrize_bitmap_Bitmap();
+    bitmap.width = w;
+    bitmap.height = h;
+    var this1 = new Array(w * h);
+    bitmap.data = this1;
+    var i = 0;
+    while(i < bitmap.data.length) {
+        bitmap.data[i] = color;
+        ++i;
+    }
+    return bitmap;
+};
+geometrize_bitmap_Bitmap.createFromBytes = function(w,h,bytes) {
+    var bitmap = new geometrize_bitmap_Bitmap();
+    if(bytes == null) {
+        throw haxe_Exception.thrown("FAIL: bytes != null");
+    }
+    var actual = bytes.length;
+    var expected = w * h * 4;
+    if(actual != expected) {
+        throw haxe_Exception.thrown("FAIL: values are not equal (expected: " + expected + ", actual: " + actual + ")");
+    }
+    bitmap.width = w;
+    bitmap.height = h;
+    var this1 = new Array(bytes.length / 4 | 0);
+    bitmap.data = this1;
+    var i = 0;
+    var x = 0;
+    while(i < bytes.length) {
+        var red = bytes.b[i];
+        var green = bytes.b[i + 1];
+        var blue = bytes.b[i + 2];
+        var alpha = bytes.b[i + 3];
+        bitmap.data[x] = ((red < 0 ? 0 : red > 255 ? 255 : red) << 24) + ((green < 0 ? 0 : green > 255 ? 255 : green) << 16) + ((blue < 0 ? 0 : blue > 255 ? 255 : blue) << 8) + (alpha < 0 ? 0 : alpha > 255 ? 255 : alpha);
+        i += 4;
+        ++x;
+    }
+    return bitmap;
+};
+geometrize_bitmap_Bitmap.createFromByteArray = function(w,h,bytes) {
+    var data = new haxe_io_Bytes(new ArrayBuffer(bytes.length));
+    var i = 0;
+    while(i < bytes.length) {
+        data.b[i] = bytes[i];
+        ++i;
+    }
+    var bitmap = new geometrize_bitmap_Bitmap();
+    if(data == null) {
+        throw haxe_Exception.thrown("FAIL: bytes != null");
+    }
+    var actual = data.length;
+    var expected = w * h * 4;
+    if(actual != expected) {
+        throw haxe_Exception.thrown("FAIL: values are not equal (expected: " + expected + ", actual: " + actual + ")");
+    }
+    bitmap.width = w;
+    bitmap.height = h;
+    var this1 = new Array(data.length / 4 | 0);
+    bitmap.data = this1;
+    var i = 0;
+    var x = 0;
+    while(i < data.length) {
+        var red = data.b[i];
+        var green = data.b[i + 1];
+        var blue = data.b[i + 2];
+        var alpha = data.b[i + 3];
+        bitmap.data[x] = ((red < 0 ? 0 : red > 255 ? 255 : red) << 24) + ((green < 0 ? 0 : green > 255 ? 255 : green) << 16) + ((blue < 0 ? 0 : blue > 255 ? 255 : blue) << 8) + (alpha < 0 ? 0 : alpha > 255 ? 255 : alpha);
+        i += 4;
+        ++x;
+    }
+    return bitmap;
+};
+geometrize_bitmap_Bitmap.prototype = {
+    getPixel: function(x,y) {
+        return this.data[this.width * y + x];
+    }
+    ,setPixel: function(x,y,color) {
+        this.data[this.width * y + x] = color;
+    }
+    ,clone: function() {
+        var bitmap = new geometrize_bitmap_Bitmap();
+        bitmap.width = this.width;
+        bitmap.height = this.height;
+        var this1 = new Array(this.data.length);
+        bitmap.data = this1;
+        var _g = 0;
+        var _g1 = this.data.length;
+        while(_g < _g1) {
+            var i = _g++;
+            bitmap.data[i] = this.data[i];
+        }
+        return bitmap;
+    }
+    ,fill: function(color) {
+        var idx = 0;
+        while(idx < this.data.length) {
+            this.data[idx] = color >> 24 & 255;
+            this.data[idx + 1] = color >> 16 & 255;
+            this.data[idx + 2] = color >> 8 & 255;
+            this.data[idx + 3] = color & 255;
+            idx += 4;
+        }
+    }
+    ,getBytes: function() {
+        var bytes = new haxe_io_Bytes(new ArrayBuffer(this.data.length * 4));
+        var i = 0;
+        while(i < this.data.length) {
+            var idx = i * 4;
+            bytes.b[idx] = this.data[i] >> 24 & 255;
+            bytes.b[idx + 1] = this.data[i] >> 16 & 255;
+            bytes.b[idx + 2] = this.data[i] >> 8 & 255;
+            bytes.b[idx + 3] = this.data[i] & 255;
+            ++i;
+        }
+        return bytes;
+    }
+};
+var geometrize_exporter_ShapeJsonExporter = $hx_exports["geometrize"]["exporter"]["ShapeJsonExporter"] = function() { };
+geometrize_exporter_ShapeJsonExporter.export = function(shapes) {
+    return "[\n" + geometrize_exporter_ShapeJsonExporter.exportShapes(shapes) + "\n]";
+};
+geometrize_exporter_ShapeJsonExporter.exportShapes = function(shapes) {
+    var results = "";
+    var _g = 0;
+    var _g1 = shapes.length;
+    while(_g < _g1) {
+        var i = _g++;
+        results += geometrize_exporter_ShapeJsonExporter.exportShape(shapes[i]);
+        if(i != shapes.length - 1) {
+            results += ",\n";
+        }
+    }
+    return results;
+};
+geometrize_exporter_ShapeJsonExporter.exportShape = function(shape) {
+    var result = "    {\n";
+    var type = shape.shape.getType();
+    var data = shape.shape.getRawShapeData();
+    var color = shape.color;
+    var score = shape.score;
+    result += "        \"type\":" + type + ",\n";
+    result += "        \"data\":" + "[";
+    var _g = 0;
+    var _g1 = data.length;
+    while(_g < _g1) {
+        var item = _g++;
+        result += data[item];
+        if(item <= data.length - 2) {
+            result += ",";
+        }
+    }
+    result += "],\n";
+    result += "        \"color\":" + "[";
+    result += (color >> 24 & 255) + ",";
+    result += (color >> 16 & 255) + ",";
+    result += (color >> 8 & 255) + ",";
+    result += color & 255;
+    result += "],\n";
+    result += "        \"score\":" + score + "\n";
+    result += "    }";
+    return result;
+};
+var geometrize_exporter_SvgExporter = $hx_exports["geometrize"]["exporter"]["SvgExporter"] = function() { };
+geometrize_exporter_SvgExporter.export = function(shapes,width,height) {
+    var results = geometrize_exporter_SvgExporter.getSvgPrelude();
+    results += geometrize_exporter_SvgExporter.getSvgNodeOpen(width,height);
+    results += geometrize_exporter_SvgExporter.exportShapes(shapes);
+    results += geometrize_exporter_SvgExporter.getSvgNodeClose();
+    return results;
+};
+geometrize_exporter_SvgExporter.exportShapes = function(shapes) {
+    var results = "";
+    var _g = 0;
+    var _g1 = shapes.length;
+    while(_g < _g1) {
+        var i = _g++;
+        results += geometrize_exporter_SvgExporter.exportShape(shapes[i]);
+        if(i != shapes.length - 1) {
+            results += "\n";
+        }
+    }
+    return results;
+};
+geometrize_exporter_SvgExporter.exportShape = function(shape) {
+    return StringTools.replace(shape.shape.getSvgShapeData(),geometrize_exporter_SvgExporter.SVG_STYLE_HOOK,geometrize_exporter_SvgExporter.stylesForShape(shape));
+};
+geometrize_exporter_SvgExporter.getSvgPrelude = function() {
+    return "<?xml version=\"1.0\" standalone=\"no\"?>\n";
+};
+geometrize_exporter_SvgExporter.getSvgNodeOpen = function(width,height) {
+    return "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.2\" baseProfile=\"tiny\" width=\"" + width + "\" height=\"" + height + "\">\n";
+};
+geometrize_exporter_SvgExporter.getSvgNodeClose = function() {
+    return "</svg>";
+};
+geometrize_exporter_SvgExporter.stylesForShape = function(shape) {
+    switch(shape.shape.getType()) {
+    case 6:case 7:
+        return geometrize_exporter_SvgExporter.strokeForColor(shape.color) + " stroke-width=\"1\" fill=\"none\" " + geometrize_exporter_SvgExporter.strokeOpacityForAlpha(shape.color & 255);
+    default:
+        return geometrize_exporter_SvgExporter.fillForColor(shape.color) + " " + geometrize_exporter_SvgExporter.fillOpacityForAlpha(shape.color & 255);
+    }
+};
+geometrize_exporter_SvgExporter.rgbForColor = function(color) {
+    return "rgb(" + (color >> 24 & 255) + "," + (color >> 16 & 255) + "," + (color >> 8 & 255) + ")";
+};
+geometrize_exporter_SvgExporter.strokeForColor = function(color) {
+    return "stroke=\"" + geometrize_exporter_SvgExporter.rgbForColor(color) + "\"";
+};
+geometrize_exporter_SvgExporter.fillForColor = function(color) {
+    return "fill=\"" + geometrize_exporter_SvgExporter.rgbForColor(color) + "\"";
+};
+geometrize_exporter_SvgExporter.fillOpacityForAlpha = function(alpha) {
+    return "fill-opacity=\"" + alpha / 255.0 + "\"";
+};
+geometrize_exporter_SvgExporter.strokeOpacityForAlpha = function(alpha) {
+    return "stroke-opacity=\"" + alpha / 255.0 + "\"";
+};
+var geometrize_rasterizer_Rasterizer = function() { };
+geometrize_rasterizer_Rasterizer.drawLines = function(image,c,lines) {
+    if(image == null) {
+        throw haxe_Exception.thrown("FAIL: image != null");
+    }
+    if(lines == null) {
+        throw haxe_Exception.thrown("FAIL: lines != null");
+    }
+    var sr = c >> 24 & 255;
+    sr |= sr << 8;
+    sr *= c & 255;
+    sr = sr / 255 | 0;
+    var sg = c >> 16 & 255;
+    sg |= sg << 8;
+    sg *= c & 255;
+    sg = sg / 255 | 0;
+    var sb = c >> 8 & 255;
+    sb |= sb << 8;
+    sb *= c & 255;
+    sb = sb / 255 | 0;
+    var sa = c & 255;
+    sa |= sa << 8;
+    var _g = 0;
+    while(_g < lines.length) {
+        var line = lines[_g];
+        ++_g;
+        var y = line.y;
+        var ma = 65535;
+        var m = 65535;
+        var as = (m - sa * (ma / m)) * 257;
+        var a = as | 0;
+        var _g1 = line.x1;
+        var _g2 = line.x2 + 1;
+        while(_g1 < _g2) {
+            var x = _g1++;
+            var d = image.data[image.width * y + x];
+            var dr = d >> 24 & 255;
+            var dg = d >> 16 & 255;
+            var db = d >> 8 & 255;
+            var da = d & 255;
+            var r = (UInt.toFloat(dr * a + sr * ma) / UInt.toFloat(m) | 0) >> 8;
+            var g = (UInt.toFloat(dg * a + sg * ma) / UInt.toFloat(m) | 0) >> 8;
+            var b = (UInt.toFloat(db * a + sb * ma) / UInt.toFloat(m) | 0) >> 8;
+            var a1 = (UInt.toFloat(da * a + sa * ma) / UInt.toFloat(m) | 0) >> 8;
+            image.data[image.width * y + x] = ((r < 0 ? 0 : r > 255 ? 255 : r) << 24) + ((g < 0 ? 0 : g > 255 ? 255 : g) << 16) + ((b < 0 ? 0 : b > 255 ? 255 : b) << 8) + (a1 < 0 ? 0 : a1 > 255 ? 255 : a1);
+        }
+    }
+};
+geometrize_rasterizer_Rasterizer.copyLines = function(destination,source,lines) {
+    if(destination == null) {
+        throw haxe_Exception.thrown("FAIL: destination != null");
+    }
+    if(source == null) {
+        throw haxe_Exception.thrown("FAIL: source != null");
+    }
+    if(lines == null) {
+        throw haxe_Exception.thrown("FAIL: lines != null");
+    }
+    var _g = 0;
+    while(_g < lines.length) {
+        var line = lines[_g];
+        ++_g;
+        var y = line.y;
+        var _g1 = line.x1;
+        var _g2 = line.x2 + 1;
+        while(_g1 < _g2) {
+            var x = _g1++;
+            destination.data[destination.width * y + x] = source.data[source.width * y + x];
+        }
+    }
+};
+geometrize_rasterizer_Rasterizer.bresenham = function(x1,y1,x2,y2) {
+    var dx = x2 - x1;
+    var ix = (dx > 0 ? 1 : 0) - (dx < 0 ? 1 : 0);
+    dx = (dx < 0 ? -dx : dx) << 1;
+    var dy = y2 - y1;
+    var iy = (dy > 0 ? 1 : 0) - (dy < 0 ? 1 : 0);
+    dy = (dy < 0 ? -dy : dy) << 1;
+    var points = [];
+    points.push({ x : x1, y : y1});
+    if(dx >= dy) {
+        var error = dy - (dx >> 1);
+        while(x1 != x2) {
+            if(error >= 0 && (error != 0 || ix > 0)) {
+                error -= dx;
+                y1 += iy;
+            }
+            error += dy;
+            x1 += ix;
+            points.push({ x : x1, y : y1});
+        }
+    } else {
+        var error = dx - (dy >> 1);
+        while(y1 != y2) {
+            if(error >= 0 && (error != 0 || iy > 0)) {
+                error -= dy;
+                x1 += ix;
+            }
+            error += dx;
+            y1 += iy;
+            points.push({ x : x1, y : y1});
+        }
+    }
+    return points;
+};
+geometrize_rasterizer_Rasterizer.scanlinesForPolygon = function(points) {
+    var lines = [];
+    var edges = [];
+    var _g = 0;
+    var _g1 = points.length;
+    while(_g < _g1) {
+        var i = _g++;
+        var p1 = points[i];
+        var p2 = i == points.length - 1 ? points[0] : points[i + 1];
+        var p1p2 = geometrize_rasterizer_Rasterizer.bresenham(p1.x,p1.y,p2.x,p2.y);
+        edges = edges.concat(p1p2);
+    }
+    var yToXs = new haxe_ds_IntMap();
+    var _g = 0;
+    while(_g < edges.length) {
+        var point = edges[_g];
+        ++_g;
+        var s = yToXs.h[point.y];
+        if(s != null) {
+            geometrize_ArraySet.add(s,point.x);
+        } else {
+            s = geometrize_ArraySet.create();
+            geometrize_ArraySet.add(s,point.x);
+            yToXs.h[point.y] = s;
+        }
+    }
+    var key = yToXs.keys();
+    while(key.hasNext()) {
+        var key1 = key.next();
+        var a = geometrize_ArraySet.toArray(yToXs.h[key1]);
+        var minMaxElements;
+        if(a == null || a.length == 0) {
+            minMaxElements = { x : 0, y : 0};
+        } else {
+            var min = a[0];
+            var max = a[0];
+            var _g = 0;
+            while(_g < a.length) {
+                var value = a[_g];
+                ++_g;
+                if(min > value) {
+                    min = value;
+                }
+                if(max < value) {
+                    max = value;
+                }
+            }
+            minMaxElements = { x : min, y : max};
+        }
+        lines.push(new geometrize_rasterizer_Scanline(key1,minMaxElements.x,minMaxElements.y));
+    }
+    return lines;
+};
+var geometrize_rasterizer_Scanline = function(y,x1,x2) {
+    this.y = y;
+    this.x1 = x1;
+    this.x2 = x2;
+};
+geometrize_rasterizer_Scanline.trim = function(scanlines,w,h) {
+    if(scanlines == null) {
+        throw haxe_Exception.thrown("FAIL: scanlines != null");
+    }
+    var w1 = w;
+    var h1 = h;
+    var f = function(line) {
+        if(line.y < 0 || line.y >= h1 || line.x1 >= w1 || line.x2 < 0) {
+            return false;
+        } else {
+            var value = line.x1;
+            var max = w1 - 1;
+            if(0 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            line.x1 = value < 0 ? 0 : value > max ? max : value;
+            var value = line.x2;
+            var max = w1 - 1;
+            if(0 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            line.x2 = value < 0 ? 0 : value > max ? max : value;
+            return line.x1 <= line.x2;
+        }
+    };
+    var _g = [];
+    var _g1 = 0;
+    var _g2 = scanlines;
+    while(_g1 < _g2.length) {
+        var v = _g2[_g1];
+        ++_g1;
+        if(f(v)) {
+            _g.push(v);
+        }
+    }
+    return _g;
+};
+var geometrize_runner_ImageRunner = $hx_exports["geometrize"]["runner"]["ImageRunner"] = function(inputImage,backgroundColor) {
+    this.model = null;
+    this.model = new geometrize_Model(inputImage,backgroundColor);
+};
+geometrize_runner_ImageRunner.prototype = {
+    step: function(options) {
+        var finalOptions_shapeTypes = options.shapeTypes != null && options.shapeTypes.length != 0 ? options.shapeTypes : geometrize_runner_Default.options.shapeTypes;
+        var finalOptions_alpha = options.alpha != null ? options.alpha : geometrize_runner_Default.options.alpha;
+        var finalOptions_candidateShapesPerStep = options.candidateShapesPerStep != null ? options.candidateShapesPerStep : geometrize_runner_Default.options.candidateShapesPerStep;
+        var finalOptions_shapeMutationsPerStep = options.shapeMutationsPerStep != null ? options.shapeMutationsPerStep : geometrize_runner_Default.options.shapeMutationsPerStep;
+        return this.model.step(finalOptions_shapeTypes,finalOptions_alpha,finalOptions_candidateShapesPerStep,finalOptions_shapeMutationsPerStep);
+    }
+    ,getImageData: function() {
+        if(this.model == null) {
+            throw haxe_Exception.thrown("FAIL: model != null");
+        }
+        return this.model.current;
+    }
+};
+var geometrize_runner_Default = function() { };
+var geometrize_shape_Ellipse = function(xBound,yBound) {
+    this.x = Std.random(xBound);
+    this.y = Std.random(yBound);
+    this.rx = Std.random(32) + 1;
+    this.ry = Std.random(32) + 1;
+    this.xBound = xBound;
+    this.yBound = yBound;
+};
+geometrize_shape_Ellipse.prototype = {
+    rasterize: function() {
+        var lines = [];
+        var aspect = this.rx / this.ry;
+        var w = this.xBound;
+        var h = this.yBound;
+        var _g = 0;
+        var _g1 = this.ry;
+        while(_g < _g1) {
+            var dy = _g++;
+            var y1 = this.y - dy;
+            var y2 = this.y + dy;
+            if((y1 < 0 || y1 >= h) && (y2 < 0 || y2 >= h)) {
+                continue;
+            }
+            var s = Math.sqrt(this.ry * this.ry - dy * dy) * aspect | 0;
+            var x1 = this.x - s;
+            var x2 = this.x + s;
+            if(x1 < 0) {
+                x1 = 0;
+            }
+            if(x2 >= w) {
+                x2 = w - 1;
+            }
+            if(y1 >= 0 && y1 < h) {
+                lines.push(new geometrize_rasterizer_Scanline(y1,x1,x2));
+            }
+            if(y2 >= 0 && y2 < h && dy > 0) {
+                lines.push(new geometrize_rasterizer_Scanline(y2,x1,x2));
+            }
+        }
+        return lines;
+    }
+    ,mutate: function() {
+        var r = Std.random(3);
+        switch(r) {
+        case 0:
+            var value = this.x + (-16 + Math.floor(33 * Math.random()));
+            var max = this.xBound - 1;
+            if(0 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            this.x = value < 0 ? 0 : value > max ? max : value;
+            var value = this.y + (-16 + Math.floor(33 * Math.random()));
+            var max = this.yBound - 1;
+            if(0 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            this.y = value < 0 ? 0 : value > max ? max : value;
+            break;
+        case 1:
+            var value = this.rx + (-16 + Math.floor(33 * Math.random()));
+            var max = this.xBound - 1;
+            if(1 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            this.rx = value < 1 ? 1 : value > max ? max : value;
+            break;
+        case 2:
+            var value = this.ry + (-16 + Math.floor(33 * Math.random()));
+            var max = this.xBound - 1;
+            if(1 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            this.ry = value < 1 ? 1 : value > max ? max : value;
+            break;
+        }
+    }
+    ,clone: function() {
+        var ellipse = new geometrize_shape_Ellipse(this.xBound,this.yBound);
+        ellipse.x = this.x;
+        ellipse.y = this.y;
+        ellipse.rx = this.rx;
+        ellipse.ry = this.ry;
+        return ellipse;
+    }
+    ,getType: function() {
+        return 3;
+    }
+    ,getRawShapeData: function() {
+        return [this.x,this.y,this.rx,this.ry];
+    }
+    ,getSvgShapeData: function() {
+        return "<ellipse cx=\"" + this.x + "\" cy=\"" + this.y + "\" rx=\"" + this.rx + "\" ry=\"" + this.ry + "\" " + geometrize_exporter_SvgExporter.SVG_STYLE_HOOK + " />";
+    }
+};
+var geometrize_shape_Circle = function(xBound,yBound) {
+    geometrize_shape_Ellipse.call(this,xBound,yBound);
+    this.rx = Std.random(32) + 1;
+    this.ry = this.rx;
+};
+geometrize_shape_Circle.__super__ = geometrize_shape_Ellipse;
+geometrize_shape_Circle.prototype = $extend(geometrize_shape_Ellipse.prototype,{
+    mutate: function() {
+        var r = Std.random(2);
+        switch(r) {
+        case 0:
+            var value = this.x + (-16 + Math.floor(33 * Math.random()));
+            var max = this.xBound - 1;
+            if(0 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            this.x = value < 0 ? 0 : value > max ? max : value;
+            var value = this.y + (-16 + Math.floor(33 * Math.random()));
+            var max = this.yBound - 1;
+            if(0 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            this.y = value < 0 ? 0 : value > max ? max : value;
+            break;
+        case 1:
+            var value = this.rx + (-16 + Math.floor(33 * Math.random()));
+            var max = this.xBound - 1;
+            if(1 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            var r = value < 1 ? 1 : value > max ? max : value;
+            this.rx = r;
+            this.ry = r;
+            break;
+        }
+    }
+    ,clone: function() {
+        var circle = new geometrize_shape_Circle(this.xBound,this.yBound);
+        circle.x = this.x;
+        circle.y = this.y;
+        circle.rx = this.rx;
+        circle.ry = this.ry;
+        return circle;
+    }
+    ,getType: function() {
+        return 5;
+    }
+    ,getRawShapeData: function() {
+        return [this.x,this.y,this.rx];
+    }
+    ,getSvgShapeData: function() {
+        return "<circle cx=\"" + this.x + "\" cy=\"" + this.y + "\" r=\"" + this.rx + "\" " + geometrize_exporter_SvgExporter.SVG_STYLE_HOOK + " />";
+    }
+});
+var geometrize_shape_Line = function(xBound,yBound) {
+    this.x1 = Std.random(xBound);
+    this.y1 = Std.random(yBound);
+    var value = this.x1 + Std.random(32) + 1;
+    if(0 > xBound) {
+        throw haxe_Exception.thrown("FAIL: min <= max");
+    }
+    this.x2 = value < 0 ? 0 : value > xBound ? xBound : value;
+    var value = this.y1 + Std.random(32) + 1;
+    if(0 > yBound) {
+        throw haxe_Exception.thrown("FAIL: min <= max");
+    }
+    this.y2 = value < 0 ? 0 : value > yBound ? yBound : value;
+    this.xBound = xBound;
+    this.yBound = yBound;
+};
+geometrize_shape_Line.prototype = {
+    rasterize: function() {
+        var lines = [];
+        var points = geometrize_rasterizer_Rasterizer.bresenham(this.x1,this.y1,this.x2,this.y2);
+        var _g = 0;
+        while(_g < points.length) {
+            var point = points[_g];
+            ++_g;
+            lines.push(new geometrize_rasterizer_Scanline(point.y,point.x,point.x));
+        }
+        return geometrize_rasterizer_Scanline.trim(lines,this.xBound,this.yBound);
+    }
+    ,mutate: function() {
+        var r = Std.random(4);
+        switch(r) {
+        case 0:
+            var value = this.x1 + (-16 + Math.floor(33 * Math.random()));
+            var max = this.xBound - 1;
+            if(0 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            this.x1 = value < 0 ? 0 : value > max ? max : value;
+            var value = this.y1 + (-16 + Math.floor(33 * Math.random()));
+            var max = this.yBound - 1;
+            if(0 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            this.y1 = value < 0 ? 0 : value > max ? max : value;
+            break;
+        case 1:
+            var value = this.x2 + (-16 + Math.floor(33 * Math.random()));
+            var max = this.xBound - 1;
+            if(0 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            this.x2 = value < 0 ? 0 : value > max ? max : value;
+            var value = this.y2 + (-16 + Math.floor(33 * Math.random()));
+            var max = this.yBound - 1;
+            if(0 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            this.y2 = value < 0 ? 0 : value > max ? max : value;
+            break;
+        }
+    }
+    ,clone: function() {
+        var line = new geometrize_shape_Line(this.xBound,this.yBound);
+        line.x1 = this.x1;
+        line.y1 = this.y1;
+        line.x2 = this.x2;
+        line.y2 = this.y2;
+        return line;
+    }
+    ,getType: function() {
+        return 6;
+    }
+    ,getRawShapeData: function() {
+        return [this.x1,this.y1,this.x2,this.y2];
+    }
+    ,getSvgShapeData: function() {
+        return "<line x1=\"" + this.x1 + "\" y1=\"" + this.y1 + "\" x2=\"" + this.x2 + "\" y2=\"" + this.y2 + "\" " + geometrize_exporter_SvgExporter.SVG_STYLE_HOOK + " />";
+    }
+};
+var geometrize_shape_QuadraticBezier = function(xBound,yBound) {
+    var upper = xBound - 1;
+    if(0 > upper) {
+        throw haxe_Exception.thrown("FAIL: lower <= upper");
+    }
+    this.x1 = Math.floor((upper + 1) * Math.random());
+    var upper = yBound - 1;
+    if(0 > upper) {
+        throw haxe_Exception.thrown("FAIL: lower <= upper");
+    }
+    this.y1 = Math.floor((upper + 1) * Math.random());
+    var upper = xBound - 1;
+    if(0 > upper) {
+        throw haxe_Exception.thrown("FAIL: lower <= upper");
+    }
+    this.cx = Math.floor((upper + 1) * Math.random());
+    var upper = yBound - 1;
+    if(0 > upper) {
+        throw haxe_Exception.thrown("FAIL: lower <= upper");
+    }
+    this.cy = Math.floor((upper + 1) * Math.random());
+    var upper = xBound - 1;
+    if(0 > upper) {
+        throw haxe_Exception.thrown("FAIL: lower <= upper");
+    }
+    this.x2 = Math.floor((upper + 1) * Math.random());
+    var upper = yBound - 1;
+    if(0 > upper) {
+        throw haxe_Exception.thrown("FAIL: lower <= upper");
+    }
+    this.y2 = Math.floor((upper + 1) * Math.random());
+    this.xBound = xBound;
+    this.yBound = yBound;
+};
+geometrize_shape_QuadraticBezier.prototype = {
+    rasterize: function() {
+        var lines = [];
+        var points = [];
+        var pointCount = 20;
+        var _g = 0;
+        var _g1 = pointCount - 1;
+        while(_g < _g1) {
+            var i = _g++;
+            var t = i / pointCount;
+            var tp = 1 - t;
+            var x = tp * (tp * this.x1 + t * this.cx) + t * (tp * this.cx + t * this.x2) | 0;
+            var y = tp * (tp * this.y1 + t * this.cy) + t * (tp * this.cy + t * this.y2) | 0;
+            points.push({ x : x, y : y});
+        }
+        var _g = 0;
+        var _g1 = points.length - 1;
+        while(_g < _g1) {
+            var i = _g++;
+            var p0 = points[i];
+            var p1 = points[i + 1];
+            var pts = geometrize_rasterizer_Rasterizer.bresenham(p0.x,p0.y,p1.x,p1.y);
+            var _g2 = 0;
+            while(_g2 < pts.length) {
+                var point = pts[_g2];
+                ++_g2;
+                if(lines.length > 0) {
+                    var lastLine = lines[lines.length - 1];
+                    if(lastLine.y == point.y && lastLine.x1 == point.x && lastLine.x2 == point.x) {
+                        continue;
+                    }
+                }
+                lines.push(new geometrize_rasterizer_Scanline(point.y,point.x,point.x));
+            }
+        }
+        return geometrize_rasterizer_Scanline.trim(lines,this.xBound,this.yBound);
+    }
+    ,mutate: function() {
+        var r = Math.floor(3 * Math.random());
+        switch(r) {
+        case 0:
+            var value = this.cx + (-8 + Math.floor(17 * Math.random()));
+            var max = this.xBound - 1;
+            if(0 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            this.cx = value < 0 ? 0 : value > max ? max : value;
+            var value = this.cy + (-8 + Math.floor(17 * Math.random()));
+            var max = this.yBound - 1;
+            if(0 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            this.cy = value < 0 ? 0 : value > max ? max : value;
+            break;
+        case 1:
+            var value = this.x1 + (-8 + Math.floor(17 * Math.random()));
+            var max = this.xBound - 1;
+            if(1 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            this.x1 = value < 1 ? 1 : value > max ? max : value;
+            var value = this.y1 + (-8 + Math.floor(17 * Math.random()));
+            var max = this.yBound - 1;
+            if(1 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            this.y1 = value < 1 ? 1 : value > max ? max : value;
+            break;
+        case 2:
+            var value = this.x2 + (-8 + Math.floor(17 * Math.random()));
+            var max = this.xBound - 1;
+            if(1 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            this.x2 = value < 1 ? 1 : value > max ? max : value;
+            var value = this.y2 + (-8 + Math.floor(17 * Math.random()));
+            var max = this.yBound - 1;
+            if(1 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            this.y2 = value < 1 ? 1 : value > max ? max : value;
+            break;
+        }
+    }
+    ,clone: function() {
+        var bezier = new geometrize_shape_QuadraticBezier(this.xBound,this.yBound);
+        bezier.cx = this.cx;
+        bezier.cy = this.cy;
+        bezier.x1 = this.x1;
+        bezier.y1 = this.y1;
+        bezier.x2 = this.x2;
+        bezier.y2 = this.y2;
+        return bezier;
+    }
+    ,getType: function() {
+        return 7;
+    }
+    ,getRawShapeData: function() {
+        return [this.x1,this.y1,this.cx,this.cy,this.x2,this.y2];
+    }
+    ,getSvgShapeData: function() {
+        return "<path d=\"M" + this.x1 + " " + this.y1 + " Q " + this.cx + " " + this.cy + " " + this.x2 + " " + this.y2 + "\" " + geometrize_exporter_SvgExporter.SVG_STYLE_HOOK + " />";
+    }
+};
+var geometrize_shape_Rectangle = function(xBound,yBound) {
+    this.x1 = Std.random(xBound);
+    this.y1 = Std.random(yBound);
+    var value = this.x1 + Std.random(32) + 1;
+    var max = xBound - 1;
+    if(0 > max) {
+        throw haxe_Exception.thrown("FAIL: min <= max");
+    }
+    this.x2 = value < 0 ? 0 : value > max ? max : value;
+    var value = this.y1 + Std.random(32) + 1;
+    var max = yBound - 1;
+    if(0 > max) {
+        throw haxe_Exception.thrown("FAIL: min <= max");
+    }
+    this.y2 = value < 0 ? 0 : value > max ? max : value;
+    this.xBound = xBound;
+    this.yBound = yBound;
+};
+geometrize_shape_Rectangle.prototype = {
+    rasterize: function() {
+        var lines = [];
+        var first = this.y1;
+        var second = this.y2;
+        var yMin = first < second ? first : second;
+        var first = this.y1;
+        var second = this.y2;
+        var yMax = first > second ? first : second;
+        if(yMin == yMax) {
+            var first = this.x1;
+            var second = this.x2;
+            var first1 = this.x1;
+            var second1 = this.x2;
+            lines.push(new geometrize_rasterizer_Scanline(yMin,first < second ? first : second,first1 > second1 ? first1 : second1));
+        } else {
+            var _g = yMin;
+            var _g1 = yMax;
+            while(_g < _g1) {
+                var y = _g++;
+                var first = this.x1;
+                var second = this.x2;
+                var first1 = this.x1;
+                var second1 = this.x2;
+                lines.push(new geometrize_rasterizer_Scanline(y,first < second ? first : second,first1 > second1 ? first1 : second1));
+            }
+        }
+        return lines;
+    }
+    ,mutate: function() {
+        var r = Std.random(2);
+        switch(r) {
+        case 0:
+            var value = this.x1 + (-16 + Math.floor(33 * Math.random()));
+            var max = this.xBound - 1;
+            if(0 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            this.x1 = value < 0 ? 0 : value > max ? max : value;
+            var value = this.y1 + (-16 + Math.floor(33 * Math.random()));
+            var max = this.yBound - 1;
+            if(0 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            this.y1 = value < 0 ? 0 : value > max ? max : value;
+            break;
+        case 1:
+            var value = this.x2 + (-16 + Math.floor(33 * Math.random()));
+            var max = this.xBound - 1;
+            if(0 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            this.x2 = value < 0 ? 0 : value > max ? max : value;
+            var value = this.y2 + (-16 + Math.floor(33 * Math.random()));
+            var max = this.yBound - 1;
+            if(0 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            this.y2 = value < 0 ? 0 : value > max ? max : value;
+            break;
+        }
+    }
+    ,clone: function() {
+        var rectangle = new geometrize_shape_Rectangle(this.xBound,this.yBound);
+        rectangle.x1 = this.x1;
+        rectangle.y1 = this.y1;
+        rectangle.x2 = this.x2;
+        rectangle.y2 = this.y2;
+        return rectangle;
+    }
+    ,getType: function() {
+        return 0;
+    }
+    ,getRawShapeData: function() {
+        var first = this.x1;
+        var second = this.x2;
+        var first1 = this.y1;
+        var second1 = this.y2;
+        var first2 = this.x1;
+        var second2 = this.x2;
+        var first3 = this.y1;
+        var second3 = this.y2;
+        return [first < second ? first : second,first1 < second1 ? first1 : second1,first2 > second2 ? first2 : second2,first3 > second3 ? first3 : second3];
+    }
+    ,getSvgShapeData: function() {
+        var first = this.x1;
+        var second = this.x2;
+        var first1 = this.y1;
+        var second1 = this.y2;
+        var first2 = this.x1;
+        var second2 = this.x2;
+        var first3 = this.x1;
+        var second3 = this.x2;
+        var first4 = this.y1;
+        var second4 = this.y2;
+        var first5 = this.y1;
+        var second5 = this.y2;
+        return "<rect x=\"" + (first < second ? first : second) + "\" y=\"" + (first1 < second1 ? first1 : second1) + "\" width=\"" + ((first2 > second2 ? first2 : second2) - (first3 < second3 ? first3 : second3)) + "\" height=\"" + ((first4 > second4 ? first4 : second4) - (first5 < second5 ? first5 : second5)) + "\" " + geometrize_exporter_SvgExporter.SVG_STYLE_HOOK + " />";
+    }
+};
+var geometrize_shape_RotatedEllipse = function(xBound,yBound) {
+    this.x = Std.random(xBound);
+    this.y = Std.random(yBound);
+    this.rx = Std.random(32) + 1;
+    this.ry = Std.random(32) + 1;
+    this.angle = Std.random(360);
+    this.xBound = xBound;
+    this.yBound = yBound;
+};
+geometrize_shape_RotatedEllipse.prototype = {
+    rasterize: function() {
+        var pointCount = 20;
+        var points = [];
+        var rads = this.angle * (Math.PI / 180.0);
+        var c = Math.cos(rads);
+        var s = Math.sin(rads);
+        var _g = 0;
+        var _g1 = pointCount;
+        while(_g < _g1) {
+            var i = _g++;
+            var rot = 360.0 / pointCount * i * (Math.PI / 180.0);
+            var crx = this.rx * Math.cos(rot);
+            var cry = this.ry * Math.sin(rot);
+            var tx = crx * c - cry * s + this.x | 0;
+            var ty = crx * s + cry * c + this.y | 0;
+            points.push({ x : tx, y : ty});
+        }
+        return geometrize_rasterizer_Scanline.trim(geometrize_rasterizer_Rasterizer.scanlinesForPolygon(points),this.xBound,this.yBound);
+    }
+    ,mutate: function() {
+        var r = Std.random(4);
+        switch(r) {
+        case 0:
+            var value = this.x + (-16 + Math.floor(33 * Math.random()));
+            var max = this.xBound - 1;
+            if(0 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            this.x = value < 0 ? 0 : value > max ? max : value;
+            var value = this.y + (-16 + Math.floor(33 * Math.random()));
+            var max = this.yBound - 1;
+            if(0 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            this.y = value < 0 ? 0 : value > max ? max : value;
+            break;
+        case 1:
+            var value = this.rx + (-16 + Math.floor(33 * Math.random()));
+            var max = this.xBound - 1;
+            if(1 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            this.rx = value < 1 ? 1 : value > max ? max : value;
+            break;
+        case 2:
+            var value = this.ry + (-16 + Math.floor(33 * Math.random()));
+            var max = this.yBound - 1;
+            if(1 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            this.ry = value < 1 ? 1 : value > max ? max : value;
+            break;
+        case 3:
+            var value = this.angle + (-4 + Math.floor(9 * Math.random()));
+            this.angle = value < 0 ? 0 : value > 360 ? 360 : value;
+            break;
+        }
+    }
+    ,clone: function() {
+        var ellipse = new geometrize_shape_RotatedEllipse(this.xBound,this.yBound);
+        ellipse.x = this.x;
+        ellipse.y = this.y;
+        ellipse.rx = this.rx;
+        ellipse.ry = this.ry;
+        ellipse.angle = this.angle;
+        return ellipse;
+    }
+    ,getType: function() {
+        return 4;
+    }
+    ,getRawShapeData: function() {
+        return [this.x,this.y,this.rx,this.ry,this.angle];
+    }
+    ,getSvgShapeData: function() {
+        var s = "<g transform=\"translate(" + this.x + " " + this.y + ") rotate(" + this.angle + ") scale(" + this.rx + " " + this.ry + ")\">";
+        s += "<ellipse cx=\"" + 0 + "\" cy=\"" + 0 + "\" rx=\"" + 1 + "\" ry=\"" + 1 + "\" " + geometrize_exporter_SvgExporter.SVG_STYLE_HOOK + " />";
+        s += "</g>";
+        return s;
+    }
+};
+var geometrize_shape_RotatedRectangle = function(xBound,yBound) {
+    this.x1 = Std.random(xBound);
+    this.y1 = Std.random(yBound);
+    var value = this.x1 + Std.random(32) + 1;
+    if(0 > xBound) {
+        throw haxe_Exception.thrown("FAIL: min <= max");
+    }
+    this.x2 = value < 0 ? 0 : value > xBound ? xBound : value;
+    var value = this.y1 + Std.random(32) + 1;
+    if(0 > yBound) {
+        throw haxe_Exception.thrown("FAIL: min <= max");
+    }
+    this.y2 = value < 0 ? 0 : value > yBound ? yBound : value;
+    this.angle = Math.floor(361 * Math.random());
+    this.xBound = xBound;
+    this.yBound = yBound;
+};
+geometrize_shape_RotatedRectangle.prototype = {
+    rasterize: function() {
+        var first = this.x1;
+        var second = this.x2;
+        var xm1 = first < second ? first : second;
+        var first = this.x1;
+        var second = this.x2;
+        var xm2 = first > second ? first : second;
+        var first = this.y1;
+        var second = this.y2;
+        var ym1 = first < second ? first : second;
+        var first = this.y1;
+        var second = this.y2;
+        var ym2 = first > second ? first : second;
+        var cx = (xm1 + xm2) / 2 | 0;
+        var cy = (ym1 + ym2) / 2 | 0;
+        var ox1 = xm1 - cx;
+        var ox2 = xm2 - cx;
+        var oy1 = ym1 - cy;
+        var oy2 = ym2 - cy;
+        var rads = this.angle * Math.PI / 180.0;
+        var c = Math.cos(rads);
+        var s = Math.sin(rads);
+        var ulx = ox1 * c - oy1 * s + cx | 0;
+        var uly = ox1 * s + oy1 * c + cy | 0;
+        var blx = ox1 * c - oy2 * s + cx | 0;
+        var bly = ox1 * s + oy2 * c + cy | 0;
+        var urx = ox2 * c - oy1 * s + cx | 0;
+        var ury = ox2 * s + oy1 * c + cy | 0;
+        var brx = ox2 * c - oy2 * s + cx | 0;
+        var bry = ox2 * s + oy2 * c + cy | 0;
+        return geometrize_rasterizer_Scanline.trim(geometrize_rasterizer_Rasterizer.scanlinesForPolygon([{ x : ulx, y : uly},{ x : urx, y : ury},{ x : brx, y : bry},{ x : blx, y : bly}]),this.xBound,this.yBound);
+    }
+    ,mutate: function() {
+        var r = Std.random(3);
+        switch(r) {
+        case 0:
+            var value = this.x1 + (-16 + Math.floor(33 * Math.random()));
+            var max = this.xBound - 1;
+            if(0 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            this.x1 = value < 0 ? 0 : value > max ? max : value;
+            var value = this.y1 + (-16 + Math.floor(33 * Math.random()));
+            var max = this.yBound - 1;
+            if(0 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            this.y1 = value < 0 ? 0 : value > max ? max : value;
+            break;
+        case 1:
+            var value = this.x2 + (-16 + Math.floor(33 * Math.random()));
+            var max = this.xBound - 1;
+            if(0 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            this.x2 = value < 0 ? 0 : value > max ? max : value;
+            var value = this.y2 + (-16 + Math.floor(33 * Math.random()));
+            var max = this.yBound - 1;
+            if(0 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            this.y2 = value < 0 ? 0 : value > max ? max : value;
+            break;
+        case 2:
+            var value = this.angle + (-4 + Math.floor(9 * Math.random()));
+            this.angle = value < 0 ? 0 : value > 360 ? 360 : value;
+            break;
+        }
+    }
+    ,clone: function() {
+        var rectangle = new geometrize_shape_RotatedRectangle(this.xBound,this.yBound);
+        rectangle.x1 = this.x1;
+        rectangle.y1 = this.y1;
+        rectangle.x2 = this.x2;
+        rectangle.y2 = this.y2;
+        rectangle.angle = this.angle;
+        return rectangle;
+    }
+    ,getType: function() {
+        return 1;
+    }
+    ,getRawShapeData: function() {
+        var first = this.x1;
+        var second = this.x2;
+        var first1 = this.y1;
+        var second1 = this.y2;
+        var first2 = this.x1;
+        var second2 = this.x2;
+        var first3 = this.y1;
+        var second3 = this.y2;
+        return [first < second ? first : second,first1 < second1 ? first1 : second1,first2 > second2 ? first2 : second2,first3 > second3 ? first3 : second3,this.angle];
+    }
+    ,getSvgShapeData: function() {
+        var first = this.x1;
+        var second = this.x2;
+        var xm1 = first < second ? first : second;
+        var first = this.x1;
+        var second = this.x2;
+        var xm2 = first > second ? first : second;
+        var first = this.y1;
+        var second = this.y2;
+        var ym1 = first < second ? first : second;
+        var first = this.y1;
+        var second = this.y2;
+        var ym2 = first > second ? first : second;
+        var cx = (xm1 + xm2) / 2 | 0;
+        var cy = (ym1 + ym2) / 2 | 0;
+        var ox1 = xm1 - cx;
+        var ox2 = xm2 - cx;
+        var oy1 = ym1 - cy;
+        var oy2 = ym2 - cy;
+        var rads = this.angle * Math.PI / 180.0;
+        var c = Math.cos(rads);
+        var s = Math.sin(rads);
+        var ulx = ox1 * c - oy1 * s + cx | 0;
+        var uly = ox1 * s + oy1 * c + cy | 0;
+        var blx = ox1 * c - oy2 * s + cx | 0;
+        var bly = ox1 * s + oy2 * c + cy | 0;
+        var urx = ox2 * c - oy1 * s + cx | 0;
+        var ury = ox2 * s + oy1 * c + cy | 0;
+        var brx = ox2 * c - oy2 * s + cx | 0;
+        var bry = ox2 * s + oy2 * c + cy | 0;
+        var points = [{ x : ulx, y : uly},{ x : urx, y : ury},{ x : brx, y : bry},{ x : blx, y : bly}];
+        var s = "<polygon points=\"";
+        var _g = 0;
+        var _g1 = points.length;
+        while(_g < _g1) {
+            var i = _g++;
+            s += points[i].x + " " + points[i].y;
+            if(i != points.length - 1) {
+                s += " ";
+            }
+        }
+        s += "\" " + geometrize_exporter_SvgExporter.SVG_STYLE_HOOK + "/>";
+        return s;
+    }
+};
+var geometrize_shape_ShapeFactory = function() { };
+geometrize_shape_ShapeFactory.create = function(type,xBound,yBound) {
+    switch(type) {
+    case 0:
+        return new geometrize_shape_Rectangle(xBound,yBound);
+    case 1:
+        return new geometrize_shape_RotatedRectangle(xBound,yBound);
+    case 2:
+        return new geometrize_shape_Triangle(xBound,yBound);
+    case 3:
+        return new geometrize_shape_Ellipse(xBound,yBound);
+    case 4:
+        return new geometrize_shape_RotatedEllipse(xBound,yBound);
+    case 5:
+        return new geometrize_shape_Circle(xBound,yBound);
+    case 6:
+        return new geometrize_shape_Line(xBound,yBound);
+    case 7:
+        return new geometrize_shape_QuadraticBezier(xBound,yBound);
+    }
+};
+geometrize_shape_ShapeFactory.randomShapeOf = function(types,xBound,yBound) {
+    if(!(types != null && types.length > 0)) {
+        throw haxe_Exception.thrown("FAIL: a != null && a.length > 0");
+    }
+    var upper = types.length - 1;
+    if(0 > upper) {
+        throw haxe_Exception.thrown("FAIL: lower <= upper");
+    }
+    return geometrize_shape_ShapeFactory.create(types[Math.floor((upper + 1) * Math.random())],xBound,yBound);
+};
+var geometrize_shape_ShapeTypes = $hx_exports["geometrize"]["shape"]["ShapeTypes"] = function() { };
+var geometrize_shape_Triangle = function(xBound,yBound) {
+    this.x1 = Std.random(xBound);
+    this.y1 = Std.random(yBound);
+    this.x2 = this.x1 + (-16 + Math.floor(33 * Math.random()));
+    this.y2 = this.y1 + (-16 + Math.floor(33 * Math.random()));
+    this.x3 = this.x1 + (-16 + Math.floor(33 * Math.random()));
+    this.y3 = this.y1 + (-16 + Math.floor(33 * Math.random()));
+    this.xBound = xBound;
+    this.yBound = yBound;
+};
+geometrize_shape_Triangle.prototype = {
+    rasterize: function() {
+        return geometrize_rasterizer_Scanline.trim(geometrize_rasterizer_Rasterizer.scanlinesForPolygon([{ x : this.x1, y : this.y1},{ x : this.x2, y : this.y2},{ x : this.x3, y : this.y3}]),this.xBound,this.yBound);
+    }
+    ,mutate: function() {
+        var r = Std.random(3);
+        switch(r) {
+        case 0:
+            var value = this.x1 + (-16 + Math.floor(33 * Math.random()));
+            var max = this.xBound - 1;
+            if(0 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            this.x1 = value < 0 ? 0 : value > max ? max : value;
+            var value = this.y1 + (-16 + Math.floor(33 * Math.random()));
+            var max = this.yBound - 1;
+            if(0 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            this.y1 = value < 0 ? 0 : value > max ? max : value;
+            break;
+        case 1:
+            var value = this.x2 + (-16 + Math.floor(33 * Math.random()));
+            var max = this.xBound - 1;
+            if(0 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            this.x2 = value < 0 ? 0 : value > max ? max : value;
+            var value = this.y2 + (-16 + Math.floor(33 * Math.random()));
+            var max = this.yBound - 1;
+            if(0 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            this.y2 = value < 0 ? 0 : value > max ? max : value;
+            break;
+        case 2:
+            var value = this.x3 + (-16 + Math.floor(33 * Math.random()));
+            var max = this.xBound - 1;
+            if(0 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            this.x3 = value < 0 ? 0 : value > max ? max : value;
+            var value = this.y3 + (-16 + Math.floor(33 * Math.random()));
+            var max = this.yBound - 1;
+            if(0 > max) {
+                throw haxe_Exception.thrown("FAIL: min <= max");
+            }
+            this.y3 = value < 0 ? 0 : value > max ? max : value;
+            break;
+        }
+    }
+    ,clone: function() {
+        var triangle = new geometrize_shape_Triangle(this.xBound,this.yBound);
+        triangle.x1 = this.x1;
+        triangle.y1 = this.y1;
+        triangle.x2 = this.x2;
+        triangle.y2 = this.y2;
+        triangle.x3 = this.x3;
+        triangle.y3 = this.y3;
+        return triangle;
+    }
+    ,getType: function() {
+        return 2;
+    }
+    ,getRawShapeData: function() {
+        return [this.x1,this.y1,this.x2,this.y2,this.x3,this.y3];
+    }
+    ,getSvgShapeData: function() {
+        return "<polygon points=\"" + this.x1 + "," + this.y1 + " " + this.x2 + "," + this.y2 + " " + this.x3 + "," + this.y3 + "\" " + geometrize_exporter_SvgExporter.SVG_STYLE_HOOK + "/>";
+    }
+};
+var haxe_Exception = function(message,previous,native) {
+    Error.call(this,message);
+    this.message = message;
+    this.__previousException = previous;
+    this.__nativeException = native != null ? native : this;
+};
+haxe_Exception.thrown = function(value) {
+    if(((value) instanceof haxe_Exception)) {
+        return value.get_native();
+    } else if(((value) instanceof Error)) {
+        return value;
+    } else {
+        var e = new haxe_ValueException(value);
+        return e;
+    }
+};
+haxe_Exception.__super__ = Error;
+haxe_Exception.prototype = $extend(Error.prototype,{
+    get_native: function() {
+        return this.__nativeException;
+    }
+});
+var haxe_ValueException = function(value,previous,native) {
+    haxe_Exception.call(this,String(value),previous,native);
+    this.value = value;
+};
+haxe_ValueException.__super__ = haxe_Exception;
+haxe_ValueException.prototype = $extend(haxe_Exception.prototype,{
+});
+var haxe_ds_IntMap = function() {
+    this.h = { };
+};
+haxe_ds_IntMap.prototype = {
+    keys: function() {
+        var a = [];
+        for( var key in this.h ) if(this.h.hasOwnProperty(key)) a.push(+key);
+        return new haxe_iterators_ArrayIterator(a);
+    }
+};
+var haxe_io_Bytes = function(data) {
+    this.length = data.byteLength;
+    this.b = new Uint8Array(data);
+    this.b.bufferValue = data;
+    data.hxBytes = this;
+    data.bytes = this.b;
+};
+var haxe_iterators_ArrayIterator = function(array) {
+    this.current = 0;
+    this.array = array;
+};
+haxe_iterators_ArrayIterator.prototype = {
+    hasNext: function() {
+        return this.current < this.array.length;
+    }
+    ,next: function() {
+        return this.array[this.current++];
+    }
+};
+onmessage = GeometrizeWorker.prototype.messageHandler;
+geometrize_exporter_SvgExporter.SVG_STYLE_HOOK = "::svg_style_hook::";
+geometrize_runner_Default.options = { shapeTypes : [2], candidateShapesPerStep : 50, shapeMutationsPerStep : 100, alpha : 128};
+geometrize_shape_ShapeTypes.RECTANGLE = 0;
+geometrize_shape_ShapeTypes.ROTATED_RECTANGLE = 1;
+geometrize_shape_ShapeTypes.TRIANGLE = 2;
+geometrize_shape_ShapeTypes.ELLIPSE = 3;
+geometrize_shape_ShapeTypes.ROTATED_ELLIPSE = 4;
+geometrize_shape_ShapeTypes.CIRCLE = 5;
+geometrize_shape_ShapeTypes.LINE = 6;
+geometrize_shape_ShapeTypes.QUADRATIC_BEZIER = 7;
+})(typeof exports != "undefined" ? exports : typeof window != "undefined" ? window : typeof self != "undefined" ? self : this, {});
+
 </script>
 
 </body>
