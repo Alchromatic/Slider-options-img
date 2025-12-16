@@ -31,7 +31,8 @@ canvas.drawing { cursor: crosshair; }
 .color-chip .chip-number { background: rgba(0,0,0,0.7); padding: 2px 4px; border-radius: 3px; font-size: 9px; }
 .color-chip .rgb-value { font-size: 7px; background: rgba(0,0,0,0.7); padding: 2px 3px; border-radius: 2px; margin-top: 2px; font-family: monospace; }
 .frequency-info { margin: 10px 0; padding: 10px; background: #f5f5f5; border-radius: 4px; font-size: 13px; }
-.region-box { position: absolute; border: 3px solid #FF5722; background: rgba(255, 87, 34, 0.2); pointer-events: none; }
+.region-box { position: absolute; pointer-events: none; }
+.region-svg { position: absolute; pointer-events: none; overflow: visible; }
 .region-list { margin: 10px 0; padding: 10px; background: #f0f0f0; border-radius: 4px; }
 .region-item { display: flex; justify-content: space-between; align-items: center; padding: 5px; margin: 3px 0; background: white; border-radius: 3px; }
 .region-item button { padding: 4px 8px; font-size: 12px; }
@@ -705,7 +706,7 @@ canvas.picking { cursor: crosshair; }
 <!-- ====================== SELECTIVE RESOLUTION =================== -->
 <div class="section highlight">
     <h3>Selective Resolution Tool</h3>
-    <div class="info">Draw rectangles on the canvas to enhance specific regions with high-resolution shapes.</div>
+    <div class="info">Draw freehand on the canvas to select regions for high-resolution detail.</div>
 
     <button id="selectRegionsBtn">Select Regions for Detail</button>
     <button id="clearRegionsBtn">Clear All Regions</button>
@@ -942,7 +943,8 @@ const getRecipeBtn = document.getElementById("getRecipeBtn");
 const recipeResults = document.getElementById("recipeResults");
 
 let isSelecting = false;
-let startX = 0, startY = 0;
+let isDrawingPath = false;
+let currentPath = [];
 let currentRegion = null;
 
 let isPickingColor = false;
@@ -1538,54 +1540,96 @@ canvas.addEventListener("mousedown", e => {
     if (!isSelecting) return;
 
     const rect = canvas.getBoundingClientRect();
-    startX = e.clientX - rect.left;
-    startY = e.clientY - rect.top;
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
 
-    currentRegion = { x: startX, y: startY, width: 0, height: 0 };
+    isDrawingPath = true;
+    currentPath = [{ x, y }];
 });
 
 canvas.addEventListener("mousemove", e => {
-    if (!isSelecting || !currentRegion) return;
+    if (!isSelecting || !isDrawingPath) return;
 
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    currentRegion.width = x - startX;
-    currentRegion.height = y - startY;
+    currentPath.push({ x, y });
 
     drawCanvas();
-    // drawRegionOverlay(currentRegion, true); // REMOVED
+    drawCurrentPath();
 });
 
 canvas.addEventListener("mouseup", e => {
-    if (!isSelecting || !currentRegion) return;
+    if (!isSelecting || !isDrawingPath) return;
 
-    if (currentRegion.width < 0) {
-        currentRegion.x += currentRegion.width;
-        currentRegion.width = Math.abs(currentRegion.width);
-    }
-    if (currentRegion.height < 0) {
-        currentRegion.y += currentRegion.height;
-        currentRegion.height = Math.abs(currentRegion.height);
+    isDrawingPath = false;
+
+    // Need at least 3 points to form a region
+    if (currentPath.length < 3) {
+        currentPath = [];
+        return;
     }
 
     const imgRect = getImageRect();
     const scale = imgRect.scale;
 
-    const region = {
-        x: (currentRegion.x - imgRect.x) / scale,
-        y: (currentRegion.y - imgRect.y) / scale,
-        width: currentRegion.width / scale,
-        height: currentRegion.height / scale
-    };
+    // Convert canvas coordinates to image coordinates
+    const pathPoints = currentPath.map(p => ({
+        x: (p.x - imgRect.x) / scale,
+        y: (p.y - imgRect.y) / scale
+    }));
 
-    if (region.width > 5 && region.height > 5) regions.push(region);
+    // Simplify path to reduce points (keeps every Nth point)
+    const simplified = simplifyPath(pathPoints, 50);
 
-    currentRegion = null;
+    if (simplified.length >= 3) {
+        regions.push({ type: 'polygon', points: simplified });
+    }
+
+    currentPath = [];
     updateRegionUI();
     updateRender();
 });
+
+// Handle mouse leaving canvas while drawing
+canvas.addEventListener("mouseleave", e => {
+    if (isDrawingPath && currentPath.length >= 3) {
+        canvas.dispatchEvent(new MouseEvent('mouseup'));
+    }
+});
+
+function drawCurrentPath() {
+    if (currentPath.length < 2) return;
+
+    ctx.save();
+    ctx.strokeStyle = "#7c4dff";
+    ctx.lineWidth = 3;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+
+    ctx.beginPath();
+    ctx.moveTo(currentPath[0].x, currentPath[0].y);
+    for (let i = 1; i < currentPath.length; i++) {
+        ctx.lineTo(currentPath[i].x, currentPath[i].y);
+    }
+    ctx.stroke();
+    ctx.restore();
+}
+
+function simplifyPath(points, maxPoints) {
+    if (points.length <= maxPoints) return points;
+    const step = Math.max(1, Math.floor(points.length / maxPoints));
+    const result = [];
+    for (let i = 0; i < points.length; i += step) {
+        result.push(points[i]);
+    }
+    // Always include the last point
+    if (result[result.length - 1] !== points[points.length - 1]) {
+        result.push(points[points.length - 1]);
+    }
+    return result;
+}
 
 /* ==========================================================
    REGION UI
@@ -1606,22 +1650,64 @@ function updateRegionUI() {
     const scale = imgRect.scale;
 
     regions.forEach((r, i) => {
-        const box = document.createElement("div");
-        box.className = "region-box";
-        box.style.left = imgRect.x + r.x * scale + "px";
-        box.style.top = imgRect.y + r.y * scale + "px";
-        box.style.width = r.width * scale + "px";
-        box.style.height = r.height * scale + "px";
+        if (r.type === 'polygon' && r.points) {
+            // Create SVG for freehand region
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.classList.add("region-svg");
+            svg.style.left = "0px";
+            svg.style.top = "0px";
+            svg.style.width = canvas.width + "px";
+            svg.style.height = canvas.height + "px";
 
-        regionOverlay.appendChild(box);
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            let d = `M ${imgRect.x + r.points[0].x * scale} ${imgRect.y + r.points[0].y * scale}`;
+            for (let j = 1; j < r.points.length; j++) {
+                d += ` L ${imgRect.x + r.points[j].x * scale} ${imgRect.y + r.points[j].y * scale}`;
+            }
+            path.setAttribute("d", d);
+            path.setAttribute("fill", "none");
+            path.setAttribute("stroke", "#FF5722");
+            path.setAttribute("stroke-width", "3");
+            path.setAttribute("stroke-linecap", "round");
+            path.setAttribute("stroke-linejoin", "round");
 
-        const item = document.createElement("div");
-        item.className = "region-item";
-        item.innerHTML = `
-            Region ${i + 1}: ${Math.round(r.width)}×${Math.round(r.height)}
-            <button onclick="removeRegion(${i})">Remove</button>
-        `;
-        regionList.appendChild(item);
+            svg.appendChild(path);
+            regionOverlay.appendChild(svg);
+
+            // Calculate bounding box for display
+            const xs = r.points.map(p => p.x);
+            const ys = r.points.map(p => p.y);
+            const width = Math.round(Math.max(...xs) - Math.min(...xs));
+            const height = Math.round(Math.max(...ys) - Math.min(...ys));
+
+            const item = document.createElement("div");
+            item.className = "region-item";
+            item.innerHTML = `
+                Region ${i + 1}: ~${width}×${height} (${r.points.length} pts)
+                <button onclick="removeRegion(${i})">Remove</button>
+            `;
+            regionList.appendChild(item);
+        } else {
+            // Legacy rectangle support
+            const box = document.createElement("div");
+            box.className = "region-box";
+            box.style.left = imgRect.x + r.x * scale + "px";
+            box.style.top = imgRect.y + r.y * scale + "px";
+            box.style.width = r.width * scale + "px";
+            box.style.height = r.height * scale + "px";
+            box.style.border = "3px solid #FF5722";
+            box.style.background = "rgba(255, 87, 34, 0.2)";
+
+            regionOverlay.appendChild(box);
+
+            const item = document.createElement("div");
+            item.className = "region-item";
+            item.innerHTML = `
+                Region ${i + 1}: ${Math.round(r.width)}×${Math.round(r.height)}
+                <button onclick="removeRegion(${i})">Remove</button>
+            `;
+            regionList.appendChild(item);
+        }
     });
 }
 
@@ -1672,13 +1758,30 @@ applySelectiveBtn.addEventListener("click", async () => {
         return;
     }
 
+    // Convert polygon regions to include bounding box for backend compatibility
+    const processedRegions = regions.map(r => {
+        if (r.type === 'polygon' && r.points) {
+            const xs = r.points.map(p => p.x);
+            const ys = r.points.map(p => p.y);
+            return {
+                type: 'polygon',
+                points: r.points,
+                x: Math.min(...xs),
+                y: Math.min(...ys),
+                width: Math.max(...xs) - Math.min(...xs),
+                height: Math.max(...ys) - Math.min(...ys)
+            };
+        }
+        return r;
+    });
+
     const res = await fetch(`${API_BASE}/selective_resolution`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             base_shapes: baseShapes,
             detail_shapes: detailShapes,
-            regions
+            regions: processedRegions
         })
     });
 

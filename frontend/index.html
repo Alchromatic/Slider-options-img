@@ -305,6 +305,134 @@ canvas.picking { cursor: crosshair; }
     cursor: not-allowed;
 }
 
+
+/* Image Adjustments Styles */
+.adjust-section {
+    margin: 20px 0;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 2px solid #dee2e6;
+}
+.adjust-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+.adjust-header h3 {
+    margin: 0;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.adjust-icon {
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #333;
+    color: white;
+    border-radius: 50%;
+    font-size: 14px;
+}
+.adjust-tabs {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #e0e0e0;
+    padding-bottom: 5px;
+}
+.adjust-tab {
+    flex: 1;
+    padding: 10px 5px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+    color: #666;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+}
+.adjust-tab.active {
+    color: #007AFF;
+    border-bottom-color: #007AFF;
+}
+.adjust-tab:hover {
+    background: rgba(0, 122, 255, 0.05);
+}
+.adjust-controls {
+    display: none;
+}
+.adjust-controls.active {
+    display: block;
+}
+.adjust-slider-group {
+    margin-bottom: 20px;
+}
+.adjust-slider-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #333;
+}
+.adjust-slider-label span {
+    font-weight: 600;
+}
+.adjust-slider-value {
+    font-family: monospace;
+    color: #007AFF;
+    font-weight: bold;
+    min-width: 45px;
+    text-align: right;
+}
+.adjust-slider {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(to right, #e0e0e0 0%, #007AFF 50%, #e0e0e0 100%);
+    outline: none;
+    -webkit-appearance: none;
+}
+.adjust-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: white;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    border: 2px solid #007AFF;
+}
+.adjust-slider::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: white;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    border: 2px solid #007AFF;
+}
+.adjust-reset-btn {
+    background: #ff3b30;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: opacity 0.2s;
+}
+.adjust-reset-btn:hover {
+    opacity: 0.85;
+}
 /* Unmix / Recipe Styles */
 .unmix-section {
     margin-top: 15px;
@@ -743,6 +871,145 @@ canvas.picking { cursor: crosshair; }
     <div class="info">Makes shapes order-independent</div>
 </div>
 
+
+<!-- ====================== IMAGE ADJUSTMENTS ======================== -->
+<div class="section adjust-section">
+    <div class="adjust-header">
+        <h3>
+            <span class="adjust-icon">⚙</span>
+            Adjust
+        </h3>
+        <button class="adjust-reset-btn" id="resetAdjustBtn">Reset All</button>
+    </div>
+    
+    <div class="adjust-tabs">
+        <button class="adjust-tab active" data-tab="light">Light</button>
+        <button class="adjust-tab" data-tab="color">Color</button>
+        <button class="adjust-tab" data-tab="bw">B&W</button>
+    </div>
+    
+    <!-- Light Adjustments -->
+    <div class="adjust-controls active" id="light-controls">
+        <div class="adjust-slider-group">
+            <div class="adjust-slider-label">
+                <span>Brilliance</span>
+                <span class="adjust-slider-value" id="brilliance-value">0</span>
+            </div>
+            <input type="range" class="adjust-slider" id="brilliance-slider" min="-100" max="100" value="0" step="1">
+        </div>
+        
+        <div class="adjust-slider-group">
+            <div class="adjust-slider-label">
+                <span>Exposure</span>
+                <span class="adjust-slider-value" id="exposure-value">0</span>
+            </div>
+            <input type="range" class="adjust-slider" id="exposure-slider" min="-100" max="100" value="0" step="1">
+        </div>
+        
+        <div class="adjust-slider-group">
+            <div class="adjust-slider-label">
+                <span>Highlights</span>
+                <span class="adjust-slider-value" id="highlights-value">0</span>
+            </div>
+            <input type="range" class="adjust-slider" id="highlights-slider" min="-100" max="100" value="0" step="1">
+        </div>
+        
+        <div class="adjust-slider-group">
+            <div class="adjust-slider-label">
+                <span>Shadows</span>
+                <span class="adjust-slider-value" id="shadows-value">0</span>
+            </div>
+            <input type="range" class="adjust-slider" id="shadows-slider" min="-100" max="100" value="0" step="1">
+        </div>
+        
+        <div class="adjust-slider-group">
+            <div class="adjust-slider-label">
+                <span>Brightness</span>
+                <span class="adjust-slider-value" id="brightness-value">0</span>
+            </div>
+            <input type="range" class="adjust-slider" id="brightness-slider" min="-100" max="100" value="0" step="1">
+        </div>
+        
+        <div class="adjust-slider-group">
+            <div class="adjust-slider-label">
+                <span>Contrast</span>
+                <span class="adjust-slider-value" id="contrast-value">0</span>
+            </div>
+            <input type="range" class="adjust-slider" id="contrast-slider" min="-100" max="100" value="0" step="1">
+        </div>
+    </div>
+    
+    <!-- Color Adjustments -->
+    <div class="adjust-controls" id="color-controls">
+        <div class="adjust-slider-group">
+            <div class="adjust-slider-label">
+                <span>Saturation</span>
+                <span class="adjust-slider-value" id="saturation-value">0</span>
+            </div>
+            <input type="range" class="adjust-slider" id="saturation-slider" min="-100" max="100" value="0" step="1">
+        </div>
+        
+        <div class="adjust-slider-group">
+            <div class="adjust-slider-label">
+                <span>Vibrance</span>
+                <span class="adjust-slider-value" id="vibrance-value">0</span>
+            </div>
+            <input type="range" class="adjust-slider" id="vibrance-slider" min="-100" max="100" value="0" step="1">
+        </div>
+        
+        <div class="adjust-slider-group">
+            <div class="adjust-slider-label">
+                <span>Warmth</span>
+                <span class="adjust-slider-value" id="warmth-value">0</span>
+            </div>
+            <input type="range" class="adjust-slider" id="warmth-slider" min="-100" max="100" value="0" step="1">
+        </div>
+        
+        <div class="adjust-slider-group">
+            <div class="adjust-slider-label">
+                <span>Tint</span>
+                <span class="adjust-slider-value" id="tint-value">0</span>
+            </div>
+            <input type="range" class="adjust-slider" id="tint-slider" min="-100" max="100" value="0" step="1">
+        </div>
+    </div>
+    
+    <!-- Black & White Adjustments -->
+    <div class="adjust-controls" id="bw-controls">
+        <div class="adjust-slider-group">
+            <div class="adjust-slider-label">
+                <span>Intensity</span>
+                <span class="adjust-slider-value" id="bw-value">0</span>
+            </div>
+            <input type="range" class="adjust-slider" id="bw-slider" min="0" max="100" value="0" step="1">
+        </div>
+        
+        <div class="adjust-slider-group">
+            <div class="adjust-slider-label">
+                <span>Neutrals</span>
+                <span class="adjust-slider-value" id="neutrals-value">0</span>
+            </div>
+            <input type="range" class="adjust-slider" id="neutrals-slider" min="-100" max="100" value="0" step="1">
+        </div>
+        
+        <div class="adjust-slider-group">
+            <div class="adjust-slider-label">
+                <span>Tone</span>
+                <span class="adjust-slider-value" id="tone-value">0</span>
+            </div>
+            <input type="range" class="adjust-slider" id="tone-slider" min="-100" max="100" value="0" step="1">
+        </div>
+        
+        <div class="adjust-slider-group">
+            <div class="adjust-slider-label">
+                <span>Grain</span>
+                <span class="adjust-slider-value" id="grain-value">0</span>
+            </div>
+            <input type="range" class="adjust-slider" id="grain-slider" min="0" max="100" value="0" step="1">
+        </div>
+    </div>
+</div>
+
 <!-- ====================== COLOR PICKER ======================== -->
 <div class="section">
     <h3>Color Picker</h3>
@@ -971,6 +1238,126 @@ let geometrizeWorker = null;
 let isGeometrizing = false;
 let generatedShapes = [];
 let previewCtx = geometrizePreview.getContext("2d");
+
+
+// ==================== IMAGE ADJUSTMENTS ====================
+const adjustmentValues = {
+    brilliance: 0,
+    exposure: 0,
+    highlights: 0,
+    shadows: 0,
+    brightness: 0,
+    contrast: 0,
+    saturation: 0,
+    vibrance: 0,
+    warmth: 0,
+    tint: 0,
+    bw: 0,
+    neutrals: 0,
+    tone: 0,
+    grain: 0
+};
+
+// Tab switching
+document.querySelectorAll('.adjust-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        // Remove active from all tabs and controls
+        document.querySelectorAll('.adjust-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.adjust-controls').forEach(c => c.classList.remove('active'));
+        
+        // Add active to clicked tab
+        tab.classList.add('active');
+        
+        // Show corresponding controls
+        const tabType = tab.dataset.tab;
+        document.getElementById(`${tabType}-controls`).classList.add('active');
+    });
+});
+
+// Initialize all adjustment sliders
+const adjustmentSliders = [
+    'brilliance', 'exposure', 'highlights', 'shadows', 'brightness', 'contrast',
+    'saturation', 'vibrance', 'warmth', 'tint',
+    'bw', 'neutrals', 'tone', 'grain'
+];
+
+adjustmentSliders.forEach(name => {
+    const slider = document.getElementById(`${name}-slider`);
+    const valueDisplay = document.getElementById(`${name}-value`);
+    
+    if (slider && valueDisplay) {
+        slider.addEventListener('input', () => {
+            const value = parseInt(slider.value);
+            adjustmentValues[name] = value;
+            valueDisplay.textContent = value;
+            applyAdjustments();
+        });
+    }
+});
+
+// Apply all adjustments using CSS filters
+function applyAdjustments() {
+    const filters = [];
+    
+    // Light adjustments
+    const brightnessTotal = adjustmentValues.brightness + adjustmentValues.exposure * 0.5 + adjustmentValues.brilliance * 0.3;
+    const brightness = 1 + (brightnessTotal / 100);
+    if (brightness !== 1) filters.push(`brightness(${brightness})`);
+    
+    const contrast = 1 + (adjustmentValues.contrast / 100);
+    if (contrast !== 1) filters.push(`contrast(${contrast})`);
+    
+    // Color adjustments
+    const saturation = 1 + ((adjustmentValues.saturation + adjustmentValues.vibrance * 0.7) / 100);
+    if (saturation !== 1) filters.push(`saturate(${saturation})`);
+    
+    // Warmth (adjust hue)
+    const hue = adjustmentValues.warmth * 0.5 + adjustmentValues.tint * 0.3;
+    if (hue !== 0) filters.push(`hue-rotate(${hue}deg)`);
+    
+    // Black & White
+    const grayscale = adjustmentValues.bw / 100;
+    if (grayscale > 0) filters.push(`grayscale(${grayscale})`);
+    
+    // Additional tone adjustments for B&W
+    if (adjustmentValues.neutrals !== 0) {
+        const neutralsBrightness = 1 + (adjustmentValues.neutrals / 200);
+        filters.push(`brightness(${neutralsBrightness})`);
+    }
+    
+    if (adjustmentValues.tone !== 0) {
+        const toneSepia = Math.max(0, adjustmentValues.tone / 100);
+        if (toneSepia > 0) filters.push(`sepia(${toneSepia})`);
+    }
+    
+    // Apply grain effect (using blur as approximation)
+    if (adjustmentValues.grain > 0) {
+        const grainBlur = adjustmentValues.grain / 100;
+        filters.push(`blur(${grainBlur}px)`);
+    }
+    
+    // Apply filters to canvas
+    canvas.style.filter = filters.join(' ');
+}
+
+// Reset all adjustments
+document.getElementById('resetAdjustBtn').addEventListener('click', () => {
+    adjustmentSliders.forEach(name => {
+        const slider = document.getElementById(`${name}-slider`);
+        const valueDisplay = document.getElementById(`${name}-value`);
+        
+        if (slider && valueDisplay) {
+            // Reset to 0 for most, but bw needs special handling
+            const defaultValue = (name === 'bw' || name === 'grain') ? 0 : 0;
+            slider.value = defaultValue;
+            adjustmentValues[name] = defaultValue;
+            valueDisplay.textContent = defaultValue;
+        }
+    });
+    
+    // Clear all filters
+    canvas.style.filter = 'none';
+});
 
 // Update slider display values
 geometrizeAlpha.addEventListener("input", () => {
