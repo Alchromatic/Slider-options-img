@@ -306,132 +306,238 @@ canvas.picking { cursor: crosshair; }
 }
 
 
-/* Image Adjustments Styles */
+/* iPhone-style Image Adjustments */
 .adjust-section {
     margin: 20px 0;
-    padding: 20px;
-    background: #f8f9fa;
+    padding: 0;
+    background: #f2f2f7;
     border-radius: 12px;
-    border: 2px solid #dee2e6;
+    overflow: hidden;
 }
-.adjust-header {
+.adjust-container {
+    background: #fff;
+    padding: 20px 0 0 0;
+    position: relative;
+}
+/* Horizontal scrollable icons strip */
+.adjust-icons-wrapper {
+    position: relative;
+    padding: 0 40px;
+}
+.adjust-icons-scroll {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding: 10px 0 15px 0;
+    gap: 20px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
-.adjust-header h3 {
-    margin: 0;
-    font-size: 16px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.adjust-icon {
-    width: 24px;
-    height: 24px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: #333;
-    color: white;
-    border-radius: 50%;
-    font-size: 14px;
-}
-.adjust-tabs {
-    display: flex;
-    gap: 5px;
-    margin-bottom: 15px;
-    border-bottom: 2px solid #e0e0e0;
-    padding-bottom: 5px;
-}
-.adjust-tab {
-    flex: 1;
-    padding: 10px 5px;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    font-size: 11px;
-    font-weight: 600;
-    color: #666;
-    border-bottom: 3px solid transparent;
-    transition: all 0.2s;
-}
-.adjust-tab.active {
-    color: #007AFF;
-    border-bottom-color: #007AFF;
-}
-.adjust-tab:hover {
-    background: rgba(0, 122, 255, 0.05);
-}
-.adjust-controls {
+.adjust-icons-scroll::-webkit-scrollbar {
     display: none;
 }
-.adjust-controls.active {
-    display: block;
-}
-.adjust-slider-group {
-    margin-bottom: 20px;
-}
-.adjust-slider-label {
+.adjust-icon-btn {
+    flex: 0 0 auto;
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
     align-items: center;
-    margin-bottom: 8px;
-    font-size: 13px;
-    color: #333;
-}
-.adjust-slider-label span {
-    font-weight: 600;
-}
-.adjust-slider-value {
-    font-family: monospace;
-    color: #007AFF;
-    font-weight: bold;
-    min-width: 45px;
-    text-align: right;
-}
-.adjust-slider {
-    width: 100%;
-    height: 6px;
-    border-radius: 3px;
-    background: linear-gradient(to right, #e0e0e0 0%, #007AFF 50%, #e0e0e0 100%);
-    outline: none;
-    -webkit-appearance: none;
-}
-.adjust-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: white;
-    cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-    border: 2px solid #007AFF;
-}
-.adjust-slider::-moz-range-thumb {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: white;
-    cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-    border: 2px solid #007AFF;
-}
-.adjust-reset-btn {
-    background: #ff3b30;
-    color: white;
+    gap: 4px;
+    background: none;
     border: none;
-    padding: 8px 16px;
-    border-radius: 8px;
     cursor: pointer;
-    font-size: 12px;
-    font-weight: 600;
+    scroll-snap-align: center;
+    padding: 0;
+    min-width: 70px;
+}
+.adjust-icon-circle {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    border: 2px solid #d1d1d6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    transition: all 0.2s;
+    position: relative;
+}
+.adjust-icon-btn.active .adjust-icon-circle {
+    border-color: #333;
+    border-width: 2px;
+}
+.adjust-icon-btn.modified .adjust-icon-circle::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 6px;
+    background: #ffd60a;
+    border-radius: 50%;
+}
+.adjust-icon-circle svg {
+    width: 28px;
+    height: 28px;
+    fill: none;
+    stroke: #000;
+    stroke-width: 1.5;
+}
+.adjust-icon-circle img {
+    width: 32px;
+    height: 32px;
+}
+/* Scroll arrows */
+.adjust-scroll-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-60%);
+    width: 32px;
+    height: 58px;
+    background: linear-gradient(to right, rgba(255,255,255,1), rgba(255,255,255,0));
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    font-size: 24px;
+    color: #c7c7cc;
     transition: opacity 0.2s;
 }
+.adjust-scroll-arrow:hover {
+    color: #8e8e93;
+}
+.adjust-scroll-arrow.left {
+    left: 0;
+    background: linear-gradient(to right, rgba(255,255,255,1), rgba(255,255,255,0));
+    padding-left: 5px;
+}
+.adjust-scroll-arrow.right {
+    right: 0;
+    background: linear-gradient(to left, rgba(255,255,255,1), rgba(255,255,255,0));
+    padding-right: 5px;
+}
+/* Ruler slider */
+.adjust-ruler-container {
+    padding: 0 20px 20px 20px;
+}
+.adjust-ruler {
+    position: relative;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.adjust-ruler-ticks {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 4px;
+    height: 30px;
+    width: 100%;
+    max-width: 400px;
+}
+.adjust-ruler-tick {
+    width: 1px;
+    background: #d1d1d6;
+    transition: background 0.2s;
+}
+.adjust-ruler-tick.small {
+    height: 8px;
+}
+.adjust-ruler-tick.medium {
+    height: 14px;
+}
+.adjust-ruler-tick.large {
+    height: 20px;
+    background: #8e8e93;
+}
+.adjust-ruler-tick.center {
+    height: 28px;
+    width: 2px;
+    background: #000;
+}
+.adjust-ruler-tick.active {
+    background: #000;
+}
+.adjust-slider-hidden {
+    position: absolute;
+    width: 100%;
+    max-width: 400px;
+    height: 50px;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 5;
+}
+.adjust-value-display {
+    text-align: center;
+    font-size: 13px;
+    color: #8e8e93;
+    margin-top: 5px;
+    font-weight: 500;
+    min-height: 18px;
+}
+/* Reset button */
+.adjust-reset-btn {
+    background: none;
+    color: #007AFF;
+    border: none;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 400;
+    position: absolute;
+    right: 15px;
+    top: 15px;
+}
 .adjust-reset-btn:hover {
-    opacity: 0.85;
+    text-decoration: underline;
+}
+/* Icon specific styling for special icons */
+.adjust-icon-circle.auto-enhance {
+    background: #c7c7cc;
+    border-color: #c7c7cc;
+}
+.adjust-icon-circle.auto-enhance svg {
+    stroke: #000;
+}
+.adjust-icon-circle.color-wheel {
+    background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red);
+    border-color: transparent;
+    overflow: hidden;
+}
+.adjust-icon-circle.color-wheel::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background: #fff;
+    border-radius: 50%;
+}
+.adjust-icon-circle.color-stripes {
+    overflow: hidden;
+    border-color: transparent;
+    padding: 0;
+}
+.color-stripes-inner {
+    width: 100%;
+    height: 100%;
+    display: flex;
+}
+.color-stripes-inner span {
+    flex: 1;
+    height: 100%;
+}
+/* Selected adjustment label */
+.adjust-selected-label {
+    text-align: center;
+    font-size: 15px;
+    font-weight: 600;
+    color: #000;
+    padding: 10px 0 5px 0;
+    min-height: 25px;
 }
 /* Unmix / Recipe Styles */
 .unmix-section {
@@ -872,143 +978,6 @@ canvas.picking { cursor: crosshair; }
 </div>
 
 
-<!-- ====================== IMAGE ADJUSTMENTS ======================== -->
-<div class="section adjust-section">
-    <div class="adjust-header">
-        <h3>
-            <span class="adjust-icon">⚙</span>
-            Adjust
-        </h3>
-        <button class="adjust-reset-btn" id="resetAdjustBtn">Reset All</button>
-    </div>
-    
-    <div class="adjust-tabs">
-        <button class="adjust-tab active" data-tab="light">Light</button>
-        <button class="adjust-tab" data-tab="color">Color</button>
-        <button class="adjust-tab" data-tab="bw">B&W</button>
-    </div>
-    
-    <!-- Light Adjustments -->
-    <div class="adjust-controls active" id="light-controls">
-        <div class="adjust-slider-group">
-            <div class="adjust-slider-label">
-                <span>Brilliance</span>
-                <span class="adjust-slider-value" id="brilliance-value">0</span>
-            </div>
-            <input type="range" class="adjust-slider" id="brilliance-slider" min="-100" max="100" value="0" step="1">
-        </div>
-        
-        <div class="adjust-slider-group">
-            <div class="adjust-slider-label">
-                <span>Exposure</span>
-                <span class="adjust-slider-value" id="exposure-value">0</span>
-            </div>
-            <input type="range" class="adjust-slider" id="exposure-slider" min="-100" max="100" value="0" step="1">
-        </div>
-        
-        <div class="adjust-slider-group">
-            <div class="adjust-slider-label">
-                <span>Highlights</span>
-                <span class="adjust-slider-value" id="highlights-value">0</span>
-            </div>
-            <input type="range" class="adjust-slider" id="highlights-slider" min="-100" max="100" value="0" step="1">
-        </div>
-        
-        <div class="adjust-slider-group">
-            <div class="adjust-slider-label">
-                <span>Shadows</span>
-                <span class="adjust-slider-value" id="shadows-value">0</span>
-            </div>
-            <input type="range" class="adjust-slider" id="shadows-slider" min="-100" max="100" value="0" step="1">
-        </div>
-        
-        <div class="adjust-slider-group">
-            <div class="adjust-slider-label">
-                <span>Brightness</span>
-                <span class="adjust-slider-value" id="brightness-value">0</span>
-            </div>
-            <input type="range" class="adjust-slider" id="brightness-slider" min="-100" max="100" value="0" step="1">
-        </div>
-        
-        <div class="adjust-slider-group">
-            <div class="adjust-slider-label">
-                <span>Contrast</span>
-                <span class="adjust-slider-value" id="contrast-value">0</span>
-            </div>
-            <input type="range" class="adjust-slider" id="contrast-slider" min="-100" max="100" value="0" step="1">
-        </div>
-    </div>
-    
-    <!-- Color Adjustments -->
-    <div class="adjust-controls" id="color-controls">
-        <div class="adjust-slider-group">
-            <div class="adjust-slider-label">
-                <span>Saturation</span>
-                <span class="adjust-slider-value" id="saturation-value">0</span>
-            </div>
-            <input type="range" class="adjust-slider" id="saturation-slider" min="-100" max="100" value="0" step="1">
-        </div>
-        
-        <div class="adjust-slider-group">
-            <div class="adjust-slider-label">
-                <span>Vibrance</span>
-                <span class="adjust-slider-value" id="vibrance-value">0</span>
-            </div>
-            <input type="range" class="adjust-slider" id="vibrance-slider" min="-100" max="100" value="0" step="1">
-        </div>
-        
-        <div class="adjust-slider-group">
-            <div class="adjust-slider-label">
-                <span>Warmth</span>
-                <span class="adjust-slider-value" id="warmth-value">0</span>
-            </div>
-            <input type="range" class="adjust-slider" id="warmth-slider" min="-100" max="100" value="0" step="1">
-        </div>
-        
-        <div class="adjust-slider-group">
-            <div class="adjust-slider-label">
-                <span>Tint</span>
-                <span class="adjust-slider-value" id="tint-value">0</span>
-            </div>
-            <input type="range" class="adjust-slider" id="tint-slider" min="-100" max="100" value="0" step="1">
-        </div>
-    </div>
-    
-    <!-- Black & White Adjustments -->
-    <div class="adjust-controls" id="bw-controls">
-        <div class="adjust-slider-group">
-            <div class="adjust-slider-label">
-                <span>Intensity</span>
-                <span class="adjust-slider-value" id="bw-value">0</span>
-            </div>
-            <input type="range" class="adjust-slider" id="bw-slider" min="0" max="100" value="0" step="1">
-        </div>
-        
-        <div class="adjust-slider-group">
-            <div class="adjust-slider-label">
-                <span>Neutrals</span>
-                <span class="adjust-slider-value" id="neutrals-value">0</span>
-            </div>
-            <input type="range" class="adjust-slider" id="neutrals-slider" min="-100" max="100" value="0" step="1">
-        </div>
-        
-        <div class="adjust-slider-group">
-            <div class="adjust-slider-label">
-                <span>Tone</span>
-                <span class="adjust-slider-value" id="tone-value">0</span>
-            </div>
-            <input type="range" class="adjust-slider" id="tone-slider" min="-100" max="100" value="0" step="1">
-        </div>
-        
-        <div class="adjust-slider-group">
-            <div class="adjust-slider-label">
-                <span>Grain</span>
-                <span class="adjust-slider-value" id="grain-value">0</span>
-            </div>
-            <input type="range" class="adjust-slider" id="grain-slider" min="0" max="100" value="0" step="1">
-        </div>
-    </div>
-</div>
 
 <!-- ====================== COLOR PICKER ======================== -->
 <div class="section">
@@ -1123,6 +1092,158 @@ canvas.picking { cursor: crosshair; }
 <div style="position: relative;">
     <canvas id="canvas" width="600" height="600"></canvas>
     <div id="regionOverlay" style="position:absolute; top:0; left:0; pointer-events:none;"></div>
+</div>
+
+<!-- ====================== IMAGE ADJUSTMENTS ======================== -->
+<div class="section adjust-section">
+    <div class="adjust-container">
+        <button class="adjust-reset-btn" id="resetAdjustBtn">Reset</button>
+        
+        <!-- Selected adjustment label -->
+        <div class="adjust-selected-label" id="adjustSelectedLabel"></div>
+        
+        <!-- Horizontal scrollable icons -->
+        <div class="adjust-icons-wrapper">
+            <button class="adjust-scroll-arrow left" id="scrollLeft">‹</button>
+            <div class="adjust-icons-scroll" id="adjustIconsScroll">
+                <!-- Exposure -->
+                <button class="adjust-icon-btn" data-adjust="exposure" data-label="Exposure" title="Exposure">
+                    <div class="adjust-icon-circle">
+                        <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" stroke-width="1.5"/><line x1="9" y1="12" x2="15" y2="12" stroke-width="2"/><line x1="12" y1="9" x2="12" y2="15" stroke-width="2"/></svg>
+                    </div>
+                </button>
+                <!-- Brilliance -->
+                <button class="adjust-icon-btn" data-adjust="brilliance" data-label="Brilliance" title="Brilliance">
+                    <div class="adjust-icon-circle">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="#000"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.93" y1="4.93" x2="7.05" y2="7.05"/><line x1="16.95" y1="16.95" x2="19.07" y2="19.07"/><line x1="4.93" y1="19.07" x2="7.05" y2="16.95"/><line x1="16.95" y1="7.05" x2="19.07" y2="4.93"/></svg>
+                    </div>
+                </button>
+                <!-- Highlights -->
+                <button class="adjust-icon-btn" data-adjust="highlights" data-label="Highlights" title="Highlights">
+                    <div class="adjust-icon-circle">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" stroke-width="1.5"/><circle cx="12" cy="12" r="3" fill="#000"/></svg>
+                    </div>
+                </button>
+                <!-- Shadows -->
+                <button class="adjust-icon-btn" data-adjust="shadows" data-label="Shadows" title="Shadows">
+                    <div class="adjust-icon-circle">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" stroke-width="1.5"/><path d="M12 4a8 8 0 0 0 0 16" fill="#000"/></svg>
+                    </div>
+                </button>
+                <!-- Contrast -->
+                <button class="adjust-icon-btn" data-adjust="contrast" data-label="Contrast" title="Contrast">
+                    <div class="adjust-icon-circle">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-width="1.5"/><path d="M12 3a9 9 0 0 1 0 18" fill="#000"/></svg>
+                    </div>
+                </button>
+                <!-- Brightness -->
+                <button class="adjust-icon-btn" data-adjust="brightness" data-label="Brightness" title="Brightness">
+                    <div class="adjust-icon-circle">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" stroke-width="1.5"/><g stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="23"/><line x1="1" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="23" y2="12"/><line x1="4.22" y1="4.22" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.78" y2="19.78"/><line x1="4.22" y1="19.78" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.78" y2="4.22"/></g></svg>
+                    </div>
+                </button>
+                <!-- Black Point -->
+                <button class="adjust-icon-btn" data-adjust="blackpoint" data-label="Black Point" title="Black Point">
+                    <div class="adjust-icon-circle">
+                        <svg viewBox="0 0 24 24"><polygon points="4,20 12,4 20,20" fill="#000" stroke="none"/></svg>
+                    </div>
+                </button>
+                <!-- Saturation -->
+                <button class="adjust-icon-btn" data-adjust="saturation" data-label="Saturation" title="Saturation">
+                    <div class="adjust-icon-circle color-wheel"></div>
+                </button>
+                <!-- Vibrance -->
+                <button class="adjust-icon-btn" data-adjust="vibrance" data-label="Vibrance" title="Vibrance">
+                    <div class="adjust-icon-circle color-stripes">
+                        <div class="color-stripes-inner">
+                            <span style="background:#ff0000"></span>
+                            <span style="background:#ff8800"></span>
+                            <span style="background:#ffff00"></span>
+                            <span style="background:#00ff00"></span>
+                            <span style="background:#00ffff"></span>
+                            <span style="background:#0000ff"></span>
+                            <span style="background:#ff00ff"></span>
+                        </div>
+                    </div>
+                </button>
+                <!-- Warmth -->
+                <button class="adjust-icon-btn" data-adjust="warmth" data-label="Warmth" title="Warmth">
+                    <div class="adjust-icon-circle">
+                        <svg viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M8 12a4 4 0 1 0 8 0c0-2-1.5-4-4-6-2.5 2-4 4-4 6z" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="12" r="2" fill="#000"/></svg>
+                    </div>
+                </button>
+                <!-- Tint -->
+                <button class="adjust-icon-btn" data-adjust="tint" data-label="Tint" title="Tint">
+                    <div class="adjust-icon-circle">
+                        <svg viewBox="0 0 24 24"><path d="M12 2c-4 4-6 7-6 10a6 6 0 0 0 12 0c0-3-2-6-6-10z" stroke-width="1.5" fill="none"/></svg>
+                    </div>
+                </button>
+                <!-- Sharpness -->
+                <button class="adjust-icon-btn" data-adjust="sharpness" data-label="Sharpness" title="Sharpness">
+                    <div class="adjust-icon-circle">
+                        <svg viewBox="0 0 24 24"><polygon points="4,20 20,20 12,4" stroke-width="1.5" fill="none"/></svg>
+                    </div>
+                </button>
+                <!-- Definition -->
+                <button class="adjust-icon-btn" data-adjust="definition" data-label="Definition" title="Definition">
+                    <div class="adjust-icon-circle">
+                        <svg viewBox="0 0 24 24"><polygon points="4,18 12,6 20,18" stroke-width="1.5" fill="none"/><line x1="7" y1="14" x2="17" y2="14" stroke-width="1.5"/></svg>
+                    </div>
+                </button>
+                <!-- Noise Reduction -->
+                <button class="adjust-icon-btn" data-adjust="noise" data-label="Noise Reduction" title="Noise Reduction">
+                    <div class="adjust-icon-circle">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-width="1.5"/><circle cx="8" cy="10" r="1" fill="#000"/><circle cx="14" cy="8" r="1" fill="#000"/><circle cx="16" cy="14" r="1" fill="#000"/><circle cx="10" cy="15" r="1" fill="#000"/><circle cx="12" cy="12" r="1" fill="#000"/></svg>
+                    </div>
+                </button>
+                <!-- Vignette -->
+                <button class="adjust-icon-btn" data-adjust="vignette" data-label="Vignette" title="Vignette">
+                    <div class="adjust-icon-circle">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-width="1.5"/><circle cx="12" cy="12" r="5" stroke-width="1.5" stroke-dasharray="2,2"/></svg>
+                    </div>
+                </button>
+                <!-- B&W -->
+                <button class="adjust-icon-btn" data-adjust="bw" data-label="Black & White" title="Black & White">
+                    <div class="adjust-icon-circle">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-width="1.5" fill="none"/><path d="M12 3a9 9 0 0 1 0 18" fill="#000"/><g stroke-width="1.5" stroke="#fff"><line x1="15" y1="8" x2="15" y2="16"/><line x1="17" y1="8" x2="17" y2="16"/><line x1="19" y1="8" x2="19" y2="16"/></g><g stroke-width="1.5" stroke="#000"><line x1="5" y1="8" x2="5" y2="16"/><line x1="7" y1="8" x2="7" y2="16"/><line x1="9" y1="8" x2="9" y2="16"/></g></svg>
+                    </div>
+                </button>
+            </div>
+            <button class="adjust-scroll-arrow right" id="scrollRight">›</button>
+        </div>
+        
+        <!-- Ruler slider -->
+        <div class="adjust-ruler-container">
+            <div class="adjust-ruler">
+                <input type="range" class="adjust-slider-hidden" id="adjustSlider" min="-100" max="100" value="0" step="1">
+                <div class="adjust-ruler-ticks" id="rulerTicks"></div>
+            </div>
+            <div class="adjust-value-display" id="adjustValueDisplay"></div>
+        </div>
+    </div>
+    
+    <!-- Hidden sliders for each adjustment (for data storage) -->
+    <div style="display:none;">
+        <input type="range" id="brilliance-slider" min="-100" max="100" value="0">
+        <input type="range" id="exposure-slider" min="-100" max="100" value="0">
+        <input type="range" id="highlights-slider" min="-100" max="100" value="0">
+        <input type="range" id="shadows-slider" min="-100" max="100" value="0">
+        <input type="range" id="brightness-slider" min="-100" max="100" value="0">
+        <input type="range" id="contrast-slider" min="-100" max="100" value="0">
+        <input type="range" id="saturation-slider" min="-100" max="100" value="0">
+        <input type="range" id="vibrance-slider" min="-100" max="100" value="0">
+        <input type="range" id="warmth-slider" min="-100" max="100" value="0">
+        <input type="range" id="tint-slider" min="-100" max="100" value="0">
+        <input type="range" id="bw-slider" min="0" max="100" value="0">
+        <input type="range" id="neutrals-slider" min="-100" max="100" value="0">
+        <input type="range" id="tone-slider" min="-100" max="100" value="0">
+        <input type="range" id="grain-slider" min="0" max="100" value="0">
+        <input type="range" id="blackpoint-slider" min="-100" max="100" value="0">
+        <input type="range" id="sharpness-slider" min="0" max="100" value="0">
+        <input type="range" id="definition-slider" min="-100" max="100" value="0">
+        <input type="range" id="noise-slider" min="0" max="100" value="0">
+        <input type="range" id="vignette-slider" min="-100" max="100" value="0">
+    </div>
 </div>
 
 <!-- ========== MODALS (COLOR SEQUENCE + DRAG) — UNCHANGED ========= -->
@@ -1255,120 +1376,338 @@ const adjustmentValues = {
     bw: 0,
     neutrals: 0,
     tone: 0,
-    grain: 0
+    grain: 0,
+    blackpoint: 0,
+    sharpness: 0,
+    definition: 0,
+    noise: 0,
+    vignette: 0
 };
 
-// Tab switching
-document.querySelectorAll('.adjust-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-        // Remove active from all tabs and controls
-        document.querySelectorAll('.adjust-tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.adjust-controls').forEach(c => c.classList.remove('active'));
+// iPhone-style adjustment UI
+const adjustIconsScroll = document.getElementById('adjustIconsScroll');
+const adjustSlider = document.getElementById('adjustSlider');
+const rulerTicks = document.getElementById('rulerTicks');
+const adjustValueDisplay = document.getElementById('adjustValueDisplay');
+let currentAdjustment = null;
+
+// Generate ruler ticks
+function generateRulerTicks() {
+    if (!rulerTicks) return;
+    rulerTicks.innerHTML = '';
+    const totalTicks = 41; // -100 to 100, showing every 5
+    for (let i = 0; i < totalTicks; i++) {
+        const tick = document.createElement('div');
+        tick.className = 'adjust-ruler-tick';
+        if (i === 20) { // Center tick
+            tick.classList.add('center');
+        } else if (i % 10 === 0) { // Large tick every 50
+            tick.classList.add('large');
+        } else if (i % 2 === 0) { // Medium tick every 10
+            tick.classList.add('medium');
+        } else {
+            tick.classList.add('small');
+        }
+        rulerTicks.appendChild(tick);
+    }
+}
+generateRulerTicks();
+
+// Update ruler tick highlights based on value
+function updateRulerHighlight(value) {
+    if (!rulerTicks) return;
+    const ticks = rulerTicks.querySelectorAll('.adjust-ruler-tick');
+    const centerIndex = 20;
+    const ticksToHighlight = Math.round(Math.abs(value) / 5);
+    
+    ticks.forEach((tick, index) => {
+        tick.classList.remove('active');
+        if (value > 0) {
+            if (index > centerIndex && index <= centerIndex + ticksToHighlight) {
+                tick.classList.add('active');
+            }
+        } else if (value < 0) {
+            if (index < centerIndex && index >= centerIndex - ticksToHighlight) {
+                tick.classList.add('active');
+            }
+        }
+    });
+}
+
+// Scroll arrows
+const scrollLeftBtn = document.getElementById('scrollLeft');
+const scrollRightBtn = document.getElementById('scrollRight');
+if (scrollLeftBtn && adjustIconsScroll) {
+    scrollLeftBtn.addEventListener('click', () => {
+        adjustIconsScroll.scrollBy({ left: -200, behavior: 'smooth' });
+    });
+}
+if (scrollRightBtn && adjustIconsScroll) {
+    scrollRightBtn.addEventListener('click', () => {
+        adjustIconsScroll.scrollBy({ left: 200, behavior: 'smooth' });
+    });
+}
+
+// Selected label element
+const adjustSelectedLabel = document.getElementById('adjustSelectedLabel');
+
+// Icon buttons
+document.querySelectorAll('.adjust-icon-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        // Remove active from all
+        document.querySelectorAll('.adjust-icon-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
         
-        // Add active to clicked tab
-        tab.classList.add('active');
+        const adjustType = btn.dataset.adjust;
+        const adjustLabel = btn.dataset.label || adjustType;
+        currentAdjustment = adjustType;
         
-        // Show corresponding controls
-        const tabType = tab.dataset.tab;
-        document.getElementById(`${tabType}-controls`).classList.add('active');
+        // Update the selected label
+        if (adjustSelectedLabel) {
+            adjustSelectedLabel.textContent = adjustLabel;
+        }
+        
+        if (adjustSlider) adjustSlider.disabled = false;
+        const slider = document.getElementById(`${adjustType}-slider`);
+        if (slider) {
+            const currentValue = parseInt(slider.value) || 0;
+            if (adjustSlider) {
+                adjustSlider.value = currentValue;
+                adjustSlider.min = slider.min;
+                adjustSlider.max = slider.max;
+            }
+            updateRulerHighlight(currentValue);
+            if (adjustValueDisplay) adjustValueDisplay.textContent = currentValue !== 0 ? currentValue : '';
+        }
     });
 });
+
+// Main slider interaction
+if (adjustSlider) {
+    adjustSlider.addEventListener('input', () => {
+        if (!currentAdjustment) return;
+        
+        const value = parseInt(adjustSlider.value);
+        const hiddenSlider = document.getElementById(`${currentAdjustment}-slider`);
+        
+        if (hiddenSlider) {
+            hiddenSlider.value = value;
+            adjustmentValues[currentAdjustment] = value;
+        }
+        
+        // Update display
+        if (adjustValueDisplay) adjustValueDisplay.textContent = value !== 0 ? value : '';
+        updateRulerHighlight(value);
+        
+        // Mark icon as modified
+        const activeBtn = document.querySelector(`.adjust-icon-btn[data-adjust="${currentAdjustment}"]`);
+        if (activeBtn) {
+            if (value !== 0) {
+                activeBtn.classList.add('modified');
+            } else {
+                activeBtn.classList.remove('modified');
+            }
+        }
+        
+        applyAdjustments();
+    });
+}
 
 // Initialize all adjustment sliders
 const adjustmentSliders = [
     'brilliance', 'exposure', 'highlights', 'shadows', 'brightness', 'contrast',
     'saturation', 'vibrance', 'warmth', 'tint',
-    'bw', 'neutrals', 'tone', 'grain'
+    'bw', 'neutrals', 'tone', 'grain',
+    'blackpoint', 'sharpness', 'definition', 'noise', 'vignette'
 ];
-
-adjustmentSliders.forEach(name => {
-    const slider = document.getElementById(`${name}-slider`);
-    const valueDisplay = document.getElementById(`${name}-value`);
-    
-    if (slider && valueDisplay) {
-        slider.addEventListener('input', () => {
-            const value = parseInt(slider.value);
-            adjustmentValues[name] = value;
-            valueDisplay.textContent = value;
-            applyAdjustments();
-        });
-    }
-});
 
 // Apply all adjustments using CSS filters
 function applyAdjustments() {
     const filters = [];
     
-    // Light adjustments
-    const brightnessTotal = adjustmentValues.brightness + adjustmentValues.exposure * 0.5 + adjustmentValues.brilliance * 0.3;
-    const brightness = 1 + (brightnessTotal / 100);
-    if (brightness !== 1) filters.push(`brightness(${brightness})`);
-    
-    const contrast = 1 + (adjustmentValues.contrast / 100);
-    if (contrast !== 1) filters.push(`contrast(${contrast})`);
-    
-    // Color adjustments
-    const saturation = 1 + ((adjustmentValues.saturation + adjustmentValues.vibrance * 0.7) / 100);
-    if (saturation !== 1) filters.push(`saturate(${saturation})`);
-    
-    // Warmth (adjust hue)
-    const hue = adjustmentValues.warmth * 0.5 + adjustmentValues.tint * 0.3;
-    if (hue !== 0) filters.push(`hue-rotate(${hue}deg)`);
-    
-    // Black & White
-    const grayscale = adjustmentValues.bw / 100;
-    if (grayscale > 0) filters.push(`grayscale(${grayscale})`);
-    
-    // Additional tone adjustments for B&W
-    if (adjustmentValues.neutrals !== 0) {
-        const neutralsBrightness = 1 + (adjustmentValues.neutrals / 200);
-        filters.push(`brightness(${neutralsBrightness})`);
+    // === EXPOSURE === (overall light multiplier)
+    if (adjustmentValues.exposure !== 0) {
+        const exp = 1 + (adjustmentValues.exposure / 100);
+        filters.push(`brightness(${exp})`);
     }
     
-    if (adjustmentValues.tone !== 0) {
-        const toneSepia = Math.max(0, adjustmentValues.tone / 100);
-        if (toneSepia > 0) filters.push(`sepia(${toneSepia})`);
+    // === BRIGHTNESS === (adds light)
+    if (adjustmentValues.brightness !== 0) {
+        const bright = 1 + (adjustmentValues.brightness / 100);
+        filters.push(`brightness(${bright})`);
     }
     
-    // Apply grain effect (using blur as approximation)
-    if (adjustmentValues.grain > 0) {
-        const grainBlur = adjustmentValues.grain / 100;
-        filters.push(`blur(${grainBlur}px)`);
+    // === BRILLIANCE === (mid-tone focused brightness)
+    if (adjustmentValues.brilliance !== 0) {
+        const brill = 1 + (adjustmentValues.brilliance / 120);
+        filters.push(`brightness(${brill})`);
     }
     
-    // Apply filters to canvas
-    canvas.style.filter = filters.join(' ');
+    // === HIGHLIGHTS === (CSS can't target only highlights, so we use a combination)
+    // Positive: increases overall brightness slightly
+    // Negative: reduces brightness (recover highlights)
+    if (adjustmentValues.highlights !== 0) {
+        const hl = 1 + (adjustmentValues.highlights / 200);
+        filters.push(`brightness(${hl})`);
+        // Also adjust contrast to simulate highlight compression/expansion
+        if (adjustmentValues.highlights < 0) {
+            // Recovering highlights - reduce contrast slightly
+            filters.push(`contrast(${1 + adjustmentValues.highlights / 400})`);
+        }
+    }
+    
+    // === SHADOWS === (lift or crush dark areas)
+    // We simulate this with brightness + contrast combination
+    if (adjustmentValues.shadows !== 0) {
+        // Lifting shadows = add brightness + reduce contrast
+        // Crushing shadows = reduce brightness + increase contrast
+        const shadowBright = 1 + (adjustmentValues.shadows / 300);
+        const shadowContrast = 1 - (adjustmentValues.shadows / 400);
+        filters.push(`brightness(${shadowBright})`);
+        filters.push(`contrast(${shadowContrast})`);
+    }
+    
+    // === BLACK POINT === (set minimum black level)
+    if (adjustmentValues.blackpoint !== 0) {
+        if (adjustmentValues.blackpoint > 0) {
+            // Lift blacks - add brightness, reduce contrast
+            const bpBright = 1 + (adjustmentValues.blackpoint / 250);
+            const bpContrast = 1 - (adjustmentValues.blackpoint / 300);
+            filters.push(`brightness(${bpBright})`);
+            filters.push(`contrast(${bpContrast})`);
+        } else {
+            // Crush blacks - increase contrast
+            const bpContrast = 1 - (adjustmentValues.blackpoint / 200);
+            filters.push(`contrast(${bpContrast})`);
+        }
+    }
+    
+    // === CONTRAST ===
+    if (adjustmentValues.contrast !== 0) {
+        const cont = 1 + (adjustmentValues.contrast / 100);
+        filters.push(`contrast(${cont})`);
+    }
+    
+    // === DEFINITION === (local contrast / clarity)
+    if (adjustmentValues.definition !== 0) {
+        const def = 1 + (adjustmentValues.definition / 100);
+        filters.push(`contrast(${def})`);
+    }
+    
+    // === SATURATION ===
+    if (adjustmentValues.saturation !== 0) {
+        const sat = 1 + (adjustmentValues.saturation / 100);
+        filters.push(`saturate(${sat})`);
+    }
+    
+    // === VIBRANCE === (gentler saturation)
+    if (adjustmentValues.vibrance !== 0) {
+        const vib = 1 + (adjustmentValues.vibrance / 150);
+        filters.push(`saturate(${vib})`);
+    }
+    
+    // === WARMTH === (color temperature)
+    if (adjustmentValues.warmth !== 0) {
+        if (adjustmentValues.warmth > 0) {
+            // Warm: sepia effect
+            const warmth = adjustmentValues.warmth / 100;
+            filters.push(`sepia(${warmth * 0.4})`);
+            filters.push(`saturate(${1 + warmth * 0.2})`);
+        } else {
+            // Cool: hue shift towards blue
+            const cool = adjustmentValues.warmth;
+            filters.push(`hue-rotate(${cool * 0.5}deg)`);
+            filters.push(`saturate(${1 + Math.abs(cool) / 200})`);
+        }
+    }
+    
+    // === TINT === (green-magenta axis)
+    if (adjustmentValues.tint !== 0) {
+        const tint = adjustmentValues.tint;
+        filters.push(`hue-rotate(${tint * 0.8}deg)`);
+    }
+    
+    // === BLACK & WHITE ===
+    if (adjustmentValues.bw > 0) {
+        const bw = adjustmentValues.bw / 100;
+        filters.push(`grayscale(${bw})`);
+    }
+    
+    // === SHARPNESS === (simulated with contrast)
+    if (adjustmentValues.sharpness > 0) {
+        const sharp = 1 + (adjustmentValues.sharpness / 200);
+        filters.push(`contrast(${sharp})`);
+    }
+    
+    // === NOISE REDUCTION === (blur)
+    if (adjustmentValues.noise > 0) {
+        const blur = adjustmentValues.noise / 50;
+        filters.push(`blur(${blur}px)`);
+    }
+    
+    // Apply filters
+    if (filters.length > 0) {
+        canvas.style.filter = filters.join(' ');
+    } else {
+        canvas.style.filter = 'none';
+    }
+    
+    console.log('Applied filters:', filters.join(' ')); // Debug
 }
 
 // Reset all adjustments
 document.getElementById('resetAdjustBtn').addEventListener('click', () => {
     adjustmentSliders.forEach(name => {
         const slider = document.getElementById(`${name}-slider`);
-        const valueDisplay = document.getElementById(`${name}-value`);
-        
-        if (slider && valueDisplay) {
-            // Reset to 0 for most, but bw needs special handling
-            const defaultValue = (name === 'bw' || name === 'grain') ? 0 : 0;
-            slider.value = defaultValue;
-            adjustmentValues[name] = defaultValue;
-            valueDisplay.textContent = defaultValue;
+        if (slider) {
+            slider.value = 0;
+            adjustmentValues[name] = 0;
         }
     });
+    
+    // Remove modified and active class from all icons
+    document.querySelectorAll('.adjust-icon-btn').forEach(btn => {
+        btn.classList.remove('modified');
+        btn.classList.remove('active');
+    });
+    
+    // Reset current slider and label
+    currentAdjustment = null;
+    if (adjustSlider) {
+        adjustSlider.value = 0;
+    }
+    if (adjustValueDisplay) {
+        adjustValueDisplay.textContent = '';
+    }
+    if (adjustSelectedLabel) {
+        adjustSelectedLabel.textContent = '';
+    }
+    updateRulerHighlight(0);
     
     // Clear all filters
     canvas.style.filter = 'none';
 });
 
 // Update slider display values
-geometrizeAlpha.addEventListener("input", () => {
-    document.getElementById("alphaDisplayValue").textContent = geometrizeAlpha.value;
-});
-geometrizeCandidates.addEventListener("input", () => {
-    document.getElementById("candidatesValue").textContent = geometrizeCandidates.value;
-});
-geometrizeMutations.addEventListener("input", () => {
-    document.getElementById("mutationsValue").textContent = geometrizeMutations.value;
-});
+const geometrizeAlphaEl = document.getElementById("geometrizeAlpha");
+const geometrizeCandidatesEl = document.getElementById("geometrizeCandidates");
+const geometrizeMutationsEl = document.getElementById("geometrizeMutations");
+
+if (geometrizeAlphaEl) {
+    geometrizeAlphaEl.addEventListener("input", () => {
+        document.getElementById("alphaDisplayValue").textContent = geometrizeAlphaEl.value;
+    });
+}
+if (geometrizeCandidatesEl) {
+    geometrizeCandidatesEl.addEventListener("input", () => {
+        document.getElementById("candidatesValue").textContent = geometrizeCandidatesEl.value;
+    });
+}
+if (geometrizeMutationsEl) {
+    geometrizeMutationsEl.addEventListener("input", () => {
+        document.getElementById("mutationsValue").textContent = geometrizeMutationsEl.value;
+    });
+}
 
 /* ==========================================================
    DOWNLOAD JSON
