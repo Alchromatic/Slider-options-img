@@ -3202,8 +3202,14 @@ window.enhanceSelectedRegions = async function() {
     progressText.textContent = 'Preparing regions...';
     
     try {
-        // Render current canvas to get source image
-        drawCanvas();
+        // Check if we have the original source image
+        if (!window.sourceImageData) {
+            alert("No source image available. Please generate shapes from an image first.");
+            progressDiv.style.display = 'none';
+            return;
+        }
+        
+        const sourceCanvas = window.sourceImageData;
         const imgRect = getImageRect();
         
         // Prepare worker code once
@@ -3227,47 +3233,46 @@ window.enhanceSelectedRegions = async function() {
             
             progressText.textContent = `Region ${regionIdx + 1}/${regions.length}: Preparing...`;
             
-            // Calculate bounding box of the region polygon (in canvas coordinates)
-            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            // Region points are already in IMAGE coordinates (not canvas coordinates)
+            // Calculate bounding box directly from region points
+            let imgMinX = Infinity, imgMinY = Infinity, imgMaxX = -Infinity, imgMaxY = -Infinity;
             for (const pt of region.points) {
-                const canvasX = pt.x * imgRect.scale + imgRect.x;
-                const canvasY = pt.y * imgRect.scale + imgRect.y;
-                minX = Math.min(minX, canvasX);
-                minY = Math.min(minY, canvasY);
-                maxX = Math.max(maxX, canvasX);
-                maxY = Math.max(maxY, canvasY);
+                imgMinX = Math.min(imgMinX, pt.x);
+                imgMinY = Math.min(imgMinY, pt.y);
+                imgMaxX = Math.max(imgMaxX, pt.x);
+                imgMaxY = Math.max(imgMaxY, pt.y);
             }
             
-            // Add some padding and clamp to canvas bounds
+            // Add some padding and clamp to source image bounds
             const padding = 5;
-            minX = Math.max(0, Math.floor(minX - padding));
-            minY = Math.max(0, Math.floor(minY - padding));
-            maxX = Math.min(canvas.width, Math.ceil(maxX + padding));
-            maxY = Math.min(canvas.height, Math.ceil(maxY + padding));
+            imgMinX = Math.max(0, Math.floor(imgMinX - padding));
+            imgMinY = Math.max(0, Math.floor(imgMinY - padding));
+            imgMaxX = Math.min(sourceCanvas.width, Math.ceil(imgMaxX + padding));
+            imgMaxY = Math.min(sourceCanvas.height, Math.ceil(imgMaxY + padding));
             
-            const cropWidth = maxX - minX;
-            const cropHeight = maxY - minY;
+            const cropWidth = imgMaxX - imgMinX;
+            const cropHeight = imgMaxY - imgMinY;
             
             if (cropWidth < 10 || cropHeight < 10) {
                 console.log(`Region ${regionIdx} too small, skipping`);
                 continue;
             }
             
-            // Extract just this region's pixels from the full image
+            // Extract region from ORIGINAL SOURCE IMAGE (not the canvas!)
             const cropCanvas = document.createElement('canvas');
             cropCanvas.width = cropWidth;
             cropCanvas.height = cropHeight;
             const cropCtx = cropCanvas.getContext('2d');
             
-            // Copy the region from the main canvas
+            // Copy from the original source image
             cropCtx.drawImage(
-                canvas, 
-                minX, minY, cropWidth, cropHeight,
+                sourceCanvas, 
+                imgMinX, imgMinY, cropWidth, cropHeight,
                 0, 0, cropWidth, cropHeight
             );
             
-            // Downscale for geometrize (max 128px for speed - regions are small)
-            const maxDim = 128;
+            // Downscale for geometrize (use 256 for better detail)
+            const maxDim = 256;
             let workWidth = cropWidth;
             let workHeight = cropHeight;
             
@@ -3296,17 +3301,13 @@ window.enhanceSelectedRegions = async function() {
                 data[i] = ((r & 255) << 24) | ((g & 255) << 16) | ((b & 255) << 8) | (a & 255);
             }
             
-            // Scale factors: from work coords -> crop coords -> image coords
-            const scaleWorkToCrop = cropWidth / workWidth;
-            const scaleCanvasToImage = 1 / imgRect.scale;
+            // Scale factors: from work coords to original image coords
+            const scaleX = cropWidth / workWidth;
+            const scaleY = cropHeight / workHeight;
             
-            // Combined scale from work coords to image coords
-            const totalScaleX = scaleWorkToCrop * scaleCanvasToImage;
-            const totalScaleY = scaleWorkToCrop * scaleCanvasToImage;
-            
-            // Offset in image coordinates
-            const offsetX = (minX - imgRect.x) / imgRect.scale;
-            const offsetY = (minY - imgRect.y) / imgRect.scale;
+            // Offset in original image coordinates
+            const offsetX = imgMinX;
+            const offsetY = imgMinY;
             
             // Run geometrize on this small region
             const worker = new Worker(URL.createObjectURL(workerBlob));
@@ -3329,7 +3330,7 @@ window.enhanceSelectedRegions = async function() {
                                 for (const shape of shapes) {
                                     const transformedShape = transformRegionShape(
                                         shape, 
-                                        totalScaleX, totalScaleY, 
+                                        scaleX, scaleY, 
                                         offsetX, offsetY
                                     );
                                     currentShapes.push(transformedShape);
@@ -3575,34 +3576,36 @@ function drawSelectiveResolutionPath() {
 }
 
 async function processSelectiveResolution() {
-    const imgRect = getImageRect();
-    
-    // Convert canvas coordinates to image coordinates
-    const pathPoints = selectiveResolutionPath.map(p => ({
-        x: (p.x - imgRect.x) / imgRect.scale,
-        y: (p.y - imgRect.y) / imgRect.scale
-    }));
-    
-    // Calculate bounding box
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    for (const pt of selectiveResolutionPath) {
-        minX = Math.min(minX, pt.x);
-        minY = Math.min(minY, pt.y);
-        maxX = Math.max(maxX, pt.x);
-        maxY = Math.max(maxY, pt.y);
+    // Check if we have the original source image
+    if (!window.sourceImageData) {
+        alert("No source image available. Please generate shapes from an image first.");
+        return;
     }
     
-    // Add padding and clamp
+    const imgRect = getImageRect();
+    const sourceCanvas = window.sourceImageData;
+    
+    // Convert canvas coordinates to IMAGE coordinates (not canvas coordinates)
+    // The drawn path is in canvas coordinates, we need to map to original image coordinates
+    let minCanvasX = Infinity, minCanvasY = Infinity, maxCanvasX = -Infinity, maxCanvasY = -Infinity;
+    for (const pt of selectiveResolutionPath) {
+        minCanvasX = Math.min(minCanvasX, pt.x);
+        minCanvasY = Math.min(minCanvasY, pt.y);
+        maxCanvasX = Math.max(maxCanvasX, pt.x);
+        maxCanvasY = Math.max(maxCanvasY, pt.y);
+    }
+    
+    // Convert canvas bounding box to original image coordinates
     const padding = 5;
-    minX = Math.max(0, Math.floor(minX - padding));
-    minY = Math.max(0, Math.floor(minY - padding));
-    maxX = Math.min(canvas.width, Math.ceil(maxX + padding));
-    maxY = Math.min(canvas.height, Math.ceil(maxY + padding));
+    let imgMinX = Math.max(0, Math.floor((minCanvasX - imgRect.x) / imgRect.scale - padding));
+    let imgMinY = Math.max(0, Math.floor((minCanvasY - imgRect.y) / imgRect.scale - padding));
+    let imgMaxX = Math.min(sourceCanvas.width, Math.ceil((maxCanvasX - imgRect.x) / imgRect.scale + padding));
+    let imgMaxY = Math.min(sourceCanvas.height, Math.ceil((maxCanvasY - imgRect.y) / imgRect.scale + padding));
     
-    const cropWidth = maxX - minX;
-    const cropHeight = maxY - minY;
+    const cropWidth = imgMaxX - imgMinX;
+    const cropHeight = imgMaxY - imgMinY;
     
-    if (cropWidth < 20 || cropHeight < 20) {
+    if (cropWidth < 10 || cropHeight < 10) {
         return; // Region too small
     }
     
@@ -3631,15 +3634,17 @@ async function processSelectiveResolution() {
         );
         const workerBlob = new Blob([geometrizeLibCode], { type: 'application/javascript' });
         
-        // Extract region from canvas
+        // Extract region from ORIGINAL SOURCE IMAGE (not the canvas!)
         const cropCanvas = document.createElement('canvas');
         cropCanvas.width = cropWidth;
         cropCanvas.height = cropHeight;
         const cropCtx = cropCanvas.getContext('2d');
-        cropCtx.drawImage(canvas, minX, minY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
         
-        // Downscale for geometrize
-        const maxDim = 128;
+        // Draw from the original source image
+        cropCtx.drawImage(sourceCanvas, imgMinX, imgMinY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+        
+        // Downscale for geometrize (use higher resolution for better detail - 256 instead of 128)
+        const maxDim = 256;
         let workWidth = cropWidth;
         let workHeight = cropHeight;
         
@@ -3668,13 +3673,12 @@ async function processSelectiveResolution() {
             data[i] = ((r & 255) << 24) | ((g & 255) << 16) | ((b & 255) << 8) | (a & 255);
         }
         
-        // Scale factors
-        const scaleWorkToCrop = cropWidth / workWidth;
-        const scaleCanvasToImage = 1 / imgRect.scale;
-        const totalScaleX = scaleWorkToCrop * scaleCanvasToImage;
-        const totalScaleY = scaleWorkToCrop * scaleCanvasToImage;
-        const offsetX = (minX - imgRect.x) / imgRect.scale;
-        const offsetY = (minY - imgRect.y) / imgRect.scale;
+        // Scale factors - from work coordinates to original image coordinates
+        const scaleX = cropWidth / workWidth;
+        const scaleY = cropHeight / workHeight;
+        // Offset in original image coordinates
+        const offsetX = imgMinX;
+        const offsetY = imgMinY;
         
         // Run geometrize
         const worker = new Worker(URL.createObjectURL(workerBlob));
@@ -3695,7 +3699,7 @@ async function processSelectiveResolution() {
                             
                             for (const shape of shapes) {
                                 const transformedShape = transformRegionShape(
-                                    shape, totalScaleX, totalScaleY, offsetX, offsetY
+                                    shape, scaleX, scaleY, offsetX, offsetY
                                 );
                                 currentShapes.push(transformedShape);
                             }
