@@ -767,6 +767,291 @@ canvas.picking { cursor: crosshair; }
     border-color: #7c4dff;
     background: #f3e5f5;
 }
+
+/* Main Tabs Container */
+.main-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 0;
+    border-bottom: 2px solid #dee2e6;
+}
+.main-tab-btn {
+    padding: 12px 24px;
+    background: #f0f0f0;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+    transition: all 0.2s;
+}
+.main-tab-btn:hover {
+    background: #e8e8e8;
+    color: #333;
+}
+.main-tab-btn.active {
+    background: white;
+    color: #7c4dff;
+    border-bottom-color: #7c4dff;
+}
+.main-tab-content {
+    display: none;
+    padding: 20px 0;
+}
+.main-tab-content.active {
+    display: block;
+}
+
+/* Rendering Logic Icons Strip */
+.rendering-icons-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+.rendering-icon-btn {
+    width: 48px;
+    height: 48px;
+    border: 2px solid #d1d1d6;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    position: relative;
+}
+.rendering-icon-btn:hover {
+    border-color: #7c4dff;
+    transform: scale(1.05);
+}
+.rendering-icon-btn.active {
+    border-color: #7c4dff;
+    background: #f3e5f5;
+    box-shadow: 0 0 0 2px rgba(124, 77, 255, 0.2);
+}
+.rendering-icon-btn svg {
+    width: 24px;
+    height: 24px;
+    stroke: #333;
+    stroke-width: 1.5;
+    fill: none;
+}
+.rendering-icon-btn.active svg {
+    stroke: #7c4dff;
+}
+.rendering-icon-btn[title]::after {
+    content: attr(title);
+    position: absolute;
+    bottom: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 100;
+}
+.rendering-icon-btn:hover[title]::after {
+    opacity: 1;
+}
+
+/* Selective Resolution Icon - Special styling */
+#selectiveResolutionIcon {
+    border-color: #2196F3;
+    background: linear-gradient(135deg, #e3f2fd 0%, #fff 100%);
+}
+#selectiveResolutionIcon:hover {
+    border-color: #1565C0;
+    background: linear-gradient(135deg, #bbdefb 0%, #e3f2fd 100%);
+}
+#selectiveResolutionIcon.active {
+    border-color: #1565C0;
+    background: linear-gradient(135deg, #bbdefb 0%, #e3f2fd 100%);
+    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.3);
+}
+#selectiveResolutionIcon svg {
+    stroke: #2196F3;
+}
+
+/* Slider Container for Rendering */
+.rendering-slider-container {
+    margin: 15px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+.rendering-slider-container label {
+    font-size: 12px;
+    color: #666;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 8px;
+}
+.rendering-slider-container input[type="range"] {
+    width: 100%;
+}
+
+/* Drag & Drop Inline Container */
+.drag-drop-inline {
+    margin-top: 15px;
+    padding: 15px;
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    display: none;
+}
+.drag-drop-inline.active {
+    display: block;
+}
+.drag-drop-inline h4 {
+    margin: 0 0 10px 0;
+    font-size: 13px;
+    color: #495057;
+}
+.drag-drop-inline .color-palette {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* Sequence Filter Styles */
+.sequence-filter-section {
+    margin-top: 15px;
+    padding: 15px;
+    background: #fff3e0;
+    border: 1px solid #ffcc80;
+    border-radius: 8px;
+}
+.sequence-filter-section h4 {
+    margin: 0 0 10px 0;
+    font-size: 13px;
+    color: #e65100;
+}
+.sequence-filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    max-height: 150px;
+    overflow-y: auto;
+}
+.sequence-filter-chip {
+    width: 36px;
+    height: 36px;
+    border-radius: 4px;
+    border: 2px solid #ccc;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+.sequence-filter-chip:hover {
+    transform: scale(1.1);
+    border-color: #333;
+}
+.sequence-filter-chip.selected {
+    border-color: #e65100;
+    box-shadow: 0 0 0 3px rgba(230, 81, 0, 0.3);
+}
+.sequence-filter-chip.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-weight: bold;
+    text-shadow: 0 0 3px black;
+}
+.sequence-filter-chip .chip-counter {
+    position: absolute;
+    bottom: -6px;
+    right: -6px;
+    background: #333;
+    color: white;
+    font-size: 9px;
+    font-weight: bold;
+    padding: 2px 4px;
+    border-radius: 8px;
+    min-width: 14px;
+    text-align: center;
+    line-height: 1;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+.sequence-filter-actions {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+}
+.sequence-filter-actions button {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+#clearFilterBtn {
+    background: #ff5722;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+#clearFilterBtn:hover {
+    background: #e64a19;
+}
+.sort-btn {
+    padding: 4px 10px;
+    font-size: 11px;
+    border: 1px solid #ccc;
+    background: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.sort-btn:hover {
+    border-color: #e65100;
+    background: #fff3e0;
+}
+.sort-btn.active {
+    background: #e65100;
+    color: white;
+    border-color: #e65100;
+}
+.slider-mode-btn {
+    padding: 4px 10px;
+    font-size: 11px;
+    border: 1px solid #ccc;
+    background: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.slider-mode-btn:hover {
+    border-color: #1976d2;
+    background: #e3f2fd;
+}
+.slider-mode-btn.active {
+    background: #1976d2;
+    color: white;
+    border-color: #1976d2;
+}
+
+/* Shape Type Validation */
+.shape-type-error {
+    color: #c62828;
+    font-size: 11px;
+    margin-top: 4px;
+    display: none;
+}
+.shape-type-error.visible {
+    display: block;
+}
 </style>
 <script type="application/json" id="colorsData">
 {
@@ -834,6 +1119,14 @@ canvas.picking { cursor: crosshair; }
 <body>
 <h2>Art-AI Renderer - Selective Resolution</h2>
 
+<!-- Main Tabs Navigation -->
+<div class="main-tabs">
+    <button class="main-tab-btn active" data-tab="tab-addimage">Add Image</button>
+    <button class="main-tab-btn" data-tab="tab-adjust">Adjust</button>
+</div>
+
+<!-- TAB 1: Add Image (Generate from Image) -->
+<div id="tab-addimage" class="main-tab-content active">
 <!-- ========================== GEOMETRIZE (Client-Side) ========================= -->
 <div class="section" style="background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%); padding: 20px; border-radius: 8px; border: 2px solid #7c4dff;">
     <h3 style="color: #512da8; margin-top: 0;">Generate from Image</h3>
@@ -867,6 +1160,7 @@ canvas.picking { cursor: crosshair; }
                     <label class="shape-checkbox"><input type="checkbox" name="shapeType" value="6"> <span>Line</span></label>
                     <label class="shape-checkbox"><input type="checkbox" name="shapeType" value="7"> <span>Bezier</span></label>
                 </div>
+                <div id="shapeTypeError" class="shape-type-error">Please select at least one shape type</div>
             </div>
             <!-- Alpha -->
             <div>
@@ -921,6 +1215,45 @@ canvas.picking { cursor: crosshair; }
     <button id="downloadJsonBtn" style="background: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; margin-top: 10px; width: 100%;" disabled>
         Download JSON
     </button>
+    
+    <!-- LINE DRAWING MODE -->
+    <div style="margin-top: 15px; padding-top: 15px; border-top: 2px dashed #ff9800;">
+        <h4 style="color: #e65100; margin: 0 0 10px 0; font-size: 14px;">📝 Line Drawing Mode</h4>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+            <div>
+                <label style="font-size: 11px; color: #666;">Style:</label>
+                <select id="lineDrawingStyle" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;">
+                    <option value="stencil">Stencil (Outline Only)</option>
+                    <option value="sketch">Pencil Sketch</option>
+                    <option value="detailed" selected>Detailed Sketch</option>
+                    <option value="crosshatch">Cross-Hatch Style</option>
+                    <option value="architectural">Architectural</option>
+                </select>
+            </div>
+            <div>
+                <label style="font-size: 11px; color: #666;">Detail: <span id="ldDetailVal">80</span>%</label>
+                <input type="range" id="lineDrawingDetail" min="20" max="100" value="80" style="width: 100%;">
+            </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+            <div>
+                <label style="font-size: 11px; color: #666;">Line Weight: <span id="ldWeightVal">2</span></label>
+                <input type="range" id="lineDrawingWeight" min="1" max="4" value="2" style="width: 100%;">
+            </div>
+            <div style="display: flex; align-items: end;">
+                <label style="font-size: 11px; color: #666; display: flex; align-items: center; gap: 5px;">
+                    <input type="checkbox" id="lineDrawingGrid"> Show Grid Lines
+                </label>
+            </div>
+        </div>
+        <button id="generateLineDrawingBtn" style="background: linear-gradient(135deg, #ff9800, #f57c00); color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; width: 100%;">
+            Generate Line Drawing
+        </button>
+        <button id="downloadLineDrawingBtn" style="background: #607D8B; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 8px; width: 100%; display: none;">
+            Download Line Drawing PNG
+        </button>
+    </div>
+    
     <div id="geometrizeStatus" class="info" style="margin-top: 10px; text-align: center;"></div>
 </div>
 
@@ -940,44 +1273,131 @@ canvas.picking { cursor: crosshair; }
 <!-- ====================== SELECTIVE RESOLUTION =================== -->
 <div class="section highlight">
     <h3>Selective Resolution Tool</h3>
-    <div class="info">Draw freehand on the canvas to select regions for high-resolution detail.</div>
+    <div class="info">Draw freehand on the canvas to select regions, then click the enhance icon (or button below) to add more detail to those areas.</div>
 
     <button id="selectRegionsBtn">Select Regions for Detail</button>
     <button id="clearRegionsBtn">Clear All Regions</button>
-    <button id="applySelectiveBtn">Apply Selective Resolution</button>
+    <button id="applyEnhanceBtn" style="background: #4CAF50; color: white;" onclick="enhanceSelectedRegions()">Enhance Selected Regions</button>
+    
+    <div id="enhanceProgress" style="display: none; margin-top: 10px;">
+        <div style="background: #e0e0e0; border-radius: 4px; overflow: hidden;">
+            <div id="enhanceProgressFill" style="height: 20px; background: #4CAF50; width: 0%; transition: width 0.3s;"></div>
+        </div>
+        <div id="enhanceProgressText" style="font-size: 12px; color: #666; margin-top: 5px;">Generating detail shapes...</div>
+    </div>
 
     <div class="region-list" id="regionList" style="display:none;"></div>
 </div>
+</div><!-- END TAB 1 -->
 
-<!-- ====================== RENDERING LOGIC ======================== -->
+<!-- TAB 2: Adjust (Rendering Logic + Color Picker + Adjustments) -->
+<div id="tab-adjust" class="main-tab-content">
+
+<!-- ====================== RENDERING LOGIC (Icon-Based) ======================== -->
 <div class="section">
     <h3>Rendering Logic</h3>
-
-    <div class="radio-group">
-        <label><input type="radio" name="logic" value="original" checked> Original Order</label>
-        <label><input type="radio" name="logic" value="exterior_to_center"> Exterior → Center</label>
-        <label><input type="radio" name="logic" value="center_to_exterior"> Center → Exterior</label>
-        <label><input type="radio" name="logic" value="top_to_bottom"> Top → Bottom</label>
-        <label><input type="radio" name="logic" value="bottom_to_top"> Bottom → Top</label>
-        <label><input type="radio" name="logic" value="color_sequence"> Color Sequence</label>
-        <label><input type="radio" name="logic" value="light_to_dark"> Light → Dark</label>
-        <label><input type="radio" name="logic" value="dark_to_light"> Dark → Light</label>
-        <label><input type="radio" name="logic" value="frequency_by_color"> Most Count → Least Count</label>
-        <label><input type="radio" name="logic" value="frequency_by_color_reverse"> Least Count → Most Count</label>
-        <label><input type="radio" name="logic" value="custom_sequence"> Custom Sequence (Drag Colors)</label>
+    <div class="info" style="margin-bottom: 10px;">Select a rendering order for shapes.</div>
+    
+    <!-- Icons Strip for Rendering Logic -->
+    <div class="rendering-icons-strip">
+        <button class="rendering-icon-btn active" data-logic="original" title="Original Order">
+            <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="15" x2="16" y2="15"/></svg>
+        </button>
+        <button class="rendering-icon-btn" data-logic="exterior_to_center" title="Exterior → Center">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>
+        </button>
+        <button class="rendering-icon-btn" data-logic="center_to_exterior" title="Center → Exterior">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2" fill="currentColor"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="9"/></svg>
+        </button>
+        <button class="rendering-icon-btn" data-logic="top_to_bottom" title="Top → Bottom">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="3" x2="12" y2="21"/><polyline points="6,15 12,21 18,15"/></svg>
+        </button>
+        <button class="rendering-icon-btn" data-logic="bottom_to_top" title="Bottom → Top">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="21" x2="12" y2="3"/><polyline points="6,9 12,3 18,9"/></svg>
+        </button>
+        <button class="rendering-icon-btn" data-logic="color_sequence" title="Color Sequence">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="6" height="6" fill="#ff6b6b" stroke="none"/><rect x="9" y="3" width="6" height="6" fill="#4ecdc4" stroke="none"/><rect x="15" y="3" width="6" height="6" fill="#45b7d1" stroke="none"/><rect x="3" y="9" width="18" height="12" rx="1"/></svg>
+        </button>
+        <button class="rendering-icon-btn" data-logic="light_to_dark" title="Light → Dark">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 3 L21 21" stroke-width="2"/><rect x="3" y="3" width="9" height="18" fill="white" stroke="none"/></svg>
+        </button>
+        <button class="rendering-icon-btn" data-logic="dark_to_light" title="Dark → Light">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" fill="#333"/><path d="M3 3 L21 21" stroke="#fff" stroke-width="2"/><rect x="12" y="3" width="9" height="18" fill="white" stroke="none"/></svg>
+        </button>
+        <button class="rendering-icon-btn" data-logic="frequency_by_color" title="Most → Least Count">
+            <svg viewBox="0 0 24 24"><rect x="3" y="14" width="4" height="7"/><rect x="8" y="10" width="4" height="11"/><rect x="13" y="6" width="4" height="15"/><rect x="18" y="3" width="4" height="18"/></svg>
+        </button>
+        <button class="rendering-icon-btn" data-logic="frequency_by_color_reverse" title="Least → Most Count">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="4" height="18"/><rect x="8" y="6" width="4" height="15"/><rect x="13" y="10" width="4" height="11"/><rect x="18" y="14" width="4" height="7"/></svg>
+        </button>
+        <button class="rendering-icon-btn" data-logic="custom_sequence" title="Custom Sequence (Drag Colors)">
+            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="7" rx="1"/><rect x="14" y="4" width="7" height="7" rx="1"/><rect x="3" y="13" width="7" height="7" rx="1"/><rect x="14" y="13" width="7" height="7" rx="1"/><path d="M10 7.5 L14 7.5" stroke-dasharray="2,1"/><path d="M10 16.5 L14 16.5" stroke-dasharray="2,1"/></svg>
+        </button>
+        <button class="rendering-icon-btn" id="selectiveResolutionIcon" title="Selective Resolution (Draw region to add detail)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <rect x="6" y="6" width="8" height="8" rx="1" stroke-dasharray="2,1"/>
+                <circle cx="10" cy="10" r="2" fill="currentColor" stroke="none"/>
+                <line x1="16" y1="8" x2="19" y2="8"/>
+                <line x1="16" y1="12" x2="19" y2="12"/>
+                <line x1="16" y1="16" x2="19" y2="16"/>
+                <line x1="8" y1="16" x2="12" y2="16"/>
+            </svg>
+        </button>
+    </div>
+    
+    <!-- Hidden radio buttons for logic (keep for JS compatibility) -->
+    <div style="display: none;">
+        <input type="radio" name="logic" value="original" checked>
+        <input type="radio" name="logic" value="exterior_to_center">
+        <input type="radio" name="logic" value="center_to_exterior">
+        <input type="radio" name="logic" value="top_to_bottom">
+        <input type="radio" name="logic" value="bottom_to_top">
+        <input type="radio" name="logic" value="color_sequence">
+        <input type="radio" name="logic" value="light_to_dark">
+        <input type="radio" name="logic" value="dark_to_light">
+        <input type="radio" name="logic" value="frequency_by_color">
+        <input type="radio" name="logic" value="frequency_by_color_reverse">
+        <input type="radio" name="logic" value="custom_sequence">
     </div>
 
-    <button id="editColorBtn">Edit Color Sequence</button>
+    <!-- Progressive Render Slider (under icons when logic selected) -->
+    <div class="rendering-slider-container">
+        <label id="sliderLabel">Shapes: 0 / 0</label>
+        <input type="range" id="slider" min="0" max="0" value="0">
+    </div>
+    
+    <!-- Inline Drag & Drop (shown when custom_sequence is selected) -->
+    <div id="dragDropInline" class="drag-drop-inline">
+        <h4>Drag & Drop Color Order</h4>
+        <div id="frequencyInfoInline" class="frequency-info"></div>
+        <div id="colorPaletteInline" class="color-palette"></div>
+        <button id="saveDragInlineBtn" style="background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-top: 10px;">Apply Order</button>
+    </div>
+
+    <button id="editColorBtn" style="margin-top: 10px;">Edit Color Sequence</button>
     <button id="dragColorBtn">Drag & Drop Color Order</button>
 
-    <!-- ⭐ NEW BAKE OPAQUE BUTTON (Option A) -->
     <button id="bakeOpaqueBtn" style="background:#2196F3; color:white; margin-top:10px;">
         Bake Opaque (Fix Order Issues)
     </button>
     <div class="info">Makes shapes order-independent</div>
+    
+    <!-- Sequence Filter Section -->
+    <div id="sequenceFilterSection" class="sequence-filter-section" style="display: none;">
+        <h4>Sequence Filter (Click to show only selected color)</h4>
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+            <span style="font-size: 12px; color: #666;">Sort:</span>
+            <button id="sortDescBtn" class="sort-btn active" title="Most to Least">▼ Most</button>
+            <button id="sortAscBtn" class="sort-btn" title="Least to Most">▲ Least</button>
+        </div>
+        <div id="sequenceFilterChips" class="sequence-filter-chips"></div>
+        <div class="sequence-filter-actions">
+            <button id="clearFilterBtn">Clear Filter</button>
+            <button id="showGroupedOnlyBtn" style="background: #9c27b0; color: white; border: none; border-radius: 4px; cursor: pointer;">Show Grouped Only (<span id="groupedColorCount">0</span>)</button>
+        </div>
+    </div>
 </div>
-
-
 
 <!-- ====================== COLOR PICKER ======================== -->
 <div class="section">
@@ -1075,18 +1495,17 @@ canvas.picking { cursor: crosshair; }
     </div>
 </div>
 
-<!-- ========================= SLIDERS ============================= -->
-<div class="section slider-container">
-    <h3>Progressive Render</h3>
-    <div class="info" id="sliderLabel">Shapes: 0 / 0</div>
-    <input type="range" id="slider" min="0" max="0" value="0">
-</div>
-
 <div class="section slider-container">
     <h3>Color Grouping (Compress Similar Colors)</h3>
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+        <span style="font-size: 12px; color: #666;">Mode:</span>
+        <button id="sliderModeNormal" class="slider-mode-btn active" title="Start with all colors, slide right to compress">All → Few</button>
+        <button id="sliderModeReversed" class="slider-mode-btn" title="Start compressed, slide right to expand">Few → All</button>
+    </div>
     <div class="info" id="colorGroupLabel">Tolerance: 0 (Unique colors: 0)</div>
     <input type="range" id="colorGroupSlider" min="0" max="100" value="0">
 </div>
+</div><!-- END TAB 2 -->
 
 <!-- ========================== CANVAS ============================= -->
 <div style="position: relative;">
@@ -1282,6 +1701,12 @@ let regions = [];
 let customColorOrder = null;
 let colorOrder = null;
 let colorTolerance = 0;
+let selectedFilterColor = null; // For sequence filter
+let showGroupedOnly = false; // Toggle for sequence filter to show grouped colors only
+let sequenceFilterSortOrder = 'desc'; // 'desc' = most to least, 'asc' = least to most
+let sliderModeReversed = false; // false = normal (0→100), true = reversed (100→0 displayed as 0→100)
+let isSelectiveResolutionMode = false; // For selective resolution tool
+let selectiveResolutionPath = []; // Current drawing path for selective resolution
 
 const baseFileInput = document.getElementById("baseFileInput");
 const detailFileInput = document.getElementById("detailFileInput");
@@ -1290,7 +1715,7 @@ const detailFileStatus = document.getElementById("detailFileStatus");
 
 const selectRegionsBtn = document.getElementById("selectRegionsBtn");
 const clearRegionsBtn = document.getElementById("clearRegionsBtn");
-const applySelectiveBtn = document.getElementById("applySelectiveBtn");
+const applyEnhanceBtn = document.getElementById("applyEnhanceBtn");
 const regionList = document.getElementById("regionList");
 const regionOverlay = document.getElementById("regionOverlay");
 
@@ -1307,6 +1732,280 @@ const editColorBtn = document.getElementById("editColorBtn");
 const dragColorBtn = document.getElementById("dragColorBtn");
 
 const bakeOpaqueBtn = document.getElementById("bakeOpaqueBtn");
+
+/* ==========================================================
+   MAIN TABS FUNCTIONALITY
+========================================================== */
+document.querySelectorAll('.main-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const tabId = btn.dataset.tab;
+        
+        // Update buttons
+        document.querySelectorAll('.main-tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // Update tab content
+        document.querySelectorAll('.main-tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        document.getElementById(tabId).classList.add('active');
+    });
+});
+
+/* ==========================================================
+   RENDERING LOGIC ICONS FUNCTIONALITY
+========================================================== */
+document.querySelectorAll('.rendering-icon-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const logic = btn.dataset.logic;
+        
+        // Skip if this is the selective resolution icon (handled separately)
+        if (btn.id === 'selectiveResolutionIcon') {
+            return;
+        }
+        
+        // Disable selective resolution mode if active
+        if (isSelectiveResolutionMode) {
+            isSelectiveResolutionMode = false;
+            document.getElementById('selectiveResolutionIcon')?.classList.remove('active');
+            canvas.style.cursor = 'crosshair';
+        }
+        
+        // Update icon buttons
+        document.querySelectorAll('.rendering-icon-btn:not(#selectiveResolutionIcon)').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // Update hidden radio button
+        const radio = document.querySelector(`input[name='logic'][value='${logic}']`);
+        if (radio) {
+            radio.checked = true;
+            radio.dispatchEvent(new Event('change'));
+        }
+        
+        // Show/hide inline drag & drop for custom_sequence
+        const dragDropInline = document.getElementById('dragDropInline');
+        if (logic === 'custom_sequence') {
+            dragDropInline.classList.add('active');
+            populateColorPaletteInline();
+        } else {
+            dragDropInline.classList.remove('active');
+        }
+        
+        // Show sequence filter for color-based logics
+        const filterSection = document.getElementById('sequenceFilterSection');
+        if (['color_sequence', 'custom_sequence', 'light_to_dark', 'dark_to_light', 'frequency_by_color', 'frequency_by_color_reverse'].includes(logic)) {
+            filterSection.style.display = 'block';
+            populateSequenceFilterChips();
+        } else {
+            filterSection.style.display = 'none';
+            selectedFilterColor = null;
+        }
+    });
+});
+
+/* ==========================================================
+   SHAPE TYPE VALIDATION
+========================================================== */
+function validateShapeTypes() {
+    const checkboxes = document.querySelectorAll('input[name="shapeType"]:checked');
+    const errorEl = document.getElementById('shapeTypeError');
+    
+    if (checkboxes.length === 0) {
+        errorEl.classList.add('visible');
+        return false;
+    } else {
+        errorEl.classList.remove('visible');
+        return true;
+    }
+}
+
+// Add validation on checkbox change
+document.querySelectorAll('input[name="shapeType"]').forEach(cb => {
+    cb.addEventListener('change', validateShapeTypes);
+});
+
+/* ==========================================================
+   INLINE DRAG & DROP FOR CUSTOM SEQUENCE
+========================================================== */
+function populateColorPaletteInline() {
+    const palette = document.getElementById("colorPaletteInline");
+    if (!palette) return;
+    palette.innerHTML = "";
+
+    const freq = new Map();
+    const working = groupedShapes.length ? groupedShapes : currentShapes;
+
+    if (!working.length) return;
+
+    working.forEach(s => {
+        if (s.type === 0) return;
+        const k = JSON.stringify(s.color);
+        freq.set(k, (freq.get(k) || 0) + 1);
+    });
+
+    const list = [...freq.entries()].map(([k, count]) => ({
+        color: JSON.parse(k),
+        count
+    }));
+
+    list.sort((a, b) => b.count - a.count);
+
+    list.forEach((item, i) => {
+        const chip = document.createElement("div");
+        chip.className = "color-chip";
+        chip.draggable = true;
+        chip.dataset.color = JSON.stringify(item.color);
+        chip.style.backgroundColor = `rgba(${item.color[0]},${item.color[1]},${item.color[2]},${item.color[3]/255})`;
+        chip.innerHTML = `
+            <div class="chip-number">#${i + 1}</div>
+            <div class="rgb-value">${item.color.slice(0,3).join(", ")}</div>
+            <div class="count">${item.count}×</div>
+        `;
+
+        chip.addEventListener("dragstart", () => chip.classList.add("dragging"));
+        chip.addEventListener("dragend", () => chip.classList.remove("dragging"));
+        chip.addEventListener("dragover", e => e.preventDefault());
+        chip.addEventListener("drop", e => {
+            e.preventDefault();
+            const dragging = palette.querySelector(".dragging");
+            if (dragging && dragging !== chip) {
+                const all = [...palette.children];
+                const from = all.indexOf(dragging);
+                const to = all.indexOf(chip);
+                if (from < to) chip.after(dragging);
+                else chip.before(dragging);
+            }
+        });
+
+        palette.appendChild(chip);
+    });
+}
+
+// Save inline drag order
+document.getElementById('saveDragInlineBtn')?.addEventListener('click', () => {
+    const palette = document.getElementById("colorPaletteInline");
+    const chips = [...palette.children];
+    customColorOrder = chips.map(chip => JSON.parse(chip.dataset.color));
+    updateRender();
+});
+
+/* ==========================================================
+   SEQUENCE FILTER FUNCTIONALITY
+========================================================== */
+function populateSequenceFilterChips() {
+    const container = document.getElementById('sequenceFilterChips');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const freq = new Map();
+    // When showGroupedOnly is true, use groupedShapes; otherwise use currentShapes for all original colors
+    const working = showGroupedOnly ? (groupedShapes.length ? groupedShapes : currentShapes) : currentShapes;
+
+    if (!working.length) return;
+
+    working.forEach(s => {
+        if (s.type === 0) return;
+        const k = JSON.stringify(s.color);
+        freq.set(k, (freq.get(k) || 0) + 1);
+    });
+
+    const list = [...freq.entries()].map(([k, count]) => ({
+        color: JSON.parse(k),
+        count
+    }));
+
+    // Sort based on sequenceFilterSortOrder
+    if (sequenceFilterSortOrder === 'desc') {
+        list.sort((a, b) => b.count - a.count); // Most to least
+    } else {
+        list.sort((a, b) => a.count - b.count); // Least to most
+    }
+
+    list.forEach(item => {
+        const chip = document.createElement('div');
+        chip.className = 'sequence-filter-chip';
+        chip.style.backgroundColor = `rgba(${item.color[0]},${item.color[1]},${item.color[2]},${item.color[3]/255})`;
+        chip.dataset.color = JSON.stringify(item.color);
+        chip.title = `RGB(${item.color.slice(0,3).join(', ')}) - ${item.count} shapes`;
+
+        // Add counter badge
+        const counter = document.createElement('span');
+        counter.className = 'chip-counter';
+        counter.textContent = item.count;
+        chip.appendChild(counter);
+
+        chip.addEventListener('click', () => {
+            // Toggle selection
+            if (chip.classList.contains('selected')) {
+                chip.classList.remove('selected');
+                selectedFilterColor = null;
+            } else {
+                container.querySelectorAll('.sequence-filter-chip').forEach(c => c.classList.remove('selected'));
+                chip.classList.add('selected');
+                selectedFilterColor = item.color;
+            }
+            updateRender();
+        });
+
+        container.appendChild(chip);
+    });
+    
+    // Update the grouped color count
+    updateGroupedColorCount();
+}
+
+// Clear filter button
+document.getElementById('clearFilterBtn')?.addEventListener('click', () => {
+    selectedFilterColor = null;
+    document.querySelectorAll('.sequence-filter-chip').forEach(c => c.classList.remove('selected'));
+    updateRender();
+});
+
+// Sort buttons for sequence filter
+document.getElementById('sortDescBtn')?.addEventListener('click', () => {
+    sequenceFilterSortOrder = 'desc';
+    document.getElementById('sortDescBtn').classList.add('active');
+    document.getElementById('sortAscBtn').classList.remove('active');
+    populateSequenceFilterChips();
+});
+
+document.getElementById('sortAscBtn')?.addEventListener('click', () => {
+    sequenceFilterSortOrder = 'asc';
+    document.getElementById('sortAscBtn').classList.add('active');
+    document.getElementById('sortDescBtn').classList.remove('active');
+    populateSequenceFilterChips();
+});
+
+// Show Grouped Only button - filters to show only the grouped colors from the slider
+document.getElementById('showGroupedOnlyBtn')?.addEventListener('click', () => {
+    showGroupedOnly = !showGroupedOnly;
+    const btn = document.getElementById('showGroupedOnlyBtn');
+    if (showGroupedOnly) {
+        btn.style.background = '#7b1fa2';
+        btn.textContent = 'Show All Colors';
+    } else {
+        btn.style.background = '#9c27b0';
+        updateGroupedColorCount(); // Restore original text
+    }
+    populateSequenceFilterChips();
+});
+
+// Update the grouped color count in the button
+function updateGroupedColorCount() {
+    const working = groupedShapes.length ? groupedShapes : currentShapes;
+    const unique = new Set();
+    working.forEach(s => {
+        if (s.type !== 0) unique.add(JSON.stringify(s.color));
+    });
+    const countSpan = document.getElementById('groupedColorCount');
+    if (countSpan) {
+        countSpan.textContent = unique.size;
+    }
+    const btn = document.getElementById('showGroupedOnlyBtn');
+    if (btn && !showGroupedOnly) {
+        btn.innerHTML = `Show Grouped Only (<span id="groupedColorCount">${unique.size}</span>)`;
+    }
+}
 
 const colorPickerBtn = document.getElementById("colorPickerBtn");
 const colorPickerPanel = document.getElementById("colorPickerPanel");
@@ -1753,6 +2452,14 @@ async function imageToBitmapData(imageFile) {
     return new Promise((resolve, reject) => {
         const img = new Image();
         img.onload = () => {
+            // Store the full resolution image for enhance functionality
+            const fullCanvas = document.createElement('canvas');
+            fullCanvas.width = img.width;
+            fullCanvas.height = img.height;
+            const fullCtx = fullCanvas.getContext('2d');
+            fullCtx.drawImage(img, 0, 0);
+            window.sourceImageData = fullCanvas; // Store for selective enhancement
+            
             // Resize if too large for performance
             let width = img.width;
             let height = img.height;
@@ -1907,6 +2614,13 @@ geometrizeBtn.addEventListener("click", async () => {
     const file = geometrizeInput.files[0];
     if (!file) {
         geometrizeStatus.textContent = "Please select an image file first.";
+        geometrizeStatus.style.color = "#f44336";
+        return;
+    }
+    
+    // Validate shape types (multi-select validation)
+    if (!validateShapeTypes()) {
+        geometrizeStatus.textContent = "Please select at least one shape type.";
         geometrizeStatus.style.color = "#f44336";
         return;
     }
@@ -2070,6 +2784,13 @@ geometrizeBtn.addEventListener("click", async () => {
             
             updateRender();
             
+            // Enable color picker and show panel when shapes are generated
+            isPickingColor = true;
+            colorPickerBtn.classList.add("active");
+            colorPickerBtn.textContent = "Disable Color Picker";
+            canvas.classList.add("picking");
+            colorPickerPanel.classList.add("active");
+            
             geometrizeStatus.textContent = `✓ Generated ${generatedShapes.length} shapes as Base (${originalWidth}x${originalHeight})`;
         } else {
             detailShapes = [...generatedShapes];
@@ -2209,6 +2930,13 @@ baseFileInput.addEventListener("change", async e => {
     downloadJsonBtn.disabled = false;
 
     updateRender();
+    
+    // Enable color picker and show panel when shapes are loaded
+    isPickingColor = true;
+    colorPickerBtn.classList.add("active");
+    colorPickerBtn.textContent = "Disable Color Picker";
+    canvas.classList.add("picking");
+    colorPickerPanel.classList.add("active");
 });
 
 detailFileInput.addEventListener("change", async e => {
@@ -2238,6 +2966,12 @@ selectRegionsBtn.addEventListener("click", () => {
         colorPickerPanel.classList.remove("active");
         clearShapeHighlight();
     }
+    
+    // Disable selective resolution mode when region selection is active
+    if (isSelecting && isSelectiveResolutionMode) {
+        isSelectiveResolutionMode = false;
+        document.getElementById('selectiveResolutionIcon')?.classList.remove('active');
+    }
 });
 
 clearRegionsBtn.addEventListener("click", () => {
@@ -2263,7 +2997,7 @@ clearRegionsBtn.addEventListener("click", () => {
 // }
 
 canvas.addEventListener("mousedown", e => {
-    if (!isSelecting) return;
+    if (!isSelecting || isSelectiveResolutionMode) return;
 
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -2274,7 +3008,7 @@ canvas.addEventListener("mousedown", e => {
 });
 
 canvas.addEventListener("mousemove", e => {
-    if (!isSelecting || !isDrawingPath) return;
+    if (!isSelecting || !isDrawingPath || isSelectiveResolutionMode) return;
 
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -2287,7 +3021,7 @@ canvas.addEventListener("mousemove", e => {
 });
 
 canvas.addEventListener("mouseup", e => {
-    if (!isSelecting || !isDrawingPath) return;
+    if (!isSelecting || !isDrawingPath || isSelectiveResolutionMode) return;
 
     isDrawingPath = false;
 
@@ -2471,57 +3205,596 @@ function getImageRect() {
 }
 
 /* ==========================================================
-   APPLY SELECTIVE RESOLUTION
+   ENHANCE SELECTED REGIONS (NEW SIMPLIFIED APPROACH)
 ========================================================== */
 
-applySelectiveBtn.addEventListener("click", async () => {
-    if (!baseShapes.length || !detailShapes.length) {
-        alert("Load both base and detail JSON first.");
+// Enhance multiplier - how many times more shapes to generate in selected regions
+const ENHANCE_MULTIPLIER = 3; // Generate 3x more shapes in regions
+
+// Make function global
+window.enhanceSelectedRegions = async function() {
+    console.log("=== ENHANCE STARTED (OPTIMIZED) ===");
+    
+    if (!currentShapes.length) {
+        alert("Load shapes first.");
         return;
     }
     if (!regions.length) {
-        alert("Select regions first.");
+        alert("Select regions first by drawing on the canvas.");
         return;
     }
-
-    // Convert polygon regions to include bounding box for backend compatibility
-    const processedRegions = regions.map(r => {
-        if (r.type === 'polygon' && r.points) {
-            const xs = r.points.map(p => p.x);
-            const ys = r.points.map(p => p.y);
-            return {
-                type: 'polygon',
-                points: r.points,
-                x: Math.min(...xs),
-                y: Math.min(...ys),
-                width: Math.max(...xs) - Math.min(...xs),
-                height: Math.max(...ys) - Math.min(...ys)
-            };
+    
+    // Get settings from UI - use reduced values for enhance mode (speed over perfect quality)
+    const shapesPerRegion = Math.max(20, Math.round(currentShapes.length * 0.25 / regions.length));
+    const alpha = parseInt(geometrizeAlpha.value) || 128;
+    // Use lower candidates/mutations for enhance - regions are small so fewer iterations needed
+    const candidatesPerStep = Math.min(parseInt(geometrizeCandidates.value) || 50, 30);
+    const mutationsPerStep = Math.min(parseInt(geometrizeMutations.value) || 100, 50);
+    const shapeTypes = getSelectedShapeTypes();
+    
+    const progressDiv = document.getElementById('enhanceProgress');
+    const progressFill = document.getElementById('enhanceProgressFill');
+    const progressText = document.getElementById('enhanceProgressText');
+    
+    progressDiv.style.display = 'block';
+    progressFill.style.width = '0%';
+    progressText.textContent = 'Preparing regions...';
+    
+    try {
+        // Check if we have the original source image
+        if (!window.sourceImageData) {
+            alert("No source image available. Please generate shapes from an image first.");
+            progressDiv.style.display = 'none';
+            return;
         }
-        return r;
-    });
+        
+        const sourceCanvas = window.sourceImageData;
+        const imgRect = getImageRect();
+        
+        // Prepare worker code once
+        let geometrizeLibCode = document.getElementById('geometrize-lib').textContent;
+        geometrizeLibCode = geometrizeLibCode.replace(
+            'onmessage = GeometrizeWorker.prototype.messageHandler;',
+            `
+            var _geometrizeWorkerInstance = new GeometrizeWorker();
+            _geometrizeWorkerInstance.postMessage = function(msg) { self.postMessage(msg); };
+            onmessage = function(e) { _geometrizeWorkerInstance.messageHandler(e); };
+            `
+        );
+        const workerBlob = new Blob([geometrizeLibCode], { type: 'application/javascript' });
+        
+        let totalShapesAdded = 0;
+        const totalShapesTarget = shapesPerRegion * regions.length;
+        
+        // Process each region separately - this is the key optimization!
+        for (let regionIdx = 0; regionIdx < regions.length; regionIdx++) {
+            const region = regions[regionIdx];
+            
+            progressText.textContent = `Region ${regionIdx + 1}/${regions.length}: Preparing...`;
+            
+            // Region points are already in IMAGE coordinates (not canvas coordinates)
+            // Calculate bounding box directly from region points
+            let imgMinX = Infinity, imgMinY = Infinity, imgMaxX = -Infinity, imgMaxY = -Infinity;
+            for (const pt of region.points) {
+                imgMinX = Math.min(imgMinX, pt.x);
+                imgMinY = Math.min(imgMinY, pt.y);
+                imgMaxX = Math.max(imgMaxX, pt.x);
+                imgMaxY = Math.max(imgMaxY, pt.y);
+            }
+            
+            // Add some padding and clamp to source image bounds
+            const padding = 5;
+            imgMinX = Math.max(0, Math.floor(imgMinX - padding));
+            imgMinY = Math.max(0, Math.floor(imgMinY - padding));
+            imgMaxX = Math.min(sourceCanvas.width, Math.ceil(imgMaxX + padding));
+            imgMaxY = Math.min(sourceCanvas.height, Math.ceil(imgMaxY + padding));
+            
+            const cropWidth = imgMaxX - imgMinX;
+            const cropHeight = imgMaxY - imgMinY;
+            
+            if (cropWidth < 10 || cropHeight < 10) {
+                console.log(`Region ${regionIdx} too small, skipping`);
+                continue;
+            }
+            
+            // Extract region from ORIGINAL SOURCE IMAGE (not the canvas!)
+            const cropCanvas = document.createElement('canvas');
+            cropCanvas.width = cropWidth;
+            cropCanvas.height = cropHeight;
+            const cropCtx = cropCanvas.getContext('2d');
+            
+            // Copy from the original source image
+            cropCtx.drawImage(
+                sourceCanvas, 
+                imgMinX, imgMinY, cropWidth, cropHeight,
+                0, 0, cropWidth, cropHeight
+            );
+            
+            // Downscale for geometrize (use 256 for better detail)
+            const maxDim = 256;
+            let workWidth = cropWidth;
+            let workHeight = cropHeight;
+            
+            if (workWidth > maxDim || workHeight > maxDim) {
+                const ratio = Math.min(maxDim / workWidth, maxDim / workHeight);
+                workWidth = Math.floor(workWidth * ratio);
+                workHeight = Math.floor(workHeight * ratio);
+            }
+            
+            const workCanvas = document.createElement('canvas');
+            workCanvas.width = workWidth;
+            workCanvas.height = workHeight;
+            const workCtx = workCanvas.getContext('2d');
+            workCtx.drawImage(cropCanvas, 0, 0, workWidth, workHeight);
+            
+            const imageData = workCtx.getImageData(0, 0, workWidth, workHeight);
+            const pixels = imageData.data;
+            
+            // Convert to geometrize format
+            const data = new Array(workWidth * workHeight);
+            for (let i = 0; i < workWidth * workHeight; i++) {
+                const r = pixels[i * 4];
+                const g = pixels[i * 4 + 1];
+                const b = pixels[i * 4 + 2];
+                const a = pixels[i * 4 + 3];
+                data[i] = ((r & 255) << 24) | ((g & 255) << 16) | ((b & 255) << 8) | (a & 255);
+            }
+            
+            // Scale factors: from work coords to original image coords
+            const scaleX = cropWidth / workWidth;
+            const scaleY = cropHeight / workHeight;
+            
+            // Offset in original image coordinates
+            const offsetX = imgMinX;
+            const offsetY = imgMinY;
+            
+            // Run geometrize on this small region
+            const worker = new Worker(URL.createObjectURL(workerBlob));
+            let regionStep = 0;
+            
+            await new Promise((resolve, reject) => {
+                worker.onmessage = (e) => {
+                    const msg = e.data;
+                    
+                    if (msg.id === "did_set_target_image") {
+                        doStep();
+                    }
+                    else if (msg.id === "did_step") {
+                        if (msg.jsonData && msg.jsonData.length > 0) {
+                            try {
+                                // Parse and transform shapes
+                                const fullJson = "[\n" + msg.jsonData + "\n]";
+                                const shapes = JSON.parse(fullJson);
+                                
+                                for (const shape of shapes) {
+                                    const transformedShape = transformRegionShape(
+                                        shape, 
+                                        scaleX, scaleY, 
+                                        offsetX, offsetY
+                                    );
+                                    currentShapes.push(transformedShape);
+                                }
+                            } catch(parseErr) {
+                                console.error("Parse error:", parseErr);
+                            }
+                        }
+                        
+                        regionStep++;
+                        totalShapesAdded++;
+                        
+                        // Update progress bar only (lightweight)
+                        const progress = (totalShapesAdded / totalShapesTarget) * 100;
+                        progressFill.style.width = progress + "%";
+                        
+                        // Update text and canvas only every 10 shapes (like main generate)
+                        if (regionStep % 10 === 0 || regionStep >= shapesPerRegion) {
+                            progressText.textContent = `Region ${regionIdx + 1}/${regions.length}: ${regionStep}/${shapesPerRegion} shapes`;
+                            slider.max = currentShapes.length;
+                            slider.value = currentShapes.length;
+                            sliderLabel.textContent = `Shapes: ${currentShapes.length} / ${currentShapes.length}`;
+                        }
+                        
+                        if (regionStep >= shapesPerRegion) {
+                            resolve();
+                        } else {
+                            doStep();
+                        }
+                    }
+                };
+                
+                worker.onerror = (err) => {
+                    console.error("Worker error:", err);
+                    reject(err);
+                };
+                
+                function doStep() {
+                    worker.postMessage({
+                        id: "should_step",
+                        data: {
+                            shapeTypes: shapeTypes,
+                            alpha: alpha,
+                            candidateShapesPerStep: candidatesPerStep,
+                            shapeMutationsPerStep: mutationsPerStep
+                        }
+                    });
+                }
+                
+                // Send the small cropped image to worker
+                worker.postMessage({
+                    id: "should_set_target_image",
+                    data: { width: workWidth, height: workHeight, data }
+                });
+            });
+            
+            worker.terminate();
+        }
+        
+        // Sync groupedShapes and draw canvas only once at the very end
+        groupedShapes = [...currentShapes];
+        drawCanvas();
+        
+        progressFill.style.width = '100%';
+        progressText.textContent = `Done! Added ${totalShapesAdded} shapes. Total: ${currentShapes.length}`;
+        
+        setTimeout(() => {
+            progressDiv.style.display = 'none';
+        }, 2000);
+        
+        populateSequenceFilterChips();
+        
+    } catch (error) {
+        console.error('Enhancement error:', error);
+        alert('Error: ' + error.message);
+        progressDiv.style.display = 'none';
+    }
+}
 
-    const res = await fetch(`${API_BASE}/selective_resolution`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            base_shapes: baseShapes,
-            detail_shapes: detailShapes,
-            regions: processedRegions
-        })
-    });
+// Helper function to transform a shape from region coordinates to image coordinates
+function transformRegionShape(shape, scaleX, scaleY, offsetX, offsetY) {
+    const type = shape.type;
+    const data = shape.data;
+    let scaledData;
+    
+    switch(type) {
+        case 0: // Rectangle: [x1, y1, x2, y2]
+            scaledData = [
+                Math.round(data[0] * scaleX + offsetX), Math.round(data[1] * scaleY + offsetY),
+                Math.round(data[2] * scaleX + offsetX), Math.round(data[3] * scaleY + offsetY)
+            ];
+            break;
+        case 1: // Rotated Rectangle: [x1, y1, x2, y2, angle]
+            scaledData = [
+                Math.round(data[0] * scaleX + offsetX), Math.round(data[1] * scaleY + offsetY),
+                Math.round(data[2] * scaleX + offsetX), Math.round(data[3] * scaleY + offsetY),
+                data[4]
+            ];
+            break;
+        case 2: // Triangle: [x1, y1, x2, y2, x3, y3]
+            scaledData = [
+                Math.round(data[0] * scaleX + offsetX), Math.round(data[1] * scaleY + offsetY),
+                Math.round(data[2] * scaleX + offsetX), Math.round(data[3] * scaleY + offsetY),
+                Math.round(data[4] * scaleX + offsetX), Math.round(data[5] * scaleY + offsetY)
+            ];
+            break;
+        case 3: // Ellipse: [cx, cy, rx, ry]
+            scaledData = [
+                Math.round(data[0] * scaleX + offsetX), Math.round(data[1] * scaleY + offsetY),
+                Math.round(data[2] * scaleX), Math.round(data[3] * scaleY)
+            ];
+            break;
+        case 4: // Rotated Ellipse: [cx, cy, rx, ry, angle]
+            scaledData = [
+                Math.round(data[0] * scaleX + offsetX), Math.round(data[1] * scaleY + offsetY),
+                Math.round(data[2] * scaleX), Math.round(data[3] * scaleY),
+                data[4]
+            ];
+            break;
+        case 5: // Circle: [cx, cy, r]
+            const avgScale = (scaleX + scaleY) / 2;
+            scaledData = [
+                Math.round(data[0] * scaleX + offsetX), Math.round(data[1] * scaleY + offsetY),
+                Math.round(data[2] * avgScale)
+            ];
+            break;
+        case 6: // Line: [x1, y1, x2, y2]
+            scaledData = [
+                Math.round(data[0] * scaleX + offsetX), Math.round(data[1] * scaleY + offsetY),
+                Math.round(data[2] * scaleX + offsetX), Math.round(data[3] * scaleY + offsetY)
+            ];
+            break;
+        case 7: // Quadratic Bezier: [x1, y1, cx, cy, x2, y2]
+            scaledData = [
+                Math.round(data[0] * scaleX + offsetX), Math.round(data[1] * scaleY + offsetY),
+                Math.round(data[2] * scaleX + offsetX), Math.round(data[3] * scaleY + offsetY),
+                Math.round(data[4] * scaleX + offsetX), Math.round(data[5] * scaleY + offsetY)
+            ];
+            break;
+        default:
+            scaledData = data.map((v, i) => i % 2 === 0 ? Math.round(v * scaleX + offsetX) : Math.round(v * scaleY + offsetY));
+    }
+    
+    return {
+        type: type,
+        data: scaledData,
+        color: shape.color,
+        score: shape.score
+    };
+}
 
-    const data = await res.json();
+// Event listeners for enhance buttons
+applyEnhanceBtn?.addEventListener("click", enhanceSelectedRegions);
 
-    currentShapes = [...data.shapes];
-    groupedShapes = [...currentShapes];
-    colorTolerance = 0;
-    colorGroupSlider.value = 0;
+/* ==========================================================
+   SELECTIVE RESOLUTION TOOL
+========================================================== */
 
-    alert("Selective resolution applied successfully!");
+const selectiveResolutionIcon = document.getElementById('selectiveResolutionIcon');
 
-    updateRender();
+selectiveResolutionIcon?.addEventListener('click', () => {
+    if (!currentShapes.length) {
+        alert("Generate or load shapes first before using selective resolution.");
+        return;
+    }
+    
+    isSelectiveResolutionMode = !isSelectiveResolutionMode;
+    selectiveResolutionIcon.classList.toggle('active', isSelectiveResolutionMode);
+    
+    if (isSelectiveResolutionMode) {
+        canvas.style.cursor = 'crosshair';
+        // Disable other modes
+        isPickingColor = false;
+        colorPickerBtn?.classList.remove('active');
+        isSelecting = false;
+        selectRegionsBtn?.classList.remove('active');
+    } else {
+        canvas.style.cursor = 'default';
+    }
 });
+
+// Handle selective resolution drawing on canvas
+let isDrawingSelectiveRegion = false;
+
+canvas.addEventListener('mousedown', (e) => {
+    if (!isSelectiveResolutionMode) return;
+    
+    isDrawingSelectiveRegion = true;
+    selectiveResolutionPath = [{ x: e.offsetX, y: e.offsetY }];
+});
+
+canvas.addEventListener('mousemove', (e) => {
+    if (!isSelectiveResolutionMode || !isDrawingSelectiveRegion) return;
+    
+    selectiveResolutionPath.push({ x: e.offsetX, y: e.offsetY });
+    
+    // Draw the path preview
+    drawCanvas();
+    drawSelectiveResolutionPath();
+});
+
+canvas.addEventListener('mouseup', async (e) => {
+    if (!isSelectiveResolutionMode || !isDrawingSelectiveRegion) return;
+    
+    isDrawingSelectiveRegion = false;
+    
+    if (selectiveResolutionPath.length < 3) {
+        selectiveResolutionPath = [];
+        drawCanvas();
+        return;
+    }
+    
+    // Process the region automatically
+    await processSelectiveResolution();
+    
+    selectiveResolutionPath = [];
+    drawCanvas();
+});
+
+function drawSelectiveResolutionPath() {
+    if (selectiveResolutionPath.length < 2) return;
+    
+    ctx.save();
+    ctx.strokeStyle = "#2196F3";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    
+    ctx.beginPath();
+    ctx.moveTo(selectiveResolutionPath[0].x, selectiveResolutionPath[0].y);
+    for (let i = 1; i < selectiveResolutionPath.length; i++) {
+        ctx.lineTo(selectiveResolutionPath[i].x, selectiveResolutionPath[i].y);
+    }
+    ctx.closePath();
+    ctx.stroke();
+    
+    // Fill with semi-transparent
+    ctx.fillStyle = "rgba(33, 150, 243, 0.1)";
+    ctx.fill();
+    
+    ctx.restore();
+}
+
+async function processSelectiveResolution() {
+    // Check if we have the original source image
+    if (!window.sourceImageData) {
+        alert("No source image available. Please generate shapes from an image first.");
+        return;
+    }
+    
+    const imgRect = getImageRect();
+    const sourceCanvas = window.sourceImageData;
+    
+    // Convert canvas coordinates to IMAGE coordinates (not canvas coordinates)
+    // The drawn path is in canvas coordinates, we need to map to original image coordinates
+    let minCanvasX = Infinity, minCanvasY = Infinity, maxCanvasX = -Infinity, maxCanvasY = -Infinity;
+    for (const pt of selectiveResolutionPath) {
+        minCanvasX = Math.min(minCanvasX, pt.x);
+        minCanvasY = Math.min(minCanvasY, pt.y);
+        maxCanvasX = Math.max(maxCanvasX, pt.x);
+        maxCanvasY = Math.max(maxCanvasY, pt.y);
+    }
+    
+    // Convert canvas bounding box to original image coordinates
+    const padding = 5;
+    let imgMinX = Math.max(0, Math.floor((minCanvasX - imgRect.x) / imgRect.scale - padding));
+    let imgMinY = Math.max(0, Math.floor((minCanvasY - imgRect.y) / imgRect.scale - padding));
+    let imgMaxX = Math.min(sourceCanvas.width, Math.ceil((maxCanvasX - imgRect.x) / imgRect.scale + padding));
+    let imgMaxY = Math.min(sourceCanvas.height, Math.ceil((maxCanvasY - imgRect.y) / imgRect.scale + padding));
+    
+    const cropWidth = imgMaxX - imgMinX;
+    const cropHeight = imgMaxY - imgMinY;
+    
+    if (cropWidth < 10 || cropHeight < 10) {
+        return; // Region too small
+    }
+    
+    // Show processing indicator
+    const originalCursor = canvas.style.cursor;
+    canvas.style.cursor = 'wait';
+    selectiveResolutionIcon.disabled = true;
+    
+    try {
+        // Fixed settings for automatic operation - no user input needed
+        const shapesForRegion = 40; // Fixed number of shapes
+        const alpha = 128;
+        const candidatesPerStep = 30; // Fast settings
+        const mutationsPerStep = 50;
+        const shapeTypes = getSelectedShapeTypes();
+        
+        // Get worker code
+        let geometrizeLibCode = document.getElementById('geometrize-lib').textContent;
+        geometrizeLibCode = geometrizeLibCode.replace(
+            'onmessage = GeometrizeWorker.prototype.messageHandler;',
+            `
+            var _geometrizeWorkerInstance = new GeometrizeWorker();
+            _geometrizeWorkerInstance.postMessage = function(msg) { self.postMessage(msg); };
+            onmessage = function(e) { _geometrizeWorkerInstance.messageHandler(e); };
+            `
+        );
+        const workerBlob = new Blob([geometrizeLibCode], { type: 'application/javascript' });
+        
+        // Extract region from ORIGINAL SOURCE IMAGE (not the canvas!)
+        const cropCanvas = document.createElement('canvas');
+        cropCanvas.width = cropWidth;
+        cropCanvas.height = cropHeight;
+        const cropCtx = cropCanvas.getContext('2d');
+        
+        // Draw from the original source image
+        cropCtx.drawImage(sourceCanvas, imgMinX, imgMinY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+        
+        // Downscale for geometrize (use higher resolution for better detail - 256 instead of 128)
+        const maxDim = 256;
+        let workWidth = cropWidth;
+        let workHeight = cropHeight;
+        
+        if (workWidth > maxDim || workHeight > maxDim) {
+            const ratio = Math.min(maxDim / workWidth, maxDim / workHeight);
+            workWidth = Math.floor(workWidth * ratio);
+            workHeight = Math.floor(workHeight * ratio);
+        }
+        
+        const workCanvas = document.createElement('canvas');
+        workCanvas.width = workWidth;
+        workCanvas.height = workHeight;
+        const workCtx = workCanvas.getContext('2d');
+        workCtx.drawImage(cropCanvas, 0, 0, workWidth, workHeight);
+        
+        const imageData = workCtx.getImageData(0, 0, workWidth, workHeight);
+        const pixels = imageData.data;
+        
+        // Convert to geometrize format
+        const data = new Array(workWidth * workHeight);
+        for (let i = 0; i < workWidth * workHeight; i++) {
+            const r = pixels[i * 4];
+            const g = pixels[i * 4 + 1];
+            const b = pixels[i * 4 + 2];
+            const a = pixels[i * 4 + 3];
+            data[i] = ((r & 255) << 24) | ((g & 255) << 16) | ((b & 255) << 8) | (a & 255);
+        }
+        
+        // Scale factors - from work coordinates to original image coordinates
+        const scaleX = cropWidth / workWidth;
+        const scaleY = cropHeight / workHeight;
+        // Offset in original image coordinates
+        const offsetX = imgMinX;
+        const offsetY = imgMinY;
+        
+        // Run geometrize
+        const worker = new Worker(URL.createObjectURL(workerBlob));
+        let stepCount = 0;
+        
+        await new Promise((resolve, reject) => {
+            worker.onmessage = (e) => {
+                const msg = e.data;
+                
+                if (msg.id === "did_set_target_image") {
+                    doStep();
+                }
+                else if (msg.id === "did_step") {
+                    if (msg.jsonData && msg.jsonData.length > 0) {
+                        try {
+                            const fullJson = "[\n" + msg.jsonData + "\n]";
+                            const shapes = JSON.parse(fullJson);
+                            
+                            for (const shape of shapes) {
+                                const transformedShape = transformRegionShape(
+                                    shape, scaleX, scaleY, offsetX, offsetY
+                                );
+                                currentShapes.push(transformedShape);
+                            }
+                        } catch(e) {
+                            console.error("Parse error:", e);
+                        }
+                    }
+                    
+                    stepCount++;
+                    
+                    if (stepCount >= shapesForRegion) {
+                        resolve();
+                    } else {
+                        doStep();
+                    }
+                }
+            };
+            
+            worker.onerror = reject;
+            
+            function doStep() {
+                worker.postMessage({
+                    id: "should_step",
+                    data: {
+                        shapeTypes: shapeTypes,
+                        alpha: alpha,
+                        candidateShapesPerStep: candidatesPerStep,
+                        shapeMutationsPerStep: mutationsPerStep
+                    }
+                });
+            }
+            
+            worker.postMessage({
+                id: "should_set_target_image",
+                data: { width: workWidth, height: workHeight, data }
+            });
+        });
+        
+        worker.terminate();
+        
+        // Update UI
+        groupedShapes = [...currentShapes];
+        slider.max = currentShapes.length;
+        slider.value = currentShapes.length;
+        sliderLabel.textContent = `Shapes: ${currentShapes.length} / ${currentShapes.length}`;
+        
+        drawCanvas();
+        populateSequenceFilterChips();
+        
+    } catch (error) {
+        console.error('Selective resolution error:', error);
+    } finally {
+        canvas.style.cursor = originalCursor;
+        selectiveResolutionIcon.disabled = false;
+    }
+}
 
 /* ==========================================================
    BAKE OPAQUE — PAGE 31 FIX
@@ -3155,9 +4428,40 @@ logicRadios.forEach(r => r.addEventListener("change", updateRender));
 slider.addEventListener("input", updateRender);
 
 colorGroupSlider.addEventListener("input", () => {
-    colorTolerance = parseInt(colorGroupSlider.value);
+    const sliderValue = parseInt(colorGroupSlider.value);
+    // In reversed mode, invert the value (100 - sliderValue)
+    colorTolerance = sliderModeReversed ? (100 - sliderValue) : sliderValue;
     applyColorGrouping();
     updateRender();
+    // Update sequence filter chips and grouped color count when tolerance changes
+    populateSequenceFilterChips();
+});
+
+// Slider mode toggle buttons
+document.getElementById('sliderModeNormal')?.addEventListener('click', () => {
+    if (!sliderModeReversed) return; // Already in normal mode
+    sliderModeReversed = false;
+    document.getElementById('sliderModeNormal').classList.add('active');
+    document.getElementById('sliderModeReversed').classList.remove('active');
+    // Reset to starting position: left = all colors (tolerance 0)
+    colorGroupSlider.value = 0;
+    colorTolerance = 0;
+    applyColorGrouping();
+    updateRender();
+    populateSequenceFilterChips();
+});
+
+document.getElementById('sliderModeReversed')?.addEventListener('click', () => {
+    if (sliderModeReversed) return; // Already in reversed mode
+    sliderModeReversed = true;
+    document.getElementById('sliderModeReversed').classList.add('active');
+    document.getElementById('sliderModeNormal').classList.remove('active');
+    // Reset to starting position: left = few colors (tolerance 100)
+    colorGroupSlider.value = 0;
+    colorTolerance = 100;
+    applyColorGrouping();
+    updateRender();
+    populateSequenceFilterChips();
 });
 
 /* ==========================================================
@@ -3170,7 +4474,17 @@ async function updateRender() {
     // Clear any shape highlight when re-rendering
     clearShapeHighlight();
 
-    const working = groupedShapes.length ? groupedShapes : currentShapes;
+    let working = groupedShapes.length ? groupedShapes : currentShapes;
+    
+    // Apply sequence filter if a color is selected
+    if (selectedFilterColor) {
+        working = working.filter(s => {
+            if (s.type === 0) return true; // Keep background
+            const [r, g, b, a] = s.color;
+            const [fr, fg, fb, fa] = selectedFilterColor;
+            return r === fr && g === fg && b === fb && a === fa;
+        });
+    }
 
     const logic = document.querySelector("input[name='logic']:checked").value;
     const limit = parseInt(slider.value);
@@ -5315,6 +6629,575 @@ geometrize_shape_ShapeTypes.LINE = 6;
 geometrize_shape_ShapeTypes.QUADRATIC_BEZIER = 7;
 })(typeof exports != "undefined" ? exports : typeof window != "undefined" ? window : typeof self != "undefined" ? self : this, {});
 
+</script>
+
+<!-- ==================== LINE DRAWING MODULE ==================== -->
+<script>
+(function() {
+    'use strict';
+    
+    const geometrizeInput = document.getElementById('geometrizeInput');
+    const lineDrawingStyle = document.getElementById('lineDrawingStyle');
+    const lineDrawingDetail = document.getElementById('lineDrawingDetail');
+    const lineDrawingWeight = document.getElementById('lineDrawingWeight');
+    const lineDrawingGrid = document.getElementById('lineDrawingGrid');
+    const generateBtn = document.getElementById('generateLineDrawingBtn');
+    const downloadBtn = document.getElementById('downloadLineDrawingBtn');
+    const mainCanvas = document.getElementById('canvas');
+    const statusDiv = document.getElementById('geometrizeStatus');
+    
+    const MAX_CANVAS_WIDTH = 600;
+    const MAX_CANVAS_HEIGHT = 600;
+    
+    let lineDrawingFullSize = null;
+    
+    lineDrawingDetail.addEventListener('input', (e) => {
+        document.getElementById('ldDetailVal').textContent = e.target.value;
+    });
+    lineDrawingWeight.addEventListener('input', (e) => {
+        document.getElementById('ldWeightVal').textContent = e.target.value;
+    });
+    
+    generateBtn.addEventListener('click', async () => {
+        const file = geometrizeInput.files[0];
+        if (!file) {
+            statusDiv.textContent = 'Please select an image first above.';
+            statusDiv.style.color = '#f44336';
+            return;
+        }
+        
+        statusDiv.textContent = 'Generating line drawing...';
+        statusDiv.style.color = '#ff9800';
+        generateBtn.disabled = true;
+        
+        const style = lineDrawingStyle.value;
+        const detail = parseInt(lineDrawingDetail.value);
+        const lineWeight = parseInt(lineDrawingWeight.value);
+        const showGrid = lineDrawingGrid.checked;
+        
+        try {
+            let resultImg;
+            
+            // Use API for sketch/detailed, client-side for crosshatch/architectural
+            if (style === 'sketch' || style === 'detailed') {
+                try {
+                    resultImg = await generateViaAPI(file, style, detail, lineWeight, showGrid);
+                } catch (e) {
+                    console.log('API failed, falling back to client-side');
+                    resultImg = await generateClientSide(file, style, detail, lineWeight, showGrid);
+                }
+            } else {
+                resultImg = await generateClientSide(file, style, detail, lineWeight, showGrid);
+            }
+            
+            displayResult(resultImg);
+        } catch (error) {
+            statusDiv.textContent = 'Error: ' + error.message;
+            statusDiv.style.color = '#f44336';
+            console.error(error);
+        }
+        
+        generateBtn.disabled = false;
+    });
+    
+    async function generateViaAPI(file, style, detail, lineWeight, showGrid) {
+        const formData = new FormData();
+        formData.append('image', file);
+        formData.append('style', style);
+        formData.append('detail', detail);
+        formData.append('line_weight', lineWeight);
+        formData.append('show_grid', showGrid);
+        
+        const response = await fetch(`${API_BASE}/line-drawing`, { method: 'POST', body: formData });
+        if (!response.ok) throw new Error('API failed');
+        
+        const data = await response.json();
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+            img.src = 'data:image/png;base64,' + data.image_base64;
+        });
+    }
+    
+    async function generateClientSide(file, style, detail, lineWeight, showGrid) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    // Process synchronously to avoid blank canvas
+                    try {
+                        const result = processImage(img, style, detail, lineWeight, showGrid);
+                        resolve(result);
+                    } catch (err) { reject(err); }
+                };
+                img.onerror = reject;
+                img.src = e.target.result;
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+    
+    function displayResult(img) {
+        const w = img.naturalWidth || img.width;
+        const h = img.naturalHeight || img.height;
+        
+        // Store full size
+        const fullCanvas = document.createElement('canvas');
+        fullCanvas.width = w;
+        fullCanvas.height = h;
+        fullCanvas.getContext('2d').drawImage(img, 0, 0);
+        lineDrawingFullSize = fullCanvas;
+        
+        // Display scaled
+        let dw = w, dh = h;
+        if (w > MAX_CANVAS_WIDTH || h > MAX_CANVAS_HEIGHT) {
+            const ratio = Math.min(MAX_CANVAS_WIDTH / w, MAX_CANVAS_HEIGHT / h);
+            dw = Math.floor(w * ratio);
+            dh = Math.floor(h * ratio);
+        }
+        
+        mainCanvas.width = dw;
+        mainCanvas.height = dh;
+        mainCanvas.getContext('2d').drawImage(img, 0, 0, dw, dh);
+        
+        downloadBtn.style.display = 'block';
+        statusDiv.textContent = `Line drawing generated (${w}x${h})`;
+        statusDiv.style.color = '#4CAF50';
+    }
+    
+    downloadBtn.addEventListener('click', () => {
+        if (!lineDrawingFullSize) return;
+        const link = document.createElement('a');
+        link.download = 'line-drawing-' + Date.now() + '.png';
+        link.href = lineDrawingFullSize.toDataURL('image/png');
+        link.click();
+    });
+    
+    // ==================== CLIENT-SIDE PROCESSING ====================
+    
+    function processImage(img, style, detail, lineWeight, showGrid) {
+        const w = img.naturalWidth || img.width;
+        const h = img.naturalHeight || img.height;
+        
+        const srcCanvas = document.createElement('canvas');
+        srcCanvas.width = w;
+        srcCanvas.height = h;
+        const srcCtx = srcCanvas.getContext('2d');
+        srcCtx.drawImage(img, 0, 0);
+        
+        const imageData = srcCtx.getImageData(0, 0, w, h);
+        const gray = toGrayscale(imageData);
+        
+        let result;
+        switch (style) {
+            case 'stencil': result = stencilOutline(gray, w, h, detail, lineWeight); break;
+            case 'sketch': result = pencilSketch(gray, w, h, detail, lineWeight); break;
+            case 'crosshatch': result = crosshatchFast(gray, w, h, detail, lineWeight); break;
+            case 'architectural': result = architecturalFast(gray, w, h, detail, lineWeight); break;
+            default: result = detailedSketch(gray, w, h, detail, lineWeight);
+        }
+        
+        if (showGrid) addGridLines(result, w, h);
+        
+        // Convert to canvas image - SYNCHRONOUS to avoid blank canvas
+        const outCanvas = document.createElement('canvas');
+        outCanvas.width = w;
+        outCanvas.height = h;
+        const outCtx = outCanvas.getContext('2d');
+        const outData = outCtx.createImageData(w, h);
+        
+        for (let i = 0; i < result.length; i++) {
+            const v = result[i] | 0;
+            outData.data[i * 4] = v;
+            outData.data[i * 4 + 1] = v;
+            outData.data[i * 4 + 2] = v;
+            outData.data[i * 4 + 3] = 255;
+        }
+        outCtx.putImageData(outData, 0, 0);
+        
+        // Create image synchronously using canvas directly
+        const resultImg = new Image();
+        resultImg.width = w;
+        resultImg.height = h;
+        resultImg.src = outCanvas.toDataURL('image/png');
+        
+        // Return the canvas as an image-like object that works immediately
+        return {
+            width: w,
+            height: h,
+            naturalWidth: w,
+            naturalHeight: h,
+            _canvas: outCanvas,
+            // Make it drawable
+            get src() { return outCanvas.toDataURL(); }
+        };
+    }
+    
+    // Override displayResult to handle our canvas-backed image
+    const originalDisplayResult = displayResult;
+    displayResult = function(img) {
+        if (img._canvas) {
+            // It's our canvas-backed object
+            const w = img.width;
+            const h = img.height;
+            
+            lineDrawingFullSize = img._canvas;
+            
+            let dw = w, dh = h;
+            if (w > MAX_CANVAS_WIDTH || h > MAX_CANVAS_HEIGHT) {
+                const ratio = Math.min(MAX_CANVAS_WIDTH / w, MAX_CANVAS_HEIGHT / h);
+                dw = Math.floor(w * ratio);
+                dh = Math.floor(h * ratio);
+            }
+            
+            mainCanvas.width = dw;
+            mainCanvas.height = dh;
+            mainCanvas.getContext('2d').drawImage(img._canvas, 0, 0, dw, dh);
+            
+            downloadBtn.style.display = 'block';
+            statusDiv.textContent = `Line drawing generated (${w}x${h})`;
+            statusDiv.style.color = '#4CAF50';
+        } else {
+            originalDisplayResult(img);
+        }
+    };
+    
+    function toGrayscale(imageData) {
+        const d = imageData.data, len = imageData.width * imageData.height;
+        const gray = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+            gray[i] = (d[i*4] * 77 + d[i*4+1] * 150 + d[i*4+2] * 29) >> 8;
+        }
+        return gray;
+    }
+    
+    // Stencil - clean outline only, like a coloring book
+    function stencilOutline(gray, w, h, detail, lineWeight) {
+        const len = w * h;
+        
+        // 1. Blur to reduce noise - more blur for lower detail
+        const blurRadius = Math.max(1, ((100 - detail) / 20) | 0);
+        const blurred = boxBlurFast(gray, w, h, blurRadius);
+        
+        // 2. Edge detection with Canny-like approach
+        // Compute gradients
+        const gx = new Int16Array(len);
+        const gy = new Int16Array(len);
+        const mag = new Uint8Array(len);
+        
+        for (let y = 1; y < h - 1; y++) {
+            for (let x = 1; x < w - 1; x++) {
+                const i = y * w + x;
+                // Sobel
+                const px = -blurred[i-w-1] + blurred[i-w+1] - 2*blurred[i-1] + 2*blurred[i+1] - blurred[i+w-1] + blurred[i+w+1];
+                const py = -blurred[i-w-1] - 2*blurred[i-w] - blurred[i-w+1] + blurred[i+w-1] + 2*blurred[i+w] + blurred[i+w+1];
+                gx[i] = px;
+                gy[i] = py;
+                mag[i] = Math.min(255, (Math.sqrt(px*px + py*py) * 0.5) | 0);
+            }
+        }
+        
+        // 3. Non-maximum suppression for thin edges
+        const thin = new Uint8Array(len);
+        for (let y = 1; y < h - 1; y++) {
+            for (let x = 1; x < w - 1; x++) {
+                const i = y * w + x;
+                const m = mag[i];
+                if (m < 10) continue;
+                
+                // Get gradient direction
+                const angle = Math.atan2(gy[i], gx[i]) * 180 / Math.PI;
+                let n1, n2;
+                
+                if ((angle >= -22.5 && angle < 22.5) || angle >= 157.5 || angle < -157.5) {
+                    n1 = mag[i - 1]; n2 = mag[i + 1];
+                } else if ((angle >= 22.5 && angle < 67.5) || (angle >= -157.5 && angle < -112.5)) {
+                    n1 = mag[i - w + 1]; n2 = mag[i + w - 1];
+                } else if ((angle >= 67.5 && angle < 112.5) || (angle >= -112.5 && angle < -67.5)) {
+                    n1 = mag[i - w]; n2 = mag[i + w];
+                } else {
+                    n1 = mag[i - w - 1]; n2 = mag[i + w + 1];
+                }
+                
+                if (m >= n1 && m >= n2) thin[i] = m;
+            }
+        }
+        
+        // 4. Double threshold and hysteresis
+        const lowThresh = Math.max(10, 50 - (detail / 3) | 0);
+        const highThresh = lowThresh * 2;
+        
+        const edges = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+            if (thin[i] >= highThresh) edges[i] = 255;
+            else if (thin[i] >= lowThresh) edges[i] = 128;
+        }
+        
+        // Hysteresis - connect weak edges to strong edges
+        let changed = true;
+        while (changed) {
+            changed = false;
+            for (let y = 1; y < h - 1; y++) {
+                for (let x = 1; x < w - 1; x++) {
+                    const i = y * w + x;
+                    if (edges[i] === 128) {
+                        // Check 8-neighbors for strong edge
+                        if (edges[i-w-1] === 255 || edges[i-w] === 255 || edges[i-w+1] === 255 ||
+                            edges[i-1] === 255 || edges[i+1] === 255 ||
+                            edges[i+w-1] === 255 || edges[i+w] === 255 || edges[i+w+1] === 255) {
+                            edges[i] = 255;
+                            changed = true;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Remove remaining weak edges
+        for (let i = 0; i < len; i++) {
+            if (edges[i] === 128) edges[i] = 0;
+        }
+        
+        // 5. Dilate edges based on line weight
+        let finalEdges = edges;
+        if (lineWeight > 1) {
+            finalEdges = dilateFast(edges, w, h, lineWeight);
+        }
+        
+        // 6. Create output - white background, black lines
+        const result = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+            result[i] = finalEdges[i] > 0 ? 0 : 255;
+        }
+        
+        return result;
+    }
+    
+    function pencilSketch(gray, w, h, detail, lineWeight) {
+        const len = w * h;
+        const inverted = new Uint8Array(len);
+        for (let i = 0; i < len; i++) inverted[i] = 255 - gray[i];
+        
+        const blurRadius = Math.max(1, ((110 - detail) / 10) | 0);
+        const blurred = boxBlurFast(inverted, w, h, blurRadius);
+        
+        const result = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+            const b = blurred[i];
+            result[i] = b >= 255 ? 255 : Math.min(255, (gray[i] << 8) / (256 - b)) | 0;
+        }
+        
+        const edges = sobelFast(gray, w, h);
+        for (let i = 0; i < len; i++) {
+            result[i] = Math.max(0, result[i] - (edges[i] >> 2)) | 0;
+        }
+        
+        return result;
+    }
+    
+    function detailedSketch(gray, w, h, detail, lineWeight) {
+        const len = w * h;
+        const enhanced = localContrastFast(gray, w, h);
+        const edges1 = sobelFast(enhanced, w, h);
+        const edges2 = laplacianFast(enhanced, w, h);
+        
+        const inverted = new Uint8Array(len);
+        for (let i = 0; i < len; i++) inverted[i] = 255 - gray[i];
+        
+        const blurRadius = Math.max(1, ((100 - detail) / 15) | 0);
+        const blurred = boxBlurFast(inverted, w, h, blurRadius);
+        
+        const shade = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+            const b = blurred[i];
+            shade[i] = b >= 255 ? 255 : Math.min(255, (gray[i] << 8) / (256 - b)) | 0;
+        }
+        
+        const result = new Uint8Array(len);
+        const ef = detail / 80;
+        for (let i = 0; i < len; i++) {
+            const edgeVal = Math.min((edges1[i] + (edges2[i] >> 1)) * ef, 200) | 0;
+            result[i] = Math.max(0, shade[i] - edgeVal) | 0;
+        }
+        
+        if (lineWeight > 1) {
+            const inv = new Uint8Array(len);
+            for (let i = 0; i < len; i++) inv[i] = 255 - result[i];
+            const dil = dilateFast(inv, w, h, lineWeight - 1);
+            for (let i = 0; i < len; i++) result[i] = 255 - dil[i];
+        }
+        
+        return result;
+    }
+    
+    function crosshatchFast(gray, w, h, detail, lineWeight) {
+        const len = w * h;
+        const edges = sobelFast(gray, w, h);
+        const result = new Uint8Array(len);
+        result.fill(255);
+        
+        const spacing = Math.max(2, 6 - (detail / 25) | 0);
+        const sp2 = Math.max(1, spacing >> 1);
+        
+        for (let y = 0; y < h; y++) {
+            const yOff = y * w;
+            for (let x = 0; x < w; x++) {
+                const i = yOff + x;
+                const lum = gray[i];
+                let val = 255;
+                
+                if (lum < 200 && (x + y) % spacing === 0) val = 180;
+                if (lum < 150 && Math.abs(x - y) % spacing === 0) val = Math.min(val, 140);
+                if (lum < 100 && (x + y) % sp2 === 0) val = Math.min(val, 100);
+                if (lum < 50) val = Math.min(val, 60);
+                
+                if (edges[i] > 50) val = Math.min(val, 255 - Math.min(edges[i], 200));
+                
+                result[i] = val;
+            }
+        }
+        
+        return result;
+    }
+    
+    function architecturalFast(gray, w, h, detail, lineWeight) {
+        const len = w * h;
+        const blurred = boxBlurFast(gray, w, h, 2);
+        const edges = sobelFast(blurred, w, h);
+        
+        const blockSize = Math.max(11, 31 - (detail / 4) | 0) | 1;
+        const adaptive = adaptiveThresholdFast(blurred, w, h, blockSize, 3);
+        
+        const result = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+            const edgeVal = edges[i] > 40 ? 0 : 255;
+            result[i] = Math.min(adaptive[i], edgeVal);
+        }
+        
+        if (lineWeight > 1) {
+            const inv = new Uint8Array(len);
+            for (let i = 0; i < len; i++) inv[i] = 255 - result[i];
+            const dil = dilateFast(inv, w, h, lineWeight);
+            for (let i = 0; i < len; i++) result[i] = 255 - dil[i];
+        }
+        
+        return result;
+    }
+    
+    function boxBlurFast(src, w, h, r) {
+        if (r < 1) return src.slice();
+        let result = src;
+        for (let pass = 0; pass < 2; pass++) {
+            result = boxBlurH(result, w, h, r);
+            result = boxBlurV(result, w, h, r);
+        }
+        return result;
+    }
+    
+    function boxBlurH(src, w, h, r) {
+        const dst = new Uint8Array(w * h);
+        const iarr = 1 / (r + r + 1);
+        for (let y = 0; y < h; y++) {
+            let ti = y * w, li = ti, ri = ti + r;
+            const fv = src[ti], lv = src[ti + w - 1];
+            let val = (r + 1) * fv;
+            for (let j = 0; j < r; j++) val += src[ti + j];
+            for (let j = 0; j <= r; j++) { val += src[ri++] - fv; dst[ti++] = (val * iarr + 0.5) | 0; }
+            for (let j = r + 1; j < w - r; j++) { val += src[ri++] - src[li++]; dst[ti++] = (val * iarr + 0.5) | 0; }
+            for (let j = w - r; j < w; j++) { val += lv - src[li++]; dst[ti++] = (val * iarr + 0.5) | 0; }
+        }
+        return dst;
+    }
+    
+    function boxBlurV(src, w, h, r) {
+        const dst = new Uint8Array(w * h);
+        const iarr = 1 / (r + r + 1);
+        for (let x = 0; x < w; x++) {
+            let ti = x, li = ti, ri = ti + r * w;
+            const fv = src[ti], lv = src[ti + w * (h - 1)];
+            let val = (r + 1) * fv;
+            for (let j = 0; j < r; j++) val += src[ti + j * w];
+            for (let j = 0; j <= r; j++) { val += src[ri] - fv; dst[ti] = (val * iarr + 0.5) | 0; ri += w; ti += w; }
+            for (let j = r + 1; j < h - r; j++) { val += src[ri] - src[li]; dst[ti] = (val * iarr + 0.5) | 0; li += w; ri += w; ti += w; }
+            for (let j = h - r; j < h; j++) { val += lv - src[li]; dst[ti] = (val * iarr + 0.5) | 0; li += w; ti += w; }
+        }
+        return dst;
+    }
+    
+    function sobelFast(g, w, h) {
+        const r = new Uint8Array(w * h);
+        for (let y = 1; y < h - 1; y++) {
+            for (let x = 1; x < w - 1; x++) {
+                const i = y * w + x;
+                const gx = -g[i-w-1] + g[i-w+1] - 2*g[i-1] + 2*g[i+1] - g[i+w-1] + g[i+w+1];
+                const gy = -g[i-w-1] - 2*g[i-w] - g[i-w+1] + g[i+w-1] + 2*g[i+w] + g[i+w+1];
+                r[i] = Math.min(255, Math.sqrt(gx*gx + gy*gy) | 0);
+            }
+        }
+        return r;
+    }
+    
+    function laplacianFast(g, w, h) {
+        const r = new Uint8Array(w * h);
+        for (let y = 1; y < h - 1; y++) {
+            for (let x = 1; x < w - 1; x++) {
+                const i = y * w + x;
+                const v = Math.abs(-g[i-w] - g[i-1] + 4*g[i] - g[i+1] - g[i+w]);
+                r[i] = Math.min(255, v);
+            }
+        }
+        return r;
+    }
+    
+    function localContrastFast(g, w, h) {
+        const r = new Uint8Array(w * h);
+        const blurL = boxBlurFast(g, w, h, 8);
+        for (let i = 0; i < g.length; i++) {
+            const diff = g[i] - blurL[i] + 128;
+            r[i] = Math.max(0, Math.min(255, diff));
+        }
+        return r;
+    }
+    
+    function adaptiveThresholdFast(g, w, h, blockSize, c) {
+        const r = new Uint8Array(w * h);
+        const radius = blockSize >> 1;
+        const blurred = boxBlurFast(g, w, h, radius);
+        for (let i = 0; i < g.length; i++) {
+            r[i] = g[i] > blurred[i] - c ? 255 : 0;
+        }
+        return r;
+    }
+    
+    function dilateFast(e, w, h, iter) {
+        let cur = e;
+        for (let it = 0; it < iter; it++) {
+            const r = new Uint8Array(w * h);
+            for (let y = 1; y < h - 1; y++) {
+                for (let x = 1; x < w - 1; x++) {
+                    const i = y * w + x;
+                    r[i] = Math.max(cur[i-w-1], cur[i-w], cur[i-w+1], cur[i-1], cur[i], cur[i+1], cur[i+w-1], cur[i+w], cur[i+w+1]);
+                }
+            }
+            cur = r;
+        }
+        return cur;
+    }
+    
+    function addGridLines(r, w, h) {
+        const gridSize = Math.max(50, (Math.min(w, h) / 8) | 0);
+        for (let x = gridSize; x < w; x += gridSize) {
+            for (let y = 0; y < h; y++) r[y * w + x] = Math.min(r[y * w + x], 200);
+        }
+        for (let y = gridSize; y < h; y += gridSize) {
+            for (let x = 0; x < w; x++) r[y * w + x] = Math.min(r[y * w + x], 200);
+        }
+    }
+    
+})();
 </script>
 
 </body>

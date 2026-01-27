@@ -6,3 +6,6 @@ Pillow
 numpy
 opencv-python-headless==4.8.1.78
 numpy==1.26.4
+streamlit>=1.28.0
+pandas>=2.0.0
+torch>=2.0.0

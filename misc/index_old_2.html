@@ -1215,6 +1215,44 @@ canvas.picking { cursor: crosshair; }
     <button id="downloadJsonBtn" style="background: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; margin-top: 10px; width: 100%;" disabled>
         Download JSON
     </button>
+    
+    <!-- LINE DRAWING MODE -->
+    <div style="margin-top: 15px; padding-top: 15px; border-top: 2px dashed #ff9800;">
+        <h4 style="color: #e65100; margin: 0 0 10px 0; font-size: 14px;">📝 Line Drawing Mode</h4>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+            <div>
+                <label style="font-size: 11px; color: #666;">Style:</label>
+                <select id="lineDrawingStyle" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;">
+                    <option value="sketch">Pencil Sketch</option>
+                    <option value="detailed" selected>Detailed Sketch</option>
+                    <option value="crosshatch">Cross-Hatch Style</option>
+                    <option value="architectural">Architectural</option>
+                </select>
+            </div>
+            <div>
+                <label style="font-size: 11px; color: #666;">Detail: <span id="ldDetailVal">80</span>%</label>
+                <input type="range" id="lineDrawingDetail" min="20" max="100" value="80" style="width: 100%;">
+            </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+            <div>
+                <label style="font-size: 11px; color: #666;">Line Weight: <span id="ldWeightVal">2</span></label>
+                <input type="range" id="lineDrawingWeight" min="1" max="4" value="2" style="width: 100%;">
+            </div>
+            <div style="display: flex; align-items: end;">
+                <label style="font-size: 11px; color: #666; display: flex; align-items: center; gap: 5px;">
+                    <input type="checkbox" id="lineDrawingGrid"> Show Grid Lines
+                </label>
+            </div>
+        </div>
+        <button id="generateLineDrawingBtn" style="background: linear-gradient(135deg, #ff9800, #f57c00); color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; width: 100%;">
+            Generate Line Drawing
+        </button>
+        <button id="downloadLineDrawingBtn" style="background: #607D8B; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 8px; width: 100%; display: none;">
+            Download Line Drawing PNG
+        </button>
+    </div>
+    
     <div id="geometrizeStatus" class="info" style="margin-top: 10px; text-align: center;"></div>
 </div>
 
@@ -6590,6 +6628,472 @@ geometrize_shape_ShapeTypes.LINE = 6;
 geometrize_shape_ShapeTypes.QUADRATIC_BEZIER = 7;
 })(typeof exports != "undefined" ? exports : typeof window != "undefined" ? window : typeof self != "undefined" ? self : this, {});
 
+</script>
+
+<!-- ==================== LINE DRAWING MODULE ==================== -->
+<script>
+(function() {
+    'use strict';
+    
+    const geometrizeInput = document.getElementById('geometrizeInput');
+    const lineDrawingStyle = document.getElementById('lineDrawingStyle');
+    const lineDrawingDetail = document.getElementById('lineDrawingDetail');
+    const lineDrawingWeight = document.getElementById('lineDrawingWeight');
+    const lineDrawingGrid = document.getElementById('lineDrawingGrid');
+    const generateBtn = document.getElementById('generateLineDrawingBtn');
+    const downloadBtn = document.getElementById('downloadLineDrawingBtn');
+    const mainCanvas = document.getElementById('canvas');
+    const statusDiv = document.getElementById('geometrizeStatus');
+    
+    const MAX_CANVAS_WIDTH = 600;
+    const MAX_CANVAS_HEIGHT = 600;
+    
+    let lineDrawingFullSize = null;
+    
+    lineDrawingDetail.addEventListener('input', (e) => {
+        document.getElementById('ldDetailVal').textContent = e.target.value;
+    });
+    lineDrawingWeight.addEventListener('input', (e) => {
+        document.getElementById('ldWeightVal').textContent = e.target.value;
+    });
+    
+    generateBtn.addEventListener('click', async () => {
+        const file = geometrizeInput.files[0];
+        if (!file) {
+            statusDiv.textContent = 'Please select an image first above.';
+            statusDiv.style.color = '#f44336';
+            return;
+        }
+        
+        statusDiv.textContent = 'Generating line drawing...';
+        statusDiv.style.color = '#ff9800';
+        generateBtn.disabled = true;
+        
+        const style = lineDrawingStyle.value;
+        const detail = parseInt(lineDrawingDetail.value);
+        const lineWeight = parseInt(lineDrawingWeight.value);
+        const showGrid = lineDrawingGrid.checked;
+        
+        try {
+            let resultImg;
+            
+            // Use API for sketch/detailed, client-side for crosshatch/architectural
+            if (style === 'sketch' || style === 'detailed') {
+                try {
+                    resultImg = await generateViaAPI(file, style, detail, lineWeight, showGrid);
+                } catch (e) {
+                    console.log('API failed, falling back to client-side');
+                    resultImg = await generateClientSide(file, style, detail, lineWeight, showGrid);
+                }
+            } else {
+                resultImg = await generateClientSide(file, style, detail, lineWeight, showGrid);
+            }
+            
+            displayResult(resultImg);
+        } catch (error) {
+            statusDiv.textContent = 'Error: ' + error.message;
+            statusDiv.style.color = '#f44336';
+            console.error(error);
+        }
+        
+        generateBtn.disabled = false;
+    });
+    
+    async function generateViaAPI(file, style, detail, lineWeight, showGrid) {
+        const formData = new FormData();
+        formData.append('image', file);
+        formData.append('style', style);
+        formData.append('detail', detail);
+        formData.append('line_weight', lineWeight);
+        formData.append('show_grid', showGrid);
+        
+        const response = await fetch(`${API_BASE}/line-drawing`, { method: 'POST', body: formData });
+        if (!response.ok) throw new Error('API failed');
+        
+        const data = await response.json();
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+            img.src = 'data:image/png;base64,' + data.image_base64;
+        });
+    }
+    
+    async function generateClientSide(file, style, detail, lineWeight, showGrid) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    // Process synchronously to avoid blank canvas
+                    try {
+                        const result = processImage(img, style, detail, lineWeight, showGrid);
+                        resolve(result);
+                    } catch (err) { reject(err); }
+                };
+                img.onerror = reject;
+                img.src = e.target.result;
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+    
+    function displayResult(img) {
+        const w = img.naturalWidth || img.width;
+        const h = img.naturalHeight || img.height;
+        
+        // Store full size
+        const fullCanvas = document.createElement('canvas');
+        fullCanvas.width = w;
+        fullCanvas.height = h;
+        fullCanvas.getContext('2d').drawImage(img, 0, 0);
+        lineDrawingFullSize = fullCanvas;
+        
+        // Display scaled
+        let dw = w, dh = h;
+        if (w > MAX_CANVAS_WIDTH || h > MAX_CANVAS_HEIGHT) {
+            const ratio = Math.min(MAX_CANVAS_WIDTH / w, MAX_CANVAS_HEIGHT / h);
+            dw = Math.floor(w * ratio);
+            dh = Math.floor(h * ratio);
+        }
+        
+        mainCanvas.width = dw;
+        mainCanvas.height = dh;
+        mainCanvas.getContext('2d').drawImage(img, 0, 0, dw, dh);
+        
+        downloadBtn.style.display = 'block';
+        statusDiv.textContent = `Line drawing generated (${w}x${h})`;
+        statusDiv.style.color = '#4CAF50';
+    }
+    
+    downloadBtn.addEventListener('click', () => {
+        if (!lineDrawingFullSize) return;
+        const link = document.createElement('a');
+        link.download = 'line-drawing-' + Date.now() + '.png';
+        link.href = lineDrawingFullSize.toDataURL('image/png');
+        link.click();
+    });
+    
+    // ==================== CLIENT-SIDE PROCESSING ====================
+    
+    function processImage(img, style, detail, lineWeight, showGrid) {
+        const w = img.naturalWidth || img.width;
+        const h = img.naturalHeight || img.height;
+        
+        const srcCanvas = document.createElement('canvas');
+        srcCanvas.width = w;
+        srcCanvas.height = h;
+        const srcCtx = srcCanvas.getContext('2d');
+        srcCtx.drawImage(img, 0, 0);
+        
+        const imageData = srcCtx.getImageData(0, 0, w, h);
+        const gray = toGrayscale(imageData);
+        
+        let result;
+        switch (style) {
+            case 'sketch': result = pencilSketch(gray, w, h, detail, lineWeight); break;
+            case 'crosshatch': result = crosshatchFast(gray, w, h, detail, lineWeight); break;
+            case 'architectural': result = architecturalFast(gray, w, h, detail, lineWeight); break;
+            default: result = detailedSketch(gray, w, h, detail, lineWeight);
+        }
+        
+        if (showGrid) addGridLines(result, w, h);
+        
+        // Convert to canvas image - SYNCHRONOUS to avoid blank canvas
+        const outCanvas = document.createElement('canvas');
+        outCanvas.width = w;
+        outCanvas.height = h;
+        const outCtx = outCanvas.getContext('2d');
+        const outData = outCtx.createImageData(w, h);
+        
+        for (let i = 0; i < result.length; i++) {
+            const v = result[i] | 0;
+            outData.data[i * 4] = v;
+            outData.data[i * 4 + 1] = v;
+            outData.data[i * 4 + 2] = v;
+            outData.data[i * 4 + 3] = 255;
+        }
+        outCtx.putImageData(outData, 0, 0);
+        
+        // Create image synchronously using canvas directly
+        const resultImg = new Image();
+        resultImg.width = w;
+        resultImg.height = h;
+        resultImg.src = outCanvas.toDataURL('image/png');
+        
+        // Return the canvas as an image-like object that works immediately
+        return {
+            width: w,
+            height: h,
+            naturalWidth: w,
+            naturalHeight: h,
+            _canvas: outCanvas,
+            // Make it drawable
+            get src() { return outCanvas.toDataURL(); }
+        };
+    }
+    
+    // Override displayResult to handle our canvas-backed image
+    const originalDisplayResult = displayResult;
+    displayResult = function(img) {
+        if (img._canvas) {
+            // It's our canvas-backed object
+            const w = img.width;
+            const h = img.height;
+            
+            lineDrawingFullSize = img._canvas;
+            
+            let dw = w, dh = h;
+            if (w > MAX_CANVAS_WIDTH || h > MAX_CANVAS_HEIGHT) {
+                const ratio = Math.min(MAX_CANVAS_WIDTH / w, MAX_CANVAS_HEIGHT / h);
+                dw = Math.floor(w * ratio);
+                dh = Math.floor(h * ratio);
+            }
+            
+            mainCanvas.width = dw;
+            mainCanvas.height = dh;
+            mainCanvas.getContext('2d').drawImage(img._canvas, 0, 0, dw, dh);
+            
+            downloadBtn.style.display = 'block';
+            statusDiv.textContent = `Line drawing generated (${w}x${h})`;
+            statusDiv.style.color = '#4CAF50';
+        } else {
+            originalDisplayResult(img);
+        }
+    };
+    
+    function toGrayscale(imageData) {
+        const d = imageData.data, len = imageData.width * imageData.height;
+        const gray = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+            gray[i] = (d[i*4] * 77 + d[i*4+1] * 150 + d[i*4+2] * 29) >> 8;
+        }
+        return gray;
+    }
+    
+    function pencilSketch(gray, w, h, detail, lineWeight) {
+        const len = w * h;
+        const inverted = new Uint8Array(len);
+        for (let i = 0; i < len; i++) inverted[i] = 255 - gray[i];
+        
+        const blurRadius = Math.max(1, ((110 - detail) / 10) | 0);
+        const blurred = boxBlurFast(inverted, w, h, blurRadius);
+        
+        const result = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+            const b = blurred[i];
+            result[i] = b >= 255 ? 255 : Math.min(255, (gray[i] << 8) / (256 - b)) | 0;
+        }
+        
+        const edges = sobelFast(gray, w, h);
+        for (let i = 0; i < len; i++) {
+            result[i] = Math.max(0, result[i] - (edges[i] >> 2)) | 0;
+        }
+        
+        return result;
+    }
+    
+    function detailedSketch(gray, w, h, detail, lineWeight) {
+        const len = w * h;
+        const enhanced = localContrastFast(gray, w, h);
+        const edges1 = sobelFast(enhanced, w, h);
+        const edges2 = laplacianFast(enhanced, w, h);
+        
+        const inverted = new Uint8Array(len);
+        for (let i = 0; i < len; i++) inverted[i] = 255 - gray[i];
+        
+        const blurRadius = Math.max(1, ((100 - detail) / 15) | 0);
+        const blurred = boxBlurFast(inverted, w, h, blurRadius);
+        
+        const shade = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+            const b = blurred[i];
+            shade[i] = b >= 255 ? 255 : Math.min(255, (gray[i] << 8) / (256 - b)) | 0;
+        }
+        
+        const result = new Uint8Array(len);
+        const ef = detail / 80;
+        for (let i = 0; i < len; i++) {
+            const edgeVal = Math.min((edges1[i] + (edges2[i] >> 1)) * ef, 200) | 0;
+            result[i] = Math.max(0, shade[i] - edgeVal) | 0;
+        }
+        
+        if (lineWeight > 1) {
+            const inv = new Uint8Array(len);
+            for (let i = 0; i < len; i++) inv[i] = 255 - result[i];
+            const dil = dilateFast(inv, w, h, lineWeight - 1);
+            for (let i = 0; i < len; i++) result[i] = 255 - dil[i];
+        }
+        
+        return result;
+    }
+    
+    function crosshatchFast(gray, w, h, detail, lineWeight) {
+        const len = w * h;
+        const edges = sobelFast(gray, w, h);
+        const result = new Uint8Array(len);
+        result.fill(255);
+        
+        const spacing = Math.max(2, 6 - (detail / 25) | 0);
+        const sp2 = Math.max(1, spacing >> 1);
+        
+        for (let y = 0; y < h; y++) {
+            const yOff = y * w;
+            for (let x = 0; x < w; x++) {
+                const i = yOff + x;
+                const lum = gray[i];
+                let val = 255;
+                
+                if (lum < 200 && (x + y) % spacing === 0) val = 180;
+                if (lum < 150 && Math.abs(x - y) % spacing === 0) val = Math.min(val, 140);
+                if (lum < 100 && (x + y) % sp2 === 0) val = Math.min(val, 100);
+                if (lum < 50) val = Math.min(val, 60);
+                
+                if (edges[i] > 50) val = Math.min(val, 255 - Math.min(edges[i], 200));
+                
+                result[i] = val;
+            }
+        }
+        
+        return result;
+    }
+    
+    function architecturalFast(gray, w, h, detail, lineWeight) {
+        const len = w * h;
+        const blurred = boxBlurFast(gray, w, h, 2);
+        const edges = sobelFast(blurred, w, h);
+        
+        const blockSize = Math.max(11, 31 - (detail / 4) | 0) | 1;
+        const adaptive = adaptiveThresholdFast(blurred, w, h, blockSize, 3);
+        
+        const result = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+            const edgeVal = edges[i] > 40 ? 0 : 255;
+            result[i] = Math.min(adaptive[i], edgeVal);
+        }
+        
+        if (lineWeight > 1) {
+            const inv = new Uint8Array(len);
+            for (let i = 0; i < len; i++) inv[i] = 255 - result[i];
+            const dil = dilateFast(inv, w, h, lineWeight);
+            for (let i = 0; i < len; i++) result[i] = 255 - dil[i];
+        }
+        
+        return result;
+    }
+    
+    function boxBlurFast(src, w, h, r) {
+        if (r < 1) return src.slice();
+        let result = src;
+        for (let pass = 0; pass < 2; pass++) {
+            result = boxBlurH(result, w, h, r);
+            result = boxBlurV(result, w, h, r);
+        }
+        return result;
+    }
+    
+    function boxBlurH(src, w, h, r) {
+        const dst = new Uint8Array(w * h);
+        const iarr = 1 / (r + r + 1);
+        for (let y = 0; y < h; y++) {
+            let ti = y * w, li = ti, ri = ti + r;
+            const fv = src[ti], lv = src[ti + w - 1];
+            let val = (r + 1) * fv;
+            for (let j = 0; j < r; j++) val += src[ti + j];
+            for (let j = 0; j <= r; j++) { val += src[ri++] - fv; dst[ti++] = (val * iarr + 0.5) | 0; }
+            for (let j = r + 1; j < w - r; j++) { val += src[ri++] - src[li++]; dst[ti++] = (val * iarr + 0.5) | 0; }
+            for (let j = w - r; j < w; j++) { val += lv - src[li++]; dst[ti++] = (val * iarr + 0.5) | 0; }
+        }
+        return dst;
+    }
+    
+    function boxBlurV(src, w, h, r) {
+        const dst = new Uint8Array(w * h);
+        const iarr = 1 / (r + r + 1);
+        for (let x = 0; x < w; x++) {
+            let ti = x, li = ti, ri = ti + r * w;
+            const fv = src[ti], lv = src[ti + w * (h - 1)];
+            let val = (r + 1) * fv;
+            for (let j = 0; j < r; j++) val += src[ti + j * w];
+            for (let j = 0; j <= r; j++) { val += src[ri] - fv; dst[ti] = (val * iarr + 0.5) | 0; ri += w; ti += w; }
+            for (let j = r + 1; j < h - r; j++) { val += src[ri] - src[li]; dst[ti] = (val * iarr + 0.5) | 0; li += w; ri += w; ti += w; }
+            for (let j = h - r; j < h; j++) { val += lv - src[li]; dst[ti] = (val * iarr + 0.5) | 0; li += w; ti += w; }
+        }
+        return dst;
+    }
+    
+    function sobelFast(g, w, h) {
+        const r = new Uint8Array(w * h);
+        for (let y = 1; y < h - 1; y++) {
+            for (let x = 1; x < w - 1; x++) {
+                const i = y * w + x;
+                const gx = -g[i-w-1] + g[i-w+1] - 2*g[i-1] + 2*g[i+1] - g[i+w-1] + g[i+w+1];
+                const gy = -g[i-w-1] - 2*g[i-w] - g[i-w+1] + g[i+w-1] + 2*g[i+w] + g[i+w+1];
+                r[i] = Math.min(255, Math.sqrt(gx*gx + gy*gy) | 0);
+            }
+        }
+        return r;
+    }
+    
+    function laplacianFast(g, w, h) {
+        const r = new Uint8Array(w * h);
+        for (let y = 1; y < h - 1; y++) {
+            for (let x = 1; x < w - 1; x++) {
+                const i = y * w + x;
+                const v = Math.abs(-g[i-w] - g[i-1] + 4*g[i] - g[i+1] - g[i+w]);
+                r[i] = Math.min(255, v);
+            }
+        }
+        return r;
+    }
+    
+    function localContrastFast(g, w, h) {
+        const r = new Uint8Array(w * h);
+        const blurL = boxBlurFast(g, w, h, 8);
+        for (let i = 0; i < g.length; i++) {
+            const diff = g[i] - blurL[i] + 128;
+            r[i] = Math.max(0, Math.min(255, diff));
+        }
+        return r;
+    }
+    
+    function adaptiveThresholdFast(g, w, h, blockSize, c) {
+        const r = new Uint8Array(w * h);
+        const radius = blockSize >> 1;
+        const blurred = boxBlurFast(g, w, h, radius);
+        for (let i = 0; i < g.length; i++) {
+            r[i] = g[i] > blurred[i] - c ? 255 : 0;
+        }
+        return r;
+    }
+    
+    function dilateFast(e, w, h, iter) {
+        let cur = e;
+        for (let it = 0; it < iter; it++) {
+            const r = new Uint8Array(w * h);
+            for (let y = 1; y < h - 1; y++) {
+                for (let x = 1; x < w - 1; x++) {
+                    const i = y * w + x;
+                    r[i] = Math.max(cur[i-w-1], cur[i-w], cur[i-w+1], cur[i-1], cur[i], cur[i+1], cur[i+w-1], cur[i+w], cur[i+w+1]);
+                }
+            }
+            cur = r;
+        }
+        return cur;
+    }
+    
+    function addGridLines(r, w, h) {
+        const gridSize = Math.max(50, (Math.min(w, h) / 8) | 0);
+        for (let x = gridSize; x < w; x += gridSize) {
+            for (let y = 0; y < h; y++) r[y * w + x] = Math.min(r[y * w + x], 200);
+        }
+        for (let y = gridSize; y < h; y += gridSize) {
+            for (let x = 0; x < w; x++) r[y * w + x] = Math.min(r[y * w + x], 200);
+        }
+    }
+    
+})();
 </script>
 
 </body>
