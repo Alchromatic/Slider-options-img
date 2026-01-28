@@ -387,20 +387,117 @@ if st.button("Run evaluation") and eval_csv:
 st.markdown("---")
 st.subheader("Interactive mix")
 
-bases = [
-    st.color_picker("Base A", "#FF2B2B"),
-    st.color_picker("Base B", "#FFFFFF")
-]
-weights = [
-    st.slider("wA", 0.0, 1.0, 0.8),
-    st.slider("wB", 0.0, 1.0, 0.2)
-]
+# CSV Upload for populating dropdown
+mix_csv = st.file_uploader("Load mix presets (CSV)", type=["csv"], key="mix_presets_csv")
+if mix_csv:
+    csv_content = mix_csv.read().decode()
+    st.session_state.mix_presets = parse_csv(csv_content)
+    mix_csv.seek(0)  # Reset for potential re-read
 
-if st.button("Mix"):
+# Dropdown to select from CSV presets
+preset_options = ["-- Manual Input --"]
+if "mix_presets" in st.session_state and st.session_state.mix_presets:
+    for i, row in enumerate(st.session_state.mix_presets):
+        bases_str = " + ".join(row["bases"])
+        weights_str = ":".join([f"{w:.2f}" for w in row["weights"]])
+        preset_options.append(f"{row['group_id']} | {bases_str} ({weights_str}) → {row['api_hex']}")
+
+# Callback to update session state when preset changes
+def on_preset_change():
+    selected = st.session_state.preset_selector
+    if selected != "-- Manual Input --" and "mix_presets" in st.session_state:
+        idx = preset_options.index(selected) - 1
+        if 0 <= idx < len(st.session_state.mix_presets):
+            preset_data = st.session_state.mix_presets[idx]
+            # Update all widget values in session state
+            for i, base_hex in enumerate(preset_data["bases"]):
+                st.session_state[f"base_{i}"] = base_hex
+            for i, weight in enumerate(preset_data["weights"]):
+                st.session_state[f"weight_{i}"] = weight
+            st.session_state["target_color"] = preset_data["api_hex"]
+            st.session_state["num_bases_input"] = len(preset_data["bases"])
+
+selected_preset = st.selectbox(
+    "Select preset from CSV", 
+    preset_options, 
+    key="preset_selector",
+    on_change=on_preset_change
+)
+
+# Get current values from session state or use defaults
+num_bases = st.session_state.get("num_bases_input", 2)
+
+# Number of base colors selector
+num_bases = st.number_input("Number of base colors", min_value=2, max_value=6, value=num_bases, key="num_bases_input")
+
+# Dynamic base color pickers and weight sliders
+col1, col2 = st.columns(2)
+
+bases = []
+weights = []
+
+with col1:
+    st.markdown("**Base Colors**")
+    for i in range(num_bases):
+        default_color = st.session_state.get(f"base_{i}", "#FF2B2B" if i == 0 else "#FFFFFF")
+        bases.append(st.color_picker(f"Base {chr(65+i)}", default_color, key=f"base_{i}"))
+
+with col2:
+    st.markdown("**Weights**")
+    for i in range(num_bases):
+        default_weight = st.session_state.get(f"weight_{i}", 0.8 if i == 0 else 0.2)
+        weights.append(st.slider(f"w{chr(65+i)}", 0.0, 1.0, default_weight, key=f"weight_{i}"))
+
+# Target color picker for comparison
+st.markdown("---")
+st.markdown("**Target Color (for comparison)**")
+target_col1, target_col2 = st.columns([1, 3])
+with target_col1:
+    default_target = st.session_state.get("target_color", "#FF9C9C")
+    target_color = st.color_picker("Target", default_target, key="target_color")
+with target_col2:
+    st.markdown(f"Target hex: `{target_color}`")
+
+# Mix button and results
+if st.button("Mix", key="mix_button"):
     out = predict_one(
         bases, weights,
         ks_eps, yn_n,
         st.session_state.get("calibrator"),
         st.session_state.get("nn_model") if use_nn else None
     )
-    st.image(make_swatch(out), caption=out)
+    
+    # Calculate RMSE between prediction and target
+    error = rmse_hex(out, target_color)
+    
+    # Display results side by side
+    st.markdown("### Results")
+    res_col1, res_col2, res_col3 = st.columns(3)
+    
+    with res_col1:
+        st.markdown("**Predicted**")
+        st.image(make_swatch(out, 120), caption=out)
+    
+    with res_col2:
+        st.markdown("**Target**")
+        st.image(make_swatch(target_color, 120), caption=target_color)
+    
+    with res_col3:
+        st.markdown("**Comparison**")
+        # Create a side-by-side comparison swatch
+        comparison = Image.new("RGB", (120, 120))
+        pred_half = make_swatch(out, 60)
+        target_half = make_swatch(target_color, 60)
+        comparison.paste(pred_half, (0, 30))
+        comparison.paste(target_half, (60, 30))
+        st.image(comparison, caption="Pred | Target")
+    
+    # Show error metrics
+    st.markdown("---")
+    metric_col1, metric_col2 = st.columns(2)
+    with metric_col1:
+        st.metric("RMSE (Linear RGB)", f"{error:.6f}")
+    with metric_col2:
+        # Calculate a rough match percentage (inverse of error)
+        match_pct = max(0, (1 - error) * 100)
+        st.metric("Approx Match %", f"{match_pct:.1f}%")

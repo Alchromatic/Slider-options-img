@@ -28,6 +28,11 @@ canvas.drawing { cursor: crosshair; }
 .color-chip.dragging { opacity: 0.5; }
 .color-chip:hover { border-color: #000; transform: scale(1.05); box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
 .color-chip .count { font-size: 8px; font-weight: bold; margin-top: 2px; background: rgba(0,0,0,0.7); padding: 2px 4px; border-radius: 3px; }
+/* Spinner animation for iframe loader */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
 .color-chip .chip-number { background: rgba(0,0,0,0.7); padding: 2px 4px; border-radius: 3px; font-size: 9px; }
 .color-chip .rgb-value { font-size: 7px; background: rgba(0,0,0,0.7); padding: 2px 3px; border-radius: 2px; margin-top: 2px; font-family: monospace; }
 .frequency-info { margin: 10px 0; padding: 10px; background: #f5f5f5; border-radius: 4px; font-size: 13px; }
@@ -1123,6 +1128,40 @@ canvas.picking { cursor: crosshair; }
 <div class="main-tabs">
     <button class="main-tab-btn active" data-tab="tab-addimage">Add Image</button>
     <button class="main-tab-btn" data-tab="tab-adjust">Adjust</button>
+    <button class="main-tab-btn" data-tab="tab-trycolors" style="background: linear-gradient(135deg, #FF6B6B, #4ECDC4); color: white;">Trycolors Lab</button>
+</div>
+
+<!-- TAB: Trycolors Lab -->
+<div id="tab-trycolors" class="main-tab-content">
+    <div class="section" style="background: linear-gradient(135deg, #FF6B6B22, #4ECDC422); padding: 20px; border-radius: 8px; border: 2px solid #4ECDC4;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <div>
+                <h3 style="color: #333; margin: 0;">Trycolors Reverse Engineering Lab</h3>
+                <p style="color: #666; font-size: 13px; margin: 5px 0 0 0;">YN-KM color mixing calibration with log-poly correction</p>
+            </div>
+            <button id="openTrycolorsNewTab" style="background: #333; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                    <polyline points="15 3 21 3 21 9"/>
+                    <line x1="10" y1="14" x2="21" y2="3"/>
+                </svg>
+                Open in New Tab
+            </button>
+        </div>
+        <div style="position: relative; width: 100%; height: 700px; border-radius: 8px; overflow: hidden; border: 1px solid #ddd;">
+            <iframe 
+                id="trycolorsIframe"
+                src="https://slider-options-img-production-48cf.up.railway.app/"
+                style="width: 100%; height: 100%; border: none;"
+                loading="lazy"
+                allow="clipboard-read; clipboard-write"
+            ></iframe>
+            <div id="trycolorsLoader" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #f5f5f5; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px;">
+                <div style="width: 40px; height: 40px; border: 4px solid #4ECDC4; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                <span style="color: #666; font-size: 14px;">Loading Trycolors Lab...</span>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- TAB 1: Add Image (Generate from Image) -->
@@ -1693,6 +1732,9 @@ canvas.picking { cursor: crosshair; }
 //const API_BASE = "http://127.0.0.1:8000";
 const API_BASE = "https://slider-options-img-production.up.railway.app";
 
+// Trycolors Lab URL - Streamlit app on Railway
+const TRYCOLORS_LAB_URL = "https://slider-options-img-production-48cf.up.railway.app";
+
 let baseShapes = [];
 let detailShapes = [];
 let currentShapes = [];
@@ -1750,6 +1792,20 @@ document.querySelectorAll('.main-tab-btn').forEach(btn => {
         });
         document.getElementById(tabId).classList.add('active');
     });
+});
+
+// Trycolors iframe load handler - hide loader when iframe loads
+const trycolorsIframe = document.getElementById('trycolorsIframe');
+const trycolorsLoader = document.getElementById('trycolorsLoader');
+if (trycolorsIframe && trycolorsLoader) {
+    trycolorsIframe.addEventListener('load', () => {
+        trycolorsLoader.style.display = 'none';
+    });
+}
+
+// Open Trycolors in new tab button
+document.getElementById('openTrycolorsNewTab')?.addEventListener('click', () => {
+    window.open(TRYCOLORS_LAB_URL, '_blank');
 });
 
 /* ==========================================================
