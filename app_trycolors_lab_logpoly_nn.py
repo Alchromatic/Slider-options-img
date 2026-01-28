@@ -575,8 +575,7 @@ if st.button("Mix", key="mix_button"):
                 comparison.paste(pred_half, (0, 30))
                 comparison.paste(target_half, (60, 30))
                 st.image(comparison, caption="Pred | Target")
-            
-            # Show error metrics
+
             st.markdown("---")
             metric_col1, metric_col2 = st.columns(2)
             with metric_col1:
