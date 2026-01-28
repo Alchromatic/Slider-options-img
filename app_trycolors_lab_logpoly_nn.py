@@ -31,7 +31,18 @@ except Exception:
 # ============================================================
 # Streamlit config
 # ============================================================
-st.set_page_config(page_title="Trycolors Reverse Engineering Lab", layout="wide")
+st.set_page_config(
+    page_title="Trycolors Reverse Engineering Lab", 
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Note: For iframe embedding, run Streamlit with these flags:
+# streamlit run app.py --server.enableCORS=false --server.enableXsrfProtection=false
+# Or create .streamlit/config.toml with:
+# [server]
+# enableCORS = false
+# enableXsrfProtection = false
 
 # ============================================================
 # 1) Color utilities
@@ -116,21 +127,28 @@ def make_swatch(hex_color: str, size: int = 180) -> Image.Image:
 # ============================================================
 
 def mix_linear_rgb(bases, w):
+    """Simple linear RGB mixing (additive light) - good default for screen colors"""
     w = normalize_weights(w)
     return tuple(clamp01(sum(b[i] * wi for b, wi in zip(bases, w))) for i in range(3))
 
 def _ks_from_R(R, eps):
+    """Convert reflectance to K/S ratio (Kubelka-Munk)"""
     R = max(R, eps)
     return (1 - R) ** 2 / (2 * R)
 
 def _R_from_ks(KS):
+    """Convert K/S ratio back to reflectance"""
     return max(0.0, (1 + KS) - math.sqrt(KS*KS + 2*KS))
 
 def mix_km(bases, w, eps):
+    """Kubelka-Munk subtractive mixing for paint/pigment simulation"""
     w = normalize_weights(w)
     out = []
+    # Use a higher minimum reflectance floor (5%) to prevent extreme darkening
+    # when mixing colors with zero channel values
+    min_reflectance = max(eps, 0.05)
     for ch in range(3):
-        KS = sum(_ks_from_R(b[ch], eps) * wi for b, wi in zip(bases, w))
+        KS = sum(_ks_from_R(max(b[ch], min_reflectance), min_reflectance) * wi for b, wi in zip(bases, w))
         out.append(clamp01(_R_from_ks(KS)))
     return tuple(out)
 
@@ -230,16 +248,21 @@ def parse_csv(text: str) -> List[Dict[str, Any]]:
 # 5) Prediction + batch evaluation
 # ============================================================
 
-def predict_one(bases, weights, ks_eps, yn_n, calibrator=None, nn_model=None):
+def predict_one(bases, weights, ks_eps, yn_n, calibrator=None, nn_model=None, use_linear=False):
     bases_lin = [hex_to_linear_rgb(h) for h in bases]
     w = normalize_weights(weights)
 
-    lin = mix_ynkm(bases_lin, w, yn_n, ks_eps)
+    if use_linear:
+        # Simple linear RGB mixing (additive)
+        lin = mix_linear_rgb(bases_lin, w)
+    else:
+        # YN-KM subtractive mixing
+        lin = mix_ynkm(bases_lin, w, yn_n, ks_eps)
 
-    if calibrator:
+    if calibrator and not use_linear:
         lin = calibrator.apply(lin)
 
-    if nn_model is not None:
+    if nn_model is not None and not use_linear:
         with torch.no_grad():
             delta = nn_model(torch.tensor(lin, dtype=torch.float32)).numpy()
         lin = tuple(clamp01(lin[i] + 0.25 * delta[i]) for i in range(3))
@@ -306,8 +329,19 @@ st.title("Trycolors Reverse Engineering Lab")
 st.caption("YN-KM + permanent log-poly calibration (+ optional NN residual)")
 
 with st.sidebar:
-    ks_eps = st.number_input("KS_EPS", value=1e-6, format="%.9f")
-    yn_n = st.number_input("YN n", value=1.5)
+    st.subheader("Mixing Parameters")
+    
+    # Mixing method selector
+    mix_method = st.selectbox(
+        "Mixing Method",
+        ["YN-KM (Subtractive/Paint)", "Linear RGB (Additive/Light)"],
+        index=0,
+        help="YN-KM simulates paint mixing (subtractive). Linear RGB is simple additive mixing."
+    )
+    use_linear_mix = "Linear" in mix_method
+    
+    ks_eps = st.number_input("KS_EPS", value=1e-6, format="%.9f", disabled=use_linear_mix)
+    yn_n = st.number_input("YN n", value=1.5, disabled=use_linear_mix)
 
     st.markdown("---")
     st.subheader("Log-poly calibrator")
@@ -392,7 +426,6 @@ mix_csv = st.file_uploader("Load mix presets (CSV)", type=["csv"], key="mix_pres
 if mix_csv:
     csv_content = mix_csv.read().decode()
     st.session_state.mix_presets = parse_csv(csv_content)
-    mix_csv.seek(0)  # Reset for potential re-read
 
 # Dropdown to select from CSV presets
 preset_options = ["-- Manual Input --"]
@@ -402,33 +435,49 @@ if "mix_presets" in st.session_state and st.session_state.mix_presets:
         weights_str = ":".join([f"{w:.2f}" for w in row["weights"]])
         preset_options.append(f"{row['group_id']} | {bases_str} ({weights_str}) → {row['api_hex']}")
 
-# Callback to update session state when preset changes
-def on_preset_change():
-    selected = st.session_state.preset_selector
-    if selected != "-- Manual Input --" and "mix_presets" in st.session_state:
-        idx = preset_options.index(selected) - 1
-        if 0 <= idx < len(st.session_state.mix_presets):
-            preset_data = st.session_state.mix_presets[idx]
-            # Update all widget values in session state
-            for i, base_hex in enumerate(preset_data["bases"]):
-                st.session_state[f"base_{i}"] = base_hex
-            for i, weight in enumerate(preset_data["weights"]):
-                st.session_state[f"weight_{i}"] = weight
-            st.session_state["target_color"] = preset_data["api_hex"]
-            st.session_state["num_bases_input"] = len(preset_data["bases"])
+# Initialize active_preset tracking
+if "active_preset_idx" not in st.session_state:
+    st.session_state.active_preset_idx = 0
 
 selected_preset = st.selectbox(
     "Select preset from CSV", 
     preset_options, 
-    key="preset_selector",
-    on_change=on_preset_change
+    key="preset_selector"
 )
 
-# Get current values from session state or use defaults
-num_bases = st.session_state.get("num_bases_input", 2)
+# Determine current preset data
+current_preset = None
+if selected_preset != "-- Manual Input --" and "mix_presets" in st.session_state:
+    idx = preset_options.index(selected_preset) - 1
+    if 0 <= idx < len(st.session_state.mix_presets):
+        current_preset = st.session_state.mix_presets[idx]
+        # Track if preset changed to force widget updates
+        if st.session_state.active_preset_idx != idx + 1:
+            st.session_state.active_preset_idx = idx + 1
+            st.rerun()
+else:
+    if st.session_state.active_preset_idx != 0:
+        st.session_state.active_preset_idx = 0
+
+# Set values based on preset or defaults
+if current_preset:
+    preset_bases = current_preset["bases"]
+    preset_weights = current_preset["weights"]
+    preset_target = current_preset["api_hex"]
+    preset_num_bases = len(preset_bases)
+else:
+    preset_bases = ["#FF2B2B", "#FFFFFF"]
+    preset_weights = [0.8, 0.2]
+    preset_target = "#FF9C9C"
+    preset_num_bases = 2
 
 # Number of base colors selector
-num_bases = st.number_input("Number of base colors", min_value=2, max_value=6, value=num_bases, key="num_bases_input")
+num_bases = st.number_input(
+    "Number of base colors", 
+    min_value=2, 
+    max_value=6, 
+    value=preset_num_bases
+)
 
 # Dynamic base color pickers and weight sliders
 col1, col2 = st.columns(2)
@@ -439,65 +488,102 @@ weights = []
 with col1:
     st.markdown("**Base Colors**")
     for i in range(num_bases):
-        default_color = st.session_state.get(f"base_{i}", "#FF2B2B" if i == 0 else "#FFFFFF")
-        bases.append(st.color_picker(f"Base {chr(65+i)}", default_color, key=f"base_{i}"))
+        if i < len(preset_bases):
+            default_color = preset_bases[i]
+        else:
+            default_color = "#FFFFFF"
+        # Use unique key with preset index to force refresh on preset change
+        color = st.color_picker(
+            f"Base {chr(65+i)}", 
+            default_color, 
+            key=f"base_{i}_p{st.session_state.active_preset_idx}"
+        )
+        bases.append(color)
 
 with col2:
     st.markdown("**Weights**")
     for i in range(num_bases):
-        default_weight = st.session_state.get(f"weight_{i}", 0.8 if i == 0 else 0.2)
-        weights.append(st.slider(f"w{chr(65+i)}", 0.0, 1.0, default_weight, key=f"weight_{i}"))
+        if i < len(preset_weights):
+            default_weight = preset_weights[i]
+        else:
+            default_weight = 0.5
+        weight = st.slider(
+            f"w{chr(65+i)}", 
+            0.0, 1.0, 
+            default_weight, 
+            key=f"weight_{i}_p{st.session_state.active_preset_idx}"
+        )
+        weights.append(weight)
 
 # Target color picker for comparison
 st.markdown("---")
 st.markdown("**Target Color (for comparison)**")
 target_col1, target_col2 = st.columns([1, 3])
 with target_col1:
-    default_target = st.session_state.get("target_color", "#FF9C9C")
-    target_color = st.color_picker("Target", default_target, key="target_color")
+    target_color = st.color_picker(
+        "Target", 
+        preset_target, 
+        key=f"target_color_p{st.session_state.active_preset_idx}"
+    )
 with target_col2:
     st.markdown(f"Target hex: `{target_color}`")
 
+# Show current mix inputs for debugging (collapsible)
+with st.expander("Debug: Current inputs"):
+    st.write(f"Bases: {bases}")
+    st.write(f"Weights: {weights}")
+    st.write(f"Target: {target_color}")
+    st.write(f"Sum of weights: {sum(weights)}")
+    st.write(f"Mixing method: {'Linear RGB' if use_linear_mix else 'YN-KM'}")
+
 # Mix button and results
 if st.button("Mix", key="mix_button"):
-    out = predict_one(
-        bases, weights,
-        ks_eps, yn_n,
-        st.session_state.get("calibrator"),
-        st.session_state.get("nn_model") if use_nn else None
-    )
-    
-    # Calculate RMSE between prediction and target
-    error = rmse_hex(out, target_color)
-    
-    # Display results side by side
-    st.markdown("### Results")
-    res_col1, res_col2, res_col3 = st.columns(3)
-    
-    with res_col1:
-        st.markdown("**Predicted**")
-        st.image(make_swatch(out, 120), caption=out)
-    
-    with res_col2:
-        st.markdown("**Target**")
-        st.image(make_swatch(target_color, 120), caption=target_color)
-    
-    with res_col3:
-        st.markdown("**Comparison**")
-        # Create a side-by-side comparison swatch
-        comparison = Image.new("RGB", (120, 120))
-        pred_half = make_swatch(out, 60)
-        target_half = make_swatch(target_color, 60)
-        comparison.paste(pred_half, (0, 30))
-        comparison.paste(target_half, (60, 30))
-        st.image(comparison, caption="Pred | Target")
-    
-    # Show error metrics
-    st.markdown("---")
-    metric_col1, metric_col2 = st.columns(2)
-    with metric_col1:
-        st.metric("RMSE (Linear RGB)", f"{error:.6f}")
-    with metric_col2:
-        # Calculate a rough match percentage (inverse of error)
-        match_pct = max(0, (1 - error) * 100)
-        st.metric("Approx Match %", f"{match_pct:.1f}%")
+    # Validate weights
+    if sum(weights) <= 0:
+        st.error("Weights must sum to a positive value!")
+    else:
+        try:
+            out = predict_one(
+                bases, weights,
+                ks_eps, yn_n,
+                st.session_state.get("calibrator"),
+                st.session_state.get("nn_model") if use_nn else None,
+                use_linear=use_linear_mix
+            )
+            
+            # Calculate RMSE between prediction and target
+            error = rmse_hex(out, target_color)
+            
+            # Display results side by side
+            st.markdown("### Results")
+            res_col1, res_col2, res_col3 = st.columns(3)
+            
+            with res_col1:
+                st.markdown("**Predicted**")
+                st.image(make_swatch(out, 120), caption=out)
+            
+            with res_col2:
+                st.markdown("**Target**")
+                st.image(make_swatch(target_color, 120), caption=target_color)
+            
+            with res_col3:
+                st.markdown("**Comparison**")
+                # Create a side-by-side comparison swatch
+                comparison = Image.new("RGB", (120, 120))
+                pred_half = make_swatch(out, 60)
+                target_half = make_swatch(target_color, 60)
+                comparison.paste(pred_half, (0, 30))
+                comparison.paste(target_half, (60, 30))
+                st.image(comparison, caption="Pred | Target")
+            
+            # Show error metrics
+            st.markdown("---")
+            metric_col1, metric_col2 = st.columns(2)
+            with metric_col1:
+                st.metric("RMSE (Linear RGB)", f"{error:.6f}")
+            with metric_col2:
+                # Calculate a rough match percentage (inverse of error)
+                match_pct = max(0, (1 - error) * 100)
+                st.metric("Approx Match %", f"{match_pct:.1f}%")
+        except Exception as e:
+            st.error(f"Error during mixing: {str(e)}")
