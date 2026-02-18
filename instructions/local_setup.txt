@@ -1,0 +1,11 @@
+Install python (https://www.python.org/downloads/release/python-397/, windows installer x64)
+
+Then open this project folder using cd command, 
+example cd C:\Users\Samridh\Downloads\sunnysanwar_script_v10 in terminal/CMD
+
+then pass the command: pip install -r requirements.txt
+once done write pip install uvicorn
+
+Once done, in CMD pass the command: uvicorn main:app --reload
+
+And the api will be live
