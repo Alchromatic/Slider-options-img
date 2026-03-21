@@ -141,6 +141,8 @@ class UnmixRequest(BaseModel):
     palette: List[PaletteColor]  # Available paints to mix from
     max_colors: Optional[int] = 3  # Max colors in the recipe (1-5)
     max_parts: Optional[int] = 10  # Max parts per color for ratio precision
+    prefilter_top_n: Optional[int] = 12  # Pre-filter palette to top-N closest colors (0=off)
+    top_k: Optional[int] = 5  # Keep top-K solutions
 
 
 class RecipeComponent(BaseModel):
@@ -430,7 +432,9 @@ def find_best_recipe(
     target_hex: str,
     palette: List[PaletteColor],
     max_colors: int = 3,
-    max_parts: int = 10
+    max_parts: int = 10,
+    prefilter_top_n: int = 12,
+    top_k: int = 5
 ) -> Tuple[List[Tuple[int, int]], str, float, float, str]:
     """
     Find the best combination of palette colors to achieve target color.
@@ -442,55 +446,69 @@ def find_best_recipe(
     
     Returns: (recipe as [(palette_idx, parts), ...], result_hex, match_pct, delta_e, mix_method)
     """
+    import heapq
     from itertools import combinations, product
-    
+
     target_rgb = hex_to_rgb255(target_hex)
     target_lab = rgb_to_lab(*target_rgb)
-    
+
     best_recipe = []
     best_result_hex = target_hex
     best_delta_e = float('inf')
     best_method = "kubelka_munk"
-    
+
+    # top_k candidate heap: stores (delta_e, recipe, result_hex, method)
+    # We track multiple candidates so we can fine-tune more than just the single best
+    top_k_candidates = []
+
+    def _add_candidate(de, recipe, result_hex, method):
+        nonlocal best_delta_e, best_recipe, best_result_hex, best_method
+        if de < best_delta_e:
+            best_delta_e = de
+            best_recipe = recipe
+            best_result_hex = result_hex
+            best_method = method
+        if len(top_k_candidates) < top_k:
+            heapq.heappush(top_k_candidates, (-de, recipe, result_hex, method))
+        elif de < -top_k_candidates[0][0]:
+            heapq.heapreplace(top_k_candidates, (-de, recipe, result_hex, method))
+
     palette_hexes = [normalize_hex(p.hex) for p in palette]
     n_palette = len(palette_hexes)
-    
+
     if n_palette == 0:
         return [], target_hex, 0.0, 100.0, "none"
-    
+
     # Pre-compute LAB values for all palette colors
     palette_labs = []
     for hex_color in palette_hexes:
         rgb = hex_to_rgb255(hex_color)
         palette_labs.append(rgb_to_lab(*rgb))
-    
+
     # Step 1: Find single color matches and rank palette by proximity
     color_distances = []
     for i, lab in enumerate(palette_labs):
         de = delta_e_cie76(target_lab, lab)
         color_distances.append((i, de))
-        if de < best_delta_e:
-            best_delta_e = de
-            best_recipe = [(i, max_parts)]
-            best_result_hex = palette_hexes[i]
-    
+        _add_candidate(de, [(i, max_parts)], palette_hexes[i], "exact")
+
     # If exact match found, return early
     if best_delta_e < 1.0:
         return best_recipe, best_result_hex, delta_e_to_match_percentage(best_delta_e), best_delta_e, "exact"
-    
+
     # Sort by distance - focus on closest colors
     color_distances.sort(key=lambda x: x[1])
-    
+
     # Take top N most promising colors (limit search space)
-    top_n = min(12, n_palette)  # Use at most 12 closest colors
-    promising_indices = [idx for idx, _ in color_distances[:top_n]]
-    
+    effective_top_n = n_palette if prefilter_top_n <= 0 else min(prefilter_top_n, n_palette)
+    promising_indices = [idx for idx, _ in color_distances[:effective_top_n]]
+
     # Mixing methods to try
     mixing_methods = ["kubelka_munk", "yn_km", "linear"]
-    
+
     # Step 2: Coarse search with fewer parts first
     coarse_parts = list(range(1, min(max_parts + 1, 6)))  # 1-5 for coarse
-    
+
     # Try 2-color combinations (most common case)
     for method in mixing_methods:
         for i, j in combinations(promising_indices, 2):
@@ -502,54 +520,46 @@ def find_best_recipe(
                     mixed_rgb = hex_to_rgb255(mixed_hex)
                     mixed_lab = rgb_to_lab(*mixed_rgb)
                     de = delta_e_cie76(target_lab, mixed_lab)
-                    
-                    if de < best_delta_e:
-                        best_delta_e = de
-                        best_recipe = [(i, p1), (j, p2)]
-                        best_result_hex = mixed_hex
-                        best_method = method
-                        
-                        if de < 2.0:  # Good enough for coarse search
-                            break
+
+                    _add_candidate(de, [(i, p1), (j, p2)], mixed_hex, method)
+
+                    if de < 2.0:  # Good enough for coarse search
+                        break
                 except:
                     continue
             if best_delta_e < 2.0:
                 break
         if best_delta_e < 2.0:
             break
-    
-    # Step 3: Fine-tune the best 2-color recipe with more precision
-    if len(best_recipe) == 2 and best_delta_e > 1.0:
-        i, p1 = best_recipe[0]
-        j, p2 = best_recipe[1]
-        
-        # Search around the coarse solution
-        fine_range = range(max(1, p1 - 2), min(max_parts + 1, p1 + 3))
-        fine_range2 = range(max(1, p2 - 2), min(max_parts + 1, p2 + 3))
-        
+
+    # Step 3: Fine-tune ALL top-K 2-color candidates with more precision
+    candidates_to_refine = [(recipe, method) for (neg_de, recipe, _, method) in top_k_candidates if len(recipe) == 2]
+    for candidate_recipe, candidate_method in candidates_to_refine:
+        ci, cp1 = candidate_recipe[0]
+        cj, cp2 = candidate_recipe[1]
+
+        fine_range = range(max(1, cp1 - 2), min(max_parts + 1, cp1 + 3))
+        fine_range2 = range(max(1, cp2 - 2), min(max_parts + 1, cp2 + 3))
+
         for method in mixing_methods:
             for fp1, fp2 in product(fine_range, fine_range2):
                 try:
-                    colors = [palette_hexes[i], palette_hexes[j]]
+                    colors = [palette_hexes[ci], palette_hexes[cj]]
                     weights = [fp1, fp2]
                     mixed_hex = mix_colors_hex(colors, weights, method=method)
                     mixed_rgb = hex_to_rgb255(mixed_hex)
                     mixed_lab = rgb_to_lab(*mixed_rgb)
                     de = delta_e_cie76(target_lab, mixed_lab)
-                    
-                    if de < best_delta_e:
-                        best_delta_e = de
-                        best_recipe = [(i, fp1), (j, fp2)]
-                        best_result_hex = mixed_hex
-                        best_method = method
+
+                    _add_candidate(de, [(ci, fp1), (cj, fp2)], mixed_hex, method)
                 except:
                     continue
-    
+
     # Step 4: Try 3-color only if 2-color match is poor
     if max_colors >= 3 and best_delta_e > 5.0:
         top_8 = promising_indices[:8]  # Even smaller set for 3-color
         coarse_3 = [1, 2, 3, 4]  # Very coarse for 3-color
-        
+
         for method in mixing_methods:
             for indices in combinations(top_8, 3):
                 for parts in product(coarse_3, repeat=3):
@@ -560,22 +570,18 @@ def find_best_recipe(
                         mixed_rgb = hex_to_rgb255(mixed_hex)
                         mixed_lab = rgb_to_lab(*mixed_rgb)
                         de = delta_e_cie76(target_lab, mixed_lab)
-                        
-                        if de < best_delta_e:
-                            best_delta_e = de
-                            best_recipe = list(zip(indices, parts))
-                            best_result_hex = mixed_hex
-                            best_method = method
-                            
-                            if de < 3.0:
-                                break
+
+                        _add_candidate(de, list(zip(indices, parts)), mixed_hex, method)
+
+                        if de < 3.0:
+                            break
                     except:
                         continue
                 if best_delta_e < 3.0:
                     break
             if best_delta_e < 3.0:
                 break
-    
+
     match_pct = delta_e_to_match_percentage(best_delta_e)
     return best_recipe, best_result_hex, match_pct, best_delta_e, best_method
 
@@ -777,14 +783,18 @@ def unmix_color(req: UnmixRequest):
     # Clamp parameters
     max_colors = max(1, min(5, req.max_colors or 3))
     max_parts = max(1, min(20, req.max_parts or 10))
-    
+    prefilter_top_n = max(0, min(60, req.prefilter_top_n if req.prefilter_top_n is not None else 12))
+    top_k = max(1, min(20, req.top_k or 5))
+
     # Find best recipe
     try:
         raw_recipe, result_hex, match_pct, delta_e, mix_method = find_best_recipe(
             target_normalized,
             valid_palette,
             max_colors=max_colors,
-            max_parts=max_parts
+            max_parts=max_parts,
+            prefilter_top_n=prefilter_top_n,
+            top_k=top_k
         )
         
         # Simplify recipe (combine duplicates, reduce ratios)
