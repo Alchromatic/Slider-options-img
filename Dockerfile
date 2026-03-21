@@ -11,11 +11,15 @@ RUN apt-get update && \
 
 ENV PATH=$PATH:/usr/local/go/bin:/root/go/bin
 
-# Install primitive (pin golang.org/x/image to version compatible with Go 1.24)
+# Install primitive
+ENV GOFLAGS=-mod=mod
 RUN git clone https://github.com/fogleman/primitive.git /tmp/primitive && \
     cd /tmp/primitive && \
-    go mod edit -require golang.org/x/image@v0.23.0 && \
-    go mod tidy && \
+    go mod init github.com/fogleman/primitive && \
+    go get github.com/fogleman/gg && \
+    go get github.com/golang/freetype/raster && \
+    go get github.com/nfnt/resize && \
+    go get golang.org/x/image@v0.23.0 && \
     go install . && \
     rm -rf /tmp/primitive
 
