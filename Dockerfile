@@ -13,13 +13,15 @@ ENV PATH=$PATH:/usr/local/go/bin:/root/go/bin
 
 # Install primitive
 ENV GOFLAGS=-mod=mod
+ENV GONOSUMCHECK=*
 RUN git clone https://github.com/fogleman/primitive.git /tmp/primitive && \
     cd /tmp/primitive && \
     go mod init github.com/fogleman/primitive && \
-    go get github.com/fogleman/gg && \
-    go get github.com/golang/freetype/raster && \
-    go get github.com/nfnt/resize && \
-    go get golang.org/x/image@v0.23.0 && \
+    echo 'require golang.org/x/image v0.23.0' >> go.mod && \
+    echo 'require github.com/fogleman/gg v1.3.0' >> go.mod && \
+    echo 'require github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0' >> go.mod && \
+    echo 'require github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646' >> go.mod && \
+    go mod download && \
     go install . && \
     rm -rf /tmp/primitive
 
