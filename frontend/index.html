@@ -1517,9 +1517,57 @@ canvas.picking { cursor: crosshair; }
 
 <!-- TAB 1: Add Image (Generate from Image) -->
 <div id="tab-addimage" class="main-tab-content active">
-<!-- ========================== GEOMETRIZE (Client-Side) ========================= -->
+
+<!-- ========================== 1. DRAWING (Line Drawing Mode) ========================= -->
+<div class="section" style="background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); padding: 20px; border-radius: 8px; border: 2px solid #ff9800;">
+    <h3 style="color: #e65100; margin-top: 0;">Drawing</h3>
+    <div class="info" style="margin-bottom: 15px;">Generate a line drawing from an uploaded image.</div>
+    <div style="margin-bottom: 10px;">
+        <label style="font-weight: bold; font-size: 12px; color: #666;">Image File:</label>
+        <input type="file" id="lineDrawingImageInput" accept="image/*" style="width: 100%; margin-top: 5px;">
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+        <div>
+            <label style="font-size: 11px; color: #666;">Style:</label>
+            <select id="lineDrawingStyle" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;">
+                <option value="stencil">Stencil (Outline Only)</option>
+                <option value="sketch">Pencil Sketch</option>
+                <option value="detailed" selected>Detailed Sketch</option>
+                <option value="crosshatch">Cross-Hatch Style</option>
+                <option value="architectural">Architectural</option>
+            </select>
+        </div>
+        <div>
+            <label style="font-size: 11px; color: #666;">Detail: <span id="ldDetailVal">80</span>%</label>
+            <input type="range" id="lineDrawingDetail" min="20" max="100" value="80" style="width: 100%;">
+        </div>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+        <div>
+            <label style="font-size: 11px; color: #666;">Line Weight: <span id="ldWeightVal">2</span></label>
+            <input type="range" id="lineDrawingWeight" min="1" max="4" value="2" style="width: 100%;">
+        </div>
+        <div style="display: flex; flex-direction: column; justify-content: end; gap: 4px;">
+            <label style="font-size: 11px; color: #666; display: flex; align-items: center; gap: 5px;">
+                <input type="checkbox" id="lineDrawingOutlineOnly"> Outline Only
+            </label>
+            <label style="font-size: 11px; color: #666; display: flex; align-items: center; gap: 5px;">
+                <input type="checkbox" id="lineDrawingGrid"> Show Grid Lines
+            </label>
+        </div>
+    </div>
+    <button id="generateLineDrawingBtn" style="background: linear-gradient(135deg, #ff9800, #f57c00); color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; width: 100%;">
+        Generate Line Drawing
+    </button>
+    <button id="downloadLineDrawingBtn" style="background: #607D8B; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 8px; width: 100%; display: none;">
+        Download Line Drawing PNG
+    </button>
+    <div id="lineDrawingStatus" class="info" style="margin-top: 10px; text-align: center;"></div>
+</div>
+
+<!-- ========================== 2. STROKES (Geometrize Client-Side) ========================= -->
 <div class="section" style="background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%); padding: 20px; border-radius: 8px; border: 2px solid #7c4dff;">
-    <h3 style="color: #512da8; margin-top: 0;">Generate from Image</h3>
+    <h3 style="color: #512da8; margin-top: 0;">Strokes</h3>
     <div class="info" style="margin-bottom: 15px;">Upload an image to convert it into geometric shapes.</div>
     
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
@@ -1606,53 +1654,12 @@ canvas.picking { cursor: crosshair; }
         Download JSON
     </button>
     
-    <!-- LINE DRAWING MODE -->
-    <div style="margin-top: 15px; padding-top: 15px; border-top: 2px dashed #ff9800;">
-        <h4 style="color: #e65100; margin: 0 0 10px 0; font-size: 14px;">📝 Line Drawing Mode</h4>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-            <div>
-                <label style="font-size: 11px; color: #666;">Style:</label>
-                <select id="lineDrawingStyle" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;">
-                    <option value="stencil">Stencil (Outline Only)</option>
-                    <option value="sketch">Pencil Sketch</option>
-                    <option value="detailed" selected>Detailed Sketch</option>
-                    <option value="crosshatch">Cross-Hatch Style</option>
-                    <option value="architectural">Architectural</option>
-                </select>
-            </div>
-            <div>
-                <label style="font-size: 11px; color: #666;">Detail: <span id="ldDetailVal">80</span>%</label>
-                <input type="range" id="lineDrawingDetail" min="20" max="100" value="80" style="width: 100%;">
-            </div>
-        </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-            <div>
-                <label style="font-size: 11px; color: #666;">Line Weight: <span id="ldWeightVal">2</span></label>
-                <input type="range" id="lineDrawingWeight" min="1" max="4" value="2" style="width: 100%;">
-            </div>
-            <div style="display: flex; flex-direction: column; justify-content: end; gap: 4px;">
-                <label style="font-size: 11px; color: #666; display: flex; align-items: center; gap: 5px;">
-                    <input type="checkbox" id="lineDrawingOutlineOnly"> Outline Only
-                </label>
-                <label style="font-size: 11px; color: #666; display: flex; align-items: center; gap: 5px;">
-                    <input type="checkbox" id="lineDrawingGrid"> Show Grid Lines
-                </label>
-            </div>
-        </div>
-        <button id="generateLineDrawingBtn" style="background: linear-gradient(135deg, #ff9800, #f57c00); color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; width: 100%;">
-            Generate Line Drawing
-        </button>
-        <button id="downloadLineDrawingBtn" style="background: #607D8B; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 8px; width: 100%; display: none;">
-            Download Line Drawing PNG
-        </button>
-    </div>
-    
     <div id="geometrizeStatus" class="info" style="margin-top: 10px; text-align: center;"></div>
 </div>
 
-<!-- ========================== LOAD JSON ========================= -->
+<!-- ========================== 3. ORDER SHAPES FROM JSON ========================= -->
 <div class="section">
-    <h3>Load JSON Files</h3>
+    <h3>Order Shapes From Json</h3>
 
     <label>Base (Low-res):</label>
     <input type="file" id="baseFileInput" accept=".json">
@@ -1663,9 +1670,9 @@ canvas.picking { cursor: crosshair; }
     <span id="detailFileStatus" class="info"></span>
 </div>
 
-<!-- ====================== SELECTIVE RESOLUTION =================== -->
+<!-- ====================== 5. REFINING (Selective Resolution) =================== -->
 <div class="section highlight">
-    <h3>Selective Resolution Tool</h3>
+    <h3>Refining</h3>
     <div class="info">Draw freehand on the canvas to select regions, then click the enhance icon (or button below) to add more detail to those areas.</div>
 
     <button id="selectRegionsBtn">Select Regions for Detail</button>
@@ -1765,11 +1772,6 @@ canvas.picking { cursor: crosshair; }
     <button id="editColorBtn" style="margin-top: 10px;">Edit Color Sequence</button>
     <button id="dragColorBtn">Drag & Drop Color Order</button>
 
-    <button id="bakeOpaqueBtn" style="background:#2196F3; color:white; margin-top:10px;">
-        Bake Opaque (Fix Order Issues)
-    </button>
-    <div class="info">Makes shapes order-independent</div>
-    
     <!-- Sequence Filter Section -->
     <div id="sequenceFilterSection" class="sequence-filter-section" style="display: none;">
         <h4>Sequence Filter (Click to show only selected color)</h4>
@@ -1784,6 +1786,15 @@ canvas.picking { cursor: crosshair; }
             <button id="showGroupedOnlyBtn" style="background: #9c27b0; color: white; border: none; border-radius: 4px; cursor: pointer;">Show Grouped Only (<span id="groupedColorCount">0</span>)</button>
         </div>
     </div>
+</div>
+
+<!-- ====================== 4. OPTIMIZING (Bake Opaque) ======================== -->
+<div class="section" style="background: linear-gradient(135deg, #e3f2fd 0%, #e1f5fe 100%); padding: 20px; border-radius: 8px; border: 2px solid #2196F3;">
+    <h3 style="color: #1565C0; margin-top: 0;">Optimizing</h3>
+    <div class="info" style="margin-bottom: 10px;">Makes shapes order-independent by baking opacity into each shape.</div>
+    <button id="bakeOpaqueBtn" style="background:#2196F3; color:white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; width: 100%;">
+        Bake Opaque (Fix Order Issues)
+    </button>
 </div>
 
 <!-- ====================== COLOR PICKER ======================== -->
@@ -1834,57 +1845,27 @@ canvas.picking { cursor: crosshair; }
             </div>
         </div>
         
-        <!-- Palette Preset Section -->
-        <div class="palette-preset-section">
-            <h4>Load Palette Preset</h4>
-            <div class="palette-preset-controls">
-                <select id="palettePresetSelect">
-                    <option value="">-- Select a palette --</option>
-                </select>
-                <button id="loadPaletteBtn" disabled>Load</button>
-            </div>
-        </div>
-        
-        <!-- Color Matcher Section -->
-        <div class="color-matcher-section">
-            <h5>Match Against Palette</h5>
-            <textarea id="colorMatcherInput" class="color-matcher-input" placeholder="Enter hex colors to compare against (one per line or comma-separated):
-#FF5733
-#3498DB
-#2ECC71"></textarea>
+        <!-- Palette Preset, Color Matcher, and Unmix are now separate sections below -->
+    </div>
+</div>
 
-            <div id="matchResults" class="match-results">
-                <div class="match-empty">Select a shape and enter palette colors to compare</div>
-            </div>
-        </div>
-        
-        <!-- Unmix / Get Recipe Section -->
-        <div class="unmix-section">
-            <h5>Get Mix Recipe (Unmix)</h5>
-            <p style="font-size: 11px; color: #666; margin: 0 0 12px 0;">
-                Find which paints to mix (and in what proportions) to recreate the selected color.
-            </p>
-            <div class="unmix-controls">
-                <div class="unmix-control-item">
-                    <label>Max Colors in Recipe</label>
-                    <input type="number" id="maxColorsInput" value="3" min="1" max="5">
-                </div>
-                <div class="unmix-control-item">
-                    <label>Max Parts (Precision)</label>
-                    <input type="number" id="maxPartsInput" value="10" min="2" max="20">
-                </div>
-            </div>
-            <button id="getRecipeBtn" disabled>Get Mix Recipe</button>
-            <div id="recipeResults" class="recipe-results">
-                <div class="recipe-empty">Select a shape and load a palette to get a mixing recipe</div>
-            </div>
+<!-- ====================== 6. PAINTS (Palette Preset) ======================== -->
+<div class="section">
+    <h3>Paints</h3>
+    <div class="info" style="margin-bottom: 10px;">Load a predefined palette of paint colors.</div>
+    <div class="palette-preset-section">
+        <div class="palette-preset-controls">
+            <select id="palettePresetSelect">
+                <option value="">-- Select a palette --</option>
+            </select>
+            <button id="loadPaletteBtn" disabled>Load</button>
         </div>
     </div>
 </div>
 
-<!-- NEW: Trycolors-Style Simple Unmix Section -->
+<!-- ====================== 7. PALETTE MIXING (Trycolors Style) ======================== -->
 <div class="section trycolors-section">
-    <h4>Quick Color Recipe (Trycolors Style)</h4>
+    <h4>Palette mixing</h4>
     <p style="font-size: 12px; color: #888; margin: -10px 0 15px 0;">
         Enter any hex color to find the paint recipe.
     </p>
@@ -1966,6 +1947,41 @@ canvas.picking { cursor: crosshair; }
     </details>
 </div>
 
+<!-- ====================== 8. PALETTE MIXING - PREMIUM (Unmix) ======================== -->
+<div class="section" style="background: linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, rgba(76, 175, 80, 0.02) 100%); padding: 20px; border-radius: 8px; border: 2px solid #4CAF50;">
+    <h3 style="color: #2E7D32; margin-top: 0;">Palette mixing - Premium</h3>
+    <p style="font-size: 12px; color: #666; margin: 0 0 12px 0;">
+        Find which paints to mix (and in what proportions) to recreate the selected color.
+    </p>
+    <div class="unmix-controls">
+        <div class="unmix-control-item">
+            <label>Max Colors in Recipe</label>
+            <input type="number" id="maxColorsInput" value="3" min="1" max="5">
+        </div>
+        <div class="unmix-control-item">
+            <label>Max Parts (Precision)</label>
+            <input type="number" id="maxPartsInput" value="10" min="2" max="20">
+        </div>
+    </div>
+    <button id="getRecipeBtn" disabled>Get Mix Recipe</button>
+    <div id="recipeResults" class="recipe-results">
+        <div class="recipe-empty">Select a shape and load a palette to get a mixing recipe</div>
+    </div>
+</div>
+
+<!-- ====================== 9. MATCH DIFFERENCE (Color Matcher) ======================== -->
+<div class="section" style="padding: 20px; border-radius: 8px; border: 2px solid #673AB7; background: linear-gradient(135deg, rgba(103, 58, 183, 0.05) 0%, rgba(103, 58, 183, 0.02) 100%);">
+    <h3 style="color: #4A148C; margin-top: 0;">Match difference</h3>
+    <div class="info" style="margin-bottom: 10px;">Compare a selected shape's color against a palette of hex colors.</div>
+    <textarea id="colorMatcherInput" class="color-matcher-input" placeholder="Enter hex colors to compare against (one per line or comma-separated):
+#FF5733
+#3498DB
+#2ECC71"></textarea>
+    <div id="matchResults" class="match-results">
+        <div class="match-empty">Select a shape and enter palette colors to compare</div>
+    </div>
+</div>
+
 <div class="section slider-container">
     <!-- Progressive Render Slider -->
     <div class="rendering-slider-container">
@@ -1991,7 +2007,7 @@ canvas.picking { cursor: crosshair; }
         <svg viewBox="0 0 24 24"><path d="M4 4l7 18 2.5-7.5L21 12z"/></svg>
     </button>
     <button id="toolHand" title="Hand (Pan)">
-        <svg viewBox="0 0 24 24"><path d="M8 13V4.5a1.5 1.5 0 0 1 3 0V12" /><path d="M11 5.5a1.5 1.5 0 0 1 3 0V12" /><path d="M14 5.5a1.5 1.5 0 0 1 3 0V12" /><path d="M17 7.5a1.5 1.5 0 0 1 3 0V14a8 8 0 0 1-8 8h-1a8 8 0 0 1-8-8v-2a1.5 1.5 0 0 1 3 0" /></svg>
+        <svg viewBox="0 0 24 24"><path d="M18 11V6.5a1.5 1.5 0 0 0-3 0V11" /><path d="M15 5.5a1.5 1.5 0 0 0-3 0V11" /><path d="M12 4a1.5 1.5 0 0 0-3 0v7" /><path d="M9 11V4.5a1.5 1.5 0 0 0-3 0V14" /><path d="M6 14l-1.26 2.22A2 2 0 0 0 6.5 20h7a4 4 0 0 0 4-4v-3.5a1.5 1.5 0 0 0-3 0" /></svg>
     </button>
     <div class="toolbar-sep"></div>
     <button id="toolZoomIn" title="Zoom In">
@@ -2190,8 +2206,8 @@ canvas.picking { cursor: crosshair; }
 </div>
 
 <script>
-const API_BASE = "http://127.0.0.1:8000";
-//const API_BASE = "https://alchromaticdemo.up.railway.app";
+//const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "https://alchromaticdemo.up.railway.app";
 
 // Trycolors Lab URL - Streamlit app on Railway
 const TRYCOLORS_LAB_URL = "https://slider-options-img-production-48cf.up.railway.app";
@@ -7571,7 +7587,7 @@ geometrize_shape_ShapeTypes.QUADRATIC_BEZIER = 7;
 (function() {
     'use strict';
     
-    const geometrizeInput = document.getElementById('geometrizeInput');
+    const lineDrawingImageInput = document.getElementById('lineDrawingImageInput') || document.getElementById('geometrizeInput');
     const lineDrawingStyle = document.getElementById('lineDrawingStyle');
     const lineDrawingDetail = document.getElementById('lineDrawingDetail');
     const lineDrawingWeight = document.getElementById('lineDrawingWeight');
@@ -7580,24 +7596,24 @@ geometrize_shape_ShapeTypes.QUADRATIC_BEZIER = 7;
     const generateBtn = document.getElementById('generateLineDrawingBtn');
     const downloadBtn = document.getElementById('downloadLineDrawingBtn');
     const mainCanvas = document.getElementById('canvas');
-    const statusDiv = document.getElementById('geometrizeStatus');
-    
+    const statusDiv = document.getElementById('lineDrawingStatus') || document.getElementById('geometrizeStatus');
+
     const MAX_CANVAS_WIDTH = 600;
     const MAX_CANVAS_HEIGHT = 600;
-    
+
     let lineDrawingFullSize = null;
-    
+
     lineDrawingDetail.addEventListener('input', (e) => {
         document.getElementById('ldDetailVal').textContent = e.target.value;
     });
     lineDrawingWeight.addEventListener('input', (e) => {
         document.getElementById('ldWeightVal').textContent = e.target.value;
     });
-    
+
     generateBtn.addEventListener('click', async () => {
-        const file = geometrizeInput.files[0];
+        const file = lineDrawingImageInput.files[0];
         if (!file) {
-            statusDiv.textContent = 'Please select an image first above.';
+            statusDiv.textContent = 'Please select an image first.';
             statusDiv.style.color = '#f44336';
             return;
         }

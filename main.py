@@ -19,6 +19,7 @@ import xml.etree.ElementTree as ET
 import re
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
@@ -28,7 +29,65 @@ import io
 import cv2
 import base64
 
-app = FastAPI()
+tags_metadata = [
+    {"name": "1. Drawing", "description": "Convert images to line drawings for tracing"},
+    {"name": "2. Strokes", "description": "Convert images into geometric shapes (Geometrize)"},
+    {"name": "3. Order Shapes From Json", "description": "Apply ordering strategies to shape lists"},
+    {"name": "4. Optimizing", "description": "Bake opaque colors and optimize shape rendering"},
+    {"name": "5. Refining", "description": "Enhance specific regions with selective resolution"},
+    {"name": "6. Paints", "description": "Get default paint palettes"},
+    {"name": "7. Palette mixing", "description": "Simple palette mixing / unmix (Trycolors style)"},
+    {"name": "8. Palette mixing - Premium", "description": "Advanced palette mixing with full control"},
+    {"name": "9. Match difference", "description": "Compare colors against a palette using CIE LAB Delta E"},
+]
+
+app = FastAPI(
+    title="Art-AI Renderer API",
+    description="Convert images to line drawings, geometric shapes, and optimize paint palettes.",
+    version="1.0.0",
+    openapi_tags=tags_metadata,
+    redoc_url=None,
+    docs_url="/docs",
+)
+
+
+@app.get("/redoc", include_in_schema=False)
+async def custom_redoc():
+    return HTMLResponse("""
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Art-AI Renderer API - ReDoc</title>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>body { margin: 0; padding: 0; }</style>
+</head>
+<body>
+    <div id="redoc-container"></div>
+    <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+    <script>
+        if (typeof Redoc !== 'undefined') {
+            Redoc.init('/openapi.json', {}, document.getElementById('redoc-container'));
+        } else {
+            // Fallback: try unpkg CDN
+            var s = document.createElement('script');
+            s.src = 'https://unpkg.com/redoc@latest/bundles/redoc.standalone.js';
+            s.onload = function() {
+                Redoc.init('/openapi.json', {}, document.getElementById('redoc-container'));
+            };
+            s.onerror = function() {
+                document.getElementById('redoc-container').innerHTML =
+                    '<div style="padding:40px;font-family:sans-serif;">' +
+                    '<h2>ReDoc could not load</h2>' +
+                    '<p>Cannot reach CDN. Try <a href="/docs">/docs</a> (Swagger UI) instead, ' +
+                    'or view the raw schema at <a href="/openapi.json">/openapi.json</a>.</p></div>';
+            };
+            document.head.appendChild(s);
+        }
+    </script>
+</body>
+</html>
+""")
 
 # ========== Geometrize Configuration ==========
 
@@ -613,7 +672,7 @@ def simplify_recipe(recipe: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
     return [(idx, parts) for idx, parts in combined.items()]
 
 
-@app.post("/color_match", response_model=ColorMatchResponse)
+@app.post("/color_match", response_model=ColorMatchResponse, tags=["9. Match difference"])
 def color_match(req: ColorMatchRequest):
     """
     Compare a selected color against a palette of colors using CIE LAB color space.
@@ -702,7 +761,7 @@ def color_match(req: ColorMatchRequest):
     )
 
 
-@app.post("/unmix", response_model=UnmixResponse)
+@app.post("/unmix", response_model=UnmixResponse, tags=["8. Palette mixing - Premium"])
 def unmix_color(req: UnmixRequest):
     """
     Find a mixing recipe to achieve a target color from your palette.
@@ -924,7 +983,7 @@ class SimpleUnmixResponse(BaseModel):
     formatted_output: str  # Human readable string like trycolors
 
 
-@app.post("/unmix/simple", response_model=SimpleUnmixResponse)
+@app.post("/unmix/simple", response_model=SimpleUnmixResponse, tags=["7. Palette mixing"])
 def unmix_color_simple(req: SimpleUnmixRequest):
     """
     Trycolors-style unmix endpoint.
@@ -1061,7 +1120,7 @@ def unmix_color_simple(req: SimpleUnmixRequest):
         )
 
 
-@app.get("/unmix/palette")
+@app.get("/unmix/palette", tags=["6. Paints"])
 def get_default_palette():
     """
     Get the default paint palette used for unmixing.
@@ -1275,7 +1334,7 @@ def apply_limit(shapes: List[ShapeModel], limit: Optional[int]) -> List[ShapeMod
     return shapes[: min(limit, len(shapes))]
 
 
-@app.post("/order_shapes_from_json", response_model=OrderResponse)
+@app.post("/order_shapes_from_json", response_model=OrderResponse, tags=["3. Order Shapes From Json"])
 def order_shapes_from_json(req: OrderRequest):
     """
     Apply various ordering strategies to a list of shapes.
@@ -1300,7 +1359,7 @@ def order_shapes_from_json(req: OrderRequest):
     return OrderResponse(shapes=sliced, total_shapes=len(ordered))
 
 
-@app.post("/selective_resolution", response_model=OrderResponse)
+@app.post("/selective_resolution", response_model=OrderResponse, tags=["5. Refining"])
 def apply_selective_resolution(req: SelectiveResolutionRequest):
 
     """
@@ -1341,7 +1400,7 @@ def apply_selective_resolution(req: SelectiveResolutionRequest):
     
     return OrderResponse(shapes=result_shapes, total_shapes=len(result_shapes))
 
-@app.post("/bake_opaque", response_model=OrderResponse)
+@app.post("/bake_opaque", response_model=OrderResponse, tags=["4. Optimizing"])
 async def bake_opaque(
     req: str = File(...),
     file: UploadFile = File(...)
@@ -1631,7 +1690,7 @@ class GeometrizeResponse(BaseModel):
     canvas_height: int
 
 
-@app.post("/geometrize", response_model=GeometrizeResponse)
+@app.post("/geometrize", response_model=GeometrizeResponse, tags=["2. Strokes"])
 async def geometrize_image(
     image: UploadFile = File(...),
     shape_count: int = Form(200),
@@ -1831,7 +1890,7 @@ class LineDrawingResponse(BaseModel):
     style: str
 
 
-@app.post("/line-drawing", response_model=LineDrawingResponse)
+@app.post("/line-drawing", response_model=LineDrawingResponse, tags=["1. Drawing"])
 async def create_line_drawing(
     image: UploadFile = File(...),
     style: str = Form("detailed"),  # sketch, detailed (crosshatch/architectural are JS-only)
