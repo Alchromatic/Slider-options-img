@@ -12,6 +12,7 @@ body { font-family: Arial, sans-serif; max-width: 900px; margin: 20px auto; padd
 .mix-grid-label { font-size: 11px; color: #888; margin-bottom: 6px; }
 .mix-grid { display: inline-grid; grid-template-columns: repeat(10, 1fr); gap: 4px; padding: 12px; background: #f8f8f0; border-radius: 10px; border: 1px solid #e0ddd4; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
 .mix-grid-dot { width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.12); box-shadow: inset 0 -1px 2px rgba(0,0,0,0.1); }
+.mix-grid-dot-empty { background: #e8e8e0; border: 1px dashed rgba(0,0,0,0.15); box-shadow: none; opacity: 0.5; }
 .section { margin: 20px 0; }
 h3 { margin: 10px 0; font-size: 16px; }
 input[type="file"] { margin: 10px 0; }
@@ -1916,6 +1917,25 @@ canvas.picking { cursor: crosshair; }
         </div>
     </div>
 
+    <details style="margin: 8px 0 12px 0; font-size: 12px;">
+        <summary style="cursor: pointer; color: #666; font-weight: 600;">Dot Grid Settings</summary>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-top: 8px; max-width: 400px;">
+            <div>
+                <label style="font-size: 11px; color: #888; display: block; margin-bottom: 3px;">Rows</label>
+                <input type="number" id="gridRowsInput" value="10" min="1" max="20" style="width: 60px; padding: 5px; border: 1px solid #ced4da; border-radius: 4px; font-size: 12px;">
+            </div>
+            <div>
+                <label style="font-size: 11px; color: #888; display: block; margin-bottom: 3px;">Columns</label>
+                <input type="number" id="gridColsInput" value="10" min="1" max="20" style="width: 60px; padding: 5px; border: 1px solid #ced4da; border-radius: 4px; font-size: 12px;">
+            </div>
+            <div>
+                <label style="font-size: 11px; color: #888; display: block; margin-bottom: 3px;">Max Dots</label>
+                <input type="number" id="gridMaxDotsInput" value="0" min="0" max="400" style="width: 60px; padding: 5px; border: 1px solid #ced4da; border-radius: 4px; font-size: 12px;">
+            </div>
+        </div>
+        <p style="font-size: 10px; color: #999; margin: 4px 0 0 0;">Max Dots = 0 means fill all cells. Otherwise, only that many dots are colored proportionally.</p>
+    </details>
+
     <div id="trycolorsResults" class="trycolors-results">
         <div style="text-align: center; padding: 20px; color: #666; font-size: 13px;">
             Enter a hex color code to see the paint mixing recipe
@@ -2170,8 +2190,8 @@ canvas.picking { cursor: crosshair; }
 </div>
 
 <script>
-//const API_BASE = "http://127.0.0.1:8000";
-const API_BASE = "https://slider-options-img-production.up.railway.app";
+const API_BASE = "http://127.0.0.1:8000";
+//const API_BASE = "https://alchromaticdemo.up.railway.app";
 
 // Trycolors Lab URL - Streamlit app on Railway
 const TRYCOLORS_LAB_URL = "https://slider-options-img-production-48cf.up.railway.app";
@@ -4799,31 +4819,45 @@ function formatMixMethod(method) {
     return methods[method] || method;
 }
 
-// Generate a 10x10 dot grid showing mix proportions visually
-function buildMixDotGrid(recipe) {
+// Generate a dot grid showing mix proportions visually
+// rows/cols define the grid size, maxDots limits how many cells are filled (0 = fill all)
+function buildMixDotGrid(recipe, rows, cols, maxDots) {
     if (!recipe || recipe.length === 0) return '';
-    // Calculate how many dots each color gets out of 100
+    rows = rows || 10;
+    cols = cols || 10;
+    const totalCells = rows * cols;
+    // If maxDots is 0 or not set or greater than totalCells, fill all
+    const fillCount = (!maxDots || maxDots <= 0 || maxDots > totalCells) ? totalCells : maxDots;
+
+    // Calculate how many dots each color gets out of fillCount
     const dots = [];
     let assigned = 0;
     recipe.forEach((item, idx) => {
+        const pct = parseFloat(item.percentage) || 0;
         const count = idx === recipe.length - 1
-            ? (100 - assigned)  // last color gets remainder to ensure exactly 100
-            : Math.round(item.percentage);
-        dots.push({ hex: item.hex, count: count });
-        assigned += count;
+            ? (fillCount - assigned)
+            : Math.round(pct / 100 * fillCount);
+        dots.push({ hex: item.hex, count: Math.max(0, count) });
+        assigned += Math.max(0, count);
     });
-    // Build flat array of 100 colors
+    // Build flat array: colored dots first, then empty
     const cells = [];
     dots.forEach(d => {
         for (let i = 0; i < d.count; i++) cells.push(d.hex);
     });
-    // Pad or trim to exactly 100
-    while (cells.length < 100) cells.push(dots[dots.length - 1].hex);
-    if (cells.length > 100) cells.length = 100;
+    // Trim to fillCount
+    if (cells.length > fillCount) cells.length = fillCount;
+    // Pad with null for unfilled cells
+    while (cells.length < totalCells) cells.push(null);
 
-    let html = '<div class="mix-grid-wrap"><div class="mix-grid-label">Mix Proportions</div><div class="mix-grid">';
-    for (let i = 0; i < 100; i++) {
-        html += `<div class="mix-grid-dot" style="background:${cells[i]}" title="${cells[i]}"></div>`;
+    const filledLabel = fillCount < totalCells ? ` (${fillCount} of ${totalCells} filled)` : '';
+    let html = `<div class="mix-grid-wrap"><div class="mix-grid-label">Mix Proportions${filledLabel}</div><div class="mix-grid" style="grid-template-columns: repeat(${cols}, 1fr);">`;
+    for (let i = 0; i < totalCells; i++) {
+        if (cells[i]) {
+            html += `<div class="mix-grid-dot" style="background:${cells[i]}" title="${cells[i]}"></div>`;
+        } else {
+            html += `<div class="mix-grid-dot mix-grid-dot-empty" title="empty"></div>`;
+        }
     }
     html += '</div></div>';
     return html;
@@ -4877,7 +4911,7 @@ function renderRecipeResults(data) {
     });
     
     html += `</div>`;
-    html += buildMixDotGrid(data.recipe);
+    html += buildMixDotGrid(data.recipe, parseInt(document.getElementById('gridRowsInput').value) || 10, parseInt(document.getElementById('gridColsInput').value) || 10, parseInt(document.getElementById('gridMaxDotsInput').value) || 0);
     html += `<div class="recipe-total">Total: ${data.total_parts} parts · ΔE: ${data.delta_e}</div>`;
 
     recipeResults.innerHTML = html;
@@ -5179,6 +5213,9 @@ trycolorsBtn.addEventListener('click', async () => {
         const maxParts = parseInt(document.getElementById('trycolorsMaxParts').value) || 10;
         const prefilterTopN = parseInt(document.getElementById('prefilterTopNInput').value) || 12;
         const topK = parseInt(document.getElementById('topKInput').value) || 5;
+        const gridRows = parseInt(document.getElementById('gridRowsInput').value) || 10;
+        const gridCols = parseInt(document.getElementById('gridColsInput').value) || 10;
+        const gridMaxDots = parseInt(document.getElementById('gridMaxDotsInput').value) || 0;
 
         // Build palette from trycolors palette (excluding silenced colors)
         let palette = defaultPaletteData
@@ -5200,7 +5237,10 @@ trycolorsBtn.addEventListener('click', async () => {
                 max_colors: maxColors,
                 max_parts: maxParts,
                 prefilter_top_n: prefilterTopN,
-                top_k: topK
+                top_k: topK,
+                grid_rows: gridRows,
+                grid_cols: gridCols,
+                grid_max_dots: gridMaxDots
             })
         });
         
@@ -5250,7 +5290,7 @@ function renderTrycolorsResultsFromUnmix(data, maxParts) {
             `;
         });
         html += '</div>';
-        html += buildMixDotGrid(data.recipe);
+        html += buildMixDotGrid(data.recipe, parseInt(document.getElementById('gridRowsInput').value) || 10, parseInt(document.getElementById('gridColsInput').value) || 10, parseInt(document.getElementById('gridMaxDotsInput').value) || 0);
     }
 
     // Error row with match percentage

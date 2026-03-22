@@ -143,6 +143,9 @@ class UnmixRequest(BaseModel):
     max_parts: Optional[int] = 10  # Max parts per color for ratio precision
     prefilter_top_n: Optional[int] = 12  # Pre-filter palette to top-N closest colors (0=off)
     top_k: Optional[int] = 5  # Keep top-K solutions
+    grid_rows: Optional[int] = 10  # Dot grid rows for visual display (1-20)
+    grid_cols: Optional[int] = 10  # Dot grid columns for visual display (1-20)
+    grid_max_dots: Optional[int] = 0  # Max dots to fill in the grid (0=fill all)
 
 
 class RecipeComponent(BaseModel):
@@ -161,6 +164,9 @@ class UnmixResponse(BaseModel):
     total_parts: int
     mix_method: Optional[str] = None  # 'kubelka_munk', 'linear', or 'exact'
     error: Optional[str] = None
+    grid_rows: Optional[int] = 10  # Dot grid rows for visual display
+    grid_cols: Optional[int] = 10  # Dot grid columns for visual display
+    grid_max_dots: Optional[int] = 0  # Max dots to fill (0=fill all cells)
 
 
 # --------- Color Utilities -------------
@@ -709,12 +715,18 @@ def unmix_color(req: UnmixRequest):
     - `palette`: List of available paints with hex and optional name
     - `max_colors`: Maximum colors to use in recipe (1-5, default 3)
     - `max_parts`: Maximum parts per color for ratio precision (1-20, default 10)
-    
+    - `prefilter_top_n`: Pre-filter palette to top-N closest colors, 0=off (default 12)
+    - `top_k`: Keep top-K best solutions (default 5)
+    - `grid_rows`: Dot grid rows for visual display (1-20, default 10)
+    - `grid_cols`: Dot grid columns for visual display (1-20, default 10)
+    - `grid_max_dots`: Max dots to fill in grid, 0=fill all (default 0). E.g., 10x10 grid with max 50 dots: only 50 cells colored proportionally, rest empty.
+
     **Response:**
     - `recipe`: List of colors with parts and percentage
     - `result_color`: The actual color from mixing the recipe
     - `match_percentage`: How close the result matches target (0-100%)
     - `delta_e`: CIE Delta E value for technical reference
+    - `grid_rows`, `grid_cols`, `grid_max_dots`: Echo back grid config for display
     
     **Example usage:**
     ```json
@@ -728,7 +740,10 @@ def unmix_color(req: UnmixRequest):
             {"hex": "#000000", "name": "Ivory Black"}
         ],
         "max_colors": 3,
-        "max_parts": 10
+        "max_parts": 10,
+        "grid_rows": 10,
+        "grid_cols": 10,
+        "grid_max_dots": 50
     }
     ```
     """
@@ -824,9 +839,12 @@ def unmix_color(req: UnmixRequest):
             delta_e=round(delta_e, 2),
             total_parts=total_parts,
             mix_method=mix_method,
-            error=None
+            error=None,
+            grid_rows=max(1, min(20, req.grid_rows or 10)),
+            grid_cols=max(1, min(20, req.grid_cols or 10)),
+            grid_max_dots=max(0, req.grid_max_dots or 0)
         )
-    
+
     except Exception as e:
         return UnmixResponse(
             target_color=target_normalized,
@@ -836,7 +854,10 @@ def unmix_color(req: UnmixRequest):
             delta_e=100.0,
             total_parts=0,
             mix_method=None,
-            error=f"Error finding recipe: {str(e)}"
+            error=f"Error finding recipe: {str(e)}",
+            grid_rows=max(1, min(20, req.grid_rows or 10)),
+            grid_cols=max(1, min(20, req.grid_cols or 10)),
+            grid_max_dots=max(0, req.grid_max_dots or 0)
         )
 
 
