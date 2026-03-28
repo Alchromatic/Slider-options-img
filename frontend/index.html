@@ -13,6 +13,18 @@ body { font-family: Arial, sans-serif; max-width: 900px; margin: 20px auto; padd
 .mix-grid { display: inline-grid; grid-template-columns: repeat(10, 1fr); gap: 4px; padding: 12px; background: #f8f8f0; border-radius: 10px; border: 1px solid #e0ddd4; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
 .mix-grid-dot { width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.12); box-shadow: inset 0 -1px 2px rgba(0,0,0,0.1); }
 .mix-grid-dot-empty { background: #e8e8e0; border: 1px dashed rgba(0,0,0,0.15); box-shadow: none; opacity: 0.5; }
+/* Visualization Mode Toggle */
+.viz-mode-toggle { display: inline-flex; border-radius: 6px; overflow: hidden; border: 1px solid #ced4da; margin-bottom: 8px; }
+.viz-mode-btn { padding: 4px 12px; font-size: 11px; cursor: pointer; border: none; background: #f5f5f0; color: #666; transition: all 0.15s; }
+.viz-mode-btn:not(:last-child) { border-right: 1px solid #ced4da; }
+.viz-mode-btn.active { background: #4a6fa5; color: #fff; font-weight: 600; }
+.viz-mode-btn:hover:not(.active) { background: #e8e8e0; }
+/* JSON Treemap */
+.mix-treemap-wrap { margin: 12px 0; text-align: center; }
+.mix-treemap-label { font-size: 11px; color: #888; margin-bottom: 6px; }
+.mix-treemap-container { display: inline-block; background: #f8f8f0; border-radius: 10px; border: 1px solid #e0ddd4; box-shadow: 0 1px 4px rgba(0,0,0,0.08); padding: 12px; }
+.mix-treemap-container svg { display: block; }
+.treemap-cell text { pointer-events: none; }
 .section { margin: 20px 0; }
 h3 { margin: 10px 0; font-size: 16px; }
 input[type="file"] { margin: 10px 0; }
@@ -1898,7 +1910,14 @@ canvas.picking { cursor: crosshair; }
         </div>
     </div>
 
-    <details style="margin: 8px 0 12px 0; font-size: 12px;">
+    <div style="margin: 8px 0 6px 0;">
+        <label style="font-size: 11px; color: #888; display: block; margin-bottom: 4px;">Color Distribution View</label>
+        <div class="viz-mode-toggle">
+            <button type="button" class="viz-mode-btn active" data-viz="dotgrid">Dot Matrix</button>
+            <button type="button" class="viz-mode-btn" data-viz="treemap">JSON Treemap</button>
+        </div>
+    </div>
+    <details id="dotGridSettingsPanel" style="margin: 8px 0 12px 0; font-size: 12px;">
         <summary style="cursor: pointer; color: #666; font-weight: 600;">Dot Grid Settings</summary>
         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-top: 8px; max-width: 400px;">
             <div>
@@ -4879,7 +4898,170 @@ function buildMixDotGrid(recipe, rows, cols, maxDots) {
     return html;
 }
 
+// Squarified treemap layout algorithm (Bruls, Huizing, van Wijk)
+function squarify(items, x, y, w, h) {
+    const rects = [];
+    if (!items || items.length === 0) return rects;
+    const totalValue = items.reduce((s, it) => s + it.value, 0);
+    if (totalValue <= 0) return rects;
+
+    // Normalize values to fill the area
+    const normalized = items.map(it => ({ ...it, area: (it.value / totalValue) * w * h }));
+
+    function layoutRow(row, rowItems, rx, ry, rw, rh, isVertical) {
+        const rowArea = rowItems.reduce((s, it) => s + it.area, 0);
+        let offset = 0;
+        rowItems.forEach(it => {
+            const ratio = it.area / rowArea;
+            if (isVertical) {
+                const sliceW = rowArea / rh;
+                const sliceH = rh * ratio;
+                rects.push({ ...it, x: rx, y: ry + offset, w: sliceW, h: sliceH });
+                offset += sliceH;
+            } else {
+                const sliceH = rowArea / rw;
+                const sliceW = rw * ratio;
+                rects.push({ ...it, x: rx + offset, y: ry, w: sliceW, h: sliceH });
+                offset += sliceW;
+            }
+        });
+        return rects;
+    }
+
+    function worst(row, sideLen) {
+        const rowArea = row.reduce((s, it) => s + it.area, 0);
+        const s2 = sideLen * sideLen;
+        let maxR = 0;
+        row.forEach(it => {
+            const r = Math.max((s2 * it.area) / (rowArea * rowArea), (rowArea * rowArea) / (s2 * it.area));
+            if (r > maxR) maxR = r;
+        });
+        return maxR;
+    }
+
+    function doLayout(items, cx, cy, cw, ch) {
+        if (items.length === 0) return;
+        if (items.length === 1) {
+            rects.push({ ...items[0], x: cx, y: cy, w: cw, h: ch });
+            return;
+        }
+        const isVertical = ch > cw;
+        const sideLen = isVertical ? cw : ch;
+        let row = [items[0]];
+        let remaining = items.slice(1);
+        let bestWorst = worst(row, sideLen);
+
+        while (remaining.length > 0) {
+            const candidate = [...row, remaining[0]];
+            const cw2 = worst(candidate, sideLen);
+            if (cw2 <= bestWorst) {
+                row = candidate;
+                remaining = remaining.slice(1);
+                bestWorst = cw2;
+            } else {
+                break;
+            }
+        }
+
+        const rowArea = row.reduce((s, it) => s + it.area, 0);
+        if (isVertical) {
+            const sliceW = rowArea / ch;
+            layoutRow(rects, row, cx, cy, cw, ch, true);
+            doLayout(remaining, cx + sliceW, cy, cw - sliceW, ch);
+        } else {
+            const sliceH = rowArea / cw;
+            layoutRow(rects, row, cx, cy, cw, ch, false);
+            doLayout(remaining, cx, cy + sliceH, cw, ch - sliceH);
+        }
+    }
+
+    // Sort descending by area for better squarification
+    normalized.sort((a, b) => b.area - a.area);
+    doLayout(normalized, x, y, w, h);
+    return rects;
+}
+
+// Build a JSON-style treemap visualization from recipe data
+function buildMixTreemap(recipe) {
+    if (!recipe || recipe.length === 0) return '';
+    const svgW = 300, svgH = 300, pad = 2;
+
+    const items = recipe.map(it => ({
+        hex: it.hex,
+        name: it.name || it.hex,
+        percentage: parseFloat(it.percentage) || 0,
+        parts: it.parts,
+        value: parseFloat(it.percentage) || 0
+    })).filter(it => it.value > 0);
+
+    if (items.length === 0) return '';
+
+    const rects = squarify(items, 0, 0, svgW, svgH);
+
+    // Determine text color based on background luminance
+    function textColor(hex) {
+        const c = hex.replace('#', '');
+        const r = parseInt(c.substring(0, 2), 16);
+        const g = parseInt(c.substring(2, 4), 16);
+        const b = parseInt(c.substring(4, 6), 16);
+        return (r * 0.299 + g * 0.587 + b * 0.114) > 150 ? '#222' : '#fff';
+    }
+
+    let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${svgW}" height="${svgH}" viewBox="0 0 ${svgW} ${svgH}" style="font-family: Arial, sans-serif;">`;
+
+    rects.forEach(r => {
+        const rx = r.x + pad / 2;
+        const ry = r.y + pad / 2;
+        const rw = Math.max(0, r.w - pad);
+        const rh = Math.max(0, r.h - pad);
+        const tc = textColor(r.hex);
+        const pct = r.percentage.toFixed(1) + '%';
+        const label = r.name.length > 14 ? r.name.substring(0, 12) + '…' : r.name;
+
+        svg += `<g class="treemap-cell">`;
+        svg += `<rect x="${rx.toFixed(1)}" y="${ry.toFixed(1)}" width="${rw.toFixed(1)}" height="${rh.toFixed(1)}" fill="${r.hex}" rx="3" stroke="rgba(0,0,0,0.15)" stroke-width="1"/>`;
+
+        // Only show labels if cell is big enough
+        if (rw > 35 && rh > 28) {
+            const fontSize = Math.min(12, Math.max(8, rw / 8));
+            const cx = rx + rw / 2;
+            const cy = ry + rh / 2;
+            svg += `<text x="${cx.toFixed(1)}" y="${(cy - fontSize * 0.3).toFixed(1)}" text-anchor="middle" fill="${tc}" font-size="${fontSize.toFixed(1)}px" font-weight="600">${label}</text>`;
+            svg += `<text x="${cx.toFixed(1)}" y="${(cy + fontSize * 0.9).toFixed(1)}" text-anchor="middle" fill="${tc}" font-size="${(fontSize * 0.85).toFixed(1)}px" opacity="0.85">${pct}</text>`;
+            if (rh > 45 && r.parts !== undefined) {
+                svg += `<text x="${cx.toFixed(1)}" y="${(cy + fontSize * 2).toFixed(1)}" text-anchor="middle" fill="${tc}" font-size="${(fontSize * 0.75).toFixed(1)}px" opacity="0.65">${r.parts} parts</text>`;
+            }
+        } else if (rw > 20 && rh > 16) {
+            const fontSize = Math.max(7, Math.min(9, rw / 6));
+            svg += `<text x="${(rx + rw / 2).toFixed(1)}" y="${(ry + rh / 2 + fontSize / 3).toFixed(1)}" text-anchor="middle" fill="${tc}" font-size="${fontSize.toFixed(1)}px">${pct}</text>`;
+        }
+
+        svg += `<title>${r.name}\n${r.hex}\n${pct}${r.parts !== undefined ? '\n' + r.parts + ' parts' : ''}</title>`;
+        svg += `</g>`;
+    });
+
+    svg += `</svg>`;
+
+    return `<div class="mix-treemap-wrap"><div class="mix-treemap-label">Mix Proportions — Treemap</div><div class="mix-treemap-container">${svg}</div></div>`;
+}
+
+// Returns the appropriate visualization HTML based on selected mode
+function buildMixVisualization(recipe, rows, cols, maxDots) {
+    const mode = document.querySelector('.viz-mode-btn.active');
+    const vizType = mode ? mode.getAttribute('data-viz') : 'dotgrid';
+    if (vizType === 'treemap') {
+        return buildMixTreemap(recipe);
+    }
+    return buildMixDotGrid(recipe, rows, cols, maxDots);
+}
+
+// Store last recipe data for re-rendering on viz mode switch
+let _lastRecipeData = null;
+let _lastTrycolorsData = null;
+let _lastTrycolorsMaxParts = null;
+
 function renderRecipeResults(data) {
+    _lastRecipeData = data;
     if (data.error) {
         recipeResults.innerHTML = `<div class="recipe-error">⚠️ ${data.error}</div>`;
         return;
@@ -4927,7 +5109,7 @@ function renderRecipeResults(data) {
     });
     
     html += `</div>`;
-    html += buildMixDotGrid(data.recipe, parseInt(document.getElementById('gridRowsInput').value) || 10, parseInt(document.getElementById('gridColsInput').value) || 10, parseInt(document.getElementById('gridMaxDotsInput').value) || 0);
+    html += buildMixVisualization(data.recipe, parseInt(document.getElementById('gridRowsInput').value) || 10, parseInt(document.getElementById('gridColsInput').value) || 10, parseInt(document.getElementById('gridMaxDotsInput').value) || 0);
     html += `<div class="recipe-total">Total: ${data.total_parts} parts · ΔE: ${data.delta_e}</div>`;
 
     recipeResults.innerHTML = html;
@@ -4962,6 +5144,22 @@ function buildPaletteWithNames(hexColors) {
     // No preset loaded, return without names
     return hexColors.map(hex => ({ hex: hex, name: null }));
 }
+
+// Visualization mode toggle (Dot Matrix vs JSON Treemap)
+document.querySelectorAll('.viz-mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.viz-mode-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        // Show/hide dot grid settings based on mode
+        const settingsPanel = document.getElementById('dotGridSettingsPanel');
+        if (settingsPanel) {
+            settingsPanel.style.display = btn.getAttribute('data-viz') === 'dotgrid' ? '' : 'none';
+        }
+        // Re-render existing results with the new visualization mode
+        if (_lastRecipeData) renderRecipeResults(_lastRecipeData);
+        if (_lastTrycolorsData) renderTrycolorsResultsFromUnmix(_lastTrycolorsData, _lastTrycolorsMaxParts);
+    });
+});
 
 getRecipeBtn.addEventListener("click", async () => {
     if (!currentSelectedColor) {
@@ -5282,6 +5480,8 @@ trycolorsBtn.addEventListener('click', async () => {
 
 // Render results from /unmix endpoint (same as main recipe) but with trycolors styling
 function renderTrycolorsResultsFromUnmix(data, maxParts) {
+    _lastTrycolorsData = data;
+    _lastTrycolorsMaxParts = maxParts;
     if (data.error) {
         trycolorsResults.innerHTML = `<div style="color: #f44336; text-align: center; padding: 20px;">${data.error}</div>`;
         return;
@@ -5306,7 +5506,7 @@ function renderTrycolorsResultsFromUnmix(data, maxParts) {
             `;
         });
         html += '</div>';
-        html += buildMixDotGrid(data.recipe, parseInt(document.getElementById('gridRowsInput').value) || 10, parseInt(document.getElementById('gridColsInput').value) || 10, parseInt(document.getElementById('gridMaxDotsInput').value) || 0);
+        html += buildMixVisualization(data.recipe, parseInt(document.getElementById('gridRowsInput').value) || 10, parseInt(document.getElementById('gridColsInput').value) || 10, parseInt(document.getElementById('gridMaxDotsInput').value) || 0);
     }
 
     // Error row with match percentage
