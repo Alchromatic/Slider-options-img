@@ -25,6 +25,11 @@ body { font-family: Arial, sans-serif; max-width: 900px; margin: 20px auto; padd
 .mix-treemap-container { display: inline-block; background: #f8f8f0; border-radius: 10px; border: 1px solid #e0ddd4; box-shadow: 0 1px 4px rgba(0,0,0,0.08); padding: 12px; }
 .mix-treemap-container svg { display: block; }
 .treemap-cell text { pointer-events: none; }
+/* Concentric Clock */
+.mix-concentric-wrap { margin: 12px 0; text-align: center; }
+.mix-concentric-label { font-size: 11px; color: #888; margin-bottom: 6px; }
+.mix-concentric-container { display: inline-block; background: #f8f8f0; border-radius: 10px; border: 1px solid #e0ddd4; box-shadow: 0 1px 4px rgba(0,0,0,0.08); padding: 12px; }
+.mix-concentric-container svg { display: block; }
 .section { margin: 20px 0; }
 h3 { margin: 10px 0; font-size: 16px; }
 input[type="file"] { margin: 10px 0; }
@@ -1915,6 +1920,7 @@ canvas.picking { cursor: crosshair; }
         <div class="viz-mode-toggle">
             <button type="button" class="viz-mode-btn active" data-viz="dotgrid">Dot Matrix</button>
             <button type="button" class="viz-mode-btn" data-viz="treemap">JSON Treemap</button>
+            <button type="button" class="viz-mode-btn" data-viz="concentric">Concentric Clock</button>
         </div>
     </div>
     <details id="dotGridSettingsPanel" style="margin: 8px 0 12px 0; font-size: 12px;">
@@ -5045,12 +5051,97 @@ function buildMixTreemap(recipe) {
     return `<div class="mix-treemap-wrap"><div class="mix-treemap-label">Mix Proportions — Treemap</div><div class="mix-treemap-container">${svg}</div></div>`;
 }
 
+// Build a concentric clock visualization from recipe data
+// Largest percentage = largest circle (back), smallest = smallest circle (front)
+function buildMixConcentricClock(recipe) {
+    if (!recipe || recipe.length === 0) return '';
+
+    const items = recipe.map(it => ({
+        hex: it.hex,
+        name: it.name || it.hex,
+        percentage: parseFloat(it.percentage) || 0,
+        parts: it.parts
+    })).filter(it => it.percentage > 0);
+
+    if (items.length === 0) return '';
+
+    // Sort descending by percentage — largest circle drawn first (back)
+    items.sort((a, b) => b.percentage - a.percentage);
+
+    const svgSize = 320;
+    const maxRadius = svgSize / 2 - 10; // leave some padding
+    const cx = svgSize / 2;
+    const cy = svgSize / 2;
+
+    // Radius proportional to sqrt of percentage (area-proportional)
+    const totalPct = items.reduce((s, it) => s + it.percentage, 0);
+
+    function textColor(hex) {
+        const c = hex.replace('#', '');
+        const r = parseInt(c.substring(0, 2), 16);
+        const g = parseInt(c.substring(2, 4), 16);
+        const b = parseInt(c.substring(4, 6), 16);
+        return (r * 0.299 + g * 0.587 + b * 0.114) > 150 ? '#222' : '#fff';
+    }
+
+    let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${svgSize}" height="${svgSize}" viewBox="0 0 ${svgSize} ${svgSize}" style="font-family: Arial, sans-serif;">`;
+
+    // Draw circles from largest to smallest (back to front)
+    items.forEach((item, idx) => {
+        const r = maxRadius * Math.sqrt(item.percentage / totalPct);
+        const tc = textColor(item.hex);
+        const pct = item.percentage.toFixed(1) + '%';
+        const label = item.name.length > 16 ? item.name.substring(0, 14) + '…' : item.name;
+
+        svg += `<circle cx="${cx}" cy="${cy}" r="${r.toFixed(1)}" fill="${item.hex}" stroke="rgba(0,0,0,0.18)" stroke-width="1.5"/>`;
+
+        // Label: place text inside the visible ring area
+        // For the largest circle, label goes near the top of its ring
+        // For inner circles, label goes at center of visible ring
+        if (idx === items.length - 1) {
+            // Innermost circle — label at center
+            if (r > 18) {
+                const fontSize = Math.min(12, Math.max(8, r / 3));
+                svg += `<text x="${cx}" y="${(cy - fontSize * 0.3).toFixed(1)}" text-anchor="middle" fill="${tc}" font-size="${fontSize.toFixed(1)}px" font-weight="600">${label}</text>`;
+                svg += `<text x="${cx}" y="${(cy + fontSize * 0.9).toFixed(1)}" text-anchor="middle" fill="${tc}" font-size="${(fontSize * 0.85).toFixed(1)}px" opacity="0.85">${pct}</text>`;
+            }
+        } else {
+            // Outer circles — label in the ring between this circle's edge and the next circle
+            const nextR = maxRadius * Math.sqrt(items[idx + 1].percentage / totalPct);
+            const ringMid = (r + nextR) / 2;
+            const ringWidth = r - nextR;
+            if (ringWidth > 22) {
+                const fontSize = Math.min(11, Math.max(7, ringWidth / 3));
+                // Place label at the top of the ring
+                const labelY = cy - ringMid;
+                svg += `<text x="${cx}" y="${(labelY - fontSize * 0.15).toFixed(1)}" text-anchor="middle" fill="${tc}" font-size="${fontSize.toFixed(1)}px" font-weight="600">${label}</text>`;
+                svg += `<text x="${cx}" y="${(labelY + fontSize * 0.95).toFixed(1)}" text-anchor="middle" fill="${tc}" font-size="${(fontSize * 0.85).toFixed(1)}px" opacity="0.85">${pct}</text>`;
+            } else if (ringWidth > 12) {
+                const fontSize = Math.max(7, ringWidth / 2.5);
+                const labelY = cy - ringMid;
+                svg += `<text x="${cx}" y="${(labelY + fontSize * 0.35).toFixed(1)}" text-anchor="middle" fill="${tc}" font-size="${fontSize.toFixed(1)}px">${pct}</text>`;
+            }
+        }
+
+        // Tooltip
+        svg += `<title>${item.name}\n${item.hex}\n${pct}${item.parts !== undefined ? '\n' + item.parts + ' parts' : ''}</title>`;
+    });
+
+    // Outer reference lines and percentage markers (like the reference image)
+    svg += `</svg>`;
+
+    return `<div class="mix-concentric-wrap"><div class="mix-concentric-label">Mix Proportions — Concentric Clock</div><div class="mix-concentric-container">${svg}</div></div>`;
+}
+
 // Returns the appropriate visualization HTML based on selected mode
 function buildMixVisualization(recipe, rows, cols, maxDots) {
     const mode = document.querySelector('.viz-mode-btn.active');
     const vizType = mode ? mode.getAttribute('data-viz') : 'dotgrid';
     if (vizType === 'treemap') {
         return buildMixTreemap(recipe);
+    }
+    if (vizType === 'concentric') {
+        return buildMixConcentricClock(recipe);
     }
     return buildMixDotGrid(recipe, rows, cols, maxDots);
 }
