@@ -20,6 +20,7 @@ import re
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
@@ -121,6 +122,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.mount("/GIFs", StaticFiles(directory="GIFs"), name="GIFs")
 
 class ShapeModel(BaseModel):
     type: int
@@ -1338,19 +1341,61 @@ def apply_limit(shapes: List[ShapeModel], limit: Optional[int]) -> List[ShapeMod
 def order_shapes_from_json(req: OrderRequest):
     """
     Apply various ordering strategies to a list of shapes.
-    
+
     **Available ordering strategies:**
-    - `exterior_to_center`: Order from edges toward center
-    - `center_to_exterior`: Order from center toward edges
-    - `top_to_bottom`: Order by vertical position (top first)
-    - `bottom_to_top`: Order by vertical position (bottom first)
-    - `light_to_dark`: Order by luminance (bright to dark)
-    - `dark_to_light`: Order by luminance (dark to bright)
-    - `frequency_by_color`: Order by color frequency (most common first)
-    - `frequency_by_color_reverse`: Order by color frequency (least common first)
-    - `color_sequence`: Order by custom color sequence (requires color_order)
-    - `custom_sequence`: Same as color_sequence
-    
+
+    ---
+
+    ### `exterior_to_center` — Order from edges toward center
+    ![exterior_to_center](/GIFs/02.gif)
+
+    ---
+
+    ### `center_to_exterior` — Order from center toward edges
+    ![center_to_exterior](/GIFs/03.gif)
+
+    ---
+
+    ### `top_to_bottom` — Order by vertical position (top first)
+    ![top_to_bottom](/GIFs/04.gif)
+
+    ---
+
+    ### `bottom_to_top` — Order by vertical position (bottom first)
+    ![bottom_to_top](/GIFs/05.gif)
+
+    ---
+
+    ### `light_to_dark` — Order by luminance (bright to dark)
+    ![light_to_dark](/GIFs/07.gif)
+
+    ---
+
+    ### `dark_to_light` — Order by luminance (dark to bright)
+    ![dark_to_light](/GIFs/08.gif)
+
+    ---
+
+    ### `frequency_by_color` — Order by color frequency (most common first)
+    ![frequency_by_color](/GIFs/01.gif)
+
+    ---
+
+    ### `frequency_by_color_reverse` — Order by color frequency (least common first)
+    ![frequency_by_color_reverse](/GIFs/09.gif)
+
+    ---
+
+    ### `color_sequence` — Order by custom color sequence (requires color_order)
+    ![color_sequence](/GIFs/10.gif)
+
+    ---
+
+    ### `custom_sequence` — Same as color_sequence
+    ![custom_sequence](/GIFs/11.gif)
+
+    ---
+
     Background shapes (type=0) are always placed first.
     """
 
@@ -1364,13 +1409,15 @@ def apply_selective_resolution(req: SelectiveResolutionRequest):
 
     """
     Enhance specific regions with higher resolution shapes.
-    
+
     This endpoint allows you to:
     1. Start with low-resolution base shapes
     2. Define regions of interest
     3. Replace shapes in those regions with high-resolution detail shapes
-    
+
     Useful for optimizing performance while maintaining quality in important areas.
+
+    ![selective_resolution](/GIFs/06.gif)
     """
 
     if not req.base_shapes:
@@ -1407,15 +1454,17 @@ async def bake_opaque(
 ):
     """
     Converts all shapes to fully opaque by sampling colors from the final rendered PNG image.
-    
+
     This is useful when you want to:
     - Remove transparency from shapes
     - Capture the actual rendered color (accounting for blending)
     - Simplify shape data for further processing
-    
+
     **Requires:**
     - `req`: JSON string containing shapes array
     - `file`: PNG image file of the rendered shapes
+
+    ![bake_opaque](/GIFs/12.gif)
     """
 
     # Converts all shapes into fully opaque shapes by sampling color
