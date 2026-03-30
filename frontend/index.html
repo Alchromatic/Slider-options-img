@@ -1920,7 +1920,7 @@ canvas.picking { cursor: crosshair; }
         <div class="viz-mode-toggle">
             <button type="button" class="viz-mode-btn active" data-viz="dotgrid">Dot Matrix</button>
             <button type="button" class="viz-mode-btn" data-viz="treemap">JSON Treemap</button>
-            <button type="button" class="viz-mode-btn" data-viz="concentric">Concentric Clock</button>
+            <button type="button" class="viz-mode-btn" data-viz="concentric">Concentric Circles</button>
         </div>
     </div>
     <details id="dotGridSettingsPanel" style="margin: 8px 0 12px 0; font-size: 12px;">
@@ -5051,8 +5051,7 @@ function buildMixTreemap(recipe) {
     return `<div class="mix-treemap-wrap"><div class="mix-treemap-label">Mix Proportions — Treemap</div><div class="mix-treemap-container">${svg}</div></div>`;
 }
 
-// Build a concentric clock visualization from recipe data
-// All circles share the same bottom point and expand upward — largest in back, smallest in front
+// Build concentric circles visualization — one circle per color, side by side, sized by percentage
 function buildMixConcentricClock(recipe) {
     if (!recipe || recipe.length === 0) return '';
 
@@ -5065,17 +5064,11 @@ function buildMixConcentricClock(recipe) {
 
     if (items.length === 0) return '';
 
-    // Sort descending by percentage — largest circle drawn first (back)
+    // Sort descending so largest circle is first
     items.sort((a, b) => b.percentage - a.percentage);
 
-    const maxRadius = 140;
-    const padding = 15;
-    // All circles share the same bottom point
-    const bottomY = maxRadius * 2 + padding;
-    const cx = maxRadius + padding;
-    const svgW = (maxRadius + padding) * 2;
-    const svgH = bottomY + padding;
-
+    const maxRadius = 70;
+    const spacing = 16;
     const totalPct = items.reduce((s, it) => s + it.percentage, 0);
 
     function textColor(hex) {
@@ -5086,63 +5079,66 @@ function buildMixConcentricClock(recipe) {
         return (r * 0.299 + g * 0.587 + b * 0.114) > 150 ? '#222' : '#fff';
     }
 
+    // Calculate each circle's radius (area-proportional)
+    const circles = items.map(item => {
+        const r = maxRadius * Math.sqrt(item.percentage / totalPct);
+        return { ...item, r };
+    });
+
+    // SVG dimensions: all circles sit on the same baseline
+    const svgH = maxRadius * 2 + 40; // room for circle + label below
+    const bottomY = maxRadius * 2 + 5;
+    let totalW = 0;
+    circles.forEach((c, i) => {
+        totalW += c.r * 2;
+        if (i < circles.length - 1) totalW += spacing;
+    });
+    totalW = Math.max(totalW, 100);
+    const svgW = totalW + 20;
+
     let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${svgW}" height="${svgH}" viewBox="0 0 ${svgW} ${svgH}" style="font-family: Arial, sans-serif;">`;
 
-    // Draw circles from largest to smallest (back to front)
-    // Each circle's center is at (cx, bottomY - r) so the bottom point is always at bottomY
-    items.forEach((item, idx) => {
-        const r = maxRadius * Math.sqrt(item.percentage / totalPct);
-        const circCy = bottomY - r; // center moves up so bottom touches bottomY
+    // Draw each circle, all sharing the same bottom baseline
+    let xCursor = 10;
+    circles.forEach(item => {
+        const cx = xCursor + item.r;
+        const cy = bottomY - item.r; // bottom of circle touches bottomY
         const tc = textColor(item.hex);
         const pct = item.percentage.toFixed(1) + '%';
-        const label = item.name.length > 16 ? item.name.substring(0, 14) + '…' : item.name;
+        const label = item.name.length > 12 ? item.name.substring(0, 10) + '…' : item.name;
 
-        svg += `<circle cx="${cx}" cy="${circCy.toFixed(1)}" r="${r.toFixed(1)}" fill="${item.hex}" stroke="rgba(0,0,0,0.18)" stroke-width="1.5"/>`;
+        svg += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${item.r.toFixed(1)}" fill="${item.hex}" stroke="rgba(0,0,0,0.18)" stroke-width="1.5"/>`;
 
-        // Label placement: in the upper portion of the visible area of each circle
-        if (idx === items.length - 1) {
-            // Innermost (smallest) circle — label near center
-            if (r > 15) {
-                const fontSize = Math.min(12, Math.max(8, r / 3));
-                const labelY = circCy - r * 0.15;
-                svg += `<text x="${cx}" y="${(labelY - fontSize * 0.2).toFixed(1)}" text-anchor="middle" fill="${tc}" font-size="${fontSize.toFixed(1)}px" font-weight="600">${label}</text>`;
-                svg += `<text x="${cx}" y="${(labelY + fontSize * 0.85).toFixed(1)}" text-anchor="middle" fill="${tc}" font-size="${(fontSize * 0.85).toFixed(1)}px" opacity="0.85">${pct}</text>`;
-            }
-        } else {
-            // Outer circles — label near the top of this circle (above the next circle)
-            const nextR = maxRadius * Math.sqrt(items[idx + 1].percentage / totalPct);
-            const nextTop = bottomY - nextR * 2; // top of next circle
-            const thisTop = circCy - r; // top of this circle
-            const gapMid = (thisTop + nextTop) / 2; // midpoint of visible gap at top
-            const gapHeight = nextTop - thisTop;
-            if (gapHeight > 20) {
-                const fontSize = Math.min(11, Math.max(7, gapHeight / 3));
-                svg += `<text x="${cx}" y="${(gapMid - fontSize * 0.15).toFixed(1)}" text-anchor="middle" fill="${tc}" font-size="${fontSize.toFixed(1)}px" font-weight="600">${label}</text>`;
-                svg += `<text x="${cx}" y="${(gapMid + fontSize * 0.9).toFixed(1)}" text-anchor="middle" fill="${tc}" font-size="${(fontSize * 0.85).toFixed(1)}px" opacity="0.85">${pct}</text>`;
-            } else if (gapHeight > 10) {
-                const fontSize = Math.max(7, gapHeight / 2.5);
-                svg += `<text x="${cx}" y="${(gapMid + fontSize * 0.35).toFixed(1)}" text-anchor="middle" fill="${tc}" font-size="${fontSize.toFixed(1)}px">${pct}</text>`;
-            }
+        // Label inside circle if big enough
+        if (item.r > 22) {
+            const fontSize = Math.min(11, Math.max(7, item.r / 4));
+            svg += `<text x="${cx.toFixed(1)}" y="${(cy - fontSize * 0.3).toFixed(1)}" text-anchor="middle" fill="${tc}" font-size="${fontSize.toFixed(1)}px" font-weight="600">${label}</text>`;
+            svg += `<text x="${cx.toFixed(1)}" y="${(cy + fontSize * 0.85).toFixed(1)}" text-anchor="middle" fill="${tc}" font-size="${(fontSize * 0.85).toFixed(1)}px" opacity="0.85">${pct}</text>`;
+        } else if (item.r > 12) {
+            const fontSize = Math.max(7, item.r / 3);
+            svg += `<text x="${cx.toFixed(1)}" y="${(cy + fontSize * 0.35).toFixed(1)}" text-anchor="middle" fill="${tc}" font-size="${fontSize.toFixed(1)}px">${pct}</text>`;
         }
 
+        // Percentage label below the circle
+        svg += `<text x="${cx.toFixed(1)}" y="${(bottomY + 14).toFixed(1)}" text-anchor="middle" fill="#666" font-size="10px">${pct}</text>`;
+
         svg += `<title>${item.name}\n${item.hex}\n${pct}${item.parts !== undefined ? '\n' + item.parts + ' parts' : ''}</title>`;
+
+        xCursor += item.r * 2 + spacing;
     });
 
     svg += `</svg>`;
 
-    return `<div class="mix-concentric-wrap"><div class="mix-concentric-label">Mix Proportions — Concentric Clock</div><div class="mix-concentric-container">${svg}</div></div>`;
+    return `<div class="mix-concentric-wrap"><div class="mix-concentric-label">Mix Proportions — Concentric Circles</div><div class="mix-concentric-container">${svg}</div></div>`;
 }
+
 
 // Returns the appropriate visualization HTML based on selected mode
 function buildMixVisualization(recipe, rows, cols, maxDots) {
     const mode = document.querySelector('.viz-mode-btn.active');
     const vizType = mode ? mode.getAttribute('data-viz') : 'dotgrid';
-    if (vizType === 'treemap') {
-        return buildMixTreemap(recipe);
-    }
-    if (vizType === 'concentric') {
-        return buildMixConcentricClock(recipe);
-    }
+    if (vizType === 'treemap') return buildMixTreemap(recipe);
+    if (vizType === 'concentric') return buildMixConcentricClock(recipe);
     return buildMixDotGrid(recipe, rows, cols, maxDots);
 }
 
@@ -5236,12 +5232,11 @@ function buildPaletteWithNames(hexColors) {
     return hexColors.map(hex => ({ hex: hex, name: null }));
 }
 
-// Visualization mode toggle (Dot Matrix vs JSON Treemap)
+// Visualization mode toggle (Dot Matrix / JSON Treemap / Concentric Circles)
 document.querySelectorAll('.viz-mode-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         document.querySelectorAll('.viz-mode-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        // Show/hide dot grid settings based on mode
         const settingsPanel = document.getElementById('dotGridSettingsPanel');
         if (settingsPanel) {
             settingsPanel.style.display = btn.getAttribute('data-viz') === 'dotgrid' ? '' : 'none';
