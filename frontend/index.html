@@ -5051,7 +5051,8 @@ function buildMixTreemap(recipe) {
     return `<div class="mix-treemap-wrap"><div class="mix-treemap-label">Mix Proportions — Treemap</div><div class="mix-treemap-container">${svg}</div></div>`;
 }
 
-// Build concentric circles visualization — one circle per color, side by side, sized by percentage
+// Build concentric circles visualization — 3x2 grid, edges touching, max 6 circles.
+// Each color gets a 100% reference circle with filled circle inside.
 function buildMixConcentricClock(recipe) {
     if (!recipe || recipe.length === 0) return '';
 
@@ -5064,12 +5065,18 @@ function buildMixConcentricClock(recipe) {
 
     if (items.length === 0) return '';
 
-    // Sort descending so largest circle is first
+    // Sort descending so largest is first, cap at 6
     items.sort((a, b) => b.percentage - a.percentage);
+    if (items.length > 6) items.length = 6;
 
-    const maxRadius = 70;
-    const spacing = 16;
-    const totalPct = items.reduce((s, it) => s + it.percentage, 0);
+    const maxR = 80; // radius for the 100% reference circle
+    const cols = Math.min(items.length, 3);
+    const rows = Math.ceil(items.length / 3);
+    const topPad = 20;
+    const labelH = 30; // space below each row for labels
+    const rightMargin = 42;
+    const diameter = maxR * 2;
+    const rowH = topPad + diameter + labelH;
 
     function textColor(hex) {
         const c = hex.replace('#', '');
@@ -5079,53 +5086,74 @@ function buildMixConcentricClock(recipe) {
         return (r * 0.299 + g * 0.587 + b * 0.114) > 150 ? '#222' : '#fff';
     }
 
-    // Calculate each circle's radius (area-proportional)
-    const circles = items.map(item => {
-        const r = maxRadius * Math.sqrt(item.percentage / totalPct);
-        return { ...item, r };
-    });
+    // SVG dimensions: circles touch edge-to-edge (no gap)
+    const svgW = cols * diameter + rightMargin;
+    const svgH = rows * rowH;
 
-    // SVG dimensions: all circles sit on the same baseline
-    const svgH = maxRadius * 2 + 40; // room for circle + label below
-    const bottomY = maxRadius * 2 + 5;
-    let totalW = 0;
-    circles.forEach((c, i) => {
-        totalW += c.r * 2;
-        if (i < circles.length - 1) totalW += spacing;
-    });
-    totalW = Math.max(totalW, 100);
-    const svgW = totalW + 20;
+    const guides = [
+        { pct: 10,  style: 'dashed' },
+        { pct: 50,  style: 'solid' },
+        { pct: 100, style: 'solid' }
+    ];
 
     let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${svgW}" height="${svgH}" viewBox="0 0 ${svgW} ${svgH}" style="font-family: Arial, sans-serif;">`;
 
-    // Draw each circle, all sharing the same bottom baseline
-    let xCursor = 10;
-    circles.forEach(item => {
-        const cx = xCursor + item.r;
-        const cy = bottomY - item.r; // bottom of circle touches bottomY
+    // Draw each color group in a 3-column grid
+    items.forEach((item, idx) => {
+        const col = idx % 3;
+        const row = Math.floor(idx / 3);
+        const cx = col * diameter + maxR; // edges touch: no spacing
+        const bottomY = row * rowH + topPad + diameter;
+
+        // Multiple concentric reference outlines (100%, 80%, 60%, 40%, 20%, 10%)
+        const refLevels = [100, 80, 60, 40, 20, 10];
+        refLevels.forEach(pct => {
+            const r = maxR * Math.sqrt(pct / 100);
+            const cy = bottomY - r;
+            const isOuter = (pct === 100);
+            svg += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(1)}" fill="none" stroke="#333" stroke-width="${isOuter ? 1.8 : 1}" ${isOuter ? '' : 'stroke-dasharray="5,4"'} opacity="${isOuter ? 0.7 : 0.25}"/>`;
+        });
+
+        // Filled circle for actual percentage
+        const filledR = maxR * Math.sqrt(item.percentage / 100);
+        const cyFilled = bottomY - filledR;
         const tc = textColor(item.hex);
         const pct = item.percentage.toFixed(1) + '%';
         const label = item.name.length > 12 ? item.name.substring(0, 10) + '…' : item.name;
 
-        svg += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${item.r.toFixed(1)}" fill="${item.hex}" stroke="rgba(0,0,0,0.18)" stroke-width="1.5"/>`;
+        svg += `<circle cx="${cx.toFixed(1)}" cy="${cyFilled.toFixed(1)}" r="${filledR.toFixed(1)}" fill="${item.hex}" stroke="#222" stroke-width="1.5"/>`;
 
-        // Label inside circle if big enough
-        if (item.r > 22) {
-            const fontSize = Math.min(11, Math.max(7, item.r / 4));
-            svg += `<text x="${cx.toFixed(1)}" y="${(cy - fontSize * 0.3).toFixed(1)}" text-anchor="middle" fill="${tc}" font-size="${fontSize.toFixed(1)}px" font-weight="600">${label}</text>`;
-            svg += `<text x="${cx.toFixed(1)}" y="${(cy + fontSize * 0.85).toFixed(1)}" text-anchor="middle" fill="${tc}" font-size="${(fontSize * 0.85).toFixed(1)}px" opacity="0.85">${pct}</text>`;
-        } else if (item.r > 12) {
-            const fontSize = Math.max(7, item.r / 3);
-            svg += `<text x="${cx.toFixed(1)}" y="${(cy + fontSize * 0.35).toFixed(1)}" text-anchor="middle" fill="${tc}" font-size="${fontSize.toFixed(1)}px">${pct}</text>`;
+        // Label inside filled circle
+        if (filledR > 22) {
+            const fontSize = Math.min(12, Math.max(8, filledR / 3.5));
+            svg += `<text x="${cx.toFixed(1)}" y="${(cyFilled - fontSize * 0.2).toFixed(1)}" text-anchor="middle" fill="${tc}" font-size="${fontSize.toFixed(1)}px" font-weight="600">${label}</text>`;
+            svg += `<text x="${cx.toFixed(1)}" y="${(cyFilled + fontSize * 0.95).toFixed(1)}" text-anchor="middle" fill="${tc}" font-size="${(fontSize * 0.85).toFixed(1)}px" opacity="0.85">${pct}</text>`;
+        } else if (filledR > 10) {
+            const fontSize = Math.max(7, filledR / 2.5);
+            svg += `<text x="${cx.toFixed(1)}" y="${(cyFilled + fontSize * 0.35).toFixed(1)}" text-anchor="middle" fill="${tc}" font-size="${fontSize.toFixed(1)}px">${pct}</text>`;
         }
 
-        // Percentage label below the circle
-        svg += `<text x="${cx.toFixed(1)}" y="${(bottomY + 14).toFixed(1)}" text-anchor="middle" fill="#666" font-size="10px">${pct}</text>`;
+        // Color name + hex below the baseline
+        svg += `<text x="${cx.toFixed(1)}" y="${(bottomY + 13).toFixed(1)}" text-anchor="middle" fill="#444" font-size="10px" font-weight="600">${label}</text>`;
+        svg += `<text x="${cx.toFixed(1)}" y="${(bottomY + 24).toFixed(1)}" text-anchor="middle" fill="#888" font-size="9px">${item.hex} · ${pct}</text>`;
 
         svg += `<title>${item.name}\n${item.hex}\n${pct}${item.parts !== undefined ? '\n' + item.parts + ' parts' : ''}</title>`;
-
-        xCursor += item.r * 2 + spacing;
     });
+
+    // Draw horizontal guide lines per row, spanning full width
+    for (let row = 0; row < rows; row++) {
+        const bottomY = row * rowH + topPad + diameter;
+        guides.forEach(g => {
+            const r = maxR * Math.sqrt(g.pct / 100);
+            const lineY = bottomY - r * 2;
+            const isDashed = g.style === 'dashed';
+            svg += `<line x1="0" y1="${lineY.toFixed(1)}" x2="${svgW}" y2="${lineY.toFixed(1)}" stroke="#1a5fa8" stroke-width="${isDashed ? 1.2 : 2}" ${isDashed ? 'stroke-dasharray="6,4"' : ''} opacity="0.8"/>`;
+            // Percentage label on the right
+            svg += `<text x="${(svgW - 4).toFixed(1)}" y="${(lineY + 4).toFixed(1)}" text-anchor="end" fill="#1a5fa8" font-size="11px" font-weight="700">${g.pct}%</text>`;
+        });
+        // Bottom baseline
+        svg += `<line x1="0" y1="${bottomY}" x2="${svgW}" y2="${bottomY}" stroke="#1a5fa8" stroke-width="2" opacity="0.5"/>`;
+    }
 
     svg += `</svg>`;
 
