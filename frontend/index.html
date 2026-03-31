@@ -5108,14 +5108,14 @@ function buildMixConcentricClock(recipe) {
         // Multiple concentric reference outlines (100%, 80%, 60%, 40%, 20%, 10%)
         const refLevels = [100, 80, 60, 40, 20, 10];
         refLevels.forEach(pct => {
-            const r = maxR * Math.sqrt(pct / 100);
+            const r = maxR * (pct / 100);
             const cy = bottomY - r;
             const isOuter = (pct === 100);
             svg += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(1)}" fill="none" stroke="#333" stroke-width="${isOuter ? 1.8 : 1}" ${isOuter ? '' : 'stroke-dasharray="5,4"'} opacity="${isOuter ? 0.7 : 0.25}"/>`;
         });
 
         // Filled circle for actual percentage
-        const filledR = maxR * Math.sqrt(item.percentage / 100);
+        const filledR = maxR * (item.percentage / 100);
         const cyFilled = bottomY - filledR;
         const tc = textColor(item.hex);
         const pct = item.percentage.toFixed(1) + '%';
@@ -5144,8 +5144,7 @@ function buildMixConcentricClock(recipe) {
     for (let row = 0; row < rows; row++) {
         const bottomY = row * rowH + topPad + diameter;
         guides.forEach(g => {
-            const r = maxR * Math.sqrt(g.pct / 100);
-            const lineY = bottomY - r * 2;
+            const lineY = bottomY - (g.pct / 100) * diameter;
             const isDashed = g.style === 'dashed';
             svg += `<line x1="0" y1="${lineY.toFixed(1)}" x2="${svgW}" y2="${lineY.toFixed(1)}" stroke="#1a5fa8" stroke-width="${isDashed ? 1.2 : 2}" ${isDashed ? 'stroke-dasharray="6,4"' : ''} opacity="0.8"/>`;
             // Percentage label on the right
