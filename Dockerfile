@@ -1,19 +1,5 @@
-FROM python:3.11-slim
-
-# Install Go 1.24
-RUN apt-get update && \
-    apt-get install -y wget git && \
-    wget https://go.dev/dl/go1.24.0.linux-amd64.tar.gz && \
-    tar -C /usr/local -xzf go1.24.0.linux-amd64.tar.gz && \
-    rm go1.24.0.linux-amd64.tar.gz && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-ENV PATH=$PATH:/usr/local/go/bin:/root/go/bin
-
-# Install primitive
-ENV GOFLAGS=-mod=mod
-ENV GONOSUMCHECK=*
+### Stage 1: build the 'primitive' Go binary
+FROM golang:1.24-bookworm AS go-builder
 RUN git clone https://github.com/fogleman/primitive.git /tmp/primitive && \
     cd /tmp/primitive && \
     go mod init github.com/fogleman/primitive && \
@@ -22,18 +8,19 @@ RUN git clone https://github.com/fogleman/primitive.git /tmp/primitive && \
     echo 'require github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0' >> go.mod && \
     echo 'require github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646' >> go.mod && \
     go mod download && \
-    go install . && \
-    rm -rf /tmp/primitive
+    CGO_ENABLED=0 go build -o /usr/local/bin/primitive .
 
-# Set working directory
+### Stage 2: final image (no Go toolchain)
+FROM python:3.11-slim
+
+# Copy pre-built primitive binary
+COPY --from=go-builder /usr/local/bin/primitive /usr/local/bin/primitive
+
 WORKDIR /app
 
-# Copy requirements and install
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy app code
 COPY . .
 
-# Run the app
 CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}
