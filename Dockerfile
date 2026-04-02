@@ -7,7 +7,7 @@ RUN git clone https://github.com/fogleman/primitive.git /tmp/primitive && \
     echo 'require github.com/fogleman/gg v1.3.0' >> go.mod && \
     echo 'require github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0' >> go.mod && \
     echo 'require github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646' >> go.mod && \
-    go mod download && \
+    go mod tidy && \
     CGO_ENABLED=0 go build -o /usr/local/bin/primitive .
 
 ### Stage 2: final image (no Go toolchain)
