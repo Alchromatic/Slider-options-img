@@ -576,7 +576,7 @@ def make_swatch(hex_color: str, size: int = 180) -> Image.Image:
 
 def show_swatch(label: str, hex_color: str, size: int = 180) -> None:
     st.markdown(f"**{label}: {hex_color}**")
-    st.image(make_swatch(hex_color, size=size), use_column_width=False)
+    st.image(make_swatch(hex_color, size=size), width=size)
 
 
 # ============================================================
@@ -2038,14 +2038,11 @@ with st.sidebar:
                     "This fitter learns (M,b) from labeled rows: base_hexes + weights → api_hex."
                 )
                 geolog_fit_csvs = st.file_uploader("Fit (M,b) CSV (Trycolors format)", type=["csv"], accept_multiple_files=True, key="geolog_fit_csvs")
-                colFM1, colFM2 = st.columns(2)
-                with colFM1:
-                    geolog_fit_metric = st.selectbox("Loss", ["RMSE (XYZ)", "RMSE (linear RGB)"], index=0, key="geolog_fit_metric")
-                    geolog_fit_reg = st.slider("Regularize M → Identity", min_value=0.0, max_value=0.5, value=float(st.session_state.get("geolog_fit_reg", 0.05)), step=0.01, key="geolog_fit_reg")
-                    geolog_fit_regb = st.slider("Regularize b → 0.01", min_value=0.0, max_value=0.5, value=float(st.session_state.get("geolog_fit_regb", 0.05)), step=0.01, key="geolog_fit_regb")
-                with colFM2:
-                    geolog_fit_maxiter = st.slider("Max iterations", min_value=50, max_value=800, value=int(st.session_state.get("geolog_fit_maxiter", 250)), step=50, key="geolog_fit_maxiter")
-                    geolog_fit_seed = st.number_input("Seed", min_value=0, max_value=9999, value=int(st.session_state.get("geolog_fit_seed", 0)), step=1, key="geolog_fit_seed")
+                geolog_fit_metric = st.selectbox("Loss", ["RMSE (XYZ)", "RMSE (linear RGB)"], index=0, key="geolog_fit_metric")
+                geolog_fit_reg = st.slider("Regularize M → Identity", min_value=0.0, max_value=0.5, value=float(st.session_state.get("geolog_fit_reg", 0.05)), step=0.01, key="geolog_fit_reg")
+                geolog_fit_regb = st.slider("Regularize b → 0.01", min_value=0.0, max_value=0.5, value=float(st.session_state.get("geolog_fit_regb", 0.05)), step=0.01, key="geolog_fit_regb")
+                geolog_fit_maxiter = st.slider("Max iterations", min_value=50, max_value=800, value=int(st.session_state.get("geolog_fit_maxiter", 250)), step=50, key="geolog_fit_maxiter")
+                geolog_fit_seed = st.number_input("Seed", min_value=0, max_value=9999, value=int(st.session_state.get("geolog_fit_seed", 0)), step=1, key="geolog_fit_seed")
             
                 fitMb_clicked = st.button("Fit (M,b) now", key="geolog_fitMb_btn")
                 if fitMb_clicked:
@@ -2259,13 +2256,10 @@ with st.sidebar:
 
     strength_gamma = st.slider("Strength effect (γ)", min_value=0.0, max_value=2.0, value=float(st.session_state.get("strength_gamma", 1.0)), step=0.05, key="strength_gamma")
 
-    colS1, colS2 = st.columns(2)
-    with colS1:
-        strength_a0 = st.number_input("a0 (R)", value=float(st.session_state.get("strength_a0", LEARNED_A0)), step=0.1, key="strength_a0")
-        strength_a1 = st.number_input("a1 (G)", value=float(st.session_state.get("strength_a1", LEARNED_A1)), step=0.1, key="strength_a1")
-    with colS2:
-        strength_a2 = st.number_input("a2 (B)", value=float(st.session_state.get("strength_a2", LEARNED_A2)), step=0.1, key="strength_a2")
-        strength_b  = st.number_input("b (bias)", value=float(st.session_state.get("strength_b", LEARNED_B)), step=0.1, key="strength_b")
+    strength_a0 = st.number_input("a0 (R)", value=float(st.session_state.get("strength_a0", LEARNED_A0)), step=0.1, key="strength_a0")
+    strength_a1 = st.number_input("a1 (G)", value=float(st.session_state.get("strength_a1", LEARNED_A1)), step=0.1, key="strength_a1")
+    strength_a2 = st.number_input("a2 (B)", value=float(st.session_state.get("strength_a2", LEARNED_A2)), step=0.1, key="strength_a2")
+    strength_b  = st.number_input("b (bias)", value=float(st.session_state.get("strength_b", LEARNED_B)), step=0.1, key="strength_b")
 
     if st.button("Reset strength params to learned defaults"):
         st.session_state["strength_enable"] = False
@@ -2310,11 +2304,8 @@ with st.sidebar:
         cal_ridge = 0.0
 
     cal_fit_csv = st.file_uploader("Fit CSV (Trycolors format)", type=["csv"], key="cal_fit_csv")
-    col1, col2 = st.columns(2)
-    with col1:
-        fit_clicked = st.button("Fit log-poly")
-    with col2:
-        clear_cal = st.button("Clear")
+    fit_clicked = st.button("Fit log-poly")
+    clear_cal = st.button("Clear")
 
     cal_json_file = st.file_uploader("Load calibrator JSON", type=["json"], key="cal_json")
     if cal_json_file is not None:
@@ -2652,223 +2643,218 @@ if nn_active is not None and hasattr(nn_active, "_meta"):
 st.markdown("<hr style='margin:6px 0;border-top:1px solid #ffe0b2;'>", unsafe_allow_html=True)
 st.markdown("<h3 style='margin:0 0 4px 0;font-size:14px;color:#e65100;'>Get Mix Recipe</h3>", unsafe_allow_html=True)
 
-inv_left, inv_right = st.columns([1, 1])
+target_hex = st.color_picker("Target color", "#8B5CF6", key="target_hex")
 
-with inv_left:
-    target_hex = st.color_picker("Target color", "#8B5CF6", key="target_hex")
+st.markdown("**Search constraints**")
+max_colors = st.slider("Max colors in recipe", min_value=1, max_value=6, value=2, step=1)  # increased to 6
 
-    st.markdown("**Search constraints**")
-    max_colors = st.slider("Max colors in recipe", min_value=1, max_value=6, value=2, step=1)  # increased to 6
+mode_label = st.selectbox(
+    "Inverse search mode",
+    ["Exhaustive parts grid", "Dominant + micro-tints (Trycolors-like)"],
+    index=0,
+    help=(
+        "Exhaustive mode enumerates all integer part allocations summing to MaxParts "
+        "(can be slow for large MaxParts). "
+        "Dominant+micro-tints assumes one dominant color and small tint amounts; "
+        "this enables high precision (e.g., MaxParts=200 → 0.5% steps) without "
+        "enumerating all compositions."
+    ),
+)
 
-    mode_label = st.selectbox(
-        "Inverse search mode",
-        ["Exhaustive parts grid", "Dominant + micro-tints (Trycolors-like)"],
-        index=0,
-        help=(
-            "Exhaustive mode enumerates all integer part allocations summing to MaxParts "
-            "(can be slow for large MaxParts). "
-            "Dominant+micro-tints assumes one dominant color and small tint amounts; "
-            "this enables high precision (e.g., MaxParts=200 → 0.5% steps) without "
-            "enumerating all compositions."
-        ),
-    )
+if mode_label.startswith("Dominant"):
+    search_mode = "dominant_micro"
+    max_parts = st.slider("Max parts (precision) — fine grid", min_value=20, max_value=400, value=200, step=10, key="max_parts_micro")
+    tint_cap = st.slider("Tint cap (max parts per tint color)", min_value=1, max_value=40, value=10, step=1, key="tint_cap")
+else:
+    search_mode = "exhaustive"
+    tint_cap = 0
+    max_parts = st.slider("Max parts (precision)", min_value=2, max_value=40, value=12, step=1, key="max_parts_exhaustive")
 
-    if mode_label.startswith("Dominant"):
-        search_mode = "dominant_micro"
-        max_parts = st.slider("Max parts (precision) — fine grid", min_value=20, max_value=400, value=200, step=10, key="max_parts_micro")
-        tint_cap = st.slider("Tint cap (max parts per tint color)", min_value=1, max_value=40, value=10, step=1, key="tint_cap")
-    else:
-        search_mode = "exhaustive"
-        tint_cap = 0
-        max_parts = st.slider("Max parts (precision)", min_value=2, max_value=40, value=12, step=1, key="max_parts_exhaustive")
+prefilter_top_n = st.slider(
+    "Prefilter palette to top-N nearest colors (0 = off)",
+    min_value=0,
+    max_value=60,
+    value=12,
+    step=1,
+    help=(
+        "Speed knob. Even when enabled, the app keeps a few palette extremes "
+        "(white/black + approximate cyan/magenta/yellow corners) to reduce the risk "
+        "of excluding useful tint pigments."
+    ),
+)
+top_k = st.slider("Keep top-K solutions", min_value=1, max_value=20, value=5, step=1)
 
-    prefilter_top_n = st.slider(
-        "Prefilter palette to top-N nearest colors (0 = off)",
-        min_value=0,
-        max_value=60,
-        value=12,
-        step=1,
-        help=(
-            "Speed knob. Even when enabled, the app keeps a few palette extremes "
-            "(white/black + approximate cyan/magenta/yellow corners) to reduce the risk "
-            "of excluding useful tint pigments."
-        ),
-    )
-    top_k = st.slider("Keep top-K solutions", min_value=1, max_value=20, value=5, step=1)
+# Loss metric is now hard-coded to "de00" (perceptual). No user control in client build.
+loss_metric = "de00"
 
-    # Loss metric is now hard-coded to "de00" (perceptual). No user control in client build.
-    loss_metric = "de00"
+st.subheader("Candidate palette")
 
-with inv_right:
+# ---- Palette presets (matching Trycolors / client's Netlify dropdown) ----
+PALETTE_PRESETS: Dict[str, List[Dict[str, str]]] = {
+    "Cadmium (calibrator default)": [
+        {"name": "Cadmium Yellow Light", "hex": "#FEE100"},
+        {"name": "Cadmium Red Light",    "hex": "#DE290C"},
+        {"name": "Ultramarine Blue",     "hex": "#19123F"},
+        {"name": "Titanium White",       "hex": "#F7F5F1"},
+        {"name": "Mars Black",           "hex": "#232222"},
+    ],
+    "Default Artist Palette (20 colors)": [
+        {"name": "Cadmium Yellow",       "hex": "#FDE100"},
+        {"name": "Yellow Ochre",         "hex": "#D2A51E"},
+        {"name": "Orange",               "hex": "#E87511"},
+        {"name": "Burnt Sienna",         "hex": "#8F3E1F"},
+        {"name": "Cadmium Red Medium",   "hex": "#B01B0F"},
+        {"name": "Cadmium Red Light",    "hex": "#DE290C"},
+        {"name": "Alizarin Crimson",     "hex": "#731524"},
+        {"name": "Dioxazine Purple",     "hex": "#3C1361"},
+        {"name": "Ultramarine Blue",     "hex": "#1B3F8B"},
+        {"name": "Cerulean Blue",        "hex": "#2C73A8"},
+        {"name": "Viridian Green",       "hex": "#00796B"},
+        {"name": "Chromium Oxide Green", "hex": "#4D7D4D"},
+        {"name": "Sap Green",            "hex": "#507D2A"},
+        {"name": "Raw Umber",            "hex": "#7B5B3A"},
+        {"name": "Burnt Umber",          "hex": "#6E3B21"},
+        {"name": "Raw Sienna",           "hex": "#D2691E"},
+        {"name": "Naples Yellow",        "hex": "#E8C85A"},
+        {"name": "Titanium White",       "hex": "#F7F5F1"},
+        {"name": "Ivory Black",          "hex": "#1A1A1A"},
+        {"name": "Payne's Gray",         "hex": "#536878"},
+    ],
+    "Common Color Names & Values (13)": [
+        {"name": "Red",     "hex": "#FF0000"}, {"name": "Orange",  "hex": "#FF7F50"},
+        {"name": "Yellow",  "hex": "#FFD700"}, {"name": "Green",   "hex": "#2E8B57"},
+        {"name": "Blue",    "hex": "#0047AB"}, {"name": "Purple",  "hex": "#6A0DAD"},
+        {"name": "Pink",    "hex": "#FF00AB"}, {"name": "Brown",   "hex": "#7B3F00"},
+        {"name": "Cyan",    "hex": "#00CED1"}, {"name": "Lime",    "hex": "#32CD32"},
+        {"name": "Magenta", "hex": "#C71585"}, {"name": "White",   "hex": "#FFFFFF"},
+        {"name": "Black",   "hex": "#000000"},
+    ],
+    "Gamblin Artist Oil (subset)": [
+        {"name": "Cadmium Yellow Light",  "hex": "#FDE100"},
+        {"name": "Cadmium Yellow Medium", "hex": "#F5B800"},
+        {"name": "Cadmium Orange",        "hex": "#E87511"},
+        {"name": "Cadmium Red Light",     "hex": "#DE290C"},
+        {"name": "Cadmium Red Medium",    "hex": "#B01B0F"},
+        {"name": "Alizarin Crimson",      "hex": "#731524"},
+        {"name": "Dioxazine Purple",      "hex": "#3C1361"},
+        {"name": "Ultramarine Blue",      "hex": "#1B3F8B"},
+        {"name": "Cerulean Blue",         "hex": "#2C73A8"},
+        {"name": "Phthalo Blue",          "hex": "#000F89"},
+        {"name": "Phthalo Green",         "hex": "#123524"},
+        {"name": "Viridian",              "hex": "#00796B"},
+        {"name": "Chromium Oxide Green",  "hex": "#4D7D4D"},
+        {"name": "Yellow Ochre",          "hex": "#D2A51E"},
+        {"name": "Raw Sienna",            "hex": "#D2691E"},
+        {"name": "Burnt Sienna",          "hex": "#8F3E1F"},
+        {"name": "Raw Umber",             "hex": "#7B5B3A"},
+        {"name": "Burnt Umber",           "hex": "#6E3B21"},
+        {"name": "Titanium White",        "hex": "#F7F5F1"},
+        {"name": "Ivory Black",           "hex": "#1A1A1A"},
+    ],
+}
 
-    st.subheader("Candidate palette")
+preset_choice = st.selectbox(
+    "Load palette preset",
+    ["-- Keep current --"] + list(PALETTE_PRESETS.keys()),
+    key="palette_preset_sel",
+)
+if st.button("Load preset", key="load_preset_btn"):
+    if preset_choice in PALETTE_PRESETS:
+        st.session_state.palette_rows = [dict(r) for r in PALETTE_PRESETS[preset_choice]]
+        st.rerun()
 
-    # ---- Palette presets (matching Trycolors / client's Netlify dropdown) ----
-    PALETTE_PRESETS: Dict[str, List[Dict[str, str]]] = {
-        "Cadmium (calibrator default)": [
+def _init_palette() -> None:
+    if "palette_rows" not in st.session_state:
+        # Default palette aligned to the bundled Trycolors recipe dataset (Cadmium palette).
+        st.session_state.palette_rows = [
+            {"name": "Titanium White",       "hex": "#F7F5F1"},
+            {"name": "Mars Black",           "hex": "#232222"},
             {"name": "Cadmium Yellow Light", "hex": "#FEE100"},
             {"name": "Cadmium Red Light",    "hex": "#DE290C"},
             {"name": "Ultramarine Blue",     "hex": "#19123F"},
+        ]
+
+def _add_palette_row() -> None:
+    st.session_state.palette_rows.append({"name": "", "hex": "#808080"})
+
+def _remove_palette_row(idx: Optional[int] = None) -> None:
+    if not st.session_state.palette_rows:
+        return
+    if idx is None:
+        st.session_state.palette_rows.pop()
+    else:
+        if 0 <= idx < len(st.session_state.palette_rows):
+            st.session_state.palette_rows.pop(idx)
+
+_init_palette()
+
+pal_controls = st.columns([1, 1, 1])
+with pal_controls[0]:
+    if st.button("Add color"):
+        _add_palette_row()
+with pal_controls[1]:
+    if st.button("Remove last"):
+        _remove_palette_row()
+with pal_controls[2]:
+    if st.button("Reset palette"):
+        # Default palette aligned to the bundled Trycolors recipe dataset (Cadmium palette).
+        st.session_state.palette_rows = [
             {"name": "Titanium White",       "hex": "#F7F5F1"},
             {"name": "Mars Black",           "hex": "#232222"},
-        ],
-        "Default Artist Palette (20 colors)": [
-            {"name": "Cadmium Yellow",       "hex": "#FDE100"},
-            {"name": "Yellow Ochre",         "hex": "#D2A51E"},
-            {"name": "Orange",               "hex": "#E87511"},
-            {"name": "Burnt Sienna",         "hex": "#8F3E1F"},
-            {"name": "Cadmium Red Medium",   "hex": "#B01B0F"},
+            {"name": "Cadmium Yellow Light", "hex": "#FEE100"},
             {"name": "Cadmium Red Light",    "hex": "#DE290C"},
-            {"name": "Alizarin Crimson",     "hex": "#731524"},
-            {"name": "Dioxazine Purple",     "hex": "#3C1361"},
-            {"name": "Ultramarine Blue",     "hex": "#1B3F8B"},
-            {"name": "Cerulean Blue",        "hex": "#2C73A8"},
-            {"name": "Viridian Green",       "hex": "#00796B"},
-            {"name": "Chromium Oxide Green", "hex": "#4D7D4D"},
-            {"name": "Sap Green",            "hex": "#507D2A"},
-            {"name": "Raw Umber",            "hex": "#7B5B3A"},
-            {"name": "Burnt Umber",          "hex": "#6E3B21"},
-            {"name": "Raw Sienna",           "hex": "#D2691E"},
-            {"name": "Naples Yellow",        "hex": "#E8C85A"},
-            {"name": "Titanium White",       "hex": "#F7F5F1"},
-            {"name": "Ivory Black",          "hex": "#1A1A1A"},
-            {"name": "Payne's Gray",         "hex": "#536878"},
-        ],
-        "Common Color Names & Values (13)": [
-            {"name": "Red",     "hex": "#FF0000"}, {"name": "Orange",  "hex": "#FF7F50"},
-            {"name": "Yellow",  "hex": "#FFD700"}, {"name": "Green",   "hex": "#2E8B57"},
-            {"name": "Blue",    "hex": "#0047AB"}, {"name": "Purple",  "hex": "#6A0DAD"},
-            {"name": "Pink",    "hex": "#FF00AB"}, {"name": "Brown",   "hex": "#7B3F00"},
-            {"name": "Cyan",    "hex": "#00CED1"}, {"name": "Lime",    "hex": "#32CD32"},
-            {"name": "Magenta", "hex": "#C71585"}, {"name": "White",   "hex": "#FFFFFF"},
-            {"name": "Black",   "hex": "#000000"},
-        ],
-        "Gamblin Artist Oil (subset)": [
-            {"name": "Cadmium Yellow Light",  "hex": "#FDE100"},
-            {"name": "Cadmium Yellow Medium", "hex": "#F5B800"},
-            {"name": "Cadmium Orange",        "hex": "#E87511"},
-            {"name": "Cadmium Red Light",     "hex": "#DE290C"},
-            {"name": "Cadmium Red Medium",    "hex": "#B01B0F"},
-            {"name": "Alizarin Crimson",      "hex": "#731524"},
-            {"name": "Dioxazine Purple",      "hex": "#3C1361"},
-            {"name": "Ultramarine Blue",      "hex": "#1B3F8B"},
-            {"name": "Cerulean Blue",         "hex": "#2C73A8"},
-            {"name": "Phthalo Blue",          "hex": "#000F89"},
-            {"name": "Phthalo Green",         "hex": "#123524"},
-            {"name": "Viridian",              "hex": "#00796B"},
-            {"name": "Chromium Oxide Green",  "hex": "#4D7D4D"},
-            {"name": "Yellow Ochre",          "hex": "#D2A51E"},
-            {"name": "Raw Sienna",            "hex": "#D2691E"},
-            {"name": "Burnt Sienna",          "hex": "#8F3E1F"},
-            {"name": "Raw Umber",             "hex": "#7B5B3A"},
-            {"name": "Burnt Umber",           "hex": "#6E3B21"},
-            {"name": "Titanium White",        "hex": "#F7F5F1"},
-            {"name": "Ivory Black",           "hex": "#1A1A1A"},
-        ],
-    }
+            {"name": "Ultramarine Blue",     "hex": "#19123F"},
+        ]
 
-    preset_choice = st.selectbox(
-        "Load palette preset",
-        ["-- Keep current --"] + list(PALETTE_PRESETS.keys()),
-        key="palette_preset_sel",
-    )
-    if st.button("Load preset", key="load_preset_btn"):
-        if preset_choice in PALETTE_PRESETS:
-            st.session_state.palette_rows = [dict(r) for r in PALETTE_PRESETS[preset_choice]]
-            st.rerun()
-
-    def _init_palette() -> None:
-        if "palette_rows" not in st.session_state:
-            # Default palette aligned to the bundled Trycolors recipe dataset (Cadmium palette).
-            st.session_state.palette_rows = [
-                {"name": "Titanium White",       "hex": "#F7F5F1"},
-                {"name": "Mars Black",           "hex": "#232222"},
-                {"name": "Cadmium Yellow Light", "hex": "#FEE100"},
-                {"name": "Cadmium Red Light",    "hex": "#DE290C"},
-                {"name": "Ultramarine Blue",     "hex": "#19123F"},
-            ]
-
-    def _add_palette_row() -> None:
-        st.session_state.palette_rows.append({"name": "", "hex": "#808080"})
-
-    def _remove_palette_row(idx: Optional[int] = None) -> None:
-        if not st.session_state.palette_rows:
-            return
-        if idx is None:
-            st.session_state.palette_rows.pop()
+# Import palette
+st.markdown("**Import palette**")
+pal_file = st.file_uploader("Palette CSV (hex per line, or csv with hex column)", type=["csv", "txt"], key="palette_file")
+pal_trycolors = st.file_uploader("Trycolors CSV (extract unique base_hexes)", type=["csv"], key="palette_trycolors_file")
+import_cols = st.columns([1, 1])
+with import_cols[0]:
+    if st.button("Load palette file"):
+        if pal_file is None:
+            st.error("Upload a palette file first.")
         else:
-            if 0 <= idx < len(st.session_state.palette_rows):
-                st.session_state.palette_rows.pop(idx)
+            try:
+                text = pal_file.getvalue().decode("utf-8", errors="ignore")
+                pal_list = parse_palette_csv(text)
+                if not pal_list:
+                    raise ValueError("No valid hex colors found in palette file.")
+                st.session_state.palette_rows = [{"name": "", "hex": h} for h in pal_list]
+                st.success(f"Loaded palette: {len(pal_list)} colors.")
+            except Exception as e:
+                st.error(f"Failed to load palette: {e}")
+with import_cols[1]:
+    if st.button("Extract from Trycolors CSV"):
+        if pal_trycolors is None:
+            st.error("Upload a Trycolors CSV first.")
+        else:
+            try:
+                text = pal_trycolors.getvalue().decode("utf-8", errors="ignore")
+                pal_list = extract_palette_from_trycolors_csv(text)
+                if not pal_list:
+                    raise ValueError("No base_hexes found in Trycolors CSV.")
+                st.session_state.palette_rows = [{"name": "", "hex": h} for h in pal_list]
+                st.success(f"Extracted palette: {len(pal_list)} colors.")
+            except Exception as e:
+                st.error(f"Failed to extract palette: {e}")
 
-    _init_palette()
-
-    pal_controls = st.columns([1, 1, 1])
-    with pal_controls[0]:
-        if st.button("Add color"):
-            _add_palette_row()
-    with pal_controls[1]:
-        if st.button("Remove last"):
-            _remove_palette_row()
-    with pal_controls[2]:
-        if st.button("Reset palette"):
-            # Default palette aligned to the bundled Trycolors recipe dataset (Cadmium palette).
-            st.session_state.palette_rows = [
-                {"name": "Titanium White",       "hex": "#F7F5F1"},
-                {"name": "Mars Black",           "hex": "#232222"},
-                {"name": "Cadmium Yellow Light", "hex": "#FEE100"},
-                {"name": "Cadmium Red Light",    "hex": "#DE290C"},
-                {"name": "Ultramarine Blue",     "hex": "#19123F"},
-            ]
-
-    # Import palette
-    st.markdown("**Import palette**")
-    pal_file = st.file_uploader("Palette CSV (hex per line, or csv with hex column)", type=["csv", "txt"], key="palette_file")
-    pal_trycolors = st.file_uploader("Trycolors CSV (extract unique base_hexes)", type=["csv"], key="palette_trycolors_file")
-    import_cols = st.columns([1, 1])
-    with import_cols[0]:
-        if st.button("Load palette file"):
-            if pal_file is None:
-                st.error("Upload a palette file first.")
-            else:
-                try:
-                    text = pal_file.getvalue().decode("utf-8", errors="ignore")
-                    pal_list = parse_palette_csv(text)
-                    if not pal_list:
-                        raise ValueError("No valid hex colors found in palette file.")
-                    st.session_state.palette_rows = [{"name": "", "hex": h} for h in pal_list]
-                    st.success(f"Loaded palette: {len(pal_list)} colors.")
-                except Exception as e:
-                    st.error(f"Failed to load palette: {e}")
-    with import_cols[1]:
-        if st.button("Extract from Trycolors CSV"):
-            if pal_trycolors is None:
-                st.error("Upload a Trycolors CSV first.")
-            else:
-                try:
-                    text = pal_trycolors.getvalue().decode("utf-8", errors="ignore")
-                    pal_list = extract_palette_from_trycolors_csv(text)
-                    if not pal_list:
-                        raise ValueError("No base_hexes found in Trycolors CSV.")
-                    st.session_state.palette_rows = [{"name": "", "hex": h} for h in pal_list]
-                    st.success(f"Extracted palette: {len(pal_list)} colors.")
-                except Exception as e:
-                    st.error(f"Failed to extract palette: {e}")
-
-    # Palette editor
-    st.markdown(f"**Palette editor ({len(st.session_state.palette_rows)} colors)**")
-    st.caption("Tip: Names are optional but help maintain name↔hex parity in the recipe output.")
-    to_del: List[int] = []
-    for i, row in enumerate(st.session_state.palette_rows):
-        c1, c2, c3 = st.columns([3, 2, 1])
-        with c1:
-            row["name"] = st.text_input(f"Name {i+1}", value=str(row.get("name", "")), key=f"pal_name_{i}")
-        with c2:
-            row["hex"] = st.color_picker(f"Hex {i+1}", row.get("hex", "#808080"), key=f"pal_hex_{i}")
-        with c3:
-            if st.button("✖", key=f"pal_del_{i}"):
-                to_del.append(i)
-    for idx in sorted(to_del, reverse=True):
-        _remove_palette_row(idx)
+# Palette editor
+st.markdown(f"**Palette editor ({len(st.session_state.palette_rows)} colors)**")
+st.caption("Tip: Names are optional but help maintain name↔hex parity in the recipe output.")
+to_del: List[int] = []
+for i, row in enumerate(st.session_state.palette_rows):
+    c1, c2, c3 = st.columns([3, 2, 1])
+    with c1:
+        row["name"] = st.text_input(f"Name {i+1}", value=str(row.get("name", "")), key=f"pal_name_{i}")
+    with c2:
+        row["hex"] = st.color_picker(f"Hex {i+1}", row.get("hex", "#808080"), key=f"pal_hex_{i}")
+    with c3:
+        if st.button("✖", key=f"pal_del_{i}"):
+            to_del.append(i)
+for idx in sorted(to_del, reverse=True):
+    _remove_palette_row(idx)
 
 run_inv = st.button("Run Get Mix Recipe (inverse)")
 
@@ -3407,7 +3393,7 @@ for i in range(int(n_bases)):
         else:
             st.caption("Units: raw (will normalize).")
     with c3:
-        st.image(make_swatch(rows[i]["hex"], size=64), use_column_width=False)
+        st.image(make_swatch(rows[i]["hex"], size=64), width=64)
 
 # Optional target (for RMSE)
 st.markdown("**Optional target (for RMSE diagnostics)**")

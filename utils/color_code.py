@@ -146,7 +146,7 @@ Sanwar Sunny shared this file. Want to do more with it?
     ﻿
     def show_swatch(label: str, hex_color: str, size: int = 200):
         st.markdown(f"**{label}: {hex_color}**")
-        st.image(make_swatch(hex_color, size=size), use_column_width=False)
+        st.image(make_swatch(hex_color, size=size), width=size)
     ﻿
     ﻿
     # =================================================
