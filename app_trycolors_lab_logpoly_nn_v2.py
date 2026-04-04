@@ -36,8 +36,253 @@ except Exception:
 # ============================================================
 # Streamlit config
 # ============================================================
-st.set_page_config(page_title="Trycolors Reverse Engineering Lab", layout="wide")
+st.set_page_config(page_title="Forward Mix Engine", layout="wide", initial_sidebar_state="collapsed")
 
+# ============================================================
+# Custom CSS: match the Art-AI Renderer Adjust tab look
+# ============================================================
+st.markdown("""
+<style>
+/* ---- Hide ALL Streamlit chrome ---- */
+#MainMenu, header, footer,
+[data-testid="stHeader"],
+[data-testid="stToolbar"],
+[data-testid="stDecoration"],
+[data-testid="stStatusWidget"],
+[data-testid="collapsedControl"],
+.stDeployButton,
+div[data-testid="stSidebarNav"],
+section[data-testid="stSidebar"],
+div[data-testid="stSidebarCollapsedControl"],
+.reportview-container .main footer,
+div[data-testid="stSidebarCollapsedControl"],
+button[kind="header"] {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    overflow: hidden !important;
+}
+
+/* ---- Remove Streamlit padding, warm white background ---- */
+.stApp > header { display: none !important; }
+.main .block-container {
+    padding: 12px 16px 12px 16px !important;
+    max-width: 100% !important;
+}
+.stApp, .main,
+[data-testid="stAppViewContainer"],
+[data-testid="stVerticalBlock"],
+[data-testid="stHorizontalBlock"],
+[data-testid="column"],
+div[data-testid="stForm"] {
+    background: #fffaf5 !important;
+}
+
+/* ---- Typography ---- */
+html, body, .stApp, .stMarkdown, .stText,
+[data-testid="stMarkdownContainer"],
+label, .stSelectbox, .stSlider, .stNumberInput {
+    font-family: Arial, sans-serif !important;
+    color: #333 !important;
+}
+
+h1 { font-size: 15px !important; font-weight: bold !important; margin: 6px 0 !important; color: #e65100 !important; }
+h2 { font-size: 14px !important; font-weight: bold !important; margin: 6px 0 !important; color: #e65100 !important; }
+h3 { font-size: 13px !important; font-weight: 600 !important; margin: 4px 0 !important; color: #bf360c !important; }
+.stCaption, [data-testid="stCaptionContainer"] {
+    font-size: 11px !important; color: #888 !important;
+}
+
+/* ---- Labels ---- */
+label, [data-testid="stWidgetLabel"] {
+    font-size: 11px !important;
+    color: #666 !important;
+    font-weight: 600 !important;
+}
+
+/* ---- Compact spacing: crush all vertical gaps ---- */
+.element-container { margin-bottom: 2px !important; }
+.stMarkdown { margin-bottom: 0 !important; }
+.stMarkdown p { margin-bottom: 2px !important; font-size: 12px !important; color: #666 !important; }
+[data-testid="stVerticalBlock"] > div { gap: 0.15rem !important; }
+[data-testid="stHorizontalBlock"] { gap: 0.5rem !important; }
+[data-testid="column"] { padding: 0 4px !important; }
+div[data-testid="stVerticalBlockBorderWrapper"] { padding: 0 !important; }
+
+/* ---- Sections / Expanders ---- */
+[data-testid="stExpander"] {
+    border: 1px solid #ffe0b2 !important;
+    border-radius: 6px !important;
+    background: #fff8f0 !important;
+}
+[data-testid="stExpander"] summary {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: #e65100 !important;
+}
+hr {
+    border: none !important;
+    border-top: 1px solid #ffe0b2 !important;
+    margin: 8px 0 !important;
+}
+
+/* ---- Input fields: light warm style ---- */
+input[type="text"], input[type="number"],
+[data-testid="stNumberInput"] input,
+[data-testid="stTextInput"] input,
+textarea {
+    background: #fff !important;
+    border: 1px solid #ccc !important;
+    border-radius: 4px !important;
+    font-size: 12px !important;
+    font-family: Arial, sans-serif !important;
+    padding: 6px 8px !important;
+    color: #333 !important;
+}
+input:focus, textarea:focus {
+    border-color: #ff9800 !important;
+    box-shadow: 0 0 0 1px rgba(255,152,0,0.25) !important;
+}
+
+/* Number input +/- buttons */
+[data-testid="stNumberInput"] button {
+    background: #f5f5f5 !important;
+    border: 1px solid #ccc !important;
+    color: #333 !important;
+}
+[data-testid="stNumberInput"] button:hover {
+    background: #ffe0b2 !important;
+}
+
+/* Select boxes */
+[data-testid="stSelectbox"] > div > div {
+    background: #fff !important;
+    border: 1px solid #ccc !important;
+    border-radius: 4px !important;
+    font-size: 12px !important;
+    color: #333 !important;
+}
+
+/* ---- Buttons ---- */
+.stButton > button {
+    font-family: Arial, sans-serif !important;
+    font-size: 13px !important;
+    font-weight: bold !important;
+    padding: 10px 20px !important;
+    border-radius: 4px !important;
+    border: none !important;
+    cursor: pointer !important;
+    width: 100% !important;
+    transition: all 0.15s !important;
+}
+/* Primary buttons - orange gradient like Drawing */
+.stButton > button[kind="primary"],
+.stButton > button[data-testid="baseButton-primary"],
+.stButton > button {
+    background: linear-gradient(135deg, #ff9800, #f57c00) !important;
+    color: white !important;
+}
+.stButton > button:hover {
+    background: linear-gradient(135deg, #ffa726, #ff9800) !important;
+    box-shadow: 0 2px 8px rgba(255,152,0,0.3) !important;
+}
+/* Secondary buttons */
+.stButton > button[kind="secondary"],
+.stButton > button[data-testid="baseButton-secondary"] {
+    background: #607D8B !important;
+    color: white !important;
+}
+.stButton > button[kind="secondary"]:hover,
+.stButton > button[data-testid="baseButton-secondary"]:hover {
+    background: #546e7a !important;
+}
+
+/* ---- Sliders: orange accent ---- */
+[data-testid="stSlider"] [data-testid="stThumbValue"] {
+    font-size: 10px !important;
+}
+.stSlider > div > div > div > div {
+    background: #ff9800 !important;
+}
+[data-testid="stSlider"] {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+/* ---- Color picker: compact ---- */
+[data-testid="stColorPicker"] {
+    max-width: 80px !important;
+}
+[data-testid="stColorPicker"] > div {
+    padding: 0 !important;
+}
+[data-testid="stColorPicker"] label {
+    margin-bottom: 2px !important;
+}
+
+/* ---- Alerts: warm tones ---- */
+[data-testid="stAlert"] {
+    font-size: 11px !important;
+    padding: 6px 10px !important;
+    border-radius: 4px !important;
+}
+.stSuccess > div { background: #e8f5e9 !important; border-color: #a5d6a7 !important; }
+.stInfo > div { background: #fff3e0 !important; border-color: #ffe0b2 !important; }
+.stWarning > div { background: #fff8e1 !important; border-color: #ffecb3 !important; }
+
+/* ---- Dataframes ---- */
+[data-testid="stDataFrame"] {
+    font-size: 11px !important;
+}
+
+/* ---- Download buttons ---- */
+.stDownloadButton > button {
+    font-size: 12px !important;
+    padding: 8px 16px !important;
+    background: #607D8B !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 4px !important;
+}
+.stDownloadButton > button:hover {
+    background: #546e7a !important;
+}
+
+/* ---- Tabs ---- */
+.stTabs [data-baseweb="tab-list"] { gap: 2px !important; }
+.stTabs [data-baseweb="tab"] {
+    font-size: 12px !important;
+    font-family: Arial, sans-serif !important;
+    padding: 6px 14px !important;
+}
+.stTabs [data-baseweb="tab"][aria-selected="true"] {
+    border-bottom-color: #ff9800 !important;
+    color: #e65100 !important;
+}
+
+/* ---- Color swatches from Streamlit: make smaller ---- */
+[data-testid="stImage"] {
+    max-width: 50px !important;
+}
+
+/* ---- Checkboxes: orange accent ---- */
+[data-testid="stCheckbox"] label span {
+    font-size: 12px !important;
+    color: #333 !important;
+}
+
+/* ---- File uploader ---- */
+[data-testid="stFileUploader"] {
+    border: 1px dashed #ffcc80 !important;
+    border-radius: 4px !important;
+    background: #fff8f0 !important;
+    padding: 8px !important;
+}
+[data-testid="stFileUploader"] label {
+    font-size: 11px !important;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # ============================================================
 # 1) Color utilities
@@ -1599,8 +1844,7 @@ def inverse_mix_recipe(
 # 7) UI
 # ============================================================
 
-st.title("Trycolors Reverse Engineering Lab")
-st.caption("Forward mixer (Linear / KM / YN-KM) + log-poly calibration + optional NN residual + inverse 'Get Mix Recipe' search.")
+st.markdown("<h3 style='margin:0 0 4px 0;font-size:15px;color:#e65100;'>Forward Mix Engine</h3>", unsafe_allow_html=True)
 
 
 
@@ -1680,7 +1924,7 @@ if "strength_enable" not in st.session_state:
 
 # ---------------- Sidebar: global params ----------------
 with st.sidebar:
-    st.header("Engine + params")
+    st.markdown("<h3 style='margin:0 0 4px 0;font-size:13px;color:#e65100;'>Engine + params</h3>", unsafe_allow_html=True)
     # Bundled calibrator status (autoload)
     _bc = st.session_state.get("bundled_calibrator_status", {})
     if isinstance(_bc, dict):
@@ -1717,7 +1961,7 @@ with st.sidebar:
     geolog_b_scale_default = float(st.session_state.get("geolog_b_scale", 0.01))
 
     if str(engine).startswith("GeoLogMix"):
-        st.markdown("---")
+        st.markdown("<hr style='margin:4px 0;border-top:1px solid #ffe0b2;'>", unsafe_allow_html=True)
         st.header("GeoLogMix (experimental)")
         geolog_eps = st.number_input(
             "GeoLogMix ε (positivity floor)",
@@ -2405,14 +2649,8 @@ if nn_active is not None and hasattr(nn_active, "_meta"):
 
 # ---------------- Inverse mode: Get Mix Recipe ----------------
 
-st.markdown("---")
-st.header("Get Mix Recipe (inverse search)")
-
-st.write(
-    "This mode matches the flow described in the client video: "
-    "you choose a **target color** and a **candidate palette**; the app computes the best discrete mix recipe "
-    "(integer parts) under your constraints."
-)
+st.markdown("<hr style='margin:6px 0;border-top:1px solid #ffe0b2;'>", unsafe_allow_html=True)
+st.markdown("<h3 style='margin:0 0 4px 0;font-size:14px;color:#e65100;'>Get Mix Recipe</h3>", unsafe_allow_html=True)
 
 inv_left, inv_right = st.columns([1, 1])
 
@@ -2865,8 +3103,8 @@ if run_inv:
 
 
 # ---------------- Batch evaluation ----------------
-st.markdown("---")
-st.header("Batch evaluation vs reference CSV")
+st.markdown("<hr style='margin:6px 0;border-top:1px solid #ffe0b2;'>", unsafe_allow_html=True)
+st.markdown("<h3 style='margin:0 0 4px 0;font-size:13px;color:#bf360c;'>Batch Evaluation</h3>", unsafe_allow_html=True)
 st.caption("Upload a Trycolors-style CSV and compute mean RMSE for the currently selected engine + optional calibrator + optional NN residual.")
 
 eval_csv = st.file_uploader("Evaluation CSV", type=["csv"], key="eval_csv")
@@ -2952,14 +3190,8 @@ if run_eval:
 
 
 # ---------------- Forward mode: interactive mix ----------------
-st.markdown("---")
-st.header("Forward mix (N colors)")
-
-st.write(
-    "Use this section to **test the forward mixer directly**: you provide base colors and weights, and the app "
-    "computes the mixed result. This is the quickest way to diagnose whether a mismatch is due to "
-    "**(A) the forward model** or **(B) the inverse search constraints**."
-)
+st.markdown("<hr style='margin:6px 0;border-top:1px solid #ffe0b2;'>", unsafe_allow_html=True)
+st.markdown("<h3 style='margin:0 0 4px 0;font-size:14px;color:#e65100;'>Forward Mix</h3>", unsafe_allow_html=True)
 
 
 # Quick reset (clears Streamlit widget state for this section)

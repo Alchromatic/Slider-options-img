@@ -2007,6 +2007,25 @@ canvas.picking { cursor: crosshair; }
     </div>
 </div>
 
+<!-- ====================== 10. FORWARD MIX ENGINE (Embedded Streamlit v3) ======================== -->
+<div class="section" style="background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); padding: 20px; border-radius: 8px; border: 2px solid #ff9800;">
+    <h3 style="color: #e65100; margin-top: 0;">Forward Mix Engine</h3>
+    <div class="info" style="margin-bottom: 10px;">Advanced color mixing with calibration and inverse recipe search.</div>
+    <div style="position: relative; width: 100%; height: 600px; border-radius: 4px; overflow: hidden; border: 1px solid #ffcc80; background: #fffaf5;">
+        <iframe
+            id="forwardMixIframe"
+            src="https://slider-options-img-production-v2.up.railway.app/"
+            style="width: 100%; height: 100%; border: none; background: #fffaf5;"
+            loading="lazy"
+            allow="clipboard-read; clipboard-write"
+        ></iframe>
+        <div id="forwardMixLoader" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;">
+            <div style="width: 30px; height: 30px; border: 3px solid #ff9800; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            <span style="color: #e65100; font-size: 12px;">Loading Forward Mix Engine...</span>
+        </div>
+    </div>
+</div>
+
 <div class="section slider-container">
     <!-- Progressive Render Slider -->
     <div class="rendering-slider-container">
@@ -2293,6 +2312,11 @@ document.querySelectorAll('.main-tab-btn').forEach(btn => {
             content.classList.remove('active');
         });
         document.getElementById(tabId).classList.add('active');
+
+        // Lazy-load forward mix iframe when Adjust tab is opened
+        if (tabId === 'tab-adjust' && typeof loadForwardMixIframe === 'function') {
+            loadForwardMixIframe();
+        }
     });
 });
 
@@ -2309,6 +2333,26 @@ if (trycolorsIframe && trycolorsLoader) {
 document.getElementById('openTrycolorsNewTab')?.addEventListener('click', () => {
     window.open(TRYCOLORS_LAB_URL, '_blank');
 });
+
+/* ==========================================================
+   FORWARD MIX ENGINE (Embedded Streamlit v3 iframe)
+========================================================== */
+const FORWARD_MIX_URL = "https://slider-options-img-production-v2.up.railway.app";
+const forwardMixIframe = document.getElementById('forwardMixIframe');
+const forwardMixLoader = document.getElementById('forwardMixLoader');
+
+// Lazy-load: only set src when Adjust tab is opened
+function loadForwardMixIframe() {
+    if (forwardMixIframe && !forwardMixIframe.src) {
+        forwardMixIframe.src = FORWARD_MIX_URL;
+    }
+}
+
+if (forwardMixIframe && forwardMixLoader) {
+    forwardMixIframe.addEventListener('load', () => {
+        forwardMixLoader.style.display = 'none';
+    });
+}
 
 /* ==========================================================
    RENDERING LOGIC ICONS FUNCTIONALITY

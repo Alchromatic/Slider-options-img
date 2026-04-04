@@ -231,6 +231,25 @@ class UnmixResponse(BaseModel):
     grid_max_dots: Optional[int] = 0  # Max dots to fill (0=fill all cells)
 
 
+# ---------- Forward Mix ----------
+
+class ForwardMixColor(BaseModel):
+    hex: str
+    weight: float  # Relative weight (parts, percent, or arbitrary)
+
+class ForwardMixRequest(BaseModel):
+    colors: List[ForwardMixColor]  # 2-8 colors with weights
+    method: Optional[str] = "kubelka_munk"  # kubelka_munk, yn_km, linear, hybrid
+    hybrid_t: Optional[float] = 0.28  # Blend factor for hybrid (0=KM, 1=Linear)
+    yn_n: Optional[float] = 1.5  # Yule-Nielsen n parameter
+
+class ForwardMixResponse(BaseModel):
+    result_color: str  # Mixed hex color
+    input_colors: List[ForwardMixColor]  # Echo back normalized inputs
+    method_used: str
+    error: Optional[str] = None
+
+
 # --------- Color Utilities -------------
 
 def clamp01(x: float) -> float:
@@ -762,6 +781,61 @@ def color_match(req: ColorMatchRequest):
         has_matches=True,
         error=None
     )
+
+
+@app.post("/forward-mix", response_model=ForwardMixResponse, tags=["10. Forward Mix"])
+def forward_mix(req: ForwardMixRequest):
+    """
+    Mix N colors with given weights and return the resulting color.
+
+    **Methods:** `kubelka_munk`, `yn_km`, `linear`, `hybrid`
+    - `hybrid` blends KM and Linear in linear RGB: result = (1-t)*KM + t*Linear
+    """
+    if not req.colors or len(req.colors) < 2:
+        return ForwardMixResponse(
+            result_color="#000000", input_colors=req.colors or [],
+            method_used="none", error="Need at least 2 colors"
+        )
+
+    method = (req.method or "kubelka_munk").lower().strip()
+    hybrid_t = max(0.0, min(1.0, req.hybrid_t if req.hybrid_t is not None else 0.28))
+    yn_n = max(0.0, min(10.0, req.yn_n if req.yn_n is not None else 1.5))
+
+    try:
+        hex_colors = [normalize_hex(c.hex) for c in req.colors]
+        weights = [c.weight for c in req.colors]
+
+        if method == "hybrid":
+            km_hex = mix_colors_hex(hex_colors, weights, method="kubelka_munk")
+            lin_hex = mix_colors_hex(hex_colors, weights, method="linear")
+            km_rgb = hex_to_linear_rgb(km_hex)
+            lin_rgb = hex_to_linear_rgb(lin_hex)
+            blended = tuple(
+                clamp01((1 - hybrid_t) * km_rgb[i] + hybrid_t * lin_rgb[i])
+                for i in range(3)
+            )
+            result_hex = linear_rgb_to_hex(blended)
+            method_used = f"hybrid(t={hybrid_t})"
+        elif method == "yn_km":
+            result_hex = mix_colors_hex(hex_colors, weights, method="yn_km", yn_n=yn_n)
+            method_used = f"yn_km(n={yn_n})"
+        elif method == "linear":
+            result_hex = mix_colors_hex(hex_colors, weights, method="linear")
+            method_used = "linear"
+        else:
+            result_hex = mix_colors_hex(hex_colors, weights, method="kubelka_munk")
+            method_used = "kubelka_munk"
+
+        return ForwardMixResponse(
+            result_color=result_hex,
+            input_colors=req.colors,
+            method_used=method_used,
+        )
+    except Exception as e:
+        return ForwardMixResponse(
+            result_color="#000000", input_colors=req.colors,
+            method_used=method, error=str(e)
+        )
 
 
 @app.post("/unmix", response_model=UnmixResponse, tags=["8. Palette mixing - Premium"])
