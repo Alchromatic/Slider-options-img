@@ -5095,8 +5095,8 @@ function buildMixTreemap(recipe) {
     return `<div class="mix-treemap-wrap"><div class="mix-treemap-label">Mix Proportions — Treemap</div><div class="mix-treemap-container">${svg}</div></div>`;
 }
 
-// Build concentric circles visualization — 3x2 grid, edges touching, max 6 circles.
-// Each color gets a 100% reference circle with filled circle inside.
+// Build concentric circles visualization — single diagram, all colors stacked
+// as concentric rings that together add up to 100% (area-proportional).
 function buildMixConcentricClock(recipe) {
     if (!recipe || recipe.length === 0) return '';
 
@@ -5109,18 +5109,10 @@ function buildMixConcentricClock(recipe) {
 
     if (items.length === 0) return '';
 
-    // Sort descending so largest is first, cap at 6
+    // Sort descending so largest color forms the outermost ring
     items.sort((a, b) => b.percentage - a.percentage);
-    if (items.length > 6) items.length = 6;
 
-    const maxR = 80; // radius for the 100% reference circle
-    const cols = Math.min(items.length, 3);
-    const rows = Math.ceil(items.length / 3);
-    const topPad = 20;
-    const labelH = 30; // space below each row for labels
-    const rightMargin = 42;
-    const diameter = maxR * 2;
-    const rowH = topPad + diameter + labelH;
+    const total = items.reduce((s, it) => s + it.percentage, 0) || 100;
 
     function textColor(hex) {
         const c = hex.replace('#', '');
@@ -5130,77 +5122,70 @@ function buildMixConcentricClock(recipe) {
         return (r * 0.299 + g * 0.587 + b * 0.114) > 150 ? '#222' : '#fff';
     }
 
-    // SVG dimensions: circles touch edge-to-edge (no gap)
-    const svgW = cols * diameter + rightMargin;
-    const svgH = rows * rowH;
-
-    const guides = [
-        { pct: 10,  style: 'dashed' },
-        { pct: 50,  style: 'solid' },
-        { pct: 100, style: 'solid' }
-    ];
+    const maxR = 140;
+    const pad = 24;
+    const legendW = 180;
+    const svgW = maxR * 2 + pad * 2 + legendW;
+    const svgH = maxR * 2 + pad * 2;
+    const cx = pad + maxR;
+    const cy = pad + maxR;
 
     let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${svgW}" height="${svgH}" viewBox="0 0 ${svgW} ${svgH}" style="font-family: Arial, sans-serif;">`;
 
-    // Draw each color group in a 3-column grid
-    items.forEach((item, idx) => {
-        const col = idx % 3;
-        const row = Math.floor(idx / 3);
-        const cx = col * diameter + maxR; // edges touch: no spacing
-        const bottomY = row * rowH + topPad + diameter;
-
-        // Multiple concentric reference outlines (100%, 80%, 60%, 40%, 20%, 10%)
-        const refLevels = [100, 80, 60, 40, 20, 10];
-        refLevels.forEach(pct => {
-            const r = maxR * (pct / 100);
-            const cy = bottomY - r;
-            const isOuter = (pct === 100);
-            svg += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(1)}" fill="none" stroke="#333" stroke-width="${isOuter ? 1.8 : 1}" ${isOuter ? '' : 'stroke-dasharray="5,4"'} opacity="${isOuter ? 0.7 : 0.25}"/>`;
-        });
-
-        // Filled circle for actual percentage
-        const filledR = maxR * (item.percentage / 100);
-        const cyFilled = bottomY - filledR;
-        const tc = textColor(item.hex);
-        const pct = item.percentage.toFixed(1) + '%';
-        const label = item.name.length > 12 ? item.name.substring(0, 10) + '…' : item.name;
-
-        svg += `<circle cx="${cx.toFixed(1)}" cy="${cyFilled.toFixed(1)}" r="${filledR.toFixed(1)}" fill="${item.hex}" stroke="#222" stroke-width="1.5"/>`;
-
-        // Label inside filled circle
-        if (filledR > 22) {
-            const fontSize = Math.min(12, Math.max(8, filledR / 3.5));
-            svg += `<text x="${cx.toFixed(1)}" y="${(cyFilled - fontSize * 0.2).toFixed(1)}" text-anchor="middle" fill="${tc}" font-size="${fontSize.toFixed(1)}px" font-weight="600">${label}</text>`;
-            svg += `<text x="${cx.toFixed(1)}" y="${(cyFilled + fontSize * 0.95).toFixed(1)}" text-anchor="middle" fill="${tc}" font-size="${(fontSize * 0.85).toFixed(1)}px" opacity="0.85">${pct}</text>`;
-        } else if (filledR > 10) {
-            const fontSize = Math.max(7, filledR / 2.5);
-            svg += `<text x="${cx.toFixed(1)}" y="${(cyFilled + fontSize * 0.35).toFixed(1)}" text-anchor="middle" fill="${tc}" font-size="${fontSize.toFixed(1)}px">${pct}</text>`;
-        }
-
-        // Color name + hex below the baseline
-        svg += `<text x="${cx.toFixed(1)}" y="${(bottomY + 13).toFixed(1)}" text-anchor="middle" fill="#444" font-size="10px" font-weight="600">${label}</text>`;
-        svg += `<text x="${cx.toFixed(1)}" y="${(bottomY + 24).toFixed(1)}" text-anchor="middle" fill="#888" font-size="9px">${item.hex} · ${pct}</text>`;
-
-        svg += `<title>${item.name}\n${item.hex}\n${pct}${item.parts !== undefined ? '\n' + item.parts + ' parts' : ''}</title>`;
+    // Compute cumulative outer radii (area-proportional: r = maxR * sqrt(cum/total))
+    let cum = 0;
+    const rings = items.map(it => {
+        cum += it.percentage;
+        return { ...it, outerR: maxR * Math.sqrt(cum / total) };
     });
 
-    // Draw horizontal guide lines per row, spanning full width
-    for (let row = 0; row < rows; row++) {
-        const bottomY = row * rowH + topPad + diameter;
-        guides.forEach(g => {
-            const lineY = bottomY - (g.pct / 100) * diameter;
-            const isDashed = g.style === 'dashed';
-            svg += `<line x1="0" y1="${lineY.toFixed(1)}" x2="${svgW}" y2="${lineY.toFixed(1)}" stroke="#1a5fa8" stroke-width="${isDashed ? 1.2 : 2}" ${isDashed ? 'stroke-dasharray="6,4"' : ''} opacity="0.8"/>`;
-            // Percentage label on the right
-            svg += `<text x="${(svgW - 4).toFixed(1)}" y="${(lineY + 4).toFixed(1)}" text-anchor="end" fill="#1a5fa8" font-size="11px" font-weight="700">${g.pct}%</text>`;
-        });
-        // Bottom baseline
-        svg += `<line x1="0" y1="${bottomY}" x2="${svgW}" y2="${bottomY}" stroke="#1a5fa8" stroke-width="2" opacity="0.5"/>`;
+    // Draw from outermost inward so inner discs overlay and each color shows as a ring
+    for (let i = rings.length - 1; i >= 0; i--) {
+        const r = rings[i];
+        svg += `<circle cx="${cx}" cy="${cy}" r="${r.outerR.toFixed(2)}" fill="${r.hex}" stroke="#222" stroke-width="1"/>`;
+        svg += `<title>${r.name}\n${r.hex}\n${r.percentage.toFixed(1)}%${r.parts !== undefined ? '\n' + r.parts + ' parts' : ''}</title>`;
     }
+
+    // Ring labels (percentage) placed along the vertical midline inside each ring
+    let prevR = 0;
+    rings.forEach(r => {
+        const bandMidR = (prevR + r.outerR) / 2;
+        const isInnermost = prevR === 0;
+        const labelY = isInnermost ? cy : cy - bandMidR;
+        const tc = textColor(r.hex);
+        const pct = r.percentage.toFixed(1) + '%';
+        const bandThickness = r.outerR - prevR;
+        const fontSize = Math.max(9, Math.min(13, bandThickness * 0.55));
+        if (bandThickness > 10) {
+            svg += `<text x="${cx}" y="${(labelY + fontSize * 0.35).toFixed(1)}" text-anchor="middle" fill="${tc}" font-size="${fontSize.toFixed(1)}px" font-weight="700">${pct}</text>`;
+        }
+        prevR = r.outerR;
+    });
+
+    // Reference outlines at 25%, 50%, 75%, 100% of area
+    [25, 50, 75, 100].forEach(pct => {
+        const r = maxR * Math.sqrt(pct / 100);
+        const isOuter = (pct === 100);
+        svg += `<circle cx="${cx}" cy="${cy}" r="${r.toFixed(2)}" fill="none" stroke="#1a5fa8" stroke-width="${isOuter ? 1.8 : 1}" ${isOuter ? '' : 'stroke-dasharray="4,4"'} opacity="${isOuter ? 0.9 : 0.5}"/>`;
+        svg += `<text x="${cx}" y="${(cy - r - 3).toFixed(1)}" text-anchor="middle" fill="#1a5fa8" font-size="10px" font-weight="700">${pct}%</text>`;
+    });
+
+    // Legend on the right
+    const legendX = pad * 2 + maxR * 2;
+    let ly = pad + 8;
+    svg += `<text x="${legendX}" y="${ly}" fill="#444" font-size="11px" font-weight="700">Legend</text>`;
+    ly += 14;
+    rings.forEach(r => {
+        svg += `<rect x="${legendX}" y="${ly - 9}" width="12" height="12" fill="${r.hex}" stroke="#222" stroke-width="0.8"/>`;
+        const label = r.name.length > 16 ? r.name.substring(0, 14) + '…' : r.name;
+        svg += `<text x="${legendX + 18}" y="${ly}" fill="#222" font-size="10px" font-weight="600">${label}</text>`;
+        svg += `<text x="${legendX + 18}" y="${ly + 11}" fill="#666" font-size="9px">${r.hex} · ${r.percentage.toFixed(1)}%</text>`;
+        ly += 26;
+    });
 
     svg += `</svg>`;
 
-    return `<div class="mix-concentric-wrap"><div class="mix-concentric-label">Mix Proportions — Concentric Circles</div><div class="mix-concentric-container">${svg}</div></div>`;
+    return `<div class="mix-concentric-wrap"><div class="mix-concentric-label">Mix Proportions — Concentric Circles (adds up to 100%)</div><div class="mix-concentric-container">${svg}</div></div>`;
 }
 
 
