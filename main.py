@@ -157,6 +157,8 @@ class OrderRequest(BaseModel):
     logic: Logic
     limit: Optional[int] = None
     color_order: Optional[List[List[int]]] = None
+    canvas_width: Optional[int] = None
+    canvas_height: Optional[int] = None
 
 
 class SelectiveResolutionRequest(BaseModel):
@@ -168,6 +170,8 @@ class SelectiveResolutionRequest(BaseModel):
 class OrderResponse(BaseModel):
     shapes: List[ShapeModel]
     total_shapes: int
+    canvas_width: Optional[int] = None
+    canvas_height: Optional[int] = None
 
 # ---------- Color matching ----------
 
@@ -1240,6 +1244,42 @@ def get_canvas_size(shapes: List[ShapeModel]) -> CanvasSize:
     return CanvasSize(width=max_x or 1.0, height=max_y or 1.0)
 
 
+def rescale_shapes_to_canvas(shapes: List[ShapeModel], target_w: int, target_h: int) -> List[ShapeModel]:
+    current = get_canvas_size(shapes)
+    if current.width <= 0 or current.height <= 0:
+        return shapes
+    sx = target_w / current.width
+    sy = target_h / current.height
+    if abs(sx - 1.0) < 1e-6 and abs(sy - 1.0) < 1e-6:
+        return shapes
+
+    result = []
+    for s in shapes:
+        d = list(s.data)
+        if s.type == 0:
+            d = [0, 0, target_w, target_h]
+        elif s.type == 1 and len(d) >= 5:
+            d = [d[0]*sx, d[1]*sy, d[2]*sx, d[3]*sy, d[4]]
+        elif s.type == 2 and len(d) >= 6:
+            d = [d[0]*sx, d[1]*sy, d[2]*sx, d[3]*sy, d[4]*sx, d[5]*sy]
+        elif s.type == 3 and len(d) >= 4:
+            d = [d[0]*sx, d[1]*sy, d[2]*sx, d[3]*sy]
+        elif s.type == 4 and len(d) >= 5:
+            d = [d[0]*sx, d[1]*sy, d[2]*sx, d[3]*sy, d[4]]
+        elif s.type == 5 and len(d) >= 3:
+            d = [d[0]*sx, d[1]*sy, d[2]*min(sx, sy)]
+        elif s.type == 6 and len(d) >= 4:
+            d = [d[0]*sx, d[1]*sy, d[2]*sx, d[3]*sy]
+        elif s.type == 7 and len(d) >= 6:
+            d = [d[0]*sx, d[1]*sy, d[2]*sx, d[3]*sy, d[4]*sx, d[5]*sy]
+        else:
+            for i in range(0, len(d) - 1, 2):
+                d[i] *= sx
+                d[i+1] *= sy
+        result.append(ShapeModel(type=s.type, data=d, color=s.color, score=s.score))
+    return result
+
+
 def shape_center(shape: ShapeModel, canvas: CanvasSize) -> Tuple[float, float]:
     if shape.type == 0 and len(shape.data) >= 4:  # Background rectangle
         x1, y1, x2, y2 = shape.data[:4]
@@ -1473,9 +1513,45 @@ def order_shapes_from_json(req: OrderRequest):
     Background shapes (type=0) are always placed first.
     """
 
-    ordered = order_shapes(req.shapes, req.logic, req.color_order)
+    shapes = req.shapes
+    if req.canvas_width and req.canvas_height:
+        shapes = rescale_shapes_to_canvas(shapes, req.canvas_width, req.canvas_height)
+
+    ordered = order_shapes(shapes, req.logic, req.color_order)
     sliced = apply_limit(ordered, req.limit)
-    return OrderResponse(shapes=sliced, total_shapes=len(ordered))
+    return OrderResponse(
+        shapes=sliced,
+        total_shapes=len(ordered),
+        canvas_width=req.canvas_width,
+        canvas_height=req.canvas_height,
+    )
+
+
+class ResizeCanvasRequest(BaseModel):
+    shapes: List[ShapeModel]
+    canvas_width: int
+    canvas_height: int
+
+
+@app.post("/resize_canvas", response_model=OrderResponse, tags=["3. Order Shapes From Json"])
+def resize_canvas(req: ResizeCanvasRequest):
+    """
+    Rescale all shapes to fit a target canvas size.
+
+    Reads the current canvas dimensions from the background shape (type=0),
+    then scales all shape coordinates proportionally to fill the new
+    `canvas_width` x `canvas_height`.
+    """
+    if req.canvas_width < 1 or req.canvas_height < 1:
+        raise HTTPException(status_code=400, detail="canvas_width and canvas_height must be >= 1")
+
+    scaled = rescale_shapes_to_canvas(req.shapes, req.canvas_width, req.canvas_height)
+    return OrderResponse(
+        shapes=scaled,
+        total_shapes=len(scaled),
+        canvas_width=req.canvas_width,
+        canvas_height=req.canvas_height,
+    )
 
 
 @app.post("/selective_resolution", response_model=OrderResponse, tags=["5. Refining"])

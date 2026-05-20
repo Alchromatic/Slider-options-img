@@ -28,7 +28,7 @@ body { font-family: Arial, sans-serif; max-width: 900px; margin: 20px auto; padd
 /* Concentric Clock */
 .mix-concentric-wrap { margin: 12px 0; text-align: center; }
 .mix-concentric-label { font-size: 11px; color: #888; margin-bottom: 6px; }
-.mix-concentric-container { display: inline-block; background: #f8f8f0; border-radius: 10px; border: 1px solid #e0ddd4; box-shadow: 0 1px 4px rgba(0,0,0,0.08); padding: 12px; }
+.mix-concentric-container { display: inline-block; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 10px; border: 1px solid #0f3460; box-shadow: 0 1px 4px rgba(0,0,0,0.08); padding: 12px; }
 .mix-concentric-container svg { display: block; }
 .section { margin: 20px 0; }
 h3 { margin: 10px 0; font-size: 16px; }
@@ -1596,6 +1596,39 @@ canvas.picking { cursor: crosshair; }
             <label style="font-weight: bold; font-size: 12px; color: #666;">Number of Shapes:</label>
             <input type="number" id="geometrizeShapeCount" value="200" min="10" max="2000" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;">
         </div>
+    </div>
+
+    <!-- Canvas Size & Aspect Ratio -->
+    <div style="background: #f0f4f8; border: 1px solid #d0d7de; border-radius: 6px; padding: 12px; margin: 0 0 15px 0;">
+        <h4 style="margin: 0 0 10px 0; font-size: 13px; color: #495057;">Canvas Size</h4>
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <div>
+                <label style="font-size: 11px; color: #666; font-weight: 600;">Width</label>
+                <input type="number" id="canvasWidthInput" value="800" min="100" max="4000" step="1" style="width: 80px; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-family: monospace; font-size: 12px;">
+            </div>
+            <span style="color: #999; font-size: 14px; margin-top: 14px;">&times;</span>
+            <div>
+                <label style="font-size: 11px; color: #666; font-weight: 600;">Height</label>
+                <input type="number" id="canvasHeightInput" value="450" min="100" max="4000" step="1" style="width: 80px; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-family: monospace; font-size: 12px;">
+            </div>
+            <div style="margin-left: 8px;">
+                <label style="font-size: 11px; color: #666; font-weight: 600;">Aspect Ratio</label>
+                <select id="aspectRatioSelect" style="padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; cursor: pointer;">
+                    <option value="free">Free</option>
+                    <option value="1:1">1:1 (Square)</option>
+                    <option value="4:3">4:3 (Landscape)</option>
+                    <option value="3:4">3:4 (Portrait)</option>
+                    <option value="16:9" selected>16:9 (Widescreen)</option>
+                    <option value="9:16">9:16 (Tall)</option>
+                    <option value="3:2">3:2</option>
+                    <option value="2:3">2:3</option>
+                </select>
+            </div>
+            <button id="autoCalibrateBtn" style="margin-top: 14px; padding: 6px 14px; background: #7c4dff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600;">
+                Auto Calibrate
+            </button>
+        </div>
+        <div id="calibrateInfo" style="font-size: 11px; color: #888; margin-top: 6px;"></div>
     </div>
     
     <!-- Advanced Settings Panel -->
@@ -3372,33 +3405,63 @@ geometrizeBtn.addEventListener("click", async () => {
         geometrizeBtn.disabled = false;
         stopGeometrizeBtn.style.display = "none";
         
+        // Rescale shapes to the user's chosen canvas size
+        const canvasSize = window.getChosenCanvasSize ? window.getChosenCanvasSize() : { width: originalWidth, height: originalHeight };
+        const targetW = canvasSize.width;
+        const targetH = canvasSize.height;
+
+        if (targetW !== originalWidth || targetH !== originalHeight) {
+            const sx = targetW / originalWidth;
+            const sy = targetH / originalHeight;
+            generatedShapes = generatedShapes.map(s => {
+                let d = s.data.slice();
+                switch (s.type) {
+                    case 0: d = [0, 0, targetW, targetH]; break;
+                    case 1: d = [d[0]*sx, d[1]*sy, d[2]*sx, d[3]*sy, d[4]]; break;
+                    case 2: d = [d[0]*sx, d[1]*sy, d[2]*sx, d[3]*sy, d[4]*sx, d[5]*sy]; break;
+                    case 3: d = [d[0]*sx, d[1]*sy, d[2]*sx, d[3]*sy]; break;
+                    case 4: d = [d[0]*sx, d[1]*sy, d[2]*sx, d[3]*sy, d[4]]; break;
+                    case 5: d = [d[0]*sx, d[1]*sy, d[2]*Math.min(sx,sy)]; break;
+                    case 6: d = [d[0]*sx, d[1]*sy, d[2]*sx, d[3]*sy]; break;
+                    case 7: d = [d[0]*sx, d[1]*sy, d[2]*sx, d[3]*sy, d[4]*sx, d[5]*sy]; break;
+                    default:
+                        for (let i = 0; i < d.length - 1; i += 2) { d[i] *= sx; d[i+1] *= sy; }
+                }
+                return { type: s.type, data: d, color: s.color, score: s.score };
+            });
+        }
+
         // Auto-load generated shapes
         if (target === "base") {
             baseShapes = [...generatedShapes];
             currentShapes = [...baseShapes];
             groupedShapes = [...currentShapes];
-            
+
             window.sourceWidth = null;
             window.sourceHeight = null;
-            
+
+            // Set canvas to chosen size
+            canvas.width = targetW;
+            canvas.height = targetH;
+
             baseFileStatus.textContent = `✓ Loaded ${generatedShapes.length} shapes`;
             downloadJsonBtn.disabled = false;
-            
+
             updateRender();
-            
+
             // Enable color picker and show panel when shapes are generated
             isPickingColor = true;
             colorPickerBtn.classList.add("active");
             colorPickerBtn.textContent = "Disable Color Picker";
             canvas.classList.add("picking");
             colorPickerPanel.classList.add("active");
-            
-            geometrizeStatus.textContent = `✓ Generated ${generatedShapes.length} shapes as Base (${originalWidth}x${originalHeight})`;
+
+            geometrizeStatus.textContent = `✓ Generated ${generatedShapes.length} shapes (${targetW}×${targetH})`;
         } else {
             detailShapes = [...generatedShapes];
             detailFileStatus.textContent = `✓ Loaded ${generatedShapes.length} shapes`;
-            
-            geometrizeStatus.textContent = `✓ Generated ${generatedShapes.length} shapes as Detail (${originalWidth}x${originalHeight})`;
+
+            geometrizeStatus.textContent = `✓ Generated ${generatedShapes.length} shapes as Detail (${targetW}×${targetH})`;
         }
         downloadJsonBtn.disabled = false;
         
@@ -3523,10 +3586,19 @@ baseFileInput.addEventListener("change", async e => {
 
     currentShapes = [...baseShapes];
     groupedShapes = [...currentShapes];
-    
+
     // Clear stored dimensions so getImageRect uses background shape
     window.sourceWidth = null;
     window.sourceHeight = null;
+
+    // Auto-size canvas to match the background shape dimensions
+    const bg = baseShapes.find(s => s.type === 0);
+    if (bg && bg.data.length >= 4) {
+        const bgW = Math.abs(bg.data[2] - bg.data[0]) || bg.data[2] || 600;
+        const bgH = Math.abs(bg.data[3] - bg.data[1]) || bg.data[3] || 600;
+        canvas.width = bgW;
+        canvas.height = bgH;
+    }
 
     baseFileStatus.textContent = `Loaded (${baseShapes.length} shapes)`;
     downloadJsonBtn.disabled = false;
@@ -4418,7 +4490,7 @@ bakeOpaqueBtn.addEventListener("click", async () => {
     form.append(
         "request",
         new Blob(
-            [JSON.stringify({ shapes: currentShapes, logic: "original", limit: null })],
+            [JSON.stringify({ shapes: currentShapes, logic: "original", limit: null, canvas_width: canvas.width, canvas_height: canvas.height })],
             { type: "application/json" }
         )
     );
@@ -5095,8 +5167,10 @@ function buildMixTreemap(recipe) {
     return `<div class="mix-treemap-wrap"><div class="mix-treemap-label">Mix Proportions — Treemap</div><div class="mix-treemap-container">${svg}</div></div>`;
 }
 
-// Build concentric circles visualization — single diagram, all colors stacked
-// as concentric rings that together add up to 100% (area-proportional).
+// Build concentric circles visualization — single diagram. Each color is drawn
+// as a FULL CIRCLE (not a ring) sized by its percentage. The largest color is
+// bottom-tangent to the 100% reference; smaller colors are top-tangent so they
+// don't get hidden behind larger ones. All circles share the same 100% outline.
 function buildMixConcentricClock(recipe) {
     if (!recipe || recipe.length === 0) return '';
 
@@ -5109,10 +5183,8 @@ function buildMixConcentricClock(recipe) {
 
     if (items.length === 0) return '';
 
-    // Sort descending so largest color forms the outermost ring
+    // Sort descending (largest first)
     items.sort((a, b) => b.percentage - a.percentage);
-
-    const total = items.reduce((s, it) => s + it.percentage, 0) || 100;
 
     function textColor(hex) {
         const c = hex.replace('#', '');
@@ -5122,65 +5194,94 @@ function buildMixConcentricClock(recipe) {
         return (r * 0.299 + g * 0.587 + b * 0.114) > 150 ? '#222' : '#fff';
     }
 
-    const maxR = 140;
-    const pad = 24;
-    const legendW = 180;
-    const svgW = maxR * 2 + pad * 2 + legendW;
-    const svgH = maxR * 2 + pad * 2;
+    const maxR = 150;               // radius of the 100% reference
+    const diameter = maxR * 2;
+    const pad = 28;
+    const rightGuideW = 56;          // room on right for guide-line % labels
+    // Legend goes underneath
+    const legendCols = Math.min(items.length, 3);
+    const legendRows = Math.ceil(items.length / legendCols);
+    const legendRowH = 30;
+    const legendH = 24 + legendRows * legendRowH;
+    const diagramW = diameter + pad * 2 + rightGuideW;
+    const svgW = diagramW;
+    const svgH = diameter + pad * 2 + legendH;
     const cx = pad + maxR;
-    const cy = pad + maxR;
+    const topY = pad;
+    const bottomY = pad + diameter;
+
+    // On-dark palette
+    const lineColor = '#ffffff';
+    const refStroke = '#cfe0f5';
+    const labelColor = '#ffffff';
+    const subLabelColor = '#cfe0f5';
 
     let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${svgW}" height="${svgH}" viewBox="0 0 ${svgW} ${svgH}" style="font-family: Arial, sans-serif;">`;
 
-    // Compute cumulative outer radii (area-proportional: r = maxR * sqrt(cum/total))
-    let cum = 0;
-    const rings = items.map(it => {
-        cum += it.percentage;
-        return { ...it, outerR: maxR * Math.sqrt(cum / total) };
-    });
-
-    // Draw from outermost inward so inner discs overlay and each color shows as a ring
-    for (let i = rings.length - 1; i >= 0; i--) {
-        const r = rings[i];
-        svg += `<circle cx="${cx}" cy="${cy}" r="${r.outerR.toFixed(2)}" fill="${r.hex}" stroke="#222" stroke-width="1"/>`;
-        svg += `<title>${r.name}\n${r.hex}\n${r.percentage.toFixed(1)}%${r.parts !== undefined ? '\n' + r.parts + ' parts' : ''}</title>`;
-    }
-
-    // Ring labels (percentage) placed along the vertical midline inside each ring
-    let prevR = 0;
-    rings.forEach(r => {
-        const bandMidR = (prevR + r.outerR) / 2;
-        const isInnermost = prevR === 0;
-        const labelY = isInnermost ? cy : cy - bandMidR;
-        const tc = textColor(r.hex);
-        const pct = r.percentage.toFixed(1) + '%';
-        const bandThickness = r.outerR - prevR;
-        const fontSize = Math.max(9, Math.min(13, bandThickness * 0.55));
-        if (bandThickness > 10) {
-            svg += `<text x="${cx}" y="${(labelY + fontSize * 0.35).toFixed(1)}" text-anchor="middle" fill="${tc}" font-size="${fontSize.toFixed(1)}px" font-weight="700">${pct}</text>`;
-        }
-        prevR = r.outerR;
-    });
-
-    // Reference outlines at 25%, 50%, 75%, 100% of area
-    [25, 50, 75, 100].forEach(pct => {
-        const r = maxR * Math.sqrt(pct / 100);
+    // Concentric reference outlines (100%, 80%, 60%, 40%, 20%, 10%) — bottom-tangent
+    const refLevels = [100, 80, 60, 40, 20, 10];
+    refLevels.forEach(pct => {
+        const r = maxR * (pct / 100);
+        const rcy = bottomY - r;
         const isOuter = (pct === 100);
-        svg += `<circle cx="${cx}" cy="${cy}" r="${r.toFixed(2)}" fill="none" stroke="#1a5fa8" stroke-width="${isOuter ? 1.8 : 1}" ${isOuter ? '' : 'stroke-dasharray="4,4"'} opacity="${isOuter ? 0.9 : 0.5}"/>`;
-        svg += `<text x="${cx}" y="${(cy - r - 3).toFixed(1)}" text-anchor="middle" fill="#1a5fa8" font-size="10px" font-weight="700">${pct}%</text>`;
+        svg += `<circle cx="${cx}" cy="${rcy.toFixed(1)}" r="${r.toFixed(1)}" fill="none" stroke="${refStroke}" stroke-width="${isOuter ? 1.8 : 1}" ${isOuter ? '' : 'stroke-dasharray="5,4"'} opacity="${isOuter ? 0.85 : 0.45}"/>`;
     });
 
-    // Legend on the right
-    const legendX = pad * 2 + maxR * 2;
-    let ly = pad + 8;
-    svg += `<text x="${legendX}" y="${ly}" fill="#444" font-size="11px" font-weight="700">Legend</text>`;
-    ly += 14;
-    rings.forEach(r => {
-        svg += `<rect x="${legendX}" y="${ly - 9}" width="12" height="12" fill="${r.hex}" stroke="#222" stroke-width="0.8"/>`;
-        const label = r.name.length > 16 ? r.name.substring(0, 14) + '…' : r.name;
-        svg += `<text x="${legendX + 18}" y="${ly}" fill="#222" font-size="10px" font-weight="600">${label}</text>`;
-        svg += `<text x="${legendX + 18}" y="${ly + 11}" fill="#666" font-size="9px">${r.hex} · ${r.percentage.toFixed(1)}%</text>`;
-        ly += 26;
+    // Horizontal guide lines at 10% / 50% / 100%
+    const guides = [
+        { pct: 10,  style: 'dashed' },
+        { pct: 50,  style: 'solid' },
+        { pct: 100, style: 'solid' }
+    ];
+    guides.forEach(g => {
+        const lineY = bottomY - (g.pct / 100) * diameter;
+        const isDashed = g.style === 'dashed';
+        svg += `<line x1="0" y1="${lineY.toFixed(1)}" x2="${diagramW}" y2="${lineY.toFixed(1)}" stroke="${lineColor}" stroke-width="${isDashed ? 1.2 : 2}" ${isDashed ? 'stroke-dasharray="6,4"' : ''} opacity="0.9"/>`;
+        svg += `<text x="${(diagramW - 4).toFixed(1)}" y="${(lineY + 4).toFixed(1)}" text-anchor="end" fill="${lineColor}" font-size="11px" font-weight="700">${g.pct}%</text>`;
+    });
+    // Baseline
+    svg += `<line x1="0" y1="${bottomY}" x2="${diagramW}" y2="${bottomY}" stroke="${lineColor}" stroke-width="2" opacity="0.7"/>`;
+
+    // Draw each color as a FULL filled circle sized to its percentage.
+    // Stack circles tangent vertically along the central axis so they never overlap.
+    // Largest sits at the bottom; each subsequent circle sits directly on top of the previous.
+    const total = items.reduce((s, it) => s + it.percentage, 0) || 100;
+    let stackedBottom = bottomY; // bottom y of the next circle to place
+    items.forEach((item, idx) => {
+        const r = maxR * (item.percentage / total);
+        const cyCircle = stackedBottom - r;
+        stackedBottom = stackedBottom - 2 * r; // next circle sits on top of this one
+        const tc = textColor(item.hex);
+        const pct = item.percentage.toFixed(1) + '%';
+        const label = item.name.length > 12 ? item.name.substring(0, 10) + '…' : item.name;
+
+        svg += `<circle cx="${cx}" cy="${cyCircle.toFixed(1)}" r="${r.toFixed(1)}" fill="${item.hex}" stroke="#ffffff" stroke-width="1.5"/>`;
+
+        if (r > 22) {
+            const fontSize = Math.min(13, Math.max(9, r / 3.5));
+            svg += `<text x="${cx}" y="${(cyCircle - fontSize * 0.2).toFixed(1)}" text-anchor="middle" fill="${tc}" font-size="${fontSize.toFixed(1)}px" font-weight="700">${label}</text>`;
+            svg += `<text x="${cx}" y="${(cyCircle + fontSize * 0.95).toFixed(1)}" text-anchor="middle" fill="${tc}" font-size="${(fontSize * 0.85).toFixed(1)}px" opacity="0.9">${pct}</text>`;
+        } else if (r > 10) {
+            const fontSize = Math.max(8, r / 2.5);
+            svg += `<text x="${cx}" y="${(cyCircle + fontSize * 0.35).toFixed(1)}" text-anchor="middle" fill="${tc}" font-size="${fontSize.toFixed(1)}px" font-weight="700">${pct}</text>`;
+        }
+
+        svg += `<title>${item.name}\n${item.hex}\n${pct}${item.parts !== undefined ? '\n' + item.parts + ' parts' : ''}</title>`;
+    });
+
+    // Legend underneath — grid layout, centered
+    const legendTop = pad + diameter + 18;
+    svg += `<text x="${(svgW / 2).toFixed(1)}" y="${legendTop}" text-anchor="middle" fill="${labelColor}" font-size="12px" font-weight="700">Legend</text>`;
+    const colW = svgW / legendCols;
+    items.forEach((item, idx) => {
+        const col = idx % legendCols;
+        const row = Math.floor(idx / legendCols);
+        const ex = col * colW + 14;
+        const ey = legendTop + 12 + row * legendRowH;
+        const label = item.name.length > 18 ? item.name.substring(0, 16) + '…' : item.name;
+        svg += `<rect x="${ex}" y="${ey}" width="14" height="14" fill="${item.hex}" stroke="#ffffff" stroke-width="0.8"/>`;
+        svg += `<text x="${ex + 20}" y="${(ey + 10).toFixed(1)}" fill="${labelColor}" font-size="11px" font-weight="600">${label}</text>`;
+        svg += `<text x="${ex + 20}" y="${(ey + 22).toFixed(1)}" fill="${subLabelColor}" font-size="10px">${item.hex} · ${item.percentage.toFixed(1)}%</text>`;
     });
 
     svg += `</svg>`;
@@ -5801,11 +5902,18 @@ async function updateRender() {
             shapes: working,
             logic,
             limit,
-            color_order: activeOrder
+            color_order: activeOrder,
+            canvas_width: canvas.width,
+            canvas_height: canvas.height
         })
     });
 
     const data = await res.json();
+
+    if (data.canvas_width && data.canvas_height) {
+        canvas.width = data.canvas_width;
+        canvas.height = data.canvas_height;
+    }
 
     slider.max = data.total_shapes;
     sliderLabel.textContent = `Shapes: ${limit} / ${data.total_shapes}`;
@@ -8660,6 +8768,58 @@ geometrize_shape_ShapeTypes.QUADRATIC_BEZIER = 7;
     });
     observer.observe(canvas, { attributes: true, attributeFilter: ['width', 'height'] });
 
+})();
+</script>
+
+<!-- ==================== CANVAS SIZE AUTO-CALIBRATE MODULE ==================== -->
+<script>
+(function() {
+    'use strict';
+
+    const widthInput = document.getElementById('canvasWidthInput');
+    const heightInput = document.getElementById('canvasHeightInput');
+    const ratioSelect = document.getElementById('aspectRatioSelect');
+    const calibrateBtn = document.getElementById('autoCalibrateBtn');
+    const calibrateInfo = document.getElementById('calibrateInfo');
+
+    const RATIOS = {
+        '1:1':   [1, 1],
+        '4:3':   [4, 3],
+        '3:4':   [3, 4],
+        '16:9':  [16, 9],
+        '9:16':  [9, 16],
+        '3:2':   [3, 2],
+        '2:3':   [2, 3],
+    };
+
+    function autoCalibrate() {
+        const choice = ratioSelect.value;
+        if (choice === 'free') {
+            calibrateInfo.textContent = 'Free mode — width and height are used as-is.';
+            return;
+        }
+        const [rw, rh] = RATIOS[choice];
+        const w = parseInt(widthInput.value) || 800;
+
+        const newH = Math.round(w * rh / rw);
+        heightInput.value = Math.max(100, Math.min(4000, newH));
+        calibrateInfo.textContent = `Calibrated to ${choice}: ${widthInput.value} × ${heightInput.value}`;
+    }
+
+    calibrateBtn.addEventListener('click', autoCalibrate);
+
+    ratioSelect.addEventListener('change', function() {
+        if (ratioSelect.value !== 'free') autoCalibrate();
+        else calibrateInfo.textContent = '';
+    });
+
+    // Expose helper to get chosen canvas size from anywhere
+    window.getChosenCanvasSize = function() {
+        return {
+            width: Math.max(100, Math.min(4000, parseInt(widthInput.value) || 800)),
+            height: Math.max(100, Math.min(4000, parseInt(heightInput.value) || 450)),
+        };
+    };
 })();
 </script>
 
