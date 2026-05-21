@@ -2040,6 +2040,52 @@ canvas.picking { cursor: crosshair; }
     </div>
 </div>
 
+<!-- ====================== 11. BALANCED COLOR ROUTER (M4) ======================== -->
+<div class="section" style="padding: 20px; border-radius: 8px; border: 2px solid #0097A7; background: linear-gradient(135deg, rgba(0, 151, 167, 0.06) 0%, rgba(0, 188, 212, 0.02) 100%);">
+    <h3 style="color: #00695C; margin-top: 0;">Balanced Color Router (M4)</h3>
+    <div class="info" style="margin-bottom: 12px;">Match and mix colours using weighted art sliders: <strong>Perceptual</strong> (visual accuracy), <strong>Pigment</strong> (paint realism), <strong>Harmony</strong> (hue-wheel proximity).</div>
+
+    <!-- Slider Preset Buttons -->
+    <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px;">
+        <button class="m4-preset-btn" data-p="90" data-m="5" data-h="5" style="padding:5px 10px; font-size:11px; border:1px solid #0097A7; border-radius:4px; background:#e0f7fa; cursor:pointer;">Accurate Match</button>
+        <button class="m4-preset-btn" data-p="30" data-m="60" data-h="10" style="padding:5px 10px; font-size:11px; border:1px solid #0097A7; border-radius:4px; background:#e0f7fa; cursor:pointer;">Paint Realism</button>
+        <button class="m4-preset-btn" data-p="25" data-m="15" data-h="60" style="padding:5px 10px; font-size:11px; border:1px solid #0097A7; border-radius:4px; background:#e0f7fa; cursor:pointer;">Harmonious</button>
+        <button class="m4-preset-btn" data-p="50" data-m="30" data-h="20" style="padding:5px 10px; font-size:11px; border:1px solid #0097A7; border-radius:4px; background:#e0f7fa; cursor:pointer; font-weight:600;">Balanced</button>
+    </div>
+
+    <!-- Sliders -->
+    <div style="display: grid; grid-template-columns: 90px 1fr 40px; gap: 6px 10px; align-items: center; margin-bottom: 14px;">
+        <label style="font-size:12px; font-weight:600; color:#00695C;">Perceptual</label>
+        <input type="range" id="m4SliderPerceptual" min="0" max="100" value="50" style="width:100%;">
+        <span id="m4ValPerceptual" style="font-size:12px; font-family:monospace; text-align:right;">50</span>
+
+        <label style="font-size:12px; font-weight:600; color:#00695C;">Pigment</label>
+        <input type="range" id="m4SliderPigment" min="0" max="100" value="30" style="width:100%;">
+        <span id="m4ValPigment" style="font-size:12px; font-family:monospace; text-align:right;">30</span>
+
+        <label style="font-size:12px; font-weight:600; color:#00695C;">Harmony</label>
+        <input type="range" id="m4SliderHarmony" min="0" max="100" value="20" style="width:100%;">
+        <span id="m4ValHarmony" style="font-size:12px; font-family:monospace; text-align:right;">20</span>
+    </div>
+
+    <!-- Target colour -->
+    <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 10px;">
+        <label style="font-size:12px; font-weight:600; color:#00695C;">Target:</label>
+        <input type="color" id="m4TargetPicker" value="#8B4513" style="width:40px; height:30px; border:none; cursor:pointer;">
+        <input type="text" id="m4TargetHex" value="#8B4513" style="width:80px; font-family:monospace; font-size:13px; padding:4px 6px; border:1px solid #ced4da; border-radius:4px;">
+        <button id="m4UsePickedBtn" style="padding:5px 10px; font-size:11px; border:1px solid #0097A7; border-radius:4px; background:#e0f7fa; cursor:pointer;" title="Use the colour currently selected in the Color Picker section above">Use Picked</button>
+    </div>
+
+    <!-- Action buttons -->
+    <div style="display: flex; gap: 8px; margin-bottom: 14px;">
+        <button id="m4MatchBtn" style="flex:1; padding:8px 16px; font-size:13px; border:none; border-radius:4px; background:#0097A7; color:white; cursor:pointer;">Match Palette</button>
+        <button id="m4MixBtn" style="flex:1; padding:8px 16px; font-size:13px; border:none; border-radius:4px; background:#00695C; color:white; cursor:pointer;">Find Recipe</button>
+    </div>
+
+    <!-- Results -->
+    <div id="m4Results" style="min-height: 40px;"></div>
+</div>
+
 <!-- ====================== 10. FORWARD MIX ENGINE (Embedded Streamlit v3) ======================== -->
 <div class="section" style="background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); padding: 20px; border-radius: 8px; border: 2px solid #ff9800;">
     <h3 style="color: #e65100; margin-top: 0;">Forward Mix Engine</h3>
@@ -8820,6 +8866,242 @@ geometrize_shape_ShapeTypes.QUADRATIC_BEZIER = 7;
             height: Math.max(100, Math.min(4000, parseInt(heightInput.value) || 450)),
         };
     };
+})();
+</script>
+
+<!-- ====================== M4 BALANCED ROUTER JS ======================== -->
+<script>
+(function() {
+    const sliderP = document.getElementById('m4SliderPerceptual');
+    const sliderM = document.getElementById('m4SliderPigment');
+    const sliderH = document.getElementById('m4SliderHarmony');
+    const valP = document.getElementById('m4ValPerceptual');
+    const valM = document.getElementById('m4ValPigment');
+    const valH = document.getElementById('m4ValHarmony');
+    const targetPicker = document.getElementById('m4TargetPicker');
+    const targetHex = document.getElementById('m4TargetHex');
+    const matchBtn = document.getElementById('m4MatchBtn');
+    const mixBtn = document.getElementById('m4MixBtn');
+    const usePickedBtn = document.getElementById('m4UsePickedBtn');
+    const resultsDiv = document.getElementById('m4Results');
+
+    // Sync slider labels
+    sliderP.addEventListener('input', () => valP.textContent = sliderP.value);
+    sliderM.addEventListener('input', () => valM.textContent = sliderM.value);
+    sliderH.addEventListener('input', () => valH.textContent = sliderH.value);
+
+    // Sync colour picker <-> hex input
+    targetPicker.addEventListener('input', () => targetHex.value = targetPicker.value.toUpperCase());
+    targetHex.addEventListener('change', () => {
+        let v = targetHex.value.trim();
+        if (!v.startsWith('#')) v = '#' + v;
+        targetPicker.value = v;
+        targetHex.value = v.toUpperCase();
+    });
+
+    // Preset buttons
+    document.querySelectorAll('.m4-preset-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            sliderP.value = btn.dataset.p; valP.textContent = btn.dataset.p;
+            sliderM.value = btn.dataset.m; valM.textContent = btn.dataset.m;
+            sliderH.value = btn.dataset.h; valH.textContent = btn.dataset.h;
+        });
+    });
+
+    // Use Picked: grab colour from the Color Picker section if available
+    usePickedBtn.addEventListener('click', () => {
+        const preview = document.querySelector('.color-preview-box');
+        if (preview && preview.style.backgroundColor) {
+            const rgb = preview.style.backgroundColor.match(/\d+/g);
+            if (rgb && rgb.length >= 3) {
+                const hex = '#' + rgb.slice(0,3).map(c => parseInt(c).toString(16).padStart(2,'0')).join('').toUpperCase();
+                targetPicker.value = hex;
+                targetHex.value = hex;
+                return;
+            }
+        }
+        resultsDiv.innerHTML = '<div style="color:#888; font-size:12px; padding:10px;">No colour picked yet — select a shape in the Color Picker section first.</div>';
+    });
+
+    function getSliders() {
+        return {
+            perceptual: parseInt(sliderP.value),
+            pigment: parseInt(sliderM.value),
+            harmony: parseInt(sliderH.value),
+        };
+    }
+
+    function getTarget() {
+        let v = targetHex.value.trim();
+        if (!v.startsWith('#')) v = '#' + v;
+        return v;
+    }
+
+    function getPalette() {
+        const input = document.getElementById('colorMatcherInput');
+        if (!input || !input.value.trim()) return null;
+        const lines = input.value.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+        const palette = [];
+        for (const l of lines) {
+            let h = l.replace(/[^0-9a-fA-F#]/g, '');
+            if (!h.startsWith('#')) h = '#' + h;
+            if (h.length === 4 || h.length === 7) palette.push({ hex: h });
+        }
+        return palette.length > 0 ? palette : null;
+    }
+
+    function scoreClass(v) { return v >= 70 ? 'high' : v >= 40 ? 'medium' : 'low'; }
+    function scoreColor(v) { return v >= 70 ? '#4CAF50' : v >= 40 ? '#FF9800' : '#f44336'; }
+
+    // ---------- MATCH ----------
+    matchBtn.addEventListener('click', async () => {
+        matchBtn.disabled = true;
+        matchBtn.textContent = 'Matching...';
+        resultsDiv.innerHTML = '';
+        try {
+            const body = {
+                target_color: getTarget(),
+                sliders: getSliders(),
+                max_results: 20,
+            };
+            const pal = getPalette();
+            if (pal) body.palette = pal;
+
+            const res = await fetch(`${API_BASE}/m4/match`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            const data = await res.json();
+
+            if (data.error) {
+                resultsDiv.innerHTML = `<div style="background:#ffebee; border:1px solid #ffcdd2; color:#c62828; padding:10px; border-radius:4px; font-size:12px;">${data.error}</div>`;
+                return;
+            }
+            if (!data.matches || data.matches.length === 0) {
+                resultsDiv.innerHTML = '<div style="text-align:center; padding:20px; color:#888; font-size:12px;">No matches found.</div>';
+                return;
+            }
+
+            let html = `<div style="font-size:11px; color:#888; margin-bottom:8px;">${data.matches.length} result(s) — weights: P${data.slider_weights.perceptual} / M${data.slider_weights.pigment} / H${data.slider_weights.harmony}</div>`;
+            data.matches.forEach((m, i) => {
+                const best = i === 0 ? ' style="border:2px solid #4CAF50;"' : '';
+                html += `
+                <div style="display:flex; align-items:center; gap:10px; padding:8px; background:white; border:1px solid #e0e0e0; border-radius:4px; margin-bottom:6px;"${best}>
+                    <div style="width:36px; height:36px; border-radius:4px; border:1px solid #333; flex-shrink:0; background:${m.hex};"></div>
+                    <div style="flex:1; min-width:0;">
+                        <div style="font-family:monospace; font-size:12px; font-weight:600;">${m.hex}${m.name ? ' <span style="font-weight:400; color:#888;">'+m.name+'</span>' : ''}${i === 0 ? ' <span style="background:#4CAF50; color:white; font-size:9px; padding:2px 6px; border-radius:3px; font-weight:700;">BEST</span>' : ''}</div>
+                        <div style="font-size:10px; color:#888;">dE ${m.delta_e} · Pigment ${m.pigment_score}% · Harmony ${m.harmony_score}%</div>
+                        <div style="width:100%; height:4px; background:#e0e0e0; border-radius:2px; margin-top:4px; overflow:hidden;">
+                            <div style="height:100%; width:${m.score}%; background:${scoreColor(m.score)}; border-radius:2px;"></div>
+                        </div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:18px; font-weight:bold; color:${scoreColor(m.score)};">${Math.round(m.score)}</div>
+                        <div style="font-size:9px; color:#888; text-transform:uppercase;">score</div>
+                    </div>
+                </div>`;
+            });
+            resultsDiv.innerHTML = html;
+        } catch (e) {
+            resultsDiv.innerHTML = `<div style="background:#ffebee; border:1px solid #ffcdd2; color:#c62828; padding:10px; border-radius:4px; font-size:12px;">Error: ${e.message}<br><small>Make sure the backend is running at ${API_BASE}</small></div>`;
+        } finally {
+            matchBtn.disabled = false;
+            matchBtn.textContent = 'Match Palette';
+        }
+    });
+
+    // ---------- MIX / RECIPE ----------
+    mixBtn.addEventListener('click', async () => {
+        mixBtn.disabled = true;
+        mixBtn.textContent = 'Finding recipe...';
+        resultsDiv.innerHTML = '';
+        try {
+            const body = {
+                target_color: getTarget(),
+                sliders: getSliders(),
+                max_colors: 3,
+                max_parts: 10,
+            };
+            const pal = getPalette();
+            if (pal) body.palette = pal;
+
+            const res = await fetch(`${API_BASE}/m4/mix`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            const data = await res.json();
+
+            if (data.error) {
+                resultsDiv.innerHTML = `<div style="background:#ffebee; border:1px solid #ffcdd2; color:#c62828; padding:10px; border-radius:4px; font-size:12px;">${data.error}</div>`;
+                return;
+            }
+
+            let html = '';
+            // Target vs result comparison
+            html += `<div style="display:flex; gap:12px; align-items:center; margin-bottom:12px;">
+                <div style="text-align:center;">
+                    <div style="width:50px; height:50px; border-radius:6px; border:2px solid #333; background:${data.target_color};"></div>
+                    <div style="font-size:10px; color:#888; margin-top:2px;">Target</div>
+                </div>
+                <div style="font-size:18px; color:#aaa;">→</div>
+                <div style="text-align:center;">
+                    <div style="width:50px; height:50px; border-radius:6px; border:2px solid #333; background:${data.result_color};"></div>
+                    <div style="font-size:10px; color:#888; margin-top:2px;">Result</div>
+                </div>
+                <div style="flex:1; text-align:right;">
+                    <div style="font-size:22px; font-weight:bold; color:${scoreColor(data.match_percentage)};">${data.match_percentage}%</div>
+                    <div style="font-size:10px; color:#888;">match · dE ${data.delta_e}</div>
+                    <div style="font-size:10px; color:#888;">score ${data.combined_score} · ${data.mix_method}</div>
+                </div>
+            </div>`;
+
+            // Recipe items
+            if (data.recipe && data.recipe.length > 0) {
+                html += '<div style="font-size:11px; font-weight:600; color:#00695C; margin-bottom:6px;">Recipe:</div>';
+                data.recipe.forEach(r => {
+                    html += `
+                    <div style="display:flex; align-items:center; gap:8px; padding:6px 8px; background:white; border:1px solid #e0e0e0; border-radius:4px; margin-bottom:4px;">
+                        <div style="width:24px; height:24px; border-radius:4px; border:1px solid #333; background:${r.hex}; flex-shrink:0;"></div>
+                        <div style="flex:1; font-size:12px;">
+                            <span style="font-family:monospace; font-weight:600;">${r.hex}</span>
+                            ${r.name ? '<span style="color:#888; margin-left:4px;">'+r.name+'</span>' : ''}
+                        </div>
+                        <div style="font-size:13px; font-weight:bold; color:#00695C;">${r.parts} part${r.parts !== 1 ? 's' : ''}</div>
+                        <div style="font-size:11px; color:#888; min-width:40px; text-align:right;">${r.percentage}%</div>
+                    </div>`;
+                });
+
+                // Dot grid visualisation
+                const gridSize = 10;
+                const totalDots = gridSize * gridSize;
+                const dots = [];
+                data.recipe.forEach(r => {
+                    const count = Math.round(r.percentage / 100 * totalDots);
+                    for (let i = 0; i < count && dots.length < totalDots; i++) dots.push(r.hex);
+                });
+                while (dots.length < totalDots) dots.push(data.recipe[0].hex);
+                // Shuffle for visual spread
+                for (let i = dots.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [dots[i], dots[j]] = [dots[j], dots[i]]; }
+
+                html += `<div style="margin-top:10px; text-align:center;">
+                    <div style="font-size:11px; color:#888; margin-bottom:4px;">Mix Ratio Grid</div>
+                    <div style="display:inline-grid; grid-template-columns:repeat(${gridSize}, 1fr); gap:3px; padding:10px; background:#f8f8f0; border-radius:8px; border:1px solid #e0ddd4;">`;
+                dots.forEach(hex => {
+                    html += `<div style="width:16px; height:16px; border-radius:50%; background:${hex}; border:1px solid rgba(0,0,0,0.12); box-shadow:inset 0 -1px 2px rgba(0,0,0,0.1);"></div>`;
+                });
+                html += '</div></div>';
+            }
+
+            resultsDiv.innerHTML = html;
+        } catch (e) {
+            resultsDiv.innerHTML = `<div style="background:#ffebee; border:1px solid #ffcdd2; color:#c62828; padding:10px; border-radius:4px; font-size:12px;">Error: ${e.message}<br><small>Make sure the backend is running at ${API_BASE}</small></div>`;
+        } finally {
+            mixBtn.disabled = false;
+            mixBtn.textContent = 'Find Recipe';
+        }
+    });
 })();
 </script>
 

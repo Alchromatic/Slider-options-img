@@ -40,6 +40,7 @@ tags_metadata = [
     {"name": "7. Palette mixing", "description": "Simple palette mixing / unmix (Trycolors style)"},
     {"name": "8. Palette mixing - Premium", "description": "Advanced palette mixing with full control"},
     {"name": "9. Match difference", "description": "Compare colors against a palette using CIE LAB Delta E"},
+    {"name": "11. Balanced Color Router", "description": "Art-slider weighted color matching and mixing (M4)"},
 ]
 
 app = FastAPI(
@@ -124,6 +125,9 @@ app.add_middleware(
 )
 
 app.mount("/GIFs", StaticFiles(directory="GIFs"), name="GIFs")
+
+from m4_balanced_router import router as m4_router
+app.include_router(m4_router)
 
 class ShapeModel(BaseModel):
     type: int
