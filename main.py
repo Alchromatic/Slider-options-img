@@ -1737,11 +1737,50 @@ def parse_svg_to_shapes(svg_content: str, canvas_width: int, canvas_height: int)
     Parse SVG content and convert to ShapeModel format compatible with your frontend.
     """
     shapes = []
-    
+
     try:
         root = ET.fromstring(svg_content)
         ns = {'svg': 'http://www.w3.org/2000/svg'}
-        
+
+        # Detect SVG coordinate space and compute scale factors
+        svg_w, svg_h = float(canvas_width), float(canvas_height)
+        viewbox = root.get('viewBox') or root.get('viewbox')
+        if viewbox:
+            parts = viewbox.split()
+            if len(parts) == 4:
+                svg_w = float(parts[2])
+                svg_h = float(parts[3])
+        else:
+            w_attr = root.get('width')
+            h_attr = root.get('height')
+            if w_attr and h_attr:
+                svg_w = float(w_attr)
+                svg_h = float(h_attr)
+
+        sx = canvas_width / svg_w if svg_w else 1.0
+        sy = canvas_height / svg_h if svg_h else 1.0
+
+        # Detect group transform: primitive wraps shapes in <g transform="scale(X) translate(...)">
+        g_scale = 1.0
+        g_tx, g_ty = 0.0, 0.0
+        for g in root.findall('.//{http://www.w3.org/2000/svg}g'):
+            transform = g.get('transform', '')
+            if 'scale' in transform:
+                scale_match = re.search(r'scale\(([\d.]+)\)', transform)
+                if scale_match:
+                    g_scale = float(scale_match.group(1))
+                translate_match = re.search(r'translate\(([-\d.]+)\s+([-\d.]+)\)', transform)
+                if translate_match:
+                    g_tx = float(translate_match.group(1))
+                    g_ty = float(translate_match.group(2))
+                break
+
+        sx *= g_scale
+        sy *= g_scale
+
+        print(f"[DEBUG parse_svg] svg_w={svg_w}, svg_h={svg_h}, canvas={canvas_width}x{canvas_height}")
+        print(f"[DEBUG parse_svg] g_scale={g_scale}, g_translate=({g_tx},{g_ty}), final sx={sx}, sy={sy}")
+
         # Find background color from first rect
         bg_color = [255, 255, 255, 255]
         for rect in root.findall('.//svg:rect', ns):
@@ -1777,13 +1816,16 @@ def parse_svg_to_shapes(svg_content: str, canvas_width: int, canvas_height: int)
                     except (ValueError, IndexError):
                         continue
             
-            if len(points) >= 6:  # At least 3 points (triangle)
+            if len(points) >= 6:
                 color = hex_to_rgba(fill)
                 color[3] = int(opacity * 255)
-                # Triangle type = 2, data = [x1, y1, x2, y2, x3, y3]
                 shapes.append(ShapeModel(
                     type=2,
-                    data=points[:6],
+                    data=[
+                        (points[0] + g_tx) * sx, (points[1] + g_ty) * sy,
+                        (points[2] + g_tx) * sx, (points[3] + g_ty) * sy,
+                        (points[4] + g_tx) * sx, (points[5] + g_ty) * sy
+                    ],
                     color=color,
                     score=0.0
                 ))
@@ -1798,10 +1840,9 @@ def parse_svg_to_shapes(svg_content: str, canvas_width: int, canvas_height: int)
             
             color = hex_to_rgba(fill)
             color[3] = int(opacity * 255)
-            # Circle type = 1, data = [cx, cy, radius]
             shapes.append(ShapeModel(
                 type=1,
-                data=[cx, cy, r],
+                data=[(cx + g_tx) * sx, (cy + g_ty) * sy, r * min(sx, sy)],
                 color=color,
                 score=0.0
             ))
@@ -1825,10 +1866,9 @@ def parse_svg_to_shapes(svg_content: str, canvas_width: int, canvas_height: int)
             
             color = hex_to_rgba(fill)
             color[3] = int(opacity * 255)
-            # Ellipse type = 4, data = [cx, cy, rx, ry, angle]
             shapes.append(ShapeModel(
                 type=4,
-                data=[cx, cy, rx, ry, angle],
+                data=[(cx + g_tx) * sx, (cy + g_ty) * sy, rx * sx, ry * sy, angle],
                 color=color,
                 score=0.0
             ))
@@ -1842,28 +1882,22 @@ def parse_svg_to_shapes(svg_content: str, canvas_width: int, canvas_height: int)
             fill = rect.get('fill', '#000000')
             opacity = float(rect.get('fill-opacity', 1.0))
             
-            # Skip if it's the background rect
             color = hex_to_rgba(fill)
-            if color[:3] == bg_color[:3] and width >= canvas_width * 0.9:
+            if color[:3] == bg_color[:3] and width >= svg_w * 0.9:
                 continue
             
             color[3] = int(opacity * 255)
             
-            # Convert rectangle to triangle pair or keep as rect
-            # For simplicity, convert to two triangles
-            # Triangle 1: top-left -> top-right -> bottom-right
-            # Triangle 2: top-left -> bottom-right -> bottom-left
             x2, y2 = x + width, y + height
-            
             shapes.append(ShapeModel(
                 type=2,
-                data=[x, y, x2, y, x2, y2],
+                data=[(x + g_tx) * sx, (y + g_ty) * sy, (x2 + g_tx) * sx, (y + g_ty) * sy, (x2 + g_tx) * sx, (y2 + g_ty) * sy],
                 color=color,
                 score=0.0
             ))
             shapes.append(ShapeModel(
                 type=2,
-                data=[x, y, x2, y2, x, y2],
+                data=[(x + g_tx) * sx, (y + g_ty) * sy, (x2 + g_tx) * sx, (y2 + g_ty) * sy, (x + g_tx) * sx, (y2 + g_ty) * sy],
                 color=color,
                 score=0.0
             ))
@@ -2005,18 +2039,11 @@ async def geometrize_image(
                     detail="Primitive binary not found. Install with: go install github.com/fogleman/primitive@latest"
                 )
             
-            # Parse SVG output
+            # Parse SVG output and scale to original dimensions
             with open(svg_output_path, "r") as f:
                 svg_content = f.read()
-            
-            # Parse at processing size
-            shapes = parse_svg_to_shapes(svg_content, process_width, process_height)
-            
-            # Scale shapes back to original size if we resized
-            if mode == "fast" and (process_width != original_width or process_height != original_height):
-                scale_x = original_width / process_width
-                scale_y = original_height / process_height
-                shapes = scale_shapes(shapes, scale_x, scale_y, original_width, original_height)
+
+            shapes = parse_svg_to_shapes(svg_content, original_width, original_height)
             
             return GeometrizeResponse(
                 shapes=shapes,
