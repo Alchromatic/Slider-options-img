@@ -1,0 +1,29 @@
+trial_id,recipe_short,parts_text,pigments_full,trycolors_result_hex,trycolors_name,stability_status,notes
+P01,CY + IY,1 / 1,Cadmium Yellow Light | India Yellow Hue,#E5A600,Gamboge,stable_confirmed,UI Pro Advanced manual capture
+P02,CY + CR,1 / 1,Cadmium Yellow Light | Cadmium Red Light,#E74A11,Trinidad,stable_confirmed,UI Pro Advanced manual capture
+P03,CY + QM,1 / 1,Cadmium Yellow Light | Quinacridone Magenta,#A73B2A,Medium Carmine,stable_confirmed,UI Pro Advanced manual capture
+P04,CY + UB,1 / 1,Cadmium Yellow Light | Ultramarine Blue,#226A34,Green Pea,stable_confirmed,UI Pro Advanced manual capture
+P05,CY + PG,1 / 1,Cadmium Yellow Light | Phthalo Green,#009A24,Forest Green,stable_confirmed,UI Pro Advanced manual capture
+P06,CY + TW,1 / 1,Cadmium Yellow Light | Titanium White,#FBEF43,Gorse,stable_confirmed,UI Pro Advanced manual capture
+P07,CY + BK,1 / 1,Cadmium Yellow Light | Carbon Black,#2B3126,Heavy Metal,stable_confirmed,UI Pro Advanced manual capture
+P08,IY + CR,1 / 1,India Yellow Hue | Cadmium Red Light,#D83008,Grenadier,stable_confirmed,UI Pro Advanced manual capture
+P09,IY + QM,1 / 1,India Yellow Hue | Quinacridone Magenta,#6F2020,Persian Plum,stable_confirmed,UI Pro Advanced manual capture
+P10,IY + UB,1 / 1,India Yellow Hue | Ultramarine Blue,#123223,Celtic,stable_confirmed,UI Pro Advanced manual capture
+P11,IY + PG,1 / 1,India Yellow Hue | Phthalo Green,#004921,Kaitoke Green,stable_confirmed,UI Pro Advanced manual capture
+P12,IY + TW,1 / 1,India Yellow Hue | Titanium White,#F3C24D,Ronchi,stable_confirmed,UI Pro Advanced manual capture
+P13,IY + BK,1 / 1,India Yellow Hue | Carbon Black,#242521,Log Cabin,stable_confirmed,UI Pro Advanced manual capture
+P14,CR + QM,1 / 1,Cadmium Red Light | Quinacridone Magenta,#B8121C,Monza,stable_confirmed,UI Pro Advanced manual capture
+P15,CR + UB,1 / 1,Cadmium Red Light | Ultramarine Blue,#5E2D22,Espresso,stable_confirmed,UI Pro Advanced manual capture
+P16,CR + PG,1 / 1,Cadmium Red Light | Phthalo Green,#503322,Saddle,stable_confirmed,UI Pro Advanced manual capture
+P17,CR + TW,1 / 1,Cadmium Red Light | Titanium White,#F2615A,Carnation,stable_confirmed,UI Pro Advanced manual capture
+P18,CR + BK,1 / 1,Cadmium Red Light | Carbon Black,#362722,Treehouse,stable_confirmed,UI Pro Advanced manual capture
+P19,QM + UB,1 / 1,Quinacridone Magenta | Ultramarine Blue,#1F1D30,Steel Gray,stable_confirmed,UI Pro Advanced manual capture
+P20,QM + PG,1 / 1,Quinacridone Magenta | Phthalo Green,#1A2129,Mirage,stable_confirmed,UI Pro Advanced manual capture
+P21,QM + TW,1 / 1,Quinacridone Magenta | Titanium White,#CD4DA1,Mulberry,stable_confirmed,UI Pro Advanced manual capture
+P22,QM + BK,1 / 1,Quinacridone Magenta | Carbon Black,#242223,Log Cabin,stable_confirmed,UI Pro Advanced manual capture
+P23,UB + PG,1 / 1,Ultramarine Blue | Phthalo Green,#0D1E2A,Mirage,stable_confirmed,UI Pro Advanced manual capture
+P24,UB + TW,1 / 1,Ultramarine Blue | Titanium White,#5287DF,Havelock Blue,stable_confirmed,UI Pro Advanced manual capture
+P25,UB + BK,1 / 1,Ultramarine Blue | Carbon Black,#222122,Log Cabin,stable_confirmed,UI Pro Advanced manual capture
+P26,PG + TW,1 / 1,Phthalo Green | Titanium White,#00BC8A,Caribbean Green,stable_confirmed,UI Pro Advanced manual capture
+P27,PG + BK,1 / 1,Phthalo Green | Carbon Black,#212223,Log Cabin,stable_confirmed,UI Pro Advanced manual capture
+P28,TW + BK,1 / 1,Titanium White | Carbon Black,#3A4047,Cape Cod,stable_confirmed,UI Pro Advanced manual capture

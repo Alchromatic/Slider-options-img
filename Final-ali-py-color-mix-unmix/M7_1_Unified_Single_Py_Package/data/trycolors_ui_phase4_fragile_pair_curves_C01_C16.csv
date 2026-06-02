@@ -1,0 +1,17 @@
+trial_id,recipe_short,parts_text,pigments_full,trycolors_result_hex,trycolors_name,stability_status,screenshot_file,notes
+C01,UB + PG,1 / 5,Ultramarine Blue | Phthalo Green,#04262A,Daintree,stable_confirmed,image(163).png,UI Pro Advanced manual capture
+C02,UB + PG,1 / 3,Ultramarine Blue | Phthalo Green,#07232A,Daintree,stable_confirmed,image(164).png,UI Pro Advanced manual capture
+C03,UB + PG,3 / 1,Ultramarine Blue | Phthalo Green,#111B2B,Mirage,stable_confirmed,image(165).png,UI Pro Advanced manual capture
+C04,UB + PG,5 / 1,Ultramarine Blue | Phthalo Green,#121A2C,Mirage,stable_confirmed,image(166).png,UI Pro Advanced manual capture
+C05,CY + PG,1 / 5,Cadmium Yellow Light | Phthalo Green,#00692A,Fun Green,stable_confirmed,image(168).png,UI Pro Advanced manual capture
+C06,CY + PG,1 / 3,Cadmium Yellow Light | Phthalo Green,#007829,Fun Green,stable_confirmed,image(169).png,UI Pro Advanced manual capture
+C07,CY + PG,3 / 1,Cadmium Yellow Light | Phthalo Green,#00B614,Forest Green,stable_confirmed,image(170).png,UI Pro Advanced manual capture
+C08,CY + PG,5 / 1,Cadmium Yellow Light | Phthalo Green,#40C003,Christi,stable_confirmed,image(171).png,UI Pro Advanced manual capture
+C09,QM + UB,1 / 5,Quinacridone Magenta | Ultramarine Blue,#181934,Haiti,stable_confirmed,Screenshot 2026-05-30 140710.png,UI Pro Advanced manual capture
+C10,QM + UB,1 / 3,Quinacridone Magenta | Ultramarine Blue,#191B32,Mirage,stable_confirmed,image(172).png,UI Pro Advanced manual capture
+C11,QM + UB,3 / 1,Quinacridone Magenta | Ultramarine Blue,#2A1E2E,Bastille,stable_confirmed,image(173).png,UI Pro Advanced manual capture
+C12,QM + UB,5 / 1,Quinacridone Magenta | Ultramarine Blue,#301E2E,Bleached Cedar,stable_confirmed,image(174).png,UI Pro Advanced manual capture
+C13,CY + UB,1 / 5,Cadmium Yellow Light | Ultramarine Blue,#093C34,Tiber,stable_confirmed,image(175).png,UI Pro Advanced manual capture
+C14,CY + UB,1 / 3,Cadmium Yellow Light | Ultramarine Blue,#0A4935,Sherwood Green,stable_confirmed,image(176).png,UI Pro Advanced manual capture
+C15,CY + UB,3 / 1,Cadmium Yellow Light | Ultramarine Blue,#4F8E2C,Vida Loca,stable_confirmed,image(177).png,UI Pro Advanced manual capture
+C16,CY + UB,5 / 1,Cadmium Yellow Light | Ultramarine Blue,#669E25,Olive Drab,stable_confirmed,image(178).png,UI Pro Advanced manual capture

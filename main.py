@@ -98,7 +98,7 @@ SHAPE_TYPE_MAPPING = {
     "triangle": 1,
     "rectangle": 2,
     "ellipse": 3,
-    "circle": 3,
+    "circle": 4,
     "rotated_rectangle": 5,
     "beziers": 6,
     "rotated_ellipse": 7,
@@ -128,6 +128,9 @@ app.mount("/GIFs", StaticFiles(directory="GIFs"), name="GIFs")
 
 from m4_balanced_router import router as m4_router
 app.include_router(m4_router)
+
+from version_router import router as version_router
+app.include_router(version_router)
 
 class ShapeModel(BaseModel):
     type: int

@@ -1929,6 +1929,19 @@ canvas.picking { cursor: crosshair; }
         <button id="trycolorsBtn" class="trycolors-btn">Get Recipe</button>
     </div>
 
+    <!-- Model / version selector (added) -->
+    <div style="margin: 6px 0 2px 0;">
+        <label style="font-size: 11px; color: #888; display: block; margin-bottom: 3px;">Unmix Model / Version</label>
+        <select id="trycolorsModelSelect" style="width: 100%; padding: 6px 10px; border: 1px solid #ced4da; border-radius: 4px; font-size: 12px;">
+            <option value="m7_1">M7.1 measured pairwise (current)</option>
+            <option value="m7">M7 measured pairwise</option>
+            <option value="km_baseline">KM search (your palette)</option>
+            <option value="m6_1" disabled>M6.1 tiered-confidence (unavailable)</option>
+            <option value="m6" disabled>M6 guarded (unavailable)</option>
+        </select>
+        <div id="trycolorsModelNote" style="font-size: 10px; color: #999; margin-top: 4px;"></div>
+    </div>
+
     <div style="display: grid; grid-template-columns: 1fr; gap: 8px; margin: 12px 0;">
         <div>
             <label style="font-size: 11px; color: #888; display: block; margin-bottom: 3px;">Max Colors in Recipe</label>
@@ -2003,6 +2016,35 @@ canvas.picking { cursor: crosshair; }
             <button class="trycolors-restore-btn" onclick="restoreAllSilencedColors()">Restore All</button>
         </div>
     </details>
+</div>
+
+<!-- ====================== FORWARD MIX (VERSIONED) ======================== -->
+<div class="section" id="fwdMixSection" style="padding: 20px; border-radius: 8px; border: 2px solid #5C6BC0; background: linear-gradient(135deg, rgba(92,107,192,0.06) 0%, rgba(92,107,192,0.02) 100%);">
+    <h3 style="color: #303F9F; margin-top: 0;">Forward Mix — versioned</h3>
+    <p style="font-size: 12px; color: #666; margin: 0 0 12px 0;">
+        Pick a model, set parts for each measured pigment, then predict the mixed color.
+        Switch the model to see how the methods differ on the same recipe.
+    </p>
+
+    <div style="margin: 6px 0 2px 0;">
+        <label style="font-size: 11px; color: #888; display: block; margin-bottom: 3px;">Forward Model / Version</label>
+        <select id="fwdModelSelect" style="width: 100%; padding: 6px 10px; border: 1px solid #ced4da; border-radius: 4px; font-size: 12px;">
+            <option value="m4">M4 router (current)</option>
+            <option value="baseline">Baseline (Kubelka-Munk)</option>
+            <option value="dualgate">Dual-gate (linear)</option>
+            <option value="m5">M5 router (experimental)</option>
+            <option value="m7_1">M7.1 measured predict</option>
+        </select>
+        <div id="fwdModelNote" style="font-size: 10px; color: #999; margin-top: 4px;"></div>
+    </div>
+
+    <div style="margin: 12px 0 4px 0; font-size: 11px; color: #888;">Recipe (parts per pigment)</div>
+    <div id="fwdPigmentGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;"></div>
+
+    <button id="fwdMixBtn" style="margin-top: 12px; width: 100%; padding: 9px 16px; font-size: 13px; border: none; border-radius: 4px; background: #3F51B5; color: white; cursor: pointer; font-weight: 600;">Predict Mix</button>
+    <div id="fwdResults" style="margin-top: 12px;">
+        <div style="text-align:center; padding: 14px; color:#888; font-size:12px;">Set parts and click Predict Mix.</div>
+    </div>
 </div>
 
 <!-- ====================== 8. PALETTE MIXING - PREMIUM (Unmix) ======================== -->
@@ -2329,8 +2371,14 @@ canvas.picking { cursor: crosshair; }
 </div>
 
 <script>
-//const API_BASE = "http://127.0.0.1:8000";
-const API_BASE = "https://alchromaticdemo.up.railway.app";
+// Backend endpoint.
+// LOCAL TESTING (active): points at your local uvicorn server.
+// To deploy: comment the local line and uncomment the production line below.
+// You can also override at runtime with ?api=<url> in the URL.
+const API_BASE =
+    new URLSearchParams(location.search).get('api')?.replace(/\/$/, '')
+    // || "http://127.0.0.1:8000";
+    || "https://alchromaticdemo.up.railway.app";
 
 // Trycolors Lab URL - Streamlit app on Railway
 const TRYCOLORS_LAB_URL = "https://slider-options-img-production-48cf.up.railway.app";
@@ -3716,12 +3764,25 @@ clearRegionsBtn.addEventListener("click", () => {
 //     ctx.restore();
 // }
 
+// Map a mouse/pointer event to canvas-backing-pixel coordinates.
+// getBoundingClientRect() reflects the on-screen (CSS) size, which differs from
+// canvas.width/height whenever the canvas is zoomed (CSS transform: scale) or
+// otherwise displayed at a different size. Without this conversion, clicks land
+// in the wrong place and shape hit-testing falls through to the background.
+function getCanvasPoint(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = rect.width ? canvas.width / rect.width : 1;
+    const scaleY = rect.height ? canvas.height / rect.height : 1;
+    return {
+        x: (e.clientX - rect.left) * scaleX,
+        y: (e.clientY - rect.top) * scaleY,
+    };
+}
+
 canvas.addEventListener("mousedown", e => {
     if (!isSelecting || isSelectiveResolutionMode) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const { x, y } = getCanvasPoint(e);
 
     isDrawingPath = true;
     currentPath = [{ x, y }];
@@ -3730,9 +3791,7 @@ canvas.addEventListener("mousedown", e => {
 canvas.addEventListener("mousemove", e => {
     if (!isSelecting || !isDrawingPath || isSelectiveResolutionMode) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const { x, y } = getCanvasPoint(e);
 
     currentPath.push({ x, y });
 
@@ -4790,11 +4849,9 @@ function clearShapeHighlight() {
 canvas.addEventListener("click", e => {
     if (!isPickingColor) return;
     if (isSelecting) return;
-    
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
+
+    const { x, y } = getCanvasPoint(e);
+
     const result = findShapeAtPoint(x, y);
     
     if (result) {
@@ -5349,6 +5406,8 @@ function buildMixVisualization(recipe, rows, cols, maxDots) {
 let _lastRecipeData = null;
 let _lastTrycolorsData = null;
 let _lastTrycolorsMaxParts = null;
+let _lastVersionedUnmix = null;   // last /version/unmix response shown (with _selIdx)
+let _versionedSortMode = 'match'; // 'match' = highest match first | 'reliable' = model risk-adjusted order
 
 function renderRecipeResults(data) {
     _lastRecipeData = data;
@@ -5446,7 +5505,8 @@ document.querySelectorAll('.viz-mode-btn').forEach(btn => {
         }
         // Re-render existing results with the new visualization mode
         if (_lastRecipeData) renderRecipeResults(_lastRecipeData);
-        if (_lastTrycolorsData) renderTrycolorsResultsFromUnmix(_lastTrycolorsData, _lastTrycolorsMaxParts);
+        if (_lastVersionedUnmix) renderVersionedUnmix(_lastVersionedUnmix);
+        else if (_lastTrycolorsData) renderTrycolorsResultsFromUnmix(_lastTrycolorsData, _lastTrycolorsMaxParts);
     });
 });
 
@@ -5709,7 +5769,18 @@ trycolorsBtn.addEventListener('click', async () => {
     // Show loading
     trycolorsResults.innerHTML = '<div class="trycolors-loading">Finding best recipe</div>';
     trycolorsBtn.disabled = true;
-    
+
+    // Versioned models (M7.1 / M7) use the fixed measured palette via a different endpoint.
+    const selectedUnmixVersion = (document.getElementById('trycolorsModelSelect') || {}).value || 'km_baseline';
+    if (selectedUnmixVersion && selectedUnmixVersion !== 'km_baseline') {
+        try {
+            await runVersionedUnmix(targetColor, selectedUnmixVersion);
+        } finally {
+            trycolorsBtn.disabled = false;
+        }
+        return;
+    }
+
     try {
         // Get settings from Trycolors controls
         const maxColors = parseInt(document.getElementById('trycolorsMaxColors').value) || 3;
@@ -5767,22 +5838,17 @@ trycolorsBtn.addEventListener('click', async () => {
     }
 });
 
-// Render results from /unmix endpoint (same as main recipe) but with trycolors styling
-function renderTrycolorsResultsFromUnmix(data, maxParts) {
-    _lastTrycolorsData = data;
-    _lastTrycolorsMaxParts = maxParts;
-    if (data.error) {
-        trycolorsResults.innerHTML = `<div style="color: #f44336; text-align: center; padding: 20px;">${data.error}</div>`;
-        return;
-    }
-    
+// Build the shared recipe body (recipe list + dot-matrix/concentric/treemap viz
+// + match row + target/result comparison + copyable output). Used by both the
+// KM unmix and the versioned (M7/M7.1) renderers so they share one UI.
+function buildTrycolorsRecipeHtml(data) {
     let html = '';
-    
+
     // Recipe items with percentages
     if (data.recipe && data.recipe.length > 0) {
         html += '<div class="trycolors-recipe-list">';
         data.recipe.forEach(item => {
-            const percentage = item.percentage.toFixed(1);
+            const percentage = Number(item.percentage).toFixed(1);
             html += `
                 <div class="trycolors-recipe-item" style="border-color: ${item.hex}">
                     <div class="trycolors-recipe-swatch" style="background: ${item.hex}"></div>
@@ -5798,16 +5864,16 @@ function renderTrycolorsResultsFromUnmix(data, maxParts) {
         html += buildMixVisualization(data.recipe, parseInt(document.getElementById('gridRowsInput').value) || 10, parseInt(document.getElementById('gridColsInput').value) || 10, parseInt(document.getElementById('gridMaxDotsInput').value) || 0);
     }
 
-    // Error row with match percentage
-    const matchPct = data.match_percentage.toFixed(1);
-    const errorPct = (100 - data.match_percentage).toFixed(1);
+    // Match / error row
+    const matchPct = Number(data.match_percentage).toFixed(1);
+    const errorPct = (100 - Number(data.match_percentage)).toFixed(1);
     html += `
         <div class="trycolors-error-row">
-            <div class="trycolors-error-label">Match: ${matchPct}% (ΔE: ${data.delta_e.toFixed(2)})</div>
+            <div class="trycolors-error-label">Match: ${matchPct}% (ΔE: ${Number(data.delta_e).toFixed(2)})</div>
             <div class="trycolors-error-value">${errorPct}% error</div>
         </div>
     `;
-    
+
     // Visual comparison
     html += `
         <div class="trycolors-comparison">
@@ -5822,31 +5888,41 @@ function renderTrycolorsResultsFromUnmix(data, maxParts) {
             </div>
         </div>
     `;
-    
-    // Formatted output (copyable) - color name, hex, percentage
-    let formattedOutput = data.recipe.map(item => 
-        `${item.name || 'Color'} ${item.hex} ${item.percentage.toFixed(1)}%`
+
+    // Formatted output (copyable)
+    let formattedOutput = data.recipe.map(item =>
+        `${item.name || 'Color'} ${item.hex} ${Number(item.percentage).toFixed(1)}%`
     ).join('\n');
-    formattedOutput += `\nTotal: ${data.total_parts} parts · ΔE: ${data.delta_e.toFixed(2)}`;
+    formattedOutput += `\nTotal: ${data.total_parts} parts · ΔE: ${Number(data.delta_e).toFixed(2)}`;
     if (data.mix_method) {
         formattedOutput += ` · ${data.mix_method}`;
     }
-    
     html += `
         <div class="trycolors-formatted-output" id="trycolorsOutput">${formattedOutput}</div>
         <button class="trycolors-copy-btn" onclick="copyTrycolorsOutput()">📋 Copy Recipe</button>
     `;
-    
-    // Show excluded colors notice if any are silenced
-    if (silencedColors.size > 0) {
+
+    // Excluded-colors notice (KM path only)
+    if (silencedColors.size > 0 && !data._hidesilenced) {
         html += `
             <div style="margin-top: 10px; padding: 8px 12px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; font-size: 11px; color: #856404;">
                 ⚠️ ${silencedColors.size} color${silencedColors.size > 1 ? 's' : ''} excluded from mixing
             </div>
         `;
     }
-    
-    trycolorsResults.innerHTML = html;
+    return html;
+}
+
+// Render results from /unmix endpoint (same as main recipe) but with trycolors styling
+function renderTrycolorsResultsFromUnmix(data, maxParts) {
+    _lastTrycolorsData = data;
+    _lastTrycolorsMaxParts = maxParts;
+    _lastVersionedUnmix = null; // KM result supersedes any versioned result
+    if (data.error) {
+        trycolorsResults.innerHTML = `<div style="color: #f44336; text-align: center; padding: 20px;">${data.error}</div>`;
+        return;
+    }
+    trycolorsResults.innerHTML = buildTrycolorsRecipeHtml(data);
 }
 
 // Allow Enter key to submit
@@ -5855,6 +5931,324 @@ trycolorsInput.addEventListener('keypress', (e) => {
         trycolorsBtn.click();
     }
 });
+
+/* ==========================================================
+   VERSIONED MODELS (M7.1 / M7 / M4 / ...) — single UI, model dropdown
+========================================================== */
+
+// The fixed measured 8-pigment palette used by the measured models.
+const MEASURED_PIGMENTS = [
+    { abbr: 'CY', name: 'Cadmium Yellow Light', hex: '#FEE100' },
+    { abbr: 'IY', name: 'India Yellow Hue',     hex: '#AA6200' },
+    { abbr: 'CR', name: 'Cadmium Red Light',    hex: '#DE290C' },
+    { abbr: 'QM', name: 'Quinacridone Magenta', hex: '#5D162D' },
+    { abbr: 'UB', name: 'Ultramarine Blue',     hex: '#19123F' },
+    { abbr: 'PG', name: 'Phthalo Green',        hex: '#002E2A' },
+    { abbr: 'TW', name: 'Titanium White',       hex: '#F7F5F1' },
+    { abbr: 'BK', name: 'Carbon Black',         hex: '#232222' },
+];
+
+let _versionRegistry = null;
+
+// Pull version metadata from the backend (notes / availability). Falls back to
+// the static <option> lists already in the HTML if the call fails.
+async function loadVersionRegistry() {
+    try {
+        const res = await fetch(`${API_BASE}/versions`);
+        if (!res.ok) throw new Error(res.status);
+        _versionRegistry = await res.json();
+        applyVersionRegistry();
+    } catch (e) {
+        console.warn('Could not load /versions (using static options):', e.message);
+    }
+    updateUnmixModelNote();
+    updateForwardModelNote();
+}
+
+function applyVersionRegistry() {
+    if (!_versionRegistry) return;
+    const fill = (selectId, items) => {
+        const sel = document.getElementById(selectId);
+        if (!sel) return;
+        const prev = sel.value;
+        sel.innerHTML = '';
+        items.forEach(v => {
+            const opt = document.createElement('option');
+            opt.value = v.id;
+            opt.textContent = v.label + (v.available ? '' : ' (unavailable)');
+            if (!v.available) opt.disabled = true;
+            sel.appendChild(opt);
+        });
+        if ([...sel.options].some(o => o.value === prev && !o.disabled)) sel.value = prev;
+    };
+    fill('trycolorsModelSelect', _versionRegistry.unmix || []);
+    fill('fwdModelSelect', _versionRegistry.forward || []);
+}
+
+function _versionMeta(mode, id) {
+    if (!_versionRegistry) return null;
+    return (_versionRegistry[mode] || []).find(v => v.id === id) || null;
+}
+
+function updateUnmixModelNote() {
+    const sel = document.getElementById('trycolorsModelSelect');
+    const note = document.getElementById('trycolorsModelNote');
+    if (!sel || !note) return;
+    const v = _versionMeta('unmix', sel.value);
+    let txt = v ? (v.note || v.reason || '') : '';
+    if (sel.value && sel.value !== 'km_baseline') {
+        txt += (txt ? ' ' : '') + 'Uses the fixed measured 8-pigment palette — the loaded palette above does not apply.';
+    }
+    note.textContent = txt;
+}
+
+function updateForwardModelNote() {
+    const sel = document.getElementById('fwdModelSelect');
+    const note = document.getElementById('fwdModelNote');
+    if (!sel || !note) return;
+    const v = _versionMeta('forward', sel.value);
+    note.textContent = v ? (v.note || v.reason || '') : '';
+}
+
+// Convert one measured-model proposal into the shape buildTrycolorsRecipeHtml expects.
+function _proposalToRecipeData(data, p) {
+    return {
+        recipe: p.pigment_abbr.map((ab, k) => ({
+            hex: p.pigment_hexes[k],
+            name: p.pigment_names[k],
+            percentage: p.percentages[k],
+        })),
+        match_percentage: p.match_percentage,
+        delta_e: p.delta_e,
+        target_color: data.target_color,
+        result_color: p.predicted_hex,
+        total_parts: (p.parts || []).reduce((a, b) => a + b, 0),
+        mix_method: `${data.version}${p.confidence_tier ? ' · ' + p.confidence_tier : ''}`,
+        _hidesilenced: true, // measured models use the fixed palette, not the loaded one
+    };
+}
+
+// Render proposals from /version/unmix into the SAME UI as the KM unmix
+// (dot matrix / concentric / treemap), ranked by highest match on top, with a
+// clickable list to inspect each ranked recipe.
+function renderVersionedUnmix(data) {
+    if (data.error) {
+        trycolorsResults.innerHTML = `<div style="color:#f44336; text-align:center; padding:20px;">${data.error}</div>`;
+        return;
+    }
+    if (data.available === false) {
+        trycolorsResults.innerHTML = `<div style="background:#fff3cd; border:1px solid #ffc107; color:#856404; padding:14px; border-radius:6px; font-size:12px;">
+            <strong>${data.version} is unavailable in this package.</strong><br>${data.reason || ''}</div>`;
+        return;
+    }
+    // Sort: 'match' = highest match % (lowest ΔE) on top; 'reliable' = model's
+    // risk-adjusted order (lowest score_with_risk_penalty / model rank first).
+    const byMatch = (a, b) => (b.match_percentage - a.match_percentage) || (a.delta_e - b.delta_e);
+    const byReliable = (a, b) =>
+        ((a.score_with_risk_penalty ?? a.delta_e) - (b.score_with_risk_penalty ?? b.delta_e))
+        || ((a.rank ?? 99) - (b.rank ?? 99));
+    const proposals = (data.proposals || []).slice()
+        .sort(_versionedSortMode === 'reliable' ? byReliable : byMatch);
+    if (!proposals.length) {
+        trycolorsResults.innerHTML = `<div style="text-align:center; padding:20px; color:#888; font-size:12px;">No proposals returned.</div>`;
+        return;
+    }
+
+    // Persist for viz-mode re-render and chip selection.
+    data._sorted = proposals;
+    if (typeof data._selIdx !== 'number' || data._selIdx >= proposals.length) data._selIdx = 0;
+    _lastVersionedUnmix = data;
+    _lastTrycolorsData = null;
+
+    const sel = data._selIdx;
+
+    // Sort-mode toggle.
+    const sortBtn = (mode, label, tip) => {
+        const on = _versionedSortMode === mode;
+        return `<button type="button" class="versioned-sort-btn" data-sort="${mode}" title="${tip}"
+            style="padding:3px 10px; font-size:11px; cursor:pointer; border:1px solid #3F51B5;
+                   background:${on ? '#3F51B5' : '#fff'}; color:${on ? '#fff' : '#3F51B5'};
+                   ${mode === 'match' ? 'border-radius:4px 0 0 4px;' : 'border-radius:0 4px 4px 0; border-left:none;'}">${label}</button>`;
+    };
+    let chips = `<div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:0 0 6px 0;">
+        <span style="font-size:11px; color:#888;">Model <strong>${data.version}</strong> · order:</span>
+        <span style="display:inline-flex;">
+            ${sortBtn('match', 'Best match', 'Sort by highest match % (lowest ΔE)')}
+            ${sortBtn('reliable', 'Most reliable', "Sort by the model's risk-adjusted score (observed anchors / dense data first)")}
+        </span></div>
+        <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;">`;
+    proposals.forEach((p, i) => {
+        const active = i === sel;
+        const tierTip = (p.confidence_tier || '') + (p.anchor_trycolors_name ? ' · ' + p.anchor_trycolors_name : '');
+        chips += `
+            <button type="button" class="versioned-rank-chip" data-idx="${i}" title="${tierTip}"
+                style="display:flex; align-items:center; gap:6px; padding:5px 9px; border-radius:6px; cursor:pointer;
+                       border:${active ? '2px solid #3F51B5' : '1px solid #ccc'}; background:${active ? '#eef1fb' : '#fff'};">
+                <span style="background:${active ? '#3F51B5' : '#999'}; color:#fff; font-size:9px; font-weight:700; padding:1px 6px; border-radius:3px;">#${i + 1}</span>
+                <span style="width:16px; height:16px; border-radius:3px; border:1px solid #333; background:${p.predicted_hex};"></span>
+                <span style="font-size:11px; font-weight:700;">${Number(p.match_percentage).toFixed(1)}%</span>
+                <span style="font-size:10px; color:#888;">ΔE ${Number(p.delta_e).toFixed(2)}</span>
+            </button>`;
+    });
+    chips += '</div>';
+
+    // Selected recipe rendered through the shared UI (gets dot-matrix/concentric/treemap).
+    const body = buildTrycolorsRecipeHtml(_proposalToRecipeData(data, proposals[sel]));
+
+    // Small confidence line for the selected recipe.
+    const selP = proposals[sel];
+    const conf = `<div style="font-size:10px; color:#888; margin:6px 0 2px;">
+        Selected #${sel + 1} · confidence: ${selP.confidence_tier || 'n/a'}${selP.anchor_trycolors_name ? ' · anchor "' + selP.anchor_trycolors_name + '"' : ''} · model risk +${selP.risk_penalty}</div>`;
+
+    trycolorsResults.innerHTML = chips + conf + body;
+}
+
+// Chip clicks (event delegation) switch the selected ranked recipe.
+document.addEventListener('click', (e) => {
+    if (!e.target.closest) return;
+    // Sort-mode toggle (Best match <-> Most reliable)
+    const sortBtn = e.target.closest('.versioned-sort-btn');
+    if (sortBtn && _lastVersionedUnmix) {
+        _versionedSortMode = sortBtn.dataset.sort === 'reliable' ? 'reliable' : 'match';
+        _lastVersionedUnmix._selIdx = 0; // top of the newly-sorted list
+        renderVersionedUnmix(_lastVersionedUnmix);
+        return;
+    }
+    // Ranked-recipe chip selection
+    const chip = e.target.closest('.versioned-rank-chip');
+    if (chip && _lastVersionedUnmix) {
+        _lastVersionedUnmix._selIdx = parseInt(chip.dataset.idx) || 0;
+        renderVersionedUnmix(_lastVersionedUnmix);
+    }
+});
+
+async function runVersionedUnmix(targetColor, version) {
+    try {
+        const maxColors = Math.min(4, parseInt(document.getElementById('trycolorsMaxColors').value) || 4);
+        const topK = parseInt(document.getElementById('topKInput').value) || 5;
+        const response = await fetch(`${API_BASE}/version/unmix`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                target_color: targetColor,
+                version: version,
+                max_colors: maxColors,
+                total_parts: 6,
+                top_n: topK,
+            })
+        });
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        const data = await response.json();
+        renderVersionedUnmix(data);
+    } catch (error) {
+        console.error('Versioned unmix error:', error);
+        trycolorsResults.innerHTML = `
+            <div style="color:#f44336; text-align:center; padding:20px;">
+                ⚠️ API Error: ${error.message}<br>
+                <small>Make sure the backend is running at ${API_BASE}</small>
+            </div>`;
+    }
+}
+
+// ---------- Forward mix (versioned) ----------
+function buildForwardPigmentGrid() {
+    const grid = document.getElementById('fwdPigmentGrid');
+    if (!grid) return;
+    const defaults = { CY: 4, QM: 1, UB: 1 };
+    grid.innerHTML = MEASURED_PIGMENTS.map(p => `
+        <div style="display:flex; align-items:center; gap:6px; background:white; border:1px solid #e0e0e0; border-radius:4px; padding:5px 7px;">
+            <span style="width:16px; height:16px; border-radius:3px; border:1px solid #333; background:${p.hex};"></span>
+            <span style="font-family:monospace; font-size:11px; font-weight:600;" title="${p.name}">${p.abbr}</span>
+            <input type="number" class="fwd-part" data-abbr="${p.abbr}" min="0" step="1" value="${defaults[p.abbr] || 0}"
+                   style="margin-left:auto; width:54px; padding:4px; border:1px solid #ced4da; border-radius:4px; font-size:12px; text-align:right;">
+        </div>`).join('');
+}
+
+function getForwardRecipe() {
+    const pigments = [], parts = [];
+    document.querySelectorAll('#fwdPigmentGrid .fwd-part').forEach(inp => {
+        const v = parseFloat(inp.value) || 0;
+        if (v > 0) { pigments.push(inp.dataset.abbr); parts.push(v); }
+    });
+    return { pigments, parts };
+}
+
+function renderForwardResult(data) {
+    const box = document.getElementById('fwdResults');
+    if (data.error) {
+        box.innerHTML = `<div style="background:#ffebee; border:1px solid #ffcdd2; color:#c62828; padding:10px; border-radius:4px; font-size:12px;">${data.error}</div>`;
+        return;
+    }
+    if (data.available === false) {
+        box.innerHTML = `<div style="background:#fff3cd; border:1px solid #ffc107; color:#856404; padding:12px; border-radius:6px; font-size:12px;"><strong>${data.version} unavailable.</strong><br>${data.reason || ''}</div>`;
+        return;
+    }
+    const recipe = (data.pigment_abbr || []).map((ab, k) => `
+        <div style="display:flex; align-items:center; gap:6px; font-size:11px; padding:2px 0;">
+            <span style="width:14px; height:14px; border-radius:3px; border:1px solid #333; background:${data.pigment_hexes[k]};"></span>
+            <span style="font-family:monospace; font-weight:600;">${ab}</span>
+            <span style="color:#888;">${data.pigment_names[k]}</span>
+            <span style="margin-left:auto; font-weight:600;">${data.parts[k]} pt · ${(data.normalized_weights[k]*100).toFixed(1)}%</span>
+        </div>`).join('');
+    let routeLine = '';
+    if (data.chosen_model) routeLine = `Routed → <strong>${data.chosen_model}</strong> · ${data.route_reason || ''}`;
+    else if (data.confidence_tier) routeLine = `Confidence: ${data.confidence_tier}`;
+    else if (data.mix_method) routeLine = `Mixer: ${data.mix_method}`;
+
+    box.innerHTML = `
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom:10px;">
+            <div style="text-align:center;">
+                <div style="width:64px; height:64px; border-radius:8px; border:2px solid #333; background:${data.predicted_hex};"></div>
+                <div style="font-size:10px; color:#888; margin-top:3px;">Predicted</div>
+            </div>
+            <div style="font-size:13px;">
+                <div style="font-family:monospace; font-weight:700; font-size:15px;">${data.predicted_hex}</div>
+                <div style="font-size:11px; color:#555; margin-top:4px;">Model <strong>${data.version}</strong></div>
+                <div style="font-size:11px; color:#888; margin-top:2px;">${routeLine}</div>
+            </div>
+        </div>
+        <div style="font-size:11px; font-weight:600; color:#303F9F; margin-bottom:4px;">Recipe:</div>
+        ${recipe}`;
+}
+
+const fwdMixBtn = document.getElementById('fwdMixBtn');
+if (fwdMixBtn) {
+    fwdMixBtn.addEventListener('click', async () => {
+        const { pigments, parts } = getForwardRecipe();
+        const box = document.getElementById('fwdResults');
+        if (pigments.length < 1) {
+            box.innerHTML = `<div style="color:#888; font-size:12px; padding:10px;">Set parts for at least one pigment.</div>`;
+            return;
+        }
+        const version = document.getElementById('fwdModelSelect').value;
+        fwdMixBtn.disabled = true;
+        const oldTxt = fwdMixBtn.textContent;
+        fwdMixBtn.textContent = 'Predicting...';
+        box.innerHTML = '<div class="trycolors-loading">Predicting mix</div>';
+        try {
+            const res = await fetch(`${API_BASE}/version/forward-mix`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pigments, parts, version })
+            });
+            if (!res.ok) throw new Error(`API error: ${res.status}`);
+            renderForwardResult(await res.json());
+        } catch (e) {
+            box.innerHTML = `<div style="background:#ffebee; border:1px solid #ffcdd2; color:#c62828; padding:10px; border-radius:4px; font-size:12px;">Error: ${e.message}<br><small>Make sure the backend is running at ${API_BASE}</small></div>`;
+        } finally {
+            fwdMixBtn.disabled = false;
+            fwdMixBtn.textContent = oldTxt;
+        }
+    });
+}
+
+// Wire dropdown notes + initial population
+const _tcModelSel = document.getElementById('trycolorsModelSelect');
+if (_tcModelSel) _tcModelSel.addEventListener('change', updateUnmixModelNote);
+const _fwdModelSel = document.getElementById('fwdModelSelect');
+if (_fwdModelSel) _fwdModelSel.addEventListener('change', updateForwardModelNote);
+buildForwardPigmentGrid();
+loadVersionRegistry();
 
 // Initialize on load
 loadDefaultPalette();

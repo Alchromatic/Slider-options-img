@@ -1,0 +1,25 @@
+target_id,target_hex,target_name
+H01,#2B2B28,dark neutral
+H02,#3C3A35,warm dark gray
+H03,#4C463F,muted gray-brown
+H04,#243A76,deep blue
+H05,#4A4FA0,muted blue-violet
+H06,#6A50A8,purple
+H07,#2A2240,dark purple
+H08,#145F33,deep green
+H09,#2F7D3A,medium green
+H10,#5D8A3B,olive green
+H11,#3E5A45,muted green-gray
+H12,#176F6B,teal
+H13,#2D6C78,blue-green gray
+H14,#9C6426,brown-orange
+H15,#B56A28,burnt orange
+H16,#C5542E,red-orange
+H17,#8A4B34,warm brown
+H18,#5B3828,dark brown
+H19,#8B5565,muted rose
+H20,#A0667B,dusty pink
+H21,#6E4055,muted magenta-brown
+H22,#8C7B2A,olive-yellow
+H23,#A09435,muted yellow-green
+H24,#706A35,dark olive

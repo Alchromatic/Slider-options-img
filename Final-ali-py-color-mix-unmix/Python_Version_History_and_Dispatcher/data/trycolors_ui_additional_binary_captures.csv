@@ -1,0 +1,6 @@
+trial_id,recipe_short,parts_text,pigments_full,trycolors_result_hex,trycolors_name,stability_status,screenshot_file,notes
+Q1_H04,UB + TW,5 / 1,Ultramarine Blue | Titanium White,#2C49BE,Cerulean Blue,stable_confirmed,image118.png,additional binary capture from M6.1 Priority 1 validation
+Q1_H05,UB + TW,4 / 2,Ultramarine Blue | Titanium White,#3B6CD3,Royal Blue,stable_confirmed,image119.png,additional binary capture from M6.1 Priority 1 validation
+Q1_H07,UB + BK,4 / 2,Ultramarine Blue | Carbon Black,#202023,Log Cabin,stable_confirmed,image120.png,additional binary capture from M6.1 Priority 1 validation
+Q1_H13,PG + TW,4 / 2,Phthalo Green | Titanium White,#00A873,Jade,stable_confirmed,image122.png,additional binary capture from M6.1 Priority 1 validation
+Q1_H24,CY + BK,4 / 2,Cadmium Yellow Light | Carbon Black,#313C28,Heavy Metal,stable_confirmed,image127.png,additional binary capture from M6.1 Priority 1 validation

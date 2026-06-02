@@ -1,0 +1,8 @@
+trial_id,target_id,recipe_short,pigments_full,parts_text,trycolors_result_hex,trycolors_name,source,notes
+H24-R1,H24,CY + IY + UB,Cadmium Yellow Light | India Yellow Hue | Ultramarine Blue,4 / 1 / 1,#649122,Olive Drab,H24 rescue batch,"proposed rescue, no black"
+H24-R2,H24,CY + IY + UB,Cadmium Yellow Light | India Yellow Hue | Ultramarine Blue,3 / 2 / 1,#5F831F,Olive Drab,H24 rescue batch,"proposed rescue, warmer/browner olive"
+H24-R3,H24,CY + QM + UB,Cadmium Yellow Light | Quinacridone Magenta | Ultramarine Blue,4 / 1 / 1,#6E622E,Yellow Metal,H24 rescue batch,"proposed rescue, best result"
+H24-R4,H24,CY + IY + QM + UB,Cadmium Yellow Light | India Yellow Hue | Quinacridone Magenta | Ultramarine Blue,3 / 1 / 1 / 1,#65592B,Costa Del Sol,H24 rescue batch,proposed rescue; duplicate stable result also observed
+H24-R5,H24,CY + CR + UB,Cadmium Yellow Light | Cadmium Red Light | Ultramarine Blue,3 / 1 / 1,#805D26,Kumera,H24 rescue batch,proposed rescue; duplicate stable result also observed
+H24-extra,H24,CY + UB + BK,Cadmium Yellow Light | Ultramarine Blue | Carbon Black,3 / 1 / 1,#324229,Dune,H24 rescue batch,"extra/mis-entry; requested black-control was 5 / 1 / 1, so not counted as H24-R6"
+H24-R6,H24,CY + UB + BK,Cadmium Yellow Light | Ultramarine Blue | Carbon Black,5 / 1 / 1,#3B4F2A,Kelp,H24 rescue batch,requested black-control recipe; confirms black-containing olive candidate is weaker than black-free CY+QM+UB
