@@ -19,11 +19,11 @@ import xml.etree.ElementTree as ET
 import re
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-from PIL import Image
+from PIL import Image, ImageDraw
 import numpy as np
 import io
 
@@ -41,6 +41,7 @@ tags_metadata = [
     {"name": "8. Palette mixing - Premium", "description": "Advanced palette mixing with full control"},
     {"name": "9. Match difference", "description": "Compare colors against a palette using CIE LAB Delta E"},
     {"name": "11. Balanced Color Router", "description": "Art-slider weighted color matching and mixing (M4)"},
+    {"name": "12. Rendering", "description": "Render a shape list (JSON) into a raster image on the backend"},
 ]
 
 app = FastAPI(
@@ -1915,6 +1916,425 @@ def parse_svg_to_shapes(svg_content: str, canvas_width: int, canvas_height: int)
         traceback.print_exc()
     
     return shapes
+
+
+# ==================== SHAPE RENDERING ENDPOINT ====================
+# Renders a shape list (the JSON produced by the geometrize step) into a raster
+# image entirely on the backend, mirroring the client-side `drawCanvas()` logic
+# in frontend/index.html (white background + source-over alpha compositing).
+
+class RenderShapeModel(BaseModel):
+    type: int
+    data: List[float]
+    color: List[int]
+    score: Optional[float] = 0.0
+
+
+class RenderShapesRequest(BaseModel):
+    shapes: List[RenderShapeModel]
+    canvas_width: Optional[int] = None   # explicit output width (px)
+    canvas_height: Optional[int] = None  # explicit output height (px)
+    background: Optional[List[int]] = None  # RGB(A) background, defaults to white
+    supersample: int = 2                 # 1 = no AA, 2-4 = supersampled antialiasing
+    fmt: str = "png"                     # "png" or "jpeg"
+    return_base64: bool = False          # if True, return JSON {image: "data:..."} instead of raw bytes
+
+
+def _rotate_point(px: float, py: float, cx: float, cy: float, deg: float) -> Tuple[float, float]:
+    rad = math.radians(deg)
+    cos_a, sin_a = math.cos(rad), math.sin(rad)
+    dx, dy = px - cx, py - cy
+    return (cx + dx * cos_a - dy * sin_a, cy + dx * sin_a + dy * cos_a)
+
+
+def _ellipse_polygon(cx: float, cy: float, rx: float, ry: float, angle_deg: float = 0.0,
+                     segments: int = 64) -> List[Tuple[float, float]]:
+    pts = []
+    for i in range(segments):
+        t = (2.0 * math.pi * i) / segments
+        x = rx * math.cos(t)
+        y = ry * math.sin(t)
+        if angle_deg:
+            rad = math.radians(angle_deg)
+            cos_a, sin_a = math.cos(rad), math.sin(rad)
+            x, y = x * cos_a - y * sin_a, x * sin_a + y * cos_a
+        pts.append((cx + x, cy + y))
+    return pts
+
+
+def _quad_bezier_points(x1, y1, cx, cy, x2, y2, segments: int = 32) -> List[Tuple[float, float]]:
+    pts = []
+    for i in range(segments + 1):
+        t = i / segments
+        mt = 1.0 - t
+        bx = mt * mt * x1 + 2 * mt * t * cx + t * t * x2
+        by = mt * mt * y1 + 2 * mt * t * cy + t * t * y2
+        pts.append((bx, by))
+    return pts
+
+
+def render_shapes_to_image(
+    shapes: List[RenderShapeModel],
+    canvas_width: int,
+    canvas_height: int,
+    background: Tuple[int, int, int, int],
+    supersample: int = 2,
+) -> Image.Image:
+    """Rasterize a shape list, matching the frontend canvas renderer.
+
+    Compositing is source-over (each shape's alpha = color[3]/255), drawn in
+    list order on top of an opaque background. Supersampling approximates the
+    browser canvas's antialiasing.
+    """
+    ss = max(1, min(int(supersample), 4))
+    W, H = max(1, canvas_width) * ss, max(1, canvas_height) * ss
+
+    # Single opaque canvas. Drawing through an "RGBA"-mode ImageDraw context
+    # makes Pillow source-over-blend each shape's alpha directly into the image,
+    # exactly like the browser canvas — and in ONE pass, no per-shape compositing.
+    base = Image.new("RGB", (W, H), tuple(background[:3]))
+    dr = ImageDraw.Draw(base, "RGBA")
+
+    for s in shapes:
+        col = list(s.color) + [255] * (4 - len(s.color))  # pad if alpha missing
+        r, g, b, a = int(col[0]), int(col[1]), int(col[2]), int(col[3])
+        rgba = (r, g, b, a)
+        d = s.data
+
+        try:
+            if s.type == 0 and len(d) >= 4:  # Rectangle [x1,y1,x2,y2]
+                x1, y1, x2, y2 = d[:4]
+                rx0, ry0 = min(x1, x2) * ss, min(y1, y2) * ss
+                rx1, ry1 = max(x1, x2) * ss, max(y1, y2) * ss
+                dr.rectangle([rx0, ry0, rx1, ry1], fill=rgba)
+
+            elif s.type == 1 and len(d) >= 5:  # Rotated rectangle [x1,y1,x2,y2,angle]
+                x1, y1, x2, y2, angle = d[:5]
+                cx, cy = (x1 + x2) / 2.0, (y1 + y2) / 2.0
+                w, h = abs(x2 - x1) / 2.0, abs(y2 - y1) / 2.0
+                corners = [(cx - w, cy - h), (cx + w, cy - h),
+                           (cx + w, cy + h), (cx - w, cy + h)]
+                poly = [(_rotate_point(px, py, cx, cy, angle or 0.0)) for px, py in corners]
+                dr.polygon([(px * ss, py * ss) for px, py in poly], fill=rgba)
+
+            elif s.type == 2 and len(d) >= 6:  # Triangle [x1,y1,x2,y2,x3,y3]
+                pts = [(d[0], d[1]), (d[2], d[3]), (d[4], d[5])]
+                dr.polygon([(px * ss, py * ss) for px, py in pts], fill=rgba)
+
+            elif s.type == 3 and len(d) >= 4:  # Ellipse [cx,cy,rx,ry]
+                cx, cy, rx, ry = d[:4]
+                dr.ellipse([(cx - rx) * ss, (cy - ry) * ss,
+                            (cx + rx) * ss, (cy + ry) * ss], fill=rgba)
+
+            elif s.type == 4 and len(d) >= 5:  # Rotated ellipse [cx,cy,rx,ry,angle]
+                cx, cy, rx, ry, angle = d[:5]
+                poly = _ellipse_polygon(cx, cy, rx, ry, angle or 0.0)
+                dr.polygon([(px * ss, py * ss) for px, py in poly], fill=rgba)
+
+            elif s.type == 5 and len(d) >= 3:  # Circle [cx,cy,r]
+                cx, cy, rad = d[:3]
+                dr.ellipse([(cx - rad) * ss, (cy - rad) * ss,
+                            (cx + rad) * ss, (cy + rad) * ss], fill=rgba)
+
+            elif s.type == 6 and len(d) >= 4:  # Line [x1,y1,x2,y2]
+                x1, y1, x2, y2 = d[:4]
+                dr.line([x1 * ss, y1 * ss, x2 * ss, y2 * ss], fill=rgba, width=max(1, ss))
+
+            elif s.type == 7 and len(d) >= 6:  # Quadratic bezier [x1,y1,cx,cy,x2,y2]
+                pts = _quad_bezier_points(*d[:6])
+                dr.line([(px * ss, py * ss) for px, py in pts], fill=rgba, width=max(1, ss))
+            else:
+                continue
+        except Exception:
+            # Skip malformed shapes rather than failing the whole render.
+            continue
+
+    if ss > 1:
+        base = base.resize((max(1, canvas_width), max(1, canvas_height)), Image.LANCZOS)
+
+    return base
+
+
+@app.post("/render_shapes", tags=["12. Rendering"])
+def render_shapes(req: RenderShapesRequest):
+    """
+    Render a shape list (the JSON output of the geometrize step) into a raster
+    image **on the backend**, matching the frontend canvas renderer.
+
+    **Body (JSON):**
+    - `shapes`: list of `{type, data, color, score?}` objects (Geometrize format).
+    - `canvas_width` / `canvas_height`: output size in px. If omitted, inferred
+      from the shapes (background rectangle, else bounding box).
+    - `background`: RGB or RGBA background color (default white `[255,255,255]`).
+    - `supersample`: 1 (no AA) to 4 (high-quality AA). Default 2.
+    - `fmt`: `"png"` (default) or `"jpeg"`.
+    - `return_base64`: if true, returns JSON `{"image": "data:image/...;base64,..."}`
+      instead of the raw image bytes.
+
+    **Returns:** the rendered image (`image/png` or `image/jpeg`), or a JSON
+    object with a base64 data URI when `return_base64` is true.
+    """
+    if not req.shapes:
+        raise HTTPException(status_code=400, detail="shapes list is empty")
+
+    # Determine canvas size.
+    if req.canvas_width and req.canvas_height:
+        out_w, out_h = int(req.canvas_width), int(req.canvas_height)
+    else:
+        # Reuse the shared canvas-size inference (works on ShapeModel-like objects).
+        size = get_canvas_size(req.shapes)
+        out_w = int(req.canvas_width or math.ceil(size.width) or 1)
+        out_h = int(req.canvas_height or math.ceil(size.height) or 1)
+
+    if out_w < 1 or out_h < 1 or out_w > 8000 or out_h > 8000:
+        raise HTTPException(status_code=400, detail="canvas size must be between 1 and 8000 px")
+
+    # Background color (pad to RGBA).
+    bg = req.background or [255, 255, 255]
+    bg = [int(c) for c in bg]
+    bg = (bg + [255] * (4 - len(bg)))[:4] if len(bg) >= 3 else [255, 255, 255, 255]
+
+    fmt = (req.fmt or "png").lower()
+    if fmt not in ("png", "jpeg", "jpg"):
+        raise HTTPException(status_code=400, detail="fmt must be 'png' or 'jpeg'")
+
+    img = render_shapes_to_image(req.shapes, out_w, out_h, tuple(bg), req.supersample)
+
+    if fmt in ("jpeg", "jpg"):
+        img = img.convert("RGB")
+        media_type, pil_fmt = "image/jpeg", "JPEG"
+    else:
+        media_type, pil_fmt = "image/png", "PNG"
+
+    buf = io.BytesIO()
+    img.save(buf, format=pil_fmt)
+    data = buf.getvalue()
+
+    if req.return_base64:
+        b64 = base64.b64encode(data).decode("ascii")
+        return {
+            "image": f"data:{media_type};base64,{b64}",
+            "canvas_width": out_w,
+            "canvas_height": out_h,
+            "total_shapes": len(req.shapes),
+        }
+
+    return Response(content=data, media_type=media_type)
+
+
+# ==================== FAST GEOMETRIZE + RENDER (JS ENGINE) ====================
+# Runs the SAME engine the website uses (frontend/geometrize.js) inside Python
+# via embedded V8 (mini_racer), then rasterizes with render_shapes_to_image().
+# Image in -> shapes (browser-speed JS) -> image out, all knobs as parameters.
+
+# Map friendly names (and the frontend checkbox values) to geometrize type codes.
+GEOMETRIZE_SHAPE_CODES = {
+    "rectangle": 0, "rotated_rectangle": 1, "triangle": 2, "ellipse": 3,
+    "rotated_ellipse": 4, "circle": 5, "line": 6, "quadratic_bezier": 7, "bezier": 7,
+}
+
+
+def _parse_shape_types(shape_types: str) -> List[int]:
+    """Accept e.g. 'circle', 'triangle,ellipse', or '2,5' -> [codes]."""
+    codes = []
+    for tok in str(shape_types).split(","):
+        tok = tok.strip().lower()
+        if not tok:
+            continue
+        if tok.isdigit():
+            c = int(tok)
+            if 0 <= c <= 7:
+                codes.append(c)
+        elif tok in GEOMETRIZE_SHAPE_CODES:
+            codes.append(GEOMETRIZE_SHAPE_CODES[tok])
+        else:
+            raise HTTPException(status_code=400, detail=f"Unknown shape type: {tok}")
+    return codes or [2]  # default triangle
+
+
+@app.post("/geometrize_render", tags=["2. Strokes"])
+async def geometrize_render(
+    image: UploadFile = File(...),
+    shape_count: int = Form(200),
+    shape_types: str = Form("triangle"),       # name(s) or code(s), comma-separated
+    opacity: int = Form(128),                  # shape alpha 0-255
+    candidates_per_step: int = Form(50),       # engine quality knob (browser default 50)
+    mutations_per_step: int = Form(100),       # engine quality knob (browser default 100)
+    max_resolution: int = Form(256),           # working res; browser uses 256
+    output_width: Optional[int] = Form(None),  # output px; default = source image size
+    output_height: Optional[int] = Form(None),
+    supersample: int = Form(2),                # render antialiasing 1-4
+    fmt: str = Form("png"),                    # png | jpeg
+    return_base64: bool = Form(False),
+):
+    """
+    **Image in -> rendered image out**, using the real browser geometrize engine
+    (`frontend/geometrize.js`) executed in-process via embedded V8. Generation
+    speed matches the website because it is the same code on the same engine.
+
+    All parameters are variables:
+    - `shape_count`: number of shapes.
+    - `shape_types`: one or more of rectangle, rotated_rectangle, triangle, ellipse,
+      rotated_ellipse, circle, line, quadratic_bezier — or numeric codes 0-7,
+      comma-separated (e.g. `triangle,circle` or `2,5`).
+    - `opacity`: shape alpha 0-255.
+    - `candidates_per_step` / `mutations_per_step`: engine quality vs. speed.
+    - `max_resolution`: working resolution the engine fits against (browser uses 256).
+    - `output_width` / `output_height`: output image size (defaults to source size).
+    - `supersample`: render antialiasing factor 1-4.
+    - `fmt`: `png` or `jpeg`; `return_base64`: JSON data-URI instead of raw bytes.
+    """
+    try:
+        import js_geometrize as jg
+    except Exception as e:
+        raise HTTPException(status_code=500,
+                            detail=f"JS geometrize engine unavailable (mini-racer): {e}")
+
+    if shape_count < 1 or shape_count > 10000:
+        raise HTTPException(status_code=400, detail="shape_count must be between 1 and 10000")
+    if not (0 <= opacity <= 255):
+        raise HTTPException(status_code=400, detail="opacity must be between 0 and 255")
+    fmt = (fmt or "png").lower()
+    if fmt not in ("png", "jpeg", "jpg"):
+        raise HTTPException(status_code=400, detail="fmt must be 'png' or 'jpeg'")
+
+    shape_type_codes = _parse_shape_types(shape_types)
+
+    # --- decode + downscale to working resolution (mirrors the browser) ---
+    image_data = await image.read()
+    try:
+        img = Image.open(io.BytesIO(image_data)).convert("RGBA")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid image file: {e}")
+
+    ow, oh = img.size
+    maxd = max(16, min(int(max_resolution), 1024))
+    ratio = min(maxd / ow, maxd / oh, 1.0)
+    w, h = max(1, int(ow * ratio)), max(1, int(oh * ratio))
+    small = img.resize((w, h), Image.LANCZOS) if (w, h) != (ow, oh) else img
+    rgba = small.tobytes()  # RGBA, length w*h*4
+
+    # --- generate shapes with the JS engine (browser speed) ---
+    try:
+        result = jg.generate_shapes(
+            rgba, w, h, shape_type_codes, shape_count,
+            alpha=opacity, candidates_per_step=candidates_per_step,
+            mutations_per_step=mutations_per_step,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Geometrize generation failed: {e}")
+
+    bg = result.get("background", [255, 255, 255, 255])
+
+    # Build shape list in working space: background rect first, then generated shapes.
+    shapes = [ShapeModel(type=0, data=[0, 0, w, h], color=bg, score=0.0)]
+    for s in result["shapes"]:
+        shapes.append(ShapeModel(type=int(s["type"]), data=list(s["data"]),
+                                 color=list(s["color"]), score=float(s.get("score", 0.0))))
+
+    # --- scale shapes to requested output size, then rasterize ---
+    out_w = int(output_width) if output_width else ow
+    out_h = int(output_height) if output_height else oh
+    if out_w < 1 or out_h < 1 or out_w > 8000 or out_h > 8000:
+        raise HTTPException(status_code=400, detail="output size must be between 1 and 8000 px")
+    shapes = rescale_shapes_to_canvas(shapes, out_w, out_h)
+
+    out_img = render_shapes_to_image(shapes, out_w, out_h, tuple(bg[:3]) + (255,),
+                                     supersample=supersample)
+
+    if fmt in ("jpeg", "jpg"):
+        out_img = out_img.convert("RGB")
+        media_type, pil_fmt = "image/jpeg", "JPEG"
+    else:
+        media_type, pil_fmt = "image/png", "PNG"
+
+    buf = io.BytesIO()
+    out_img.save(buf, format=pil_fmt)
+    data = buf.getvalue()
+
+    if return_base64:
+        b64 = base64.b64encode(data).decode("ascii")
+        return {
+            "image": f"data:{media_type};base64,{b64}",
+            "canvas_width": out_w,
+            "canvas_height": out_h,
+            "total_shapes": len(shapes),
+            "background": bg,
+        }
+    return Response(content=data, media_type=media_type)
+
+
+@app.post("/geometrize_js", tags=["2. Strokes"])
+async def geometrize_js(
+    image: UploadFile = File(...),
+    shape_count: int = Form(200),
+    shape_types: str = Form("triangle"),       # name(s) or code(s), comma-separated
+    opacity: int = Form(128),
+    candidates_per_step: int = Form(50),
+    mutations_per_step: int = Form(100),
+    max_resolution: int = Form(256),
+):
+    """
+    Generate shapes from an image using the **real browser geometrize engine**
+    (`frontend/geometrize.js` via embedded V8) and return them as JSON — the same
+    shape format and coordinate space (scaled to the source image size) as the
+    in-browser engine. This lets the website fetch shapes from the backend and
+    keep using all existing selection/editing/ordering features unchanged.
+
+    Returns: `{shapes, total_shapes, canvas_width, canvas_height, background}`.
+    """
+    try:
+        import js_geometrize as jg
+    except Exception as e:
+        raise HTTPException(status_code=500,
+                            detail=f"JS geometrize engine unavailable (mini-racer): {e}")
+
+    if shape_count < 1 or shape_count > 10000:
+        raise HTTPException(status_code=400, detail="shape_count must be between 1 and 10000")
+    if not (0 <= opacity <= 255):
+        raise HTTPException(status_code=400, detail="opacity must be between 0 and 255")
+
+    shape_type_codes = _parse_shape_types(shape_types)
+
+    image_data = await image.read()
+    try:
+        img = Image.open(io.BytesIO(image_data)).convert("RGBA")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid image file: {e}")
+
+    ow, oh = img.size
+    maxd = max(16, min(int(max_resolution), 1024))
+    ratio = min(maxd / ow, maxd / oh, 1.0)
+    w, h = max(1, int(ow * ratio)), max(1, int(oh * ratio))
+    small = img.resize((w, h), Image.LANCZOS) if (w, h) != (ow, oh) else img
+    rgba = small.tobytes()
+
+    try:
+        result = jg.generate_shapes(
+            rgba, w, h, shape_type_codes, shape_count,
+            alpha=opacity, candidates_per_step=candidates_per_step,
+            mutations_per_step=mutations_per_step,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Geometrize generation failed: {e}")
+
+    bg = result.get("background", [255, 255, 255, 255])
+
+    # Background rect first (working space), then generated shapes, then scale to source size.
+    shapes = [ShapeModel(type=0, data=[0, 0, w, h], color=bg, score=0.0)]
+    for s in result["shapes"]:
+        shapes.append(ShapeModel(type=int(s["type"]), data=list(s["data"]),
+                                 color=list(s["color"]), score=float(s.get("score", 0.0))))
+    shapes = rescale_shapes_to_canvas(shapes, ow, oh)
+
+    return {
+        "shapes": [{"type": s.type, "data": s.data, "color": s.color, "score": s.score}
+                   for s in shapes],
+        "total_shapes": len(shapes),
+        "canvas_width": ow,
+        "canvas_height": oh,
+        "background": bg,
+    }
 
 
 class GeometrizeRequest(BaseModel):

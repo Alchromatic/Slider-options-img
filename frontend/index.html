@@ -1682,6 +1682,15 @@ canvas.picking { cursor: crosshair; }
         </div>
     </div>
     
+    <!-- Discreet engine switch: Browser (default) vs Backend (server-side, same JS engine) -->
+    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin: 4px 0 6px 0;">
+        <label for="geometrizeEngineSelect" style="font-size: 10px; color: #aaa;">Engine</label>
+        <select id="geometrizeEngineSelect" title="Where shapes are generated. Backend uses the same engine server-side." style="font-size: 10px; color: #888; border: 1px solid #e0e0e0; border-radius: 3px; padding: 2px 4px; background: #fafafa;">
+            <option value="browser" selected>Browser</option>
+            <option value="backend">Backend</option>
+        </select>
+    </div>
+
     <button id="geometrizeBtn" style="background: #7c4dff; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: bold; width: 100%;">
         Generate Shapes
     </button>
@@ -3360,7 +3369,8 @@ geometrizeBtn.addEventListener("click", async () => {
     const mutationsPerStep = parseInt(geometrizeMutations.value) || 100;
     const shapeTypes = getSelectedShapeTypes();
     const target = document.querySelector('input[name="geometrizeTarget"]:checked').value;
-    
+    const engine = (document.getElementById('geometrizeEngineSelect') || {}).value || "browser";
+
     geometrizeBtn.disabled = true;
     stopGeometrizeBtn.style.display = "block";
     progressContainer.style.display = "block";
@@ -3396,7 +3406,32 @@ geometrizeBtn.addEventListener("click", async () => {
         let currentStep = 0;
         
         geometrizeStatus.textContent = `Processing: 0 / ${shapeCount} shapes`;
-        
+
+        if (engine === "backend") {
+            // ---- BACKEND MODE: generate shapes server-side via the same JS engine ----
+            // Returns shapes JSON in source-image space, so all downstream features
+            // (selection, ordering, render) work exactly as with the browser engine.
+            geometrizeStatus.textContent = "Generating on backend…";
+            const fd = new FormData();
+            fd.append("image", file);
+            fd.append("shape_count", String(shapeCount));
+            fd.append("shape_types", shapeTypes.join(","));
+            fd.append("opacity", String(alpha));
+            fd.append("candidates_per_step", String(candidatesPerStep));
+            fd.append("mutations_per_step", String(mutationsPerStep));
+            fd.append("max_resolution", "256");
+
+            const resp = await fetch(`${API_BASE}/geometrize_js`, { method: "POST", body: fd });
+            if (!resp.ok) {
+                const txt = await resp.text().catch(() => resp.statusText);
+                throw new Error(`Backend geometrize failed (${resp.status}): ${txt}`);
+            }
+            const json = await resp.json();
+            // Replace generatedShapes with backend output (already includes a bg rect
+            // in source-image coordinates, matching the browser path).
+            generatedShapes = json.shapes;
+            drawPreview(generatedShapes, originalWidth, originalHeight);
+        } else {
         // Create worker with proper message handling
         // The library's onmessage handler loses 'this' context, so we need to patch it
         let geometrizeLibCode = document.getElementById('geometrize-lib').textContent;
@@ -3488,7 +3523,8 @@ geometrizeBtn.addEventListener("click", async () => {
                 data: { width, height, data }
             });
         });
-        
+        } // end browser-engine branch
+
         // Processing complete
         if (geometrizeWorker) {
             geometrizeWorker.terminate();
