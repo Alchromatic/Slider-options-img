@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+
+   <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+      <!-- Title -->
+      <title>Templates | GeoMagic</title>
+
+      <!-- favicon -->
+      <link rel="apple-touch-icon" sizes="180x180" href="assets/img/favicon/apple-touch-icon.png">
+      <link rel="icon" type="image/png" sizes="512x512" href="assets/img/favicon/android-chrome-512x512.png">
+      <link rel="icon" type="image/png" sizes="192x192" href="assets/img/favicon/android-chrome-192x192.png">
+      <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon/favicon-32x32.png">
+      <link rel="icon" type="image/png" sizes="16x16" href="assets/img/favicon/favicon-16x16.png">
+      <link rel="shortcut icon" type="image/x-icon" href="assets/img/favicon/favicon.ico">
+      <link rel="manifest" href="assets/img/favicon/site.webmanifest">
+
+      <!-- google fonts cdn -->
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Sora:wght@100..800&family=Source+Code+Pro:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
+
+      <!-- vendor css -->
+      <link rel="stylesheet" href="assets/fontawesome/fontawesome.min.css">
+
+      <!-- main css -->
+      <link rel="stylesheet" href="assets/css/output.css">
+    <link rel="stylesheet" href="assets/css/palette-mixing.css">
+   </head>
+
+   <body class="bg-[#F4F4F4] dark:bg-neutral-8">
+
+      <div class="flex">
+         <!-- sidebar start -->
+         <!-- Hidden Checkbox to Control Sidebar Visibility -->
+         <input type="checkbox" title="sidebar toggle" id="sidebar-toggle" class="hidden peer">
+         <aside class="shrink-0 w-80 xl:w-70 2xl:w-85 h-screen fixed xl:sticky top-0 left-0 bg-[#FCFCFC] dark:bg-neutral-7 py-6 flex items-start flex-col gap-12 overflow-hidden transition-all duration-500 -translate-x-full peer-checked:translate-x-0 xl:translate-x-0 z-100">
+            <div class="px-6 flex items-center justify-between w-full">
+               <!-- logo -->
+               <a href="index.html" class="inline-block">
+                  <img src="assets/img/logo/logo-icon.png" alt="logo" class="w-9 lg:w-12 aspect-square hidden dark:inline-block">
+                  <img src="assets/img/logo/logo-icon-blue.png" alt="logo" class="w-9 lg:w-12 aspect-square dark:hidden">
+               </a>
+
+               <!-- sidebar close btn -->
+               <label for="sidebar-toggle" class="cursor-pointer text-neutral-6 dark:text-white text-xl flex items-center justify-center w-6 h-6 xl:hidden"><i class="fa-regular fa-xmark"></i></label>
+            </div>
+
+            <!-- sidebar content -->
+            <div class="grow min-h-0 w-full overflow-auto px-6">
+               <!-- header search -->
+               <div class="relative xl:hidden mb-8">
+                  <input type="search" class="w-full py-3 pl-12 pr-18 text-neutral-7 dark:text-neutral-1 placeholder:text-neutral-4/50 text-[15px] leading-[1.6] font-semibold -tracking-[0.15px] caret-theme-primary rounded-xl bg-[#F4F4F4] dark:bg-neutral-6 focus:outline-none" placeholder="Search or type a command">
+                  <span class="flex items-center justify-center w-6 h-6 absolute top-1/2 -translate-y-1/2 left-2 pointer-events-none text-neutral-4 text-xl"><i class="fa-regular fa-search"></i></span>
+                  <span class="flex items-center justify-center absolute top-1/2 -translate-y-1/2 right-2 pointer-events-none text-neutral-4 dark:text-neutral-1 font-semibold px-3 py-1 bg-white dark:bg-neutral-7 shadow-[0px_-1px_2px_0px_rgba(0,0,0,0.05)_inset,_0px_-1px_1px_0px_rgba(0,0,0,0.04)_inset,_0px_1px_0px_0px_rgba(255,255,255,0.08)_inset] rounded-lg">⌘ F</span>
+               </div>
+               <!-- sidebar menu -->
+               <ul class="sidebar-menu space-y-2">
+                  <li>
+                     <a href="dashboard.html" class="w-full flex items-center gap-3 p-3 text-neutral-4 text-[15px] leading-6 font-semibold -tracking-[0.15px] rounded-xl hover:text-neutral-6 dark:hover:text-neutral-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                           <path d="M10.1082 2.83511C11.2104 1.93957 12.7896 1.93957 13.8918 2.83511L19.8918 7.71011C20.5929 8.27978 21 9.13507 21 10.0385V18.8365C21 20.4934 19.6569 21.8365 18 21.8365H16V15.8363C16 14.1795 14.6569 12.8363 13 12.8363H11C9.34315 12.8363 8 14.1794 8 15.8363V21.8363L6 21.8365C4.34315 21.8365 3 20.4934 3 18.8365V10.0385C3 9.13507 3.40709 8.27978 4.10822 7.71011L10.1082 2.83511Z" fill="currentColor" />
+                           <path d="M10 21.8365H14V15.8363C14 15.284 13.5523 14.8363 13 14.8363H11C10.4477 14.8363 10 15.284 10 15.8363V21.8365Z" fill="currentColor" />
+                        </svg>
+                        <span>Dashboard</span>
+                     </a>
+                  </li>
+                  <li>
+                     <a href="portfolio.html" class="w-full flex items-center gap-3 p-3 text-neutral-4 text-[15px] leading-6 font-semibold -tracking-[0.15px] rounded-xl hover:text-neutral-6 dark:hover:text-neutral-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                           <path d="M16 20L9.41421 13.4142C8.63316 12.6332 7.36684 12.6332 6.58579 13.4142L4 16M6 20H18C19.1046 20 20 19.1046 20 18V6C20 4.89543 19.1046 4 18 4H6C4.89543 4 4 4.89543 4 6V18C4 19.1046 4.89543 20 6 20ZM16.5 9.5C16.5 10.6046 15.6046 11.5 14.5 11.5C13.3954 11.5 12.5 10.6046 12.5 9.5C12.5 8.39543 13.3954 7.5 14.5 7.5C15.6046 7.5 16.5 8.39543 16.5 9.5Z" stroke="currentColor" stroke-width="2" />
+                        </svg>
+                        <span>Portfolio</span>
+                     </a>
+                  </li>
+                  <li>
+                     <a href="templates.html" class="w-full flex items-center gap-3 p-3 text-neutral-4 text-[15px] leading-6 font-semibold -tracking-[0.15px] rounded-xl hover:text-neutral-6 dark:hover:text-neutral-1 active">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                           <path fill-rule="evenodd" clip-rule="evenodd" d="M11.3161 3.1845C11.7576 3.02395 12.2416 3.02395 12.6831 3.1845L20.7569 6.12044C22.5123 6.75874 22.5123 9.2413 20.7569 9.87961L12.6831 12.8155C12.2416 12.9761 11.7576 12.9761 11.3161 12.8155L3.2423 9.87961C1.48695 9.2413 1.48693 6.75875 3.24229 6.12044L11.3161 3.1845ZM20.0734 8.00002L11.9996 5.06409L3.92578 8.00002L11.9996 10.936L20.0734 8.00002Z" fill="currentColor" />
+                           <path d="M20.7569 13.8796L12.6831 16.8155C12.2416 16.9761 11.7576 16.9761 11.3161 16.8155L3.2423 13.8796C2.10327 13.4654 1.70334 12.2747 2.04252 11.3152L11.9996 14.936L21.9567 11.3152C22.2959 12.2747 21.896 13.4654 20.7569 13.8796Z" fill="currentColor" />
+                           <path d="M20.7569 17.8796L12.6831 20.8155C12.2416 20.9761 11.7576 20.9761 11.3161 20.8155L3.2423 17.8796C2.10327 17.4654 1.70334 16.2747 2.04252 15.3152L11.9996 18.936L21.9567 15.3152C22.2959 16.2747 21.896 17.4654 20.7569 17.8796Z" fill="currentColor" />
+                        </svg>
+                        <span>Templates</span>
+                     </a>
+                  </li>
+                  <li>
+                     <a href="pricing.html" class="w-full flex items-center gap-3 p-3 text-neutral-4 text-[15px] leading-6 font-semibold -tracking-[0.15px] rounded-xl hover:text-neutral-6 dark:hover:text-neutral-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                           <path d="M9.49962 7.91418L7.49962 9.91418L9.49962 11.9142M13.4138 19.5L21.5277 11.3861C22.3309 10.5829 22.3047 9.27275 21.4701 8.50228L17.0742 4.44458C16.7048 4.10355 16.2204 3.91418 15.7177 3.91418H8.28159C7.77881 3.91418 7.29447 4.10355 6.92503 4.44458L2.52918 8.50228C1.6945 9.27275 1.66831 10.5829 2.47153 11.3861L10.5854 19.5C11.3665 20.281 12.6328 20.281 13.4138 19.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <span>Pricing</span>
+                     </a>
+                  </li>
+                  <li>
+                     <a href="#" class="w-full flex items-center gap-3 p-3 text-neutral-4 text-[15px] leading-6 font-semibold -tracking-[0.15px] rounded-xl hover:text-neutral-6 dark:hover:text-neutral-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                           <path d="M7.98941 5.39755L7.30515 5.23965C6.72652 5.10612 6.11991 5.28009 5.7 5.7C5.28009 6.11991 5.10612 6.72651 5.23965 7.30515L5.39755 7.9894C5.57956 8.7781 5.25434 9.59711 4.58086 10.0461L3.74885 10.6008C3.28101 10.9127 3 11.4377 3 12C3 12.5623 3.28101 13.0873 3.74885 13.3992L4.58086 13.9539C5.25434 14.4029 5.57956 15.2219 5.39756 16.0106L5.23965 16.6949C5.10612 17.2735 5.28009 17.8801 5.7 18.3C6.11991 18.7199 6.72651 18.8939 7.30515 18.7604L7.9894 18.6024C8.7781 18.4204 9.59711 18.7457 10.0461 19.4191L10.6008 20.2512C10.9127 20.719 11.4377 21 12 21C12.5623 21 13.0873 20.719 13.3992 20.2512L13.9539 19.4191C14.4029 18.7457 15.2219 18.4204 16.0106 18.6024L16.6949 18.7604C17.2735 18.8939 17.8801 18.7199 18.3 18.3C18.7199 17.8801 18.8939 17.2735 18.7604 16.6949L18.6024 16.0106C18.4204 15.2219 18.7457 14.4029 19.4191 13.9539L20.2512 13.3992C20.719 13.0873 21 12.5623 21 12C21 11.4377 20.719 10.9127 20.2512 10.6008L19.4191 10.0461C18.7457 9.59711 18.4204 8.7781 18.6024 7.98941L18.7604 7.30515C18.8939 6.72652 18.7199 6.11991 18.3 5.7C17.8801 5.28009 17.2735 5.10612 16.6949 5.23965L16.0106 5.39755C15.2219 5.57956 14.4029 5.25434 13.9539 4.58086L13.3992 3.74884C13.0873 3.28101 12.5623 3 12 3C11.4377 3 10.9127 3.28101 10.6008 3.74885L10.0461 4.58086C9.59711 5.25434 8.7781 5.57956 7.98941 5.39755Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+                           <path d="M15 12C15 13.6569 13.6569 15 12 15C10.3431 15 9 13.6569 9 12C9 10.3431 10.3431 9 12 9C13.6569 9 15 10.3431 15 12Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+                        </svg>
+                        <span>Settings</span>
+                     </a>
+                  </li>
+               </ul>
+            </div>
+
+            <!-- header action -->
+            <div class="xl:hidden flex items-center gap-6 px-6">
+               <a href="#" class="theme-btn-primary inline-flex! items-center gap-2"><i class="fa-regular fa-plus"></i> New</a>
+               <button type="button" class="flex items-center justify-center w-12 h-12">
+                  <span class="relative flex items-center justify-center w-6 h-6 after:w-2.5 after:h-2.5 after:bg-theme-primary-3 after:rounded-full dark:after:outline-2 dark:after:outline-neutral-7 after:absolute after:right-0 after:top-0"><img src="assets/img/icon/bell.svg" alt="bell" class="w-full aspect-square"></span>
+               </button>
+               <div>
+                  <img src="assets/img/icon/profile-avatar.jpg" alt="profile-avatar" class="w-12 aspect-square rounded-full object-cover">
+               </div>
+            </div>
+         </aside>
+         <!-- offcanvas overlay -->
+         <label for="sidebar-toggle" class="overlay fixed top-0 left-0 z-90 w-full h-full bg-black/70 transition-all duration-400 opacity-0 invisible peer-checked:opacity-100 peer-checked:visible xl:hidden"></label>
+         <!-- sidebar end -->
+
+         <main class="grow min-w-0">
+            <!-- dashboard header -->
+            <header class="sticky top-0 left-0 w-full z-50 py-6 px-9 2xl:px-10 flex items-center justify-between bg-[#FCFCFC] dark:bg-neutral-7 dark:shadow-[1px_0px_0px_0px_#111315_inset]">
+               <!-- logo -->
+               <a href="index.html" class="inline-block xl:hidden">
+                  <img src="assets/img/logo/logo-icon.png" alt="logo" class="w-9 lg:w-12 aspect-square hidden dark:inline-block">
+                  <img src="assets/img/logo/logo-icon-blue.png" alt="logo" class="w-9 lg:w-12 aspect-square dark:hidden">
+               </a>
+
+               <!-- header search -->
+               <div class="relative max-xl:hidden">
+                  <input type="search" class="w-full py-3 pl-12 pr-18 text-neutral-7 dark:text-neutral-1 placeholder:text-neutral-4/50 text-[15px] leading-[1.6] font-semibold -tracking-[0.15px] caret-theme-primary rounded-xl bg-[#F4F4F4] dark:bg-neutral-6 focus:outline-none" placeholder="Search or type a command">
+                  <span class="flex items-center justify-center w-6 h-6 absolute top-1/2 -translate-y-1/2 left-2 pointer-events-none text-neutral-4 text-xl"><i class="fa-regular fa-search"></i></span>
+                  <span class="flex items-center justify-center absolute top-1/2 -translate-y-1/2 right-2 pointer-events-none text-neutral-4 dark:text-neutral-1 font-semibold px-3 py-1 bg-white dark:bg-neutral-7 shadow-[0px_-1px_2px_0px_rgba(0,0,0,0.05)_inset,_0px_-1px_1px_0px_rgba(0,0,0,0.04)_inset,_0px_1px_0px_0px_rgba(255,255,255,0.08)_inset] rounded-lg">⌘ F</span>
+               </div>
+
+               <!-- header action -->
+               <div class="flex items-center gap-4 xl:gap-6">
+                  <div class="hidden xl:flex items-center gap-6">
+                     <a href="#" class="theme-btn-primary inline-flex! items-center gap-2"><i class="fa-regular fa-plus"></i> New</a>
+                     <button type="button" class="flex items-center justify-center w-12 h-12">
+                        <span class="relative flex items-center justify-center w-6 h-6 after:w-2.5 after:h-2.5 after:bg-theme-primary-3 after:rounded-full dark:after:outline-2 dark:after:outline-neutral-7 after:absolute after:right-0 after:top-0"><img src="assets/img/icon/bell.svg" alt="bell" class="w-full aspect-square"></span>
+                     </button>
+                     <div>
+                        <img src="assets/img/icon/profile-avatar.jpg" alt="profile-avatar" class="w-12 aspect-square rounded-full object-cover">
+                     </div>
+                  </div>
+
+
+                  <!-- sidebar toggle bar -->
+                  <label for="sidebar-toggle" class="cursor-pointer xl:hidden"><img src="assets/img/icon/menu-bar.svg" alt="menu bar" class="w-6"></label>
+                  <!-- theme toggle -->
+                  <label class="cursor-pointer relative flex items-center gap-2.5">
+                     <input type="checkbox" title="theme toggle" class="sr-only peer" id="themeToggle" checked>
+                     <span class="flex items-center justify-center w-9 h-9 rounded-lg bg-theme-primary"></span>
+                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white hidden dark:block">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
+                     </svg>
+                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white dark:hidden">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+                     </svg>
+                  </label>
+               </div>
+            </header>
+            <!-- dashboard header end -->
+
+            <!-- rendering logic bar — OUTSIDE the scroller so it never scrolls -->
+            <section id="rendering-logic-section" class="rl-section hidden" style="padding:8px 24px; background:#111315; border-bottom:1px solid #1e2228;">
+               <div class="rl-card">
+                  <h5 class="rl-title">Rendering Logic</h5>
+                  <p class="rl-sub">Select a rendering order for shapes.</p>
+                  <div class="rl-toolbar">
+                     <button type="button" class="rendering-icon-btn active" data-logic="original" title="Original Order">
+                        <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="15" x2="16" y2="15"/></svg>
+                     </button>
+                     <button type="button" class="rendering-icon-btn" data-logic="exterior_to_center" title="Exterior → Center">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>
+                     </button>
+                     <button type="button" class="rendering-icon-btn" data-logic="center_to_exterior" title="Center → Exterior">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2" fill="currentColor"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="9"/></svg>
+                     </button>
+                     <button type="button" class="rendering-icon-btn" data-logic="top_to_bottom" title="Top → Bottom">
+                        <svg viewBox="0 0 24 24"><line x1="12" y1="3" x2="12" y2="21"/><polyline points="6,15 12,21 18,15"/></svg>
+                     </button>
+                     <button type="button" class="rendering-icon-btn" data-logic="bottom_to_top" title="Bottom → Top">
+                        <svg viewBox="0 0 24 24"><line x1="12" y1="21" x2="12" y2="3"/><polyline points="6,9 12,3 18,9"/></svg>
+                     </button>
+                     <button type="button" class="rendering-icon-btn" data-logic="color_sequence" title="Color Sequence">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="6" height="6" fill="#ff6b6b" stroke="none"/><rect x="9" y="3" width="6" height="6" fill="#4ecdc4" stroke="none"/><rect x="15" y="3" width="6" height="6" fill="#45b7d1" stroke="none"/><rect x="3" y="9" width="18" height="12" rx="1"/></svg>
+                     </button>
+                     <button type="button" class="rendering-icon-btn" data-logic="light_to_dark" title="Light → Dark">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 3 L21 21" stroke-width="2"/><rect x="3" y="3" width="9" height="18" fill="white" stroke="none"/></svg>
+                     </button>
+                     <button type="button" class="rendering-icon-btn" data-logic="dark_to_light" title="Dark → Light">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" fill="#333"/><path d="M3 3 L21 21" stroke="#fff" stroke-width="2"/><rect x="12" y="3" width="9" height="18" fill="white" stroke="none"/></svg>
+                     </button>
+                     <button type="button" class="rendering-icon-btn" data-logic="frequency_by_color" title="Most → Least Count">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="14" width="4" height="7"/><rect x="8" y="10" width="4" height="11"/><rect x="13" y="6" width="4" height="15"/><rect x="18" y="3" width="4" height="18"/></svg>
+                     </button>
+                     <button type="button" class="rendering-icon-btn" data-logic="frequency_by_color_reverse" title="Least → Most Count">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="4" height="18"/><rect x="8" y="6" width="4" height="15"/><rect x="13" y="10" width="4" height="11"/><rect x="18" y="14" width="4" height="7"/></svg>
+                     </button>
+                     <button type="button" class="rendering-icon-btn" data-logic="custom_sequence" title="Custom Sequence (Drag Colors)">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="7" rx="1"/><rect x="14" y="4" width="7" height="7" rx="1"/><rect x="3" y="13" width="7" height="7" rx="1"/><rect x="14" y="13" width="7" height="7" rx="1"/><path d="M10 7.5 L14 7.5" stroke-dasharray="2,1"/><path d="M10 16.5 L14 16.5" stroke-dasharray="2,1"/></svg>
+                     </button>
+                     <button type="button" class="rendering-icon-btn" id="selectiveResolutionIcon" title="Selective Resolution (Draw region to add detail)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="6" y="6" width="8" height="8" rx="1" stroke-dasharray="2,1"/><circle cx="10" cy="10" r="2" fill="currentColor" stroke="none"/></svg>
+                     </button>
+                  </div>
+               </div>
+            </section>
+
+            <!-- dashboard main wrapper -->
+            <div class="overflow-auto md:p-6 2xl:p-10 pt-2 md:pt-6" id="dashScroller">
+               <!-- geometrize canvas + panels -->
+               <div class="flex flex-col gap-2">
+                  <div class="pm-grid-2">
+                  <!-- ===== LEFT COLUMN: canvas (top) + diagrams (bottom) ===== -->
+                  <div class="pm-main-col">
+                  <!-- canvas -->
+                  <div class="bg-white dark:bg-neutral-7 p-6 rounded-lg border-2 border-[#F4F4F4] dark:border-0 shadow-[0px_4px_14px_-6px_#F4F4F4] dark:shadow-none">
+                     <div id="dash-preview-wrap" class="relative flex items-center justify-center w-full h-77 md:h-147 bg-[#F4F4F4] dark:bg-neutral-6 rounded-xl overflow-hidden">
+                        <canvas id="dash-canvas" class="max-w-full max-h-full hidden cursor-crosshair"></canvas>
+                        <label id="dash-drop-zone" class="absolute inset-0 flex items-center justify-center cursor-pointer">
+                           <input id="dash-image-input" type="file" accept="image/*" class="sr-only">
+                           <span id="dash-drop-label" class="inline-flex items-center gap-2 text-neutral-6 dark:text-neutral-1 text-[15px] leading-[1.6] -tracking-[0.15px] font-bold px-4.5 py-2.5 bg-[#E0EBF2] dark:bg-neutral-7 border-2 border-[#E0EBF1] dark:border-neutral-6 rounded-xl cursor-pointer transition-all duration-300 hover:bg-[#d1e8f6] dark:hover:bg-neutral-6"><span class="text-neutral-4"><i class="fa-regular fa-arrow-up-from-bracket"></i></span> Click or drop image</span>
+                        </label>
+                        <div id="dash-status" class="hidden absolute top-2 left-2 z-10 px-3 py-1 rounded-lg bg-black/60 text-white text-xs font-semibold"></div>
+                     </div>
+                     <div id="dash-selection" class="hidden mt-4 flex items-center gap-3 flex-wrap text-sm">
+                        <span class="text-neutral-4 font-semibold">Selected:</span>
+                        <span id="dash-sel-type" class="text-neutral-6 dark:text-neutral-1 font-semibold"></span>
+                        <span id="dash-sel-color" class="inline-block w-6 h-6 rounded border border-neutral-4"></span>
+                        <span id="dash-sel-rgba" class="text-neutral-4 font-mono text-xs"></span>
+                        <button id="dash-sel-delete" type="button" class="theme-btn-regular style-2">Delete shape</button>
+                        <button id="dash-sel-clear" type="button" class="theme-btn-regular style-2">Clear selection</button>
+                     </div>
+                     <!-- shape-count slider -->
+                     <div class="mt-6">
+                        <div class="flex items-center justify-between mb-2">
+                           <span class="text-neutral-6 dark:text-neutral-1 text-[15px] font-semibold -tracking-[0.15px]">Color Sequence</span>
+                           <span id="shapeSliderLabel" class="text-neutral-4 text-sm font-semibold -tracking-[0.14px]">Shapes: 0 / 0</span>
+                        </div>
+                        <input id="shapeSlider" type="range" min="0" max="0" value="0" class="tpl-range">
+                     </div>
+                     <!-- color order -->
+                     <div class="mt-6">
+                        <button id="dragColorBtn" type="button" class="theme-btn-regular style-2 inline-flex! items-center justify-center gap-2"><span class="text-neutral-4"><i class="fa-regular fa-arrow-down-arrow-up"></i></span> Drag &amp; Drop Color Order</button>
+                     </div>
+                  </div>
+
+                  <!-- ===== DIAGRAMS (bottom of left column) ===== -->
+                  <div class="pm-panel pm-diagrams">
+                     <div class="section">
+                        <div class="cd-section-header">
+                           <h4>Color Distribution</h4>
+                           <p class="cd-subtitle">Visual breakdown of the paint mixing recipe.</p>
+                        </div>
+
+                        <div class="cd-view-controls">
+                           <div class="viz-mode-toggle">
+                              <button type="button" class="viz-mode-btn active" data-viz="dotgrid">Dot Matrix</button>
+                              <button type="button" class="viz-mode-btn" data-viz="treemap">JSON Treemap</button>
+                              <button type="button" class="viz-mode-btn" data-viz="concentric">Concentric Circles</button>
+                           </div>
+                        </div>
+                        <details id="dotGridSettingsPanel" class="cd-grid-settings">
+                           <summary>Grid Settings</summary>
+                           <div class="cd-grid-fields">
+                              <div class="cd-grid-field">
+                                 <label>Rows</label>
+                                 <input type="number" id="gridRowsInput" value="10" min="1" max="20">
+                              </div>
+                              <div class="cd-grid-field">
+                                 <label>Columns</label>
+                                 <input type="number" id="gridColsInput" value="10" min="1" max="20">
+                              </div>
+                              <div class="cd-grid-field">
+                                 <label>Max Dots</label>
+                                 <input type="number" id="gridMaxDotsInput" value="0" min="0" max="400">
+                              </div>
+                           </div>
+                           <p class="cd-grid-hint">Max Dots = 0 fills all cells. Otherwise, only that many dots are colored proportionally.</p>
+                        </details>
+
+                        <div id="trycolorsResults" class="trycolors-results">
+                           <div class="cd-placeholder">
+                              Enter a hex color code to see the paint mixing recipe
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+                  </div>
+                  <!-- ===== RIGHT COLUMN: palette mixing ===== -->
+                  <div class="pm-right-col">
+                  <div class="pm-panel pm-settings">
+<!-- ====================== 7. PALETTE MIXING (Trycolors Style) ======================== -->
+<div class="section trycolors-section">
+    <h4>Palette mixing</h4>
+    <p style="font-size: 12px; color: #888; margin: -10px 0 15px 0;">
+        Enter any hex color to find the paint recipe.
+    </p>
+
+    <div class="trycolors-input-row">
+        <div class="trycolors-color-input">
+            <label>Target Color (Hex)</label>
+            <input type="text" id="trycolorsInput" placeholder="1E2448" maxlength="7">
+        </div>
+        <div id="trycolorsPreview" class="trycolors-preview"></div>
+        <button id="trycolorsBtn" class="trycolors-btn">Get Recipe</button>
+    </div>
+
+    <!-- Model / version selector (added) -->
+    <div id="trycolorsModelWrap" style="margin: 6px 0 2px 0;">
+        <label style="font-size: 11px; color: #888; display: block; margin-bottom: 3px;">Unmix Model / Version</label>
+        <select id="trycolorsModelSelect" style="width: 100%; padding: 6px 10px; border: 1px solid #ced4da; border-radius: 4px; font-size: 12px;">
+            <option value="m7_1">M7.1 measured pairwise (current)</option>
+            <option value="m7">M7 measured pairwise</option>
+            <option value="km_baseline">KM search (your palette)</option>
+            <option value="m6_1" disabled>M6.1 tiered-confidence (unavailable)</option>
+            <option value="m6" disabled>M6 guarded (unavailable)</option>
+        </select>
+        <div id="trycolorsModelNote" style="font-size: 10px; color: #999; margin-top: 4px;"></div>
+    </div>
+
+    <div class="pm-sliders">
+        <div class="pm-slider">
+            <div class="pm-slider-head"><span class="pm-slider-label"><i class="fa-regular fa-layer-group"></i> Max Colors</span><span class="pm-slider-val" data-for="trycolorsMaxColors"></span></div>
+            <input type="range" class="pm-range" id="trycolorsMaxColors" value="3" min="1" max="5">
+        </div>
+        <div class="pm-slider">
+            <div class="pm-slider-head"><span class="pm-slider-label"><i class="fa-regular fa-bullseye"></i> Parts (Precision)</span><span class="pm-slider-val" data-for="trycolorsMaxParts"></span></div>
+            <input type="range" class="pm-range" id="trycolorsMaxParts" value="10" min="2" max="30">
+        </div>
+        <div class="pm-slider">
+            <div class="pm-slider-head"><span class="pm-slider-label"><i class="fa-regular fa-filter"></i> Prefilter</span><span class="pm-slider-val" data-for="prefilterTopNInput"></span></div>
+            <input type="range" class="pm-range" id="prefilterTopNInput" value="12" min="0" max="60">
+        </div>
+        <div class="pm-slider">
+            <div class="pm-slider-head"><span class="pm-slider-label"><i class="fa-regular fa-star"></i> Top-K Solutions</span><span class="pm-slider-val" data-for="topKInput"></span></div>
+            <input type="range" class="pm-range" id="topKInput" value="5" min="1" max="20">
+        </div>
+    </div>
+
+    <!-- Palette Selector for Trycolors -->
+    <div class="trycolors-palette-selector">
+        <label>Palette:</label>
+        <select id="trycolorsPaletteSelect">
+            <option value="default">Default Artist Palette (20 colors)</option>
+        </select>
+        <button id="trycolorsLoadPaletteBtn">Load</button>
+    </div>
+
+    <details class="trycolors-palette-toggle" open>
+        <summary>Palette (<span id="trycolorsPaletteCount">20</span> colors)</summary>
+        <div class="trycolors-palette-hint">Click to use as target • Right-click to exclude from mixing</div>
+        <div id="trycolorsPaletteGrid" class="trycolors-palette-grid">
+            <!-- Filled by JS -->
+        </div>
+        <div class="trycolors-silenced-controls" id="trycolorsSilencedControls" style="display: none;">
+            <span class="trycolors-silenced-count">
+                <strong id="trycolorsSilencedCount">0</strong> colors excluded from mixing
+            </span>
+            <button class="trycolors-restore-btn" onclick="restoreAllSilencedColors()">Restore All</button>
+        </div>
+    </details>
+</div>
+                  </div>
+                  </div> <!-- /pm-right-col -->
+               </div>
+               <!-- geometrize canvas + rendering logic end -->
+            </div>
+         </main>
+      </div>
+
+      
+
+      <!-- Drag & Drop Color Order modal -->
+      <div id="dragModal" class="rl-modal">
+         <div class="rl-modal-content">
+            <h3 class="rl-modal-title">Drag &amp; Drop Color Order</h3>
+            <div id="frequencyInfo" class="rl-modal-info"></div>
+            <div id="colorPalette" class="color-palette"></div>
+            <div class="rl-modal-buttons">
+               <button id="cancelDragBtn" type="button" class="theme-btn-regular style-2">Cancel</button>
+               <button id="saveDragBtn" type="button" class="theme-btn-primary">Save Order</button>
+            </div>
+         </div>
+      </div>
+
+      <!-- main js -->
+      <script src="assets/js/main.js"></script>
+
+      <!-- geometrize engine (runs in-browser, no backend) -->
+      <script src="assets/js/geometrize.js"></script>
+      <!-- dashboard geometrize wiring (canvas + rendering logic) -->
+      <!-- carry the generated canvas forward from the Dashboard -->
+      <script>window.GEOMAGIC_RESTORE = true;</script>
+      <script src="assets/js/dashboard-geometrize.js"></script>
+      <!-- palette mixing (unmix) — calls the backend API -->
+      <script>
+         function rgbToHex(r, g, b) {
+            return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+         }
+      </script>
+      <!-- embedded palette presets (so they work under file:// where fetch() is blocked) -->
+      <script src="assets/js/colors-data.js"></script>
+      <script src="assets/js/palette-mixing.js"></script>
+      <script>
+         // value badges + blue-fill track for the palette-mixing sliders
+         document.querySelectorAll('.pm-range').forEach(function (r) {
+            var badge = document.querySelector('.pm-slider-val[data-for="' + r.id + '"]');
+            var upd = function () {
+               if (badge) badge.textContent = r.value + '/' + r.max;
+               var min = parseFloat(r.min) || 0;
+               var max = parseFloat(r.max) || 100;
+               var pct = max > min ? ((parseFloat(r.value) - min) / (max - min)) * 100 : 0;
+               r.style.setProperty('--pct', pct + '%');
+            };
+            r.addEventListener('input', upd);
+            upd();
+         });
+
+         // Adjust scroller height when rendering bar shows/hides
+         (function() {
+            var rl = document.getElementById('rendering-logic-section');
+            var sc = document.getElementById('dashScroller');
+            if (!rl || !sc) return;
+            var obs = new MutationObserver(function() {
+               var barH = rl.classList.contains('hidden') ? 0 : rl.offsetHeight;
+               sc.style.height = 'calc(100vh - ' + (96 + barH) + 'px)';
+            });
+            obs.observe(rl, { attributes: true, attributeFilter: ['class'] });
+         })();
+      </script>
+         <!-- rendering logic styles (self-contained so no Tailwind rebuild is needed) -->
+      <style>
+         .rl-section { margin: 0; }
+         .rl-card { background: #fff; border: 2px solid #f4f4f4; border-radius: 0.5rem; padding: 1.5rem; box-shadow: 0px 4px 14px -6px #f4f4f4; }
+         .dark .rl-card { background: #1a1d1f; border: 0; box-shadow: none; }
+         .rl-title { position: relative; padding-left: 1.25rem; color: #272b30; font-size: 1.25rem; line-height: 1.6; font-weight: 600; letter-spacing: -0.4px; }
+         .dark .rl-title { color: #fcfcfc; }
+         .rl-title::before { content: ""; position: absolute; left: 0; top: 2px; bottom: 2px; width: 5px; border-radius: 4px; background: #b1e5fc; }
+         .rl-sub { color: #6f767e; font-size: 0.875rem; margin: 0.5rem 0 1.25rem; }
+         .rl-toolbar { display: flex; gap: 0.5rem; flex-wrap: wrap; padding: 0.75rem; border-radius: 0.5rem; background: #f8f9fa; }
+         .dark .rl-toolbar { background: #111315; }
+         .rendering-icon-btn { position: relative; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 8px; background: #fff; border: 2px solid #d1d1d6; color: #333; cursor: pointer; transition: all 0.2s ease; }
+         .dark .rendering-icon-btn { background: #272b30; border-color: #33383f; color: #c9ced3; }
+         .rendering-icon-btn:hover { border-color: #2a85ff; transform: scale(1.05); }
+         .rendering-icon-btn.active { border-color: #2a85ff; color: #2a85ff; box-shadow: 0 0 0 2px rgba(42, 133, 255, 0.25); }
+         .dark .rendering-icon-btn.active { background: #1b2a44; }
+         .rendering-icon-btn svg { width: 24px; height: 24px; stroke: currentColor; stroke-width: 1.5; fill: none; }
+         .rendering-icon-btn[title]::after { content: attr(title); position: absolute; bottom: -27px; left: 50%; transform: translateX(-50%); background: #000; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 100; }
+         .rendering-icon-btn:hover[title]::after { opacity: 1; }
+
+         /* shape-count slider */
+         .tpl-range { width: 100%; height: 6px; border-radius: 4px; cursor: pointer; accent-color: #2a85ff; }
+
+         /* Drag & Drop Color Order modal */
+         .rl-modal { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.6); align-items: flex-start; justify-content: center; padding: 40px 16px; overflow: auto; }
+         .rl-modal-content { background: #fff; border-radius: 12px; padding: 20px; width: 100%; max-width: 760px; }
+         .dark .rl-modal-content { background: #1a1d1f; }
+         .rl-modal-title { font-size: 18px; font-weight: 700; color: #111; margin-bottom: 10px; }
+         .dark .rl-modal-title { color: #fcfcfc; }
+         .rl-modal-info { font-size: 13px; color: #6f767e; margin-bottom: 12px; }
+         .rl-modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+         .color-palette { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; max-height: 60vh; overflow: auto; padding: 4px; }
+         .color-chip { aspect-ratio: 1 / 1; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; cursor: grab; border: 2px solid rgba(0,0,0,0.08); box-shadow: 0 1px 3px rgba(0,0,0,0.15); user-select: none; }
+         .color-chip.dragging { opacity: 0.4; }
+         .color-chip .chip-number, .color-chip .rgb-value, .color-chip .count { background: rgba(0,0,0,0.72); color: #fff; font-size: 11px; font-weight: 600; line-height: 1.4; padding: 1px 6px; border-radius: 4px; }
+         @media (max-width: 640px) { .color-palette { grid-template-columns: repeat(3, 1fr); } }
+      </style>
+   </body>
+
+</html>

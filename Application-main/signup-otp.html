@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+   <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+      <!-- Title -->
+      <title>Sign OTP | GeoMagic</title>
+
+      <!-- favicon -->
+      <link rel="apple-touch-icon" sizes="180x180" href="assets/img/favicon/apple-touch-icon.png">
+      <link rel="icon" type="image/png" sizes="512x512" href="assets/img/favicon/android-chrome-512x512.png">
+      <link rel="icon" type="image/png" sizes="192x192" href="assets/img/favicon/android-chrome-192x192.png">
+      <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon/favicon-32x32.png">
+      <link rel="icon" type="image/png" sizes="16x16" href="assets/img/favicon/favicon-16x16.png">
+      <link rel="shortcut icon" type="image/x-icon" href="assets/img/favicon/favicon.ico">
+      <link rel="manifest" href="assets/img/favicon/site.webmanifest">
+
+      <!-- google fonts cdn -->
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Sora:wght@100..800&family=Source+Code+Pro:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
+
+      <!-- vendor css -->
+      <link rel="stylesheet" href="assets/fontawesome/fontawesome.min.css">
+
+      <!-- main css -->
+      <link rel="stylesheet" href="assets/css/output.css">
+   </head>
+
+   <body class="bg-white dark:bg-neutral-7">
+
+      <div class="flex">
+         <!-- sidebar start -->
+         <aside class="shrink-0 w-80 xl:w-100 h-screen sticky top-0 left-0 bg-[#F4F4F4] dark:bg-neutral-8 p-6 flex items-center justify-center overflow-auto max-lg:hidden">
+            <!-- logo -->
+            <a href="index.html" class="inline-block fixed top-6 left-6">
+               <img src="assets/img/logo/logo-icon.png" alt="logo" class="w-9 lg:w-12 aspect-square hidden dark:inline-block">
+               <img src="assets/img/logo/logo-icon-blue.png" alt="logo" class="w-9 lg:w-12 aspect-square dark:hidden">
+            </a>
+
+            <!-- sidebar content -->
+            <div class="flex flex-col items-center justify-center gap-12">
+               <img src="assets/img/shape/sidebar-shape.png" alt="sidebar shape" class="w-38">
+               <h4 class="text-neutral-6 dark:text-neutral-3 text-[32px] leading-[1.25] font-semibold -tracking-[0.96px]">Plan includes</h4>
+               <ul class="space-y-5">
+                  <li class="flex items-center gap-3 text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px]">
+                     <span class="flex items-center justify-center w-6 h-6 text-theme-primary-2 text-xl"><i class="fa-regular fa-circle-check"></i></span>
+                     <span>Unlimited uploads</span>
+                  </li>
+                  <li class="flex items-center gap-3 text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px]">
+                     <span class="flex items-center justify-center w-6 h-6 text-theme-primary-2 text-xl"><i class="fa-regular fa-circle-check"></i></span>
+                     <span>Pro tips</span>
+                  </li>
+                  <li class="flex items-center gap-3 text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px]">
+                     <span class="flex items-center justify-center w-6 h-6 text-theme-primary-2 text-xl"><i class="fa-regular fa-circle-check"></i></span>
+                     <span>Free forever</span>
+                  </li>
+                  <li class="flex items-center gap-3 text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px]">
+                     <span class="flex items-center justify-center w-6 h-6 text-theme-primary-2 text-xl"><i class="fa-regular fa-circle-check"></i></span>
+                     <span>Full options</span>
+                  </li>
+               </ul>
+            </div>
+         </aside>
+         <!-- sidebar end -->
+
+         <main class="grow min-w-0">
+            <!-- signup header -->
+            <header class="p-6 flex items-center justify-between lg:justify-end">
+               <!-- logo -->
+               <a href="index.html" class="inline-block lg:hidden">
+                  <img src="assets/img/logo/logo-icon.png" alt="logo" class="w-9 lg:w-12 aspect-square hidden dark:inline-block">
+                  <img src="assets/img/logo/logo-icon-blue.png" alt="logo" class="w-9 lg:w-12 aspect-square dark:hidden">
+               </a>
+               <div class="flex items-center">
+                  <p class="p-4 text-neutral-4 dark:text-[#9A9FA5] text-xs font-semibold -tracking-[0.12px]">Already a member? <a href="signin.html" class="text-neutral-7 dark:text-neutral-1 hover:text-theme-primary dark:hover:text-white">Sign in</a></p>
+                  <!-- theme toggle -->
+                  <label class="cursor-pointer relative flex items-center gap-2.5">
+                     <input type="checkbox" title="theme toggle" class="sr-only peer" id="themeToggle" checked>
+                     <span class="flex items-center justify-center w-9 h-9 rounded-lg bg-theme-primary"></span>
+                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white hidden dark:block">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
+                     </svg>
+                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white dark:hidden">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+                     </svg>
+                  </label>
+               </div>
+            </header>
+            <!-- signup header end -->
+
+            <!-- signup main wrapper -->
+            <div class="min-h-[calc(100vh-96px)] flex items-center justify-center overflow-auto p-10">
+               <!-- signup form start -->
+               <form action="#" class="max-w-65">
+                  <h2 class="text-neutral-6 dark:text-neutral-1 text-5xl font-semibold -tracking-[1.44px] mb-8">Sign up</h2>
+                  <div>
+                     <h6 class="text-neutral-6 dark:text-white text-sm leading-6 font-semibold -tracking-[0.14px] mb-8">We just send you a verify code. Check your inbox to get them.</h6>
+                     <div class="space-y-3 mb-8">
+                        <div class="flex gap-3">
+                           <input type="text" title="otp input" class="w-full h-18 px-3 rounded-xl bg-[#F4F4F4] dark:bg-neutral-6 text-neutral-7 dark:text-neutral-1 text-5xl leading-none font-semibold -tracking-[1.44px] text-center" value="8">
+                           <input type="text" title="otp input" class="w-full h-18 px-3 rounded-xl bg-[#F4F4F4] dark:bg-neutral-6 text-neutral-7 dark:text-neutral-1 text-5xl leading-none font-semibold -tracking-[1.44px] text-center" value="6">
+                           <input type="text" title="otp input" class="w-full h-18 px-3 rounded-xl bg-[#F4F4F4] dark:bg-neutral-6 text-neutral-7 dark:text-neutral-1 text-5xl leading-none font-semibold -tracking-[1.44px] text-center" value="4">
+                           <input type="text" title="otp input" class="w-full h-18 px-3 rounded-xl bg-[#F4F4F4] dark:bg-neutral-6 text-neutral-7 dark:text-neutral-1 text-5xl leading-none font-semibold -tracking-[1.44px] text-center" value="2">
+                        </div>
+                        <button type="button" class="theme-btn-primary w-full flex! items-center justify-center gap-2"><span class="flex items-center justify-center w-6 h-6 text-xl"><i class="fa-regular fa-loader fa-spin"></i></span> Continue</button>
+                     </div>
+                     <p class="text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px]">This site is protected by reCAPTCHA and the Google Privacy Policy.</p>
+                  </div>
+               </form>
+               <!-- signup form end -->
+            </div>
+         </main>
+      </div>
+
+      <!-- main js -->
+      <script src="assets/js/main.js"></script>
+   </body>
+
+</html>

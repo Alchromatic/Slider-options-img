@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+
+   <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+      <!-- Title -->
+      <title>GeoMagic</title>
+
+      <!-- favicon -->
+      <link rel="apple-touch-icon" sizes="180x180" href="assets/img/favicon/apple-touch-icon.png">
+      <link rel="icon" type="image/png" sizes="512x512" href="assets/img/favicon/android-chrome-512x512.png">
+      <link rel="icon" type="image/png" sizes="192x192" href="assets/img/favicon/android-chrome-192x192.png">
+      <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon/favicon-32x32.png">
+      <link rel="icon" type="image/png" sizes="16x16" href="assets/img/favicon/favicon-16x16.png">
+      <link rel="shortcut icon" type="image/x-icon" href="assets/img/favicon/favicon.ico">
+      <link rel="manifest" href="assets/img/favicon/site.webmanifest">
+
+      <!-- google fonts cdn -->
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Sora:wght@100..800&family=Source+Code+Pro:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
+
+      <!-- vendor css -->
+      <link rel="stylesheet" href="assets/fontawesome/fontawesome.min.css">
+
+      <!-- main css -->
+      <link rel="stylesheet" href="assets/css/output.css">
+   </head>
+
+   <body class="bg-white dark:bg-neutral-8">
+
+      <!-- header section start -->
+      <header>
+         <!-- Hidden Checkbox to Control Offcanvas Visibility -->
+         <input type="checkbox" title="offcanvas toggle" id="offcanvas-toggle" class="hidden peer">
+
+         <!-- main header -->
+         <div class="dark:bg-neutral-7 px-9 lg:px-10 py-5 2xl:py-6 shadow-[1px_0px_0px_0px_#111315_inset] flex items-center justify-between">
+            <!-- logo -->
+            <a href="index.html" class="inline-flex items-center gap-2.5">
+               <img src="assets/img/logo/logo-icon.png" alt="logo" class="w-9 lg:w-12 aspect-square hidden dark:inline-block">
+               <img src="assets/img/logo/logo-icon-blue.png" alt="logo" class="w-9 lg:w-12 aspect-square dark:hidden">
+               <span class="text-neutral-7 dark:text-white text-2xl lg:text-[28px] font-extrabold font-sora max-md:hidden">GeoMagic</span>
+            </a>
+
+            <div class="flex items-center gap-2.5">
+               <!-- nav -->
+               <nav class="hidden lg:flex items-center gap-15 xl:gap-20">
+                  <ul class="flex items-center gap-8 xl:gap-10">
+                     <li><a href="#" class="text-neutral-6 dark:text-neutral-1 text-[15px] -tracking-[0.15px] font-semibold hover:text-theme-primary">Home</a></li>
+                     <li><a href="#" class="text-neutral-6 dark:text-neutral-1 text-[15px] -tracking-[0.15px] font-semibold hover:text-theme-primary">Features</a></li>
+                     <li><a href="pricing.html" class="text-neutral-6 dark:text-neutral-1 text-[15px] -tracking-[0.15px] font-semibold hover:text-theme-primary">Pricing</a></li>
+                     <li><a href="#" class="text-neutral-6 dark:text-neutral-1 text-[15px] -tracking-[0.15px] font-semibold hover:text-theme-primary">Contact Us</a></li>
+                  </ul>
+                  <div class="flex items-center gap-2.5">
+                     <a href="signup.html" class="theme-btn-regular">Signup</a>
+                     <a href="signin.html" class="theme-btn-primary">Login</a>
+                  </div>
+               </nav>
+               <!-- menu toggle bar -->
+               <label for="offcanvas-toggle" class="cursor-pointer lg:hidden"><img src="assets/img/icon/menu-bar.svg" alt="menu bar" class="w-6"></label>
+               <!-- theme toggle -->
+               <label class="cursor-pointer relative flex items-center gap-2.5">
+                  <input type="checkbox" title="theme toggle" class="sr-only peer" id="themeToggle" checked>
+                  <span class="flex items-center justify-center w-9 h-9 rounded-lg bg-theme-primary"></span>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white hidden dark:block">
+                     <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
+                  </svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white dark:hidden">
+                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+                  </svg>
+               </label>
+            </div>
+         </div>
+
+         <!-- offcanvas header -->
+         <div class="fixed top-0 z-50 h-screen w-80 max-w-full bg-white dark:bg-neutral-7 transition-all duration-500 -translate-x-full peer-checked:translate-x-0 lg:hidden">
+            <div class="flex items-center justify-between p-4 sticky top-0 left-0 w-full">
+               <!-- logo -->
+               <a href="index.html" class="inline-flex items-center gap-2.5">
+                  <img src="assets/img/logo/logo-icon.png" alt="logo" class="w-9 aspect-square hidden dark:inline-block">
+                  <img src="assets/img/logo/logo-icon-blue.png" alt="logo" class="w-9 aspect-square dark:hidden">
+                  <span class="text-neutral-7 dark:text-white text-2xl font-extrabold font-sora">GeoMagic</span>
+               </a>
+
+               <!-- offcanvas close btn -->
+               <label for="offcanvas-toggle" class="cursor-pointer text-neutral-6 dark:text-white text-xl flex items-center justify-center w-6 h-6"><i class="fa-regular fa-xmark"></i></label>
+            </div>
+            <div class="p-4">
+               <ul class="flex flex-col items-center justify-center gap-8">
+                  <li><a href="#" class="text-neutral-6 dark:text-neutral-1 text-[15px] -tracking-[0.15px] font-semibold hover:text-theme-primary">Home</a></li>
+                  <li><a href="#" class="text-neutral-6 dark:text-neutral-1 text-[15px] -tracking-[0.15px] font-semibold hover:text-theme-primary">Features</a></li>
+                  <li><a href="pricing.html" class="text-neutral-6 dark:text-neutral-1 text-[15px] -tracking-[0.15px] font-semibold hover:text-theme-primary">Pricing</a></li>
+                  <li><a href="#" class="text-neutral-6 dark:text-neutral-1 text-[15px] -tracking-[0.15px] font-semibold hover:text-theme-primary">Contact Us</a></li>
+               </ul>
+               <div class="flex items-center justify-center gap-2.5 mt-10">
+                  <a href="signup.html" class="theme-btn-regular">Signup</a>
+                  <a href="signin.html" class="theme-btn-primary">Login</a>
+               </div>
+            </div>
+         </div>
+         <!-- offcanvas overlay -->
+         <label for="offcanvas-toggle" class="overlay fixed top-0 left-0 z-40 w-full h-full bg-black/70 transition-all duration-400 opacity-0 invisible peer-checked:opacity-100 peer-checked:visible lg:hidden"></label>
+
+      </header>
+      <!-- header section end -->
+
+      <main>
+         <!-- hero section start -->
+         <section class="relative pt-9 pb-6 md:py-15 lg:py-22 z-10">
+            <div class="container lg:max-w-267">
+               <div class="max-w-82 sm:max-w-104 md:max-w-116 lg:max-w-140 xl:max-w-248 mx-auto text-center relative z-10">
+                  <h1 class="text-neutral-6 dark:text-white text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl leading-[1.2] font-semibold mb-2 md:mb-6">
+                     Explore the Possibilities <br> of AI Creating with <span class="relative">GeoMagic <img src="assets/img/shape/title-shape.png" alt="title shape" class="absolute -bottom-0.5 md:-bottom-1.5 right-0 -z-10 w-full"></span>
+                  </h1>
+                  <p class="text-[#6F767E] dark:text-neutral-2 text-xs md:text-sm lg:text-base xl:text-lg 2xl:text-xl leading-[1.6] font-sora mb-3 md:mb-8 max-w-189 mx-auto">Unleash the power of AI within GeoMagic. Upgrade your productivity with GeoMagic, the open AI.</p>
+                  <a href="#" class="text-white text-xs leading-5 font-bold font-sourceCodePro tracking-[0.42px] uppercase px-5 md:px-6 lg:px-7 py-2 md:py-2.5 lg:py-3 relative z-10">
+                     <span>Get started</span>
+                     <img src="assets/img/shape/btn-bg.png" alt="btn bg" class="w-full h-full absolute top-0 left-0 -z-10">
+                  </a>
+                  <img src="assets/img/shape/hero-circle-shape.svg" alt="hero-circle-shape" class="w-2 md:w-4 absolute bottom-5 right-10 md:right-15 xl:right-40 -z-10">
+               </div>
+            </div>
+            <div class="w-30 sm:w-65 md:w-85 lg:w-100 xl:w-120 2xl:w-134.5 absolute top-7.5 left-0 -z-10">
+               <img src="assets/img/bg/hero-bg.png" alt="hero bg" class="w-full hidden dark:block">
+               <img src="assets/img/bg/hero-bg-light.png" alt="hero bg" class="w-full dark:hidden">
+            </div>
+         </section>
+         <!-- hero section end -->
+
+         <!-- image generate section start -->
+         <section class="md:pt-6 md:pb-15 lg:pb-20.5">
+            <div class="container lg:max-w-267 max-md:px-0!">
+               <div class="flex gap-2 max-md:flex-col">
+                  <div class="flex flex-col gap-2 grow">
+                     <div class="grow bg-white dark:bg-neutral-7 p-6 rounded-lg border-2 border-[#F4F4F4] dark:border-0 shadow-[0px_4px_14px_-6px_#F4F4F4] dark:shadow-none">
+                        <h5 class="text-neutral-6 dark:text-neutral-1 text-xl leading-[1.6] font-semibold -tracking-[0.4px] relative pl-5 mb-9 before:w-[5px] before:h-full before:bg-secondary-3 before:rounded before:absolute before:left-0 before:top-0">Generate Images</h5>
+                        <div>
+                           <h6 class="text-neutral-6 dark:text-neutral-3 text-sm leading-6 font-semibold -tracking-[0.14px] py-0.5 mb-3">Images Preview <button type="button" title="info" class="text-[#6F767E] hover:text-white ml-1"><i class="fa-solid fa-circle-info"></i></button></h6>
+                           <div>
+                              <label class="relative flex items-center justify-center w-full h-77 md:h-147 bg-[#F4F4F4] dark:bg-neutral-6 rounded-xl cursor-pointer">
+                                 <input type="file" class="sr-only">
+                                 <span class="inline-flex items-center gap-2 text-neutral-6 dark:text-neutral-1 text-[15px] leading-[1.6] -tracking-[0.15px] font-bold px-4.5 py-2.5 bg-[#E0EBF2] dark:bg-neutral-7 border-2 border-[#E0EBF1] dark:border-neutral-6 rounded-xl shadow-[0px_4px_4px_0px_rgba(0,0,0,0.10),_0px_12px_13px_-6px_rgba(0,0,0,0.04)] dark:shadow-[0px_2px_4px_0px_#31353B_inset,_0px_4px_4px_0px_rgba(0,0,0,0.25),_0px_12px_13px_-6px_rgba(0,0,0,.04)] cursor-pointer transition-all duration-300 hover:bg-[#d1e8f6] dark:hover:bg-neutral-6"><span class="text-neutral-4"><i class="fa-regular fa-arrow-up-from-bracket"></i></span> Click or drop image</span>
+                              </label>
+                           </div>
+                        </div>
+                     </div>
+                     <div class="bg-white dark:bg-neutral-7 p-6 max-md:py-3 rounded-lg flex items-center gap-4 flex-wrap border-2 border-[#F4F4F4] dark:border-0 shadow-[0px_4px_14px_-6px_#F4F4F4] dark:shadow-none">
+                        <button type="button" class="theme-btn-regular style-2 inline-flex! items-center justify-center gap-2 grow"><span class="text-neutral-4"><i class="fa-regular fa-arrows-rotate-reverse"></i></span> Reset</button>
+                        <button type="button" class="theme-btn-regular style-2 inline-flex! items-center justify-center gap-2 grow"><span class="text-neutral-4"><i class="fa-regular style-2 fa-layer-group"></i></span> Random</button>
+                        <button type="button" class="theme-btn-regular style-2 inline-flex! items-center justify-center gap-2 grow"><span class="text-neutral-4"><i class="fa-regular fa-paper-plane-top"></i></span> Step</button>
+                        <button type="button" class="theme-btn-primary inline-flex! items-center justify-center gap-2 grow group"><span class="text-white dark:group-hover:text-neutral-6 transition-all duration-300"><i class="fa-regular fa-play"></i></span> Reset</button>
+                     </div>
+                  </div>
+                  <div class="flex flex-col gap-2 md:shrink-0 md:w-75 lg:w-85">
+                     <div class="bg-white dark:bg-neutral-7 px-3 py-6 rounded-lg border-2 border-[#F4F4F4] dark:border-0 shadow-[0px_4px_14px_-6px_#F4F4F4] dark:shadow-none">
+                        <h5 class="text-neutral-6 dark:text-neutral-1 text-xl leading-[1.6] font-semibold -tracking-[0.4px] relative pl-5 mb-9 before:w-[5px] before:h-full before:bg-secondary-3 before:rounded before:absolute before:left-0 before:top-0">Settings</h5>
+                        <div class="flex flex-col gap-3 pr-3.5">
+                           <div>
+                              <h6 class="text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px] py-0.5">Shape Opacity</h6>
+                              <div class="relative pt-9">
+                                 <input type="range" title="shape-opacity" class="range-slider w-full cursor-pointer" min="0" max="200" value="180">
+                                 <span class="slider-value inline-block text-neutral-6 dark:text-[#F4F4F4] text-xs leading-[2] font-semibold px-2 py-px bg-[#f4f4f4] dark:bg-neutral-6 border border-white/12 rounded shadow-[0px_0px_1px_0px_rgba(0,0,0,0.02)_inset,_0px_2px_4px_0px_rgba(0,0,0,0.10)] dark:shadow-[0px_0px_1px_0px_#000_inset,_0px_2px_4px_0px_rgba(0,0,0,0.10)] absolute top-0 left-0 -translate-x-1/2 pointer-events-none transition-[left] duration-100 ease-linear">180</span>
+                              </div>
+                           </div>
+                           <div>
+                              <h6 class="text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px] py-0.5">Background Opacity</h6>
+                              <div class="relative pt-9">
+                                 <input type="range" title="background-opacity" class="range-slider w-full cursor-pointer" min="0" max="200" value="70">
+                                 <span class="slider-value inline-block text-neutral-6 dark:text-[#F4F4F4] text-xs leading-[2] font-semibold px-2 py-px bg-[#f4f4f4] dark:bg-neutral-6 border border-white/12 rounded shadow-[0px_0px_1px_0px_rgba(0,0,0,0.02)_inset,_0px_2px_4px_0px_rgba(0,0,0,0.10)] dark:shadow-[0px_0px_1px_0px_#000_inset,_0px_2px_4px_0px_rgba(0,0,0,0.10)] absolute top-0 left-0 -translate-x-1/2 pointer-events-none transition-[left] duration-100 ease-linear">180</span>
+                              </div>
+                           </div>
+                           <div>
+                              <h6 class="text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px] py-0.5">Random Shapes</h6>
+                              <div class="relative pt-9">
+                                 <input type="range" title="random-shapes" class="range-slider w-full cursor-pointer" min="0" max="200" value="140">
+                                 <span class="slider-value inline-block text-neutral-6 dark:text-[#F4F4F4] text-xs leading-[2] font-semibold px-2 py-px bg-[#f4f4f4] dark:bg-neutral-6 border border-white/12 rounded shadow-[0px_0px_1px_0px_rgba(0,0,0,0.02)_inset,_0px_2px_4px_0px_rgba(0,0,0,0.10)] dark:shadow-[0px_0px_1px_0px_#000_inset,_0px_2px_4px_0px_rgba(0,0,0,0.10)] absolute top-0 left-0 -translate-x-1/2 pointer-events-none transition-[left] duration-100 ease-linear">180</span>
+                              </div>
+                           </div>
+                           <div>
+                              <h6 class="text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px] py-0.5">Mutations</h6>
+                              <div class="relative pt-9">
+                                 <input type="range" title="mutations" class="range-slider w-full cursor-pointer" min="0" max="200" value="90">
+                                 <span class="slider-value inline-block text-neutral-6 dark:text-[#F4F4F4] text-xs leading-[2] font-semibold px-2 py-px bg-[#f4f4f4] dark:bg-neutral-6 border border-white/12 rounded shadow-[0px_0px_1px_0px_rgba(0,0,0,0.02)_inset,_0px_2px_4px_0px_rgba(0,0,0,0.10)] dark:shadow-[0px_0px_1px_0px_#000_inset,_0px_2px_4px_0px_rgba(0,0,0,0.10)] absolute top-0 left-0 -translate-x-1/2 pointer-events-none transition-[left] duration-100 ease-linear">180</span>
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+                     <div class="bg-white dark:bg-neutral-7 md:px-3 p-6 rounded-lg border-2 border-[#F4F4F4] dark:border-0 shadow-[0px_4px_14px_-6px_#F4F4F4] dark:shadow-none grid grid-cols-2 gap-4">
+                        <label class="relative cursor-pointer flex items-center gap-3 text-neutral-7 dark:text-neutral-1 text-sm font-semibold -tracking-[0.14px]">
+                           <input type="checkbox" class="sr-only  peer">
+                           <span class="shrink-0 w-6 h-6 flex items-center justify-center rounded-md bg-[#F4F4F4] dark:bg-transparent border border-[#6F767E66] text-white text-[0px] peer-checked:text-base peer-checked:bg-theme-primary! peer-checked:border-theme-primary transition-all duration-300"><i class="fa-regular fa-check"></i></span>
+                           <span>Rectangles</span>
+                        </label>
+                        <label class="relative cursor-pointer flex items-center gap-3 text-neutral-7 dark:text-neutral-1 text-sm font-semibold -tracking-[0.14px]">
+                           <input type="checkbox" class="sr-only  peer">
+                           <span class="shrink-0 w-6 h-6 flex items-center justify-center rounded-md bg-[#F4F4F4] dark:bg-transparent border border-[#6F767E66] text-white text-[0px] peer-checked:text-base peer-checked:bg-theme-primary! peer-checked:border-theme-primary transition-all duration-300"><i class="fa-regular fa-check"></i></span>
+                           <span>Rotated</span>
+                        </label>
+                        <label class="relative cursor-pointer flex items-center gap-3 text-neutral-7 dark:text-neutral-1 text-sm font-semibold -tracking-[0.14px]">
+                           <input type="checkbox" class="sr-only  peer">
+                           <span class="shrink-0 w-6 h-6 flex items-center justify-center rounded-md bg-[#F4F4F4] dark:bg-transparent border border-[#6F767E66] text-white text-[0px] peer-checked:text-base peer-checked:bg-theme-primary! peer-checked:border-theme-primary transition-all duration-300"><i class="fa-regular fa-check"></i></span>
+                           <span>Triangles</span>
+                        </label>
+                        <label class="relative cursor-pointer flex items-center gap-3 text-neutral-7 dark:text-neutral-1 text-sm font-semibold -tracking-[0.14px]">
+                           <input type="checkbox" class="sr-only  peer">
+                           <span class="shrink-0 w-6 h-6 flex items-center justify-center rounded-md bg-[#F4F4F4] dark:bg-transparent border border-[#6F767E66] text-white text-[0px] peer-checked:text-base peer-checked:bg-theme-primary! peer-checked:border-theme-primary transition-all duration-300"><i class="fa-regular fa-check"></i></span>
+                           <span>Ellipses</span>
+                        </label>
+                        <label class="relative cursor-pointer flex items-center gap-3 text-neutral-7 dark:text-neutral-1 text-sm font-semibold -tracking-[0.14px]">
+                           <input type="checkbox" class="sr-only  peer">
+                           <span class="shrink-0 w-6 h-6 flex items-center justify-center rounded-md bg-[#F4F4F4] dark:bg-transparent border border-[#6F767E66] text-white text-[0px] peer-checked:text-base peer-checked:bg-theme-primary! peer-checked:border-theme-primary transition-all duration-300"><i class="fa-regular fa-check"></i></span>
+                           <span>Rotates Ellipses</span>
+                        </label>
+                        <label class="relative cursor-pointer flex items-center gap-3 text-neutral-7 dark:text-neutral-1 text-sm font-semibold -tracking-[0.14px]">
+                           <input type="checkbox" class="sr-only  peer">
+                           <span class="shrink-0 w-6 h-6 flex items-center justify-center rounded-md bg-[#F4F4F4] dark:bg-transparent border border-[#6F767E66] text-white text-[0px] peer-checked:text-base peer-checked:bg-theme-primary! peer-checked:border-theme-primary transition-all duration-300"><i class="fa-regular fa-check"></i></span>
+                           <span>Circles</span>
+                        </label>
+                        <label class="relative cursor-pointer flex items-center gap-3 text-neutral-7 dark:text-neutral-1 text-sm font-semibold -tracking-[0.14px]">
+                           <input type="checkbox" class="sr-only  peer">
+                           <span class="shrink-0 w-6 h-6 flex items-center justify-center rounded-md bg-[#F4F4F4] dark:bg-transparent border border-[#6F767E66] text-white text-[0px] peer-checked:text-base peer-checked:bg-theme-primary! peer-checked:border-theme-primary transition-all duration-300"><i class="fa-regular fa-check"></i></span>
+                           <span>Lines</span>
+                        </label>
+                        <label class="relative cursor-pointer flex items-center gap-3 text-neutral-7 dark:text-neutral-1 text-sm font-semibold -tracking-[0.14px]">
+                           <input type="checkbox" class="sr-only  peer">
+                           <span class="shrink-0 w-6 h-6 flex items-center justify-center rounded-md bg-[#F4F4F4] dark:bg-transparent border border-[#6F767E66] text-white text-[0px] peer-checked:text-base peer-checked:bg-theme-primary! peer-checked:border-theme-primary transition-all duration-300"><i class="fa-regular fa-check"></i></span>
+                           <span>Bezier Curves</span>
+                        </label>
+                     </div>
+                     <div class="bg-white dark:bg-neutral-7 p-6 rounded-lg border-2 border-[#F4F4F4] dark:border-0 shadow-[0px_4px_14px_-6px_#F4F4F4] dark:shadow-none">
+                        <div class="grid grid-cols-2 gap-3 mb-8">
+                           <div>
+                              <label for="shape-added" class="block text-neutral-4 text-xs font-bold -tracking-[0.12px] mb-3 cursor-pointer">Shape Added</label>
+                              <input type="text" id="shape-added" class="w-full h-12 rounded-xl bg-[#F4F4F4] dark:bg-neutral-8 border border-[#F4F4F4] dark:border-neutral-6 px-5 text-neutral-8 dark:text-neutral-1 text-[15px] font-semibold -tracking-[0.15px] text-center focus:outline-none" value="255">
+                           </div>
+                           <div>
+                              <label for="max-shape-limit" class="block text-neutral-4 text-xs font-bold -tracking-[0.12px] mb-3 cursor-pointer">Max Shapes Limit</label>
+                              <input type="text" id="max-shape-limit" class="w-full h-12 rounded-xl bg-[#F4F4F4] dark:bg-neutral-8 border border-[#F4F4F4] dark:border-neutral-6 px-5 text-neutral-8 dark:text-neutral-1 text-[15px] font-semibold -tracking-[0.15px] text-center focus:outline-none" value="4000">
+                           </div>
+                        </div>
+                        <button type="button" class="theme-btn-primary block w-full">Save</button>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </section>
+         <!-- image generate section end -->
+
+         <!-- example section start -->
+         <section class="max-md:py-6 max-md:bg-neutral-7">
+            <div class="container lg:max-w-255">
+               <!-- title -->
+               <h2 class="text-center text-neutral-7 dark:text-white text-[32px] md:text-4xl lg:text-5xl xl:text-6xl leading-[1.2] font-semibold mb-8">Examples</h2>
+
+               <!-- product cards -->
+               <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-8">
+                  <!-- single card -->
+                  <div>
+                     <div class="group overflow-hidden rounded-xl h-50">
+                        <img src="assets/img/thumbs/example-product-1.jpg" alt="product card" class="w-full h-full object-cover group-hover:scale-110 transition-all duration-1000 ease-in-out">
+                     </div>
+                     <div class="pt-4">
+                        <h6 class="text-neutral-7 dark:text-neutral-1 text-[15px] leading-[1.6] font-semibold -tracking-[0.15px] mb-2">Fleet - Travel shopping</h6>
+                        <p class="text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px]">Image</p>
+                     </div>
+                  </div>
+
+                  <!-- single card -->
+                  <div>
+                     <div class="group overflow-hidden rounded-xl h-50">
+                        <img src="assets/img/thumbs/example-product-2.jpg" alt="product card" class="w-full h-full object-cover group-hover:scale-110 transition-all duration-1000 ease-in-out">
+                     </div>
+                     <div class="pt-4">
+                        <h6 class="text-neutral-7 dark:text-neutral-1 text-[15px] leading-[1.6] font-semibold -tracking-[0.15px] mb-2">Brand business card</h6>
+                        <p class="text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px]">Image</p>
+                     </div>
+                  </div>
+
+                  <!-- single card -->
+                  <div>
+                     <div class="group overflow-hidden rounded-xl h-50">
+                        <img src="assets/img/thumbs/example-product-3.jpg" alt="product card" class="w-full h-full object-cover group-hover:scale-110 transition-all duration-1000 ease-in-out">
+                     </div>
+                     <div class="pt-4">
+                        <h6 class="text-neutral-7 dark:text-neutral-1 text-[15px] leading-[1.6] font-semibold -tracking-[0.15px] mb-2">Bottle for my business, with black</h6>
+                        <p class="text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px]">Image</p>
+                     </div>
+                  </div>
+
+                  <!-- single card -->
+                  <div>
+                     <div class="group overflow-hidden rounded-xl h-50">
+                        <img src="assets/img/thumbs/example-product-4.jpg" alt="product card" class="w-full h-full object-cover group-hover:scale-110 transition-all duration-1000 ease-in-out">
+                     </div>
+                     <div class="pt-4">
+                        <h6 class="text-neutral-7 dark:text-neutral-1 text-[15px] leading-[1.6] font-semibold -tracking-[0.15px] mb-2">Bottle for my business, with black</h6>
+                        <p class="text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px]">Image</p>
+                     </div>
+                  </div>
+
+                  <!-- single card -->
+                  <div>
+                     <div class="group overflow-hidden rounded-xl h-50">
+                        <img src="assets/img/thumbs/example-product-5.jpg" alt="product card" class="w-full h-full object-cover group-hover:scale-110 transition-all duration-1000 ease-in-out">
+                     </div>
+                     <div class="pt-4">
+                        <h6 class="text-neutral-7 dark:text-neutral-1 text-[15px] leading-[1.6] font-semibold -tracking-[0.15px] mb-2">Fleet - Travel shopping</h6>
+                        <p class="text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px]">Image</p>
+                     </div>
+                  </div>
+
+                  <!-- single card -->
+                  <div>
+                     <div class="group overflow-hidden rounded-xl h-50">
+                        <img src="assets/img/thumbs/example-product-6.jpg" alt="product card" class="w-full h-full object-cover group-hover:scale-110 transition-all duration-1000 ease-in-out">
+                     </div>
+                     <div class="pt-4">
+                        <h6 class="text-neutral-7 dark:text-neutral-1 text-[15px] leading-[1.6] font-semibold -tracking-[0.15px] mb-2">Brand business card</h6>
+                        <p class="text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px]">Image</p>
+                     </div>
+                  </div>
+
+                  <!-- single card -->
+                  <div>
+                     <div class="group overflow-hidden rounded-xl h-50">
+                        <img src="assets/img/thumbs/example-product-7.jpg" alt="product card" class="w-full h-full object-cover group-hover:scale-110 transition-all duration-1000 ease-in-out">
+                     </div>
+                     <div class="pt-4">
+                        <h6 class="text-neutral-7 dark:text-neutral-1 text-[15px] leading-[1.6] font-semibold -tracking-[0.15px] mb-2">Fleet - Travel shopping</h6>
+                        <p class="text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px] flex items-center gap-2">
+                           <span><i class="fa-regular fa-star"></i></span>
+                           <span>No ratings</span>
+                        </p>
+                     </div>
+                  </div>
+
+                  <!-- single card -->
+                  <div>
+                     <div class="group overflow-hidden rounded-xl h-50">
+                        <img src="assets/img/thumbs/example-product-8.jpg" alt="product card" class="w-full h-full object-cover group-hover:scale-110 transition-all duration-1000 ease-in-out">
+                     </div>
+                     <div class="pt-4">
+                        <h6 class="text-neutral-7 dark:text-neutral-1 text-[15px] leading-[1.6] font-semibold -tracking-[0.15px] mb-2">Fleet - Travel shopping</h6>
+                        <p class="text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px] flex items-center gap-2">
+                           <span><i class="fa-regular fa-star"></i></span>
+                           <span>No ratings</span>
+                        </p>
+                     </div>
+                  </div>
+
+                  <!-- single card -->
+                  <div>
+                     <div class="group overflow-hidden rounded-xl h-50">
+                        <img src="assets/img/thumbs/example-product-9.jpg" alt="product card" class="w-full h-full object-cover group-hover:scale-110 transition-all duration-1000 ease-in-out">
+                     </div>
+                     <div class="pt-4">
+                        <h6 class="text-neutral-7 dark:text-neutral-1 text-[15px] leading-[1.6] font-semibold -tracking-[0.15px] mb-2">Fleet - Travel shopping</h6>
+                        <p class="text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px] flex items-center gap-2">
+                           <span><i class="fa-regular fa-star"></i></span>
+                           <span>No ratings</span>
+                        </p>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </section>
+         <!-- example section end -->
+
+         <!-- pricing section start -->
+         <section class="pt-10 md:pt-20 lg:pt-25 pb-15 md:pb-20">
+            <div class="container xl:max-w-298! px-9!">
+               <!-- title -->
+               <div class="text-center mb-13 lg:mb-20">
+                  <h2 class="text-neutral-7 dark:text-white text-[32px] md:text-4xl lg:text-5xl xl:text-6xl leading-[1.2] font-semibold mb-6">Pay once, use forever</h2>
+                  <p class="text-[#757185] text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl leading-normal font-sora">Get started with GeoMagic - AI chat app today and experience the power of AI in your conversations!</p>
+               </div>
+
+               <!-- pricing tab -->
+               <div class="flex items-center justify-center w-fit mx-auto p-1 rounded-xl border border-white/15 bg-[#F4F4F4] dark:bg-neutral-7 mb-5.5 md:mb-10">
+                  <button type="button" class="px-5 py-3 min-w-37 rounded-lg text-xs text-neutral-7 dark:text-white/50 tracking-[0.42px] uppercase font-bold">monthly</button>
+                  <button type="button" class="flex items-center justify-center gap-2.5 px-5 py-3 min-w-37 rounded-lg text-xs text-white bg-neutral-8 tracking-[0.42px] uppercase font-bold">annually <span class="font-sourceCodePro inline-block leading-none px-1 py-0.5 bg-[#007AFF] rounded">-10%</span></button>
+               </div>
+
+               <!-- pricing cards -->
+               <div class="grid md:grid-cols-2 lg:grid-cols-3 items-center gap-6">
+                  <div class="dark:bg-neutral-7 p-8 rounded-[32px] border border-[#F4F4F4] dark:border-white/10 space-y-6">
+                     <div>
+                        <h3 class="text-[#FFC876] text-[32px] leading-normal font-normal mb-4">Basic</h3>
+                        <p class="font-sora font-light text-neutral-7 dark:text-white/50">AI GeoMagic, personalized recommendations</p>
+                     </div>
+                     <div class="flex items-center font-sora text-neutral-7 dark:text-white">
+                        <span class="text-[40px] leading-normal">$</span>
+                        <span class="text-[88px] leading-none font-semibold">0</span>
+                     </div>
+                     <a href="#" class="text-white dark:text-neutral-8 text-xs leading-5 font-bold font-sourceCodePro tracking-[0.42px] uppercase px-7 py-3 relative z-10 w-full text-center">
+                        <span>Get started</span>
+                        <img src="assets/img/shape/btn-bg-white.png" alt="btn bg" class="w-full h-full absolute top-0 left-0 -z-10 hidden dark:block">
+                        <img src="assets/img/shape/btn-bg-blue.png" alt="btn bg" class="w-full h-full absolute top-0 left-0 -z-10 dark:hidden">
+                     </a>
+                     <ul class="divide-y divide-white/10 font-sora">
+                        <li class="flex items-center gap-4 py-5 text-neutral-7 dark:text-white font-light">
+                           <span class="text-[#007AFF]"><i class="fa-solid fa-check-circle"></i></span>
+                           <span>Unlimited uploads</span>
+                        </li>
+                        <li class="flex items-center gap-4 py-5 text-neutral-7 dark:text-white font-light">
+                           <span class="text-[#007AFF]"><i class="fa-solid fa-check-circle"></i></span>
+                           <span>Pro Tips</span>
+                        </li>
+                        <li class="flex items-center gap-4 py-5 text-neutral-7 dark:text-white font-light">
+                           <span class="text-[#007AFF]"><i class="fa-solid fa-check-circle"></i></span>
+                           <span>Free forever</span>
+                        </li>
+                        <li class="flex items-center gap-4 py-5 text-neutral-7 dark:text-white font-light">
+                           <span class="text-[#007AFF]"><i class="fa-solid fa-check-circle"></i></span>
+                           <span>All Features</span>
+                        </li>
+                     </ul>
+                  </div>
+                  <div class="dark:bg-neutral-7 p-8 rounded-[32px] border border-[#F4F4F4] dark:border-white/10 space-y-6">
+                     <div>
+                        <h3 class="text-[#007AFF] text-[32px] leading-normal font-normal mb-4">Premium</h3>
+                        <p class="font-sora font-light text-neutral-7 dark:text-white/50">Advanced AI GeoMagic, priority support, analytics dashboard</p>
+                     </div>
+                     <div class="flex items-center font-sora text-neutral-7 dark:text-white">
+                        <span class="text-[40px] leading-normal">$</span>
+                        <span class="text-[88px] leading-none font-semibold">9.99</span>
+                     </div>
+                     <a href="#" class="text-white dark:text-neutral-8 text-xs leading-5 font-bold font-sourceCodePro tracking-[0.42px] uppercase px-7 py-3 relative z-10 w-full text-center">
+                        <span>Get started</span>
+                        <img src="assets/img/shape/btn-bg-white.png" alt="btn bg" class="w-full h-full absolute top-0 left-0 -z-10 hidden dark:block">
+                        <img src="assets/img/shape/btn-bg-blue.png" alt="btn bg" class="w-full h-full absolute top-0 left-0 -z-10 dark:hidden">
+                     </a>
+                     <ul class="divide-y divide-white/10 font-sora">
+                        <li class="flex items-center gap-4 py-5 text-neutral-7 dark:text-white font-light">
+                           <span class="text-[#007AFF]"><i class="fa-solid fa-check-circle"></i></span>
+                           <span>Unlimited uploads</span>
+                        </li>
+                        <li class="flex items-center gap-4 py-5 text-neutral-7 dark:text-white font-light">
+                           <span class="text-[#007AFF]"><i class="fa-solid fa-check-circle"></i></span>
+                           <span>Pro Tips</span>
+                        </li>
+                        <li class="flex items-center gap-4 py-5 text-neutral-7 dark:text-white font-light">
+                           <span class="text-[#007AFF]"><i class="fa-solid fa-check-circle"></i></span>
+                           <span>Free forever</span>
+                        </li>
+                        <li class="flex items-center gap-4 py-5 text-neutral-7 dark:text-white font-light">
+                           <span class="text-[#007AFF]"><i class="fa-solid fa-check-circle"></i></span>
+                           <span>All Features</span>
+                        </li>
+                        <li class="flex items-center gap-4 py-5 text-neutral-7 dark:text-white font-light">
+                           <span class="text-[#007AFF]"><i class="fa-solid fa-check-circle"></i></span>
+                           <span>Life time access</span>
+                        </li>
+                     </ul>
+                  </div>
+                  <div class="dark:bg-neutral-7 p-8 rounded-[32px] border border-[#F4F4F4] dark:border-white/10 space-y-6">
+                     <div>
+                        <h3 class="text-[#FF776F] text-[32px] leading-normal font-normal mb-4">Enterprise</h3>
+                        <p class="font-sora font-light text-neutral-7 dark:text-white/50">Custom AI GeoMagic, advanced analytics, dedicated account</p>
+                     </div>
+                     <a href="#" class="text-neutral-7 dark:text-white text-xs leading-5 font-bold font-sourceCodePro tracking-[0.42px] uppercase px-7 py-3 relative z-10 w-full text-center">
+                        <span>request a demo</span>
+                        <img src="assets/img/shape/btn-border-bg.png" alt="btn bg" class="w-full h-full absolute top-0 left-0 -z-10">
+                     </a>
+                     <ul class="divide-y divide-white/10 font-sora">
+                        <li class="flex items-center gap-4 py-5 text-neutral-7 dark:text-white font-light">
+                           <span class="text-[#007AFF]"><i class="fa-solid fa-check-circle"></i></span>
+                           <span>Unlimited uploads</span>
+                        </li>
+                        <li class="flex items-center gap-4 py-5 text-neutral-7 dark:text-white font-light">
+                           <span class="text-[#007AFF]"><i class="fa-solid fa-check-circle"></i></span>
+                           <span>Pro Tips</span>
+                        </li>
+                        <li class="flex items-center gap-4 py-5 text-neutral-7 dark:text-white font-light">
+                           <span class="text-[#007AFF]"><i class="fa-solid fa-check-circle"></i></span>
+                           <span>Free forever</span>
+                        </li>
+                        <li class="flex items-center gap-4 py-5 text-neutral-7 dark:text-white font-light">
+                           <span class="text-[#007AFF]"><i class="fa-solid fa-check-circle"></i></span>
+                           <span>All Features</span>
+                        </li>
+                        <li class="flex items-center gap-4 py-5 text-neutral-7 dark:text-white font-light">
+                           <span class="text-[#007AFF]"><i class="fa-solid fa-check-circle"></i></span>
+                           <span>10 Users</span>
+                        </li>
+                        <li class="flex items-center gap-4 py-5 text-neutral-7 dark:text-white font-light">
+                           <span class="text-[#007AFF]"><i class="fa-solid fa-check-circle"></i></span>
+                           <span>Life time access</span>
+                        </li>
+                     </ul>
+                  </div>
+               </div>
+            </div>
+         </section>
+         <!-- pricing section end -->
+
+         <!-- contact section start -->
+         <section class="pb-22">
+            <div class="relative z-10">
+               <div class="container px-7.5!">
+                  <div class="max-w-236 mx-auto flex max-md:flex-col gap-3.5 md:gap-12 lg:gap-20">
+                     <div class="md:shrink-0 md:w-72 lg:w-94 md:py-12 max-md:px-6.5 max-md:text-center">
+                        <h2 class="text-neutral-7 dark:text-white text-[32px] md:text-4xl lg:text-5xl leading-[1.25] font-normal mb-3.5 md:mb-45.5">Join the AI revolution with GeoMagic</h2>
+                        <p class="text-[#757185] font-sora max-md:text-[13px] leading-normal">Get started with GeoMagic - AI app today and experience the power of AI in your Image generation!</p>
+                     </div>
+                     <form class="grow pr-4 md:pr-12">
+                        <div class="rounded-[32px] p-0.5 dark:p-px bg-[#F4F4F4] dark:bg-[conic-gradient(from_180deg,_#FFC876_10%,_#79FFF7_43%,_#9F53FF_72%,_#FF98E2_100%)] relative max-md:before:hidden before:w-6 before:h-[calc(100%-88px)] before:absolute before:top-1/2 before:-translate-y-1/2 before:-right-6 before:bg-[#E6E6E6] dark:before:bg-white/10 before:rounded-r-[20px] after:w-4 md:after:w-6 after:h-[calc(100%-130px)] md:after:h-[calc(100%-188px)] after:absolute after:top-1/2 after:-translate-y-1/2 after:-right-4 md:after:-right-12 after:bg-[#F2F2F2] dark:after:bg-white/10 after:opacity-50 after:rounded-r-[20px]">
+                           <div class="bg-white dark:bg-neutral-7 px-10 lg:px-15 py-13.5 lg:py-20 rounded-[inherit]">
+                              <div class="space-y-4 md:space-y-6">
+                                 <div class="relative">
+                                    <input type="text" title="name" class="w-full p-2.5 md:p-4 pl-8 md:pl-12 text-[#757185] placeholder:text-[#757185] max-md:text-[10px] font-sora font-light border-b border-b-white/15 focus:outline-none" placeholder="Name">
+                                    <span class="flex items-center justify-center w-4 md:w-6 h-4 md:h-6 text-[#757185] text-sm md:text-xl absolute top-1/2 -translate-y-1/2 left-0 pointer-events-none"><i class="fa-regular fa-user"></i></span>
+                                 </div>
+                                 <div class="relative">
+                                    <input type="email" title="email" class="w-full p-2.5 md:p-4 pl-8 md:pl-12 text-[#757185] placeholder:text-[#757185] max-md:text-[10px] font-sora font-light border-b border-b-white/15 focus:outline-none" placeholder="Email">
+                                    <span class="flex items-center justify-center w-4 md:w-6 h-4 md:h-6 text-[#757185] text-sm md:text-xl absolute top-1/2 -translate-y-1/2 left-0 pointer-events-none"><i class="fa-regular fa-envelope"></i></span>
+                                 </div>
+                                 <div class="relative">
+                                    <input type="password" title="password" class="w-full p-2.5 md:p-4 pl-8 md:pl-12 text-[#757185] placeholder:text-[#757185] max-md:text-[10px] font-sora font-light border-b border-b-white/15 focus:outline-none" placeholder="Password">
+                                    <span class="flex items-center justify-center w-4 md:w-6 h-4 md:h-6 text-[#757185] text-sm md:text-xl absolute top-1/2 -translate-y-1/2 left-0 pointer-events-none"><i class="fa-regular fa-lock"></i></span>
+                                 </div>
+                                 <button type="submit" class="text-white text-xs leading-5 font-bold font-sourceCodePro tracking-[0.42px] uppercase px-5 md:px-6 lg:px-7 py-2 md:py-2.5 lg:py-3 relative z-10 w-full">
+                                    <span>sign up now</span>
+                                    <img src="assets/img/shape/btn-bg-blue.png" alt="btn bg" class="w-full h-full absolute top-0 left-0 -z-10">
+                                 </button>
+                              </div>
+                              <div class="mt-12 md:mt-18">
+                                 <h6 class="text-[#757185] text-[10px] md:text-sm font-sora mb-4.5 md:mb-6.5 text-center">Or start your GeoMagic with</h6>
+                                 <div class="flex items-center justify-center gap-5 md:gap-7">
+                                    <button type="button" title="google" class="w-8 md:w-12 h-8 md:h-12 flex items-center justify-center rounded-full border border-white/10 text-[#757185] text-sm md:text-2xl hover:bg-[#757185] hover:text-white hover:border-[#757185] transition-all duration-300 cursor-pointer"><i class="fa-brands fa-google"></i></button>
+                                    <button type="button" title="apple" class="w-8 md:w-12 h-8 md:h-12 flex items-center justify-center rounded-full border border-white/10 text-[#757185] text-sm md:text-2xl hover:bg-[#757185] hover:text-white hover:border-[#757185] transition-all duration-300 cursor-pointer"><i class="fa-brands fa-apple"></i></button>
+                                 </div>
+                              </div>
+                           </div>
+                        </div>
+                     </form>
+                  </div>
+               </div>
+               <img src="assets/img/shape/contact-dots.png" alt="dots" class="w-full max-w-346 block absolute top-0 left-0 right-0 bottom-0 m-auto -z-10 max-md:hidden">
+            </div>
+         </section>
+         <!-- contact section end -->
+      </main>
+
+      <!-- footer section start -->
+      <footer class="pt-10 p-6 md:px-10 bg-[#F4F4F4] dark:bg-transparent">
+         <div>
+            <div class="flex max-md:flex-col items-start md:items-center justify-between gap-4 border-b border-b-white dark:border-b-white/10">
+               <!-- logo -->
+               <a href="index.html" class="inline-flex items-center gap-2.5">
+                  <img src="assets/img/logo/logo-icon.png" alt="logo" class="w-12 aspect-square hidden dark:inline-block">
+                  <img src="assets/img/logo/logo-icon-blue.png" alt="logo" class="w-12 aspect-square dark:hidden">
+                  <span class="text-neutral-7 dark:text-white text-[28px] font-extrabold font-sora">GeoMagic</span>
+               </a>
+
+               <!-- menu -->
+               <ul class="flex max-md:flex-col">
+                  <li><a href="#" class="md:px-6 lg:px-12 py-8 text-neutral-7 dark:text-white/50 text-xs leading-5 font-semibold font-sourceCodePro uppercase hover:text-theme-primary dark:hover:text-white relative before:w-px before:h-2 before:bg-[#C9D2D8] dark:before:bg-neutral-6 before:absolute before:left-0 before:bottom-0">Home</a></li>
+                  <li><a href="#" class="md:px-6 lg:px-12 py-8 text-neutral-7 dark:text-white/50 text-xs leading-5 font-semibold font-sourceCodePro uppercase hover:text-theme-primary dark:hover:text-white relative before:w-px before:h-2 before:bg-[#C9D2D8] dark:before:bg-neutral-6 before:absolute before:left-0 before:bottom-0">Features</a></li>
+                  <li><a href="#" class="md:px-6 lg:px-12 py-8 text-neutral-7 dark:text-white/50 text-xs leading-5 font-semibold font-sourceCodePro uppercase hover:text-theme-primary dark:hover:text-white relative before:w-px before:h-2 before:bg-[#C9D2D8] dark:before:bg-neutral-6 before:absolute before:left-0 before:bottom-0">Pricing</a></li>
+                  <li><a href="#" class="md:px-6 lg:px-12 py-8 text-neutral-7 dark:text-white/50 text-xs leading-5 font-semibold font-sourceCodePro uppercase hover:text-theme-primary dark:hover:text-white relative before:w-px before:h-2 before:bg-[#C9D2D8] dark:before:bg-neutral-6 before:absolute before:left-0 before:bottom-0">Contact Us </a></li>
+               </ul>
+            </div>
+            <div class="flex max-md:flex-col md:items-center justify-between gap-2.5 pt-6">
+               <p class="text-[#757185] text-sm font-sora">© 2025 GeoMagic</p>
+               <div class="flex items-center gap-8">
+                  <a href="#" class="flex items-center justify-center rounded-full w-10 h-10 dark:bg-neutral-7 hover:bg-white"><img src="assets/img/icon/discord.svg" alt="discord"></a>
+                  <a href="#" class="flex items-center justify-center rounded-full w-10 h-10 dark:bg-neutral-7 hover:bg-white"><img src="assets/img/icon/twitter.svg" alt="twitter"></a>
+                  <a href="#" class="flex items-center justify-center rounded-full w-10 h-10 dark:bg-neutral-7 hover:bg-white"><img src="assets/img/icon/instagram.svg" alt="instagram"></a>
+                  <a href="#" class="flex items-center justify-center rounded-full w-10 h-10 dark:bg-neutral-7 hover:bg-white"><img src="assets/img/icon/telegram.svg" alt="telegram"></a>
+                  <a href="#" class="flex items-center justify-center rounded-full w-10 h-10 dark:bg-neutral-7 hover:bg-white"><img src="assets/img/icon/facebook.svg" alt="facebook"></a>
+               </div>
+            </div>
+         </div>
+      </footer>
+      <!-- footer section end -->
+
+      <!-- main js -->
+      <script src="assets/js/main.js"></script>
+   </body>
+
+</html>

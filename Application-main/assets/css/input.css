@@ -1,0 +1,129 @@
+@config "../../tailwind.config.js";
+@import "tailwindcss";
+
+@plugin "daisyui";
+
+@theme {
+   /* fonts */
+   --font-inter: "Inter", sans-serif;
+   --font-sora: "Sora", sans-serif;
+   --font-sourceCodePro: "Source Code Pro", monospace;
+
+   /* color */
+   --color-neutral-1: #fcfcfc;
+   --color-neutral-2: #cac6dd;
+   --color-neutral-3: #efefef;
+   --color-neutral-4: #6f767e;
+   --color-neutral-5: #33383F;
+   --color-neutral-6: #272b30;
+   --color-neutral-7: #1a1d1f;
+   --color-neutral-8: #111315;
+   --color-theme-primary: #2a85ff;
+   --color-theme-primary-2: #83BF6E;
+   --color-theme-primary-3: #FF6A55;
+   --color-secondary-1: #FFBC99;
+   --color-secondary-3: #b1e5fc;
+
+   /* breakpoints */
+   --breakpoint-sm: 640px;
+   --breakpoint-md: 768px;
+   --breakpoint-lg: 1024px;
+   --breakpoint-xl: 1200px;
+   --breakpoint-2xl: 1440px;
+}
+
+@layer utilities {
+   body {
+      @apply font-inter;
+   }
+   .container {
+      @apply mx-auto px-6;
+   }
+   h1,
+   h2,
+   h3 {
+      @apply font-sora;
+   }
+   a {
+      @apply inline-block;
+   }
+   a,
+   button {
+      @apply transition-all duration-300;
+   }
+   button {
+      @apply cursor-pointer;
+   }
+   input, select, textarea{
+      @apply caret-theme-primary focus:outline-none;
+   }
+   .theme-btn-primary {
+      @apply inline-block text-neutral-1 text-[15px] -tracking-[0.15px] leading-[1.6] px-5 py-2.5 xl:py-3 font-bold rounded-xl bg-theme-primary hover:bg-neutral-6 dark:hover:bg-neutral-1 dark:hover:text-neutral-6;
+   }
+   .theme-btn-primary:disabled {
+      @apply text-white/75 pointer-events-none cursor-not-allowed select-none
+   }
+   .theme-btn-regular {
+      @apply inline-block text-[#1D1F20] dark:text-neutral-1 text-[15px] -tracking-[0.15px] leading-[1.6] px-5 py-[9px] xl:py-[11px] font-bold border border-neutral-6 rounded-xl hover:bg-neutral-6 dark:hover:bg-neutral-1 dark:hover:border-neutral-1 hover:text-white dark:hover:text-neutral-6;
+   }
+   .theme-btn-regular.style-2 {
+      @apply border-[#f4f4f4] dark:border-neutral-6 bg-[#f4f4f4] dark:bg-transparent hover:bg-neutral-6 dark:hover:bg-neutral-1 dark:hover:border-neutral-1 hover:text-white dark:hover:text-neutral-6;
+   }
+   .theme-btn-white {
+      @apply inline-block text-[#1D1F20] dark:text-neutral-7 text-[15px] -tracking-[0.15px] leading-[1.6] px-5 py-[9px] xl:py-[11px] font-bold rounded-xl border border-neutral-3 hover:border-theme-primary-3 bg-neutral-1 hover:bg-theme-primary-3 hover:text-neutral-1;
+   }
+   .sidebar-menu li a.active {
+      @apply text-neutral-4 dark:text-neutral-1 bg-[#EFEFEF] dark:bg-neutral-6 shadow-[0px_1px_1px_0px_rgba(255,255,255,0.11)_inset] dark:shadow-[0px_-2px_1px_0px_rgba(0,0,0,0.40)_inset,_0px_1px_1px_0px_rgba(255,255,255,0.11)_inset]
+   }
+   .profile-menu li a.active {
+      @apply text-neutral-7 dark:text-neutral-1
+   }
+
+   .filter-offcanvas.active {
+      @apply translate-y-0;
+   }
+   .overlay.active {
+      @apply opacity-100 visible;
+   }
+
+   .theme-modal.show {
+      @apply opacity-100 visible;
+   }
+   .theme-modal.show .modal-overlay {
+      @apply opacity-100!;
+   }
+
+}
+
+/* range slider */
+.range-slider {
+   -webkit-appearance: none;
+   appearance: none;
+   width: 100%;
+   height: 6px;
+   background: linear-gradient(to right, #2A85FF 50%, #272B30 50%);
+   border-radius: 4px;
+   outline: none;
+}
+
+.range-slider::-webkit-slider-thumb {
+   -webkit-appearance: none;
+   appearance: none;
+   width: 16px;
+   height: 16px;
+   background: white;
+   border: 2px solid #2A85FF;
+   border-radius: 50%;
+   cursor: pointer;
+   box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+}
+
+.range-slider::-moz-range-thumb {
+   width: 16px;
+   height: 16px;
+   background: white;
+   border: 2px solid #2A85FF;
+   border-radius: 50%;
+   cursor: pointer;
+   box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+}

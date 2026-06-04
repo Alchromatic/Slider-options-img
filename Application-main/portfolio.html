@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+
+   <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+      <!-- Title -->
+      <title>Portfolio | GeoMagic</title>
+
+      <!-- favicon -->
+      <link rel="apple-touch-icon" sizes="180x180" href="assets/img/favicon/apple-touch-icon.png">
+      <link rel="icon" type="image/png" sizes="512x512" href="assets/img/favicon/android-chrome-512x512.png">
+      <link rel="icon" type="image/png" sizes="192x192" href="assets/img/favicon/android-chrome-192x192.png">
+      <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon/favicon-32x32.png">
+      <link rel="icon" type="image/png" sizes="16x16" href="assets/img/favicon/favicon-16x16.png">
+      <link rel="shortcut icon" type="image/x-icon" href="assets/img/favicon/favicon.ico">
+      <link rel="manifest" href="assets/img/favicon/site.webmanifest">
+
+      <!-- google fonts cdn -->
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Sora:wght@100..800&family=Source+Code+Pro:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
+
+      <!-- vendor css -->
+      <link rel="stylesheet" href="assets/fontawesome/fontawesome.min.css">
+
+      <!-- main css -->
+      <link rel="stylesheet" href="assets/css/output.css">
+   </head>
+
+   <body class="bg-[#F4F4F4] dark:bg-neutral-8">
+
+      <div class="flex">
+         <!-- sidebar start -->
+         <!-- Hidden Checkbox to Control Sidebar Visibility -->
+         <input type="checkbox" title="sidebar toggle" id="sidebar-toggle" class="hidden peer">
+         <aside class="shrink-0 w-80 xl:w-70 2xl:w-85 h-screen fixed xl:sticky top-0 left-0 bg-[#FCFCFC] dark:bg-neutral-7 py-6 flex items-start flex-col gap-12 overflow-hidden transition-all duration-500 -translate-x-full peer-checked:translate-x-0 xl:translate-x-0 z-100">
+            <div class="px-6 flex items-center justify-between w-full">
+               <!-- logo -->
+               <a href="index.html" class="inline-block">
+                  <img src="assets/img/logo/logo-icon.png" alt="logo" class="w-9 lg:w-12 aspect-square hidden dark:inline-block">
+                  <img src="assets/img/logo/logo-icon-blue.png" alt="logo" class="w-9 lg:w-12 aspect-square dark:hidden">
+               </a>
+
+               <!-- sidebar close btn -->
+               <label for="sidebar-toggle" class="cursor-pointer text-neutral-6 dark:text-white text-xl flex items-center justify-center w-6 h-6 xl:hidden"><i class="fa-regular fa-xmark"></i></label>
+            </div>
+
+            <!-- sidebar content -->
+            <div class="grow min-h-0 w-full overflow-auto px-6">
+               <!-- header search -->
+               <div class="relative xl:hidden mb-8">
+                  <input type="search" class="w-full py-3 pl-12 pr-18 text-neutral-7 dark:text-neutral-1 placeholder:text-neutral-4/50 text-[15px] leading-[1.6] font-semibold -tracking-[0.15px] caret-theme-primary rounded-xl bg-[#F4F4F4] dark:bg-neutral-6 focus:outline-none" placeholder="Search or type a command">
+                  <span class="flex items-center justify-center w-6 h-6 absolute top-1/2 -translate-y-1/2 left-2 pointer-events-none text-neutral-4 text-xl"><i class="fa-regular fa-search"></i></span>
+                  <span class="flex items-center justify-center absolute top-1/2 -translate-y-1/2 right-2 pointer-events-none text-neutral-4 dark:text-neutral-1 font-semibold px-3 py-1 bg-white dark:bg-neutral-7 shadow-[0px_-1px_2px_0px_rgba(0,0,0,0.05)_inset,_0px_-1px_1px_0px_rgba(0,0,0,0.04)_inset,_0px_1px_0px_0px_rgba(255,255,255,0.08)_inset] rounded-lg">⌘ F</span>
+               </div>
+               <!-- sidebar menu -->
+               <ul class="sidebar-menu space-y-2">
+                  <li>
+                     <a href="dashboard.html" class="w-full flex items-center gap-3 p-3 text-neutral-4 text-[15px] leading-6 font-semibold -tracking-[0.15px] rounded-xl hover:text-neutral-6 dark:hover:text-neutral-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                           <path d="M10.1082 2.83511C11.2104 1.93957 12.7896 1.93957 13.8918 2.83511L19.8918 7.71011C20.5929 8.27978 21 9.13507 21 10.0385V18.8365C21 20.4934 19.6569 21.8365 18 21.8365H16V15.8363C16 14.1795 14.6569 12.8363 13 12.8363H11C9.34315 12.8363 8 14.1794 8 15.8363V21.8363L6 21.8365C4.34315 21.8365 3 20.4934 3 18.8365V10.0385C3 9.13507 3.40709 8.27978 4.10822 7.71011L10.1082 2.83511Z" fill="currentColor" />
+                           <path d="M10 21.8365H14V15.8363C14 15.284 13.5523 14.8363 13 14.8363H11C10.4477 14.8363 10 15.284 10 15.8363V21.8365Z" fill="currentColor" />
+                        </svg>
+                        <span>Dashboard</span>
+                     </a>
+                  </li>
+                  <li>
+                     <a href="portfolio.html" class="w-full flex items-center gap-3 p-3 text-neutral-4 text-[15px] leading-6 font-semibold -tracking-[0.15px] rounded-xl hover:text-neutral-6 dark:hover:text-neutral-1 active">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                           <path d="M16 20L9.41421 13.4142C8.63316 12.6332 7.36684 12.6332 6.58579 13.4142L4 16M6 20H18C19.1046 20 20 19.1046 20 18V6C20 4.89543 19.1046 4 18 4H6C4.89543 4 4 4.89543 4 6V18C4 19.1046 4.89543 20 6 20ZM16.5 9.5C16.5 10.6046 15.6046 11.5 14.5 11.5C13.3954 11.5 12.5 10.6046 12.5 9.5C12.5 8.39543 13.3954 7.5 14.5 7.5C15.6046 7.5 16.5 8.39543 16.5 9.5Z" stroke="currentColor" stroke-width="2" />
+                        </svg>
+                        <span>Portfolio</span>
+                     </a>
+                  </li>
+                  <li>
+                     <a href="templates.html" class="w-full flex items-center gap-3 p-3 text-neutral-4 text-[15px] leading-6 font-semibold -tracking-[0.15px] rounded-xl hover:text-neutral-6 dark:hover:text-neutral-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                           <path fill-rule="evenodd" clip-rule="evenodd" d="M11.3161 3.1845C11.7576 3.02395 12.2416 3.02395 12.6831 3.1845L20.7569 6.12044C22.5123 6.75874 22.5123 9.2413 20.7569 9.87961L12.6831 12.8155C12.2416 12.9761 11.7576 12.9761 11.3161 12.8155L3.2423 9.87961C1.48695 9.2413 1.48693 6.75875 3.24229 6.12044L11.3161 3.1845ZM20.0734 8.00002L11.9996 5.06409L3.92578 8.00002L11.9996 10.936L20.0734 8.00002Z" fill="currentColor" />
+                           <path d="M20.7569 13.8796L12.6831 16.8155C12.2416 16.9761 11.7576 16.9761 11.3161 16.8155L3.2423 13.8796C2.10327 13.4654 1.70334 12.2747 2.04252 11.3152L11.9996 14.936L21.9567 11.3152C22.2959 12.2747 21.896 13.4654 20.7569 13.8796Z" fill="currentColor" />
+                           <path d="M20.7569 17.8796L12.6831 20.8155C12.2416 20.9761 11.7576 20.9761 11.3161 20.8155L3.2423 17.8796C2.10327 17.4654 1.70334 16.2747 2.04252 15.3152L11.9996 18.936L21.9567 15.3152C22.2959 16.2747 21.896 17.4654 20.7569 17.8796Z" fill="currentColor" />
+                        </svg>
+                        <span>Templates</span>
+                     </a>
+                  </li>
+                  <li>
+                     <a href="pricing.html" class="w-full flex items-center gap-3 p-3 text-neutral-4 text-[15px] leading-6 font-semibold -tracking-[0.15px] rounded-xl hover:text-neutral-6 dark:hover:text-neutral-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                           <path d="M9.49962 7.91418L7.49962 9.91418L9.49962 11.9142M13.4138 19.5L21.5277 11.3861C22.3309 10.5829 22.3047 9.27275 21.4701 8.50228L17.0742 4.44458C16.7048 4.10355 16.2204 3.91418 15.7177 3.91418H8.28159C7.77881 3.91418 7.29447 4.10355 6.92503 4.44458L2.52918 8.50228C1.6945 9.27275 1.66831 10.5829 2.47153 11.3861L10.5854 19.5C11.3665 20.281 12.6328 20.281 13.4138 19.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <span>Pricing</span>
+                     </a>
+                  </li>
+                  <li>
+                     <a href="#" class="w-full flex items-center gap-3 p-3 text-neutral-4 text-[15px] leading-6 font-semibold -tracking-[0.15px] rounded-xl hover:text-neutral-6 dark:hover:text-neutral-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                           <path d="M7.98941 5.39755L7.30515 5.23965C6.72652 5.10612 6.11991 5.28009 5.7 5.7C5.28009 6.11991 5.10612 6.72651 5.23965 7.30515L5.39755 7.9894C5.57956 8.7781 5.25434 9.59711 4.58086 10.0461L3.74885 10.6008C3.28101 10.9127 3 11.4377 3 12C3 12.5623 3.28101 13.0873 3.74885 13.3992L4.58086 13.9539C5.25434 14.4029 5.57956 15.2219 5.39756 16.0106L5.23965 16.6949C5.10612 17.2735 5.28009 17.8801 5.7 18.3C6.11991 18.7199 6.72651 18.8939 7.30515 18.7604L7.9894 18.6024C8.7781 18.4204 9.59711 18.7457 10.0461 19.4191L10.6008 20.2512C10.9127 20.719 11.4377 21 12 21C12.5623 21 13.0873 20.719 13.3992 20.2512L13.9539 19.4191C14.4029 18.7457 15.2219 18.4204 16.0106 18.6024L16.6949 18.7604C17.2735 18.8939 17.8801 18.7199 18.3 18.3C18.7199 17.8801 18.8939 17.2735 18.7604 16.6949L18.6024 16.0106C18.4204 15.2219 18.7457 14.4029 19.4191 13.9539L20.2512 13.3992C20.719 13.0873 21 12.5623 21 12C21 11.4377 20.719 10.9127 20.2512 10.6008L19.4191 10.0461C18.7457 9.59711 18.4204 8.7781 18.6024 7.98941L18.7604 7.30515C18.8939 6.72652 18.7199 6.11991 18.3 5.7C17.8801 5.28009 17.2735 5.10612 16.6949 5.23965L16.0106 5.39755C15.2219 5.57956 14.4029 5.25434 13.9539 4.58086L13.3992 3.74884C13.0873 3.28101 12.5623 3 12 3C11.4377 3 10.9127 3.28101 10.6008 3.74885L10.0461 4.58086C9.59711 5.25434 8.7781 5.57956 7.98941 5.39755Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+                           <path d="M15 12C15 13.6569 13.6569 15 12 15C10.3431 15 9 13.6569 9 12C9 10.3431 10.3431 9 12 9C13.6569 9 15 10.3431 15 12Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+                        </svg>
+                        <span>Settings</span>
+                     </a>
+                  </li>
+               </ul>
+            </div>
+
+            <!-- header action -->
+            <div class="xl:hidden flex items-center gap-6 px-6">
+               <a href="#" class="theme-btn-primary inline-flex! items-center gap-2"><i class="fa-regular fa-plus"></i> New</a>
+               <button type="button" class="flex items-center justify-center w-12 h-12">
+                  <span class="relative flex items-center justify-center w-6 h-6 after:w-2.5 after:h-2.5 after:bg-theme-primary-3 after:rounded-full dark:after:outline-2 dark:after:outline-neutral-7 after:absolute after:right-0 after:top-0"><img src="assets/img/icon/bell.svg" alt="bell" class="w-full aspect-square"></span>
+               </button>
+               <div>
+                  <img src="assets/img/icon/profile-avatar.jpg" alt="profile-avatar" class="w-12 aspect-square rounded-full object-cover">
+               </div>
+            </div>
+         </aside>
+         <!-- offcanvas overlay -->
+         <label for="sidebar-toggle" class="overlay fixed top-0 left-0 z-90 w-full h-full bg-black/70 transition-all duration-400 opacity-0 invisible peer-checked:opacity-100 peer-checked:visible xl:hidden"></label>
+         <!-- sidebar end -->
+
+         <main class="grow min-w-0">
+            <!-- dashboard header -->
+            <header class="sticky top-0 left-0 w-full z-50 py-6 px-9 2xl:px-10 flex items-center justify-between bg-[#FCFCFC] dark:bg-neutral-7 dark:shadow-[1px_0px_0px_0px_#111315_inset]">
+               <!-- logo -->
+               <a href="index.html" class="inline-block xl:hidden">
+                  <img src="assets/img/logo/logo-icon.png" alt="logo" class="w-9 lg:w-12 aspect-square hidden dark:inline-block">
+                  <img src="assets/img/logo/logo-icon-blue.png" alt="logo" class="w-9 lg:w-12 aspect-square dark:hidden">
+               </a>
+
+               <!-- header search -->
+               <div class="relative max-xl:hidden">
+                  <input type="search" class="w-full py-3 pl-12 pr-18 text-neutral-7 dark:text-neutral-1 placeholder:text-neutral-4/50 text-[15px] leading-[1.6] font-semibold -tracking-[0.15px] caret-theme-primary rounded-xl bg-[#F4F4F4] dark:bg-neutral-6 focus:outline-none" placeholder="Search or type a command">
+                  <span class="flex items-center justify-center w-6 h-6 absolute top-1/2 -translate-y-1/2 left-2 pointer-events-none text-neutral-4 text-xl"><i class="fa-regular fa-search"></i></span>
+                  <span class="flex items-center justify-center absolute top-1/2 -translate-y-1/2 right-2 pointer-events-none text-neutral-4 dark:text-neutral-1 font-semibold px-3 py-1 bg-white dark:bg-neutral-7 shadow-[0px_-1px_2px_0px_rgba(0,0,0,0.05)_inset,_0px_-1px_1px_0px_rgba(0,0,0,0.04)_inset,_0px_1px_0px_0px_rgba(255,255,255,0.08)_inset] rounded-lg">⌘ F</span>
+               </div>
+
+               <!-- header action -->
+               <div class="flex items-center gap-4 xl:gap-6">
+                  <div class="hidden xl:flex items-center gap-6">
+                     <a href="#" class="theme-btn-primary inline-flex! items-center gap-2"><i class="fa-regular fa-plus"></i> New</a>
+                     <button type="button" class="flex items-center justify-center w-12 h-12">
+                        <span class="relative flex items-center justify-center w-6 h-6 after:w-2.5 after:h-2.5 after:bg-theme-primary-3 after:rounded-full dark:after:outline-2 dark:after:outline-neutral-7 after:absolute after:right-0 after:top-0"><img src="assets/img/icon/bell.svg" alt="bell" class="w-full aspect-square"></span>
+                     </button>
+                     <div>
+                        <img src="assets/img/icon/profile-avatar.jpg" alt="profile-avatar" class="w-12 aspect-square rounded-full object-cover">
+                     </div>
+                  </div>
+
+
+                  <!-- sidebar toggle bar -->
+                  <label for="sidebar-toggle" class="cursor-pointer xl:hidden"><img src="assets/img/icon/menu-bar.svg" alt="menu bar" class="w-6"></label>
+                  <!-- theme toggle -->
+                  <label class="cursor-pointer relative flex items-center gap-2.5">
+                     <input type="checkbox" title="theme toggle" class="sr-only peer" id="themeToggle" checked>
+                     <span class="flex items-center justify-center w-9 h-9 rounded-lg bg-theme-primary"></span>
+                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white hidden dark:block">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
+                     </svg>
+                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white dark:hidden">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+                     </svg>
+                  </label>
+               </div>
+            </header>
+            <!-- dashboard header end -->
+
+            <!-- dashboard main wrapper -->
+            <div class="min-h-[calc(100vh-96px)] overflow-auto md:p-6 2xl:p-10 pt-2 md:pt-6">
+               <!-- portfolio section start -->
+               <section class="p-6 bg-white dark:bg-neutral-7 border-2 border-[#f4f4f4] dark:border-0 shadow-[0px_4px_14px_-6px_#F4F4F4] dark:shadow-none rounded-lg">
+                  <!-- portfolio filter start -->
+                  <div class="relative">
+                     <!-- name of each tab group should be unique -->
+                     <div class="tabs">
+
+                        <!-- single tab group -->
+                        <input type="radio" name="portfolio-filter-tab" class="tab text-neutral-4! text-[15px] leading-6 font-semibold -tracking-[0.15px] px-4 py-2 rounded-lg bg-[#F4F4F4] dark:bg-transparent dark:hover:text-neutral-1! checked:text-white! dark:checked:text-neutral-1! checked:bg-theme-primary dark:checked:bg-neutral-6 mr-2 transition-all duration-300" aria-label="Today" checked="checked">
+                        <div class="tab-content pt-8">
+                           <!-- product cards -->
+                           <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-8">
+                              <!-- single card -->
+                              <div>
+                                 <a href="#" class="group overflow-hidden rounded-xl aspect-[1.54/1] block">
+                                    <img src="assets/img/thumbs/example-product-1.jpg" alt="product card" class="w-full h-full object-cover group-hover:scale-110 transition-all duration-1000 ease-in-out">
+                                 </a>
+                                 <div class="pt-4">
+                                    <h6 class="text-neutral-7 dark:text-neutral-1 text-[15px] leading-[1.6] font-semibold -tracking-[0.15px] mb-2"><a href="#" class="block">Fleet - Travel shopping</a></h6>
+                                    <p class="text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px]">Image</p>
+                                 </div>
+                              </div>
+
+                              <!-- single card -->
+                              <div>
+                                 <a href="#" class="group overflow-hidden rounded-xl aspect-[1.54/1] block">
+                                    <img src="assets/img/thumbs/example-product-2.jpg" alt="product card" class="w-full h-full object-cover group-hover:scale-110 transition-all duration-1000 ease-in-out">
+                                 </a>
+                                 <div class="pt-4">
+                                    <h6 class="text-neutral-7 dark:text-neutral-1 text-[15px] leading-[1.6] font-semibold -tracking-[0.15px] mb-2"><a href="#" class="block">Brand business card</a></h6>
+                                    <p class="text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px]">Image</p>
+                                 </div>
+                              </div>
+
+                              <!-- single card -->
+                              <div>
+                                 <a href="#" class="group overflow-hidden rounded-xl aspect-[1.54/1] block">
+                                    <img src="assets/img/thumbs/example-product-3.jpg" alt="product card" class="w-full h-full object-cover group-hover:scale-110 transition-all duration-1000 ease-in-out">
+                                 </a>
+                                 <div class="pt-4">
+                                    <h6 class="text-neutral-7 dark:text-neutral-1 text-[15px] leading-[1.6] font-semibold -tracking-[0.15px] mb-2"><a href="#" class="block">Bottle for my business, with black</a></h6>
+                                    <p class="text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px]">Image</p>
+                                 </div>
+                              </div>
+
+                              <!-- single card -->
+                              <div>
+                                 <a href="#" class="group overflow-hidden rounded-xl aspect-[1.54/1] block">
+                                    <img src="assets/img/thumbs/example-product-4.jpg" alt="product card" class="w-full h-full object-cover group-hover:scale-110 transition-all duration-1000 ease-in-out">
+                                 </a>
+                                 <div class="pt-4">
+                                    <h6 class="text-neutral-7 dark:text-neutral-1 text-[15px] leading-[1.6] font-semibold -tracking-[0.15px] mb-2"><a href="#" class="block">Bottle for my business, with black</a></h6>
+                                    <p class="text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px]">Image</p>
+                                 </div>
+                              </div>
+
+                              <!-- single card -->
+                              <div>
+                                 <a href="#" class="group overflow-hidden rounded-xl aspect-[1.54/1] block">
+                                    <img src="assets/img/thumbs/example-product-5.jpg" alt="product card" class="w-full h-full object-cover group-hover:scale-110 transition-all duration-1000 ease-in-out">
+                                 </a>
+                                 <div class="pt-4">
+                                    <h6 class="text-neutral-7 dark:text-neutral-1 text-[15px] leading-[1.6] font-semibold -tracking-[0.15px] mb-2"><a href="#" class="block">Fleet - Travel shopping</a></h6>
+                                    <p class="text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px]">Image</p>
+                                 </div>
+                              </div>
+
+                              <!-- single card -->
+                              <div>
+                                 <a href="#" class="group overflow-hidden rounded-xl aspect-[1.54/1] block">
+                                    <img src="assets/img/thumbs/example-product-6.jpg" alt="product card" class="w-full h-full object-cover group-hover:scale-110 transition-all duration-1000 ease-in-out">
+                                 </a>
+                                 <div class="pt-4">
+                                    <h6 class="text-neutral-7 dark:text-neutral-1 text-[15px] leading-[1.6] font-semibold -tracking-[0.15px] mb-2"><a href="#" class="block">Brand business card</a></h6>
+                                    <p class="text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px]">Image</p>
+                                 </div>
+                              </div>
+
+                              <!-- single card -->
+                              <div>
+                                 <a href="#" class="group overflow-hidden rounded-xl aspect-[1.54/1] block">
+                                    <img src="assets/img/thumbs/example-product-7.jpg" alt="product card" class="w-full h-full object-cover group-hover:scale-110 transition-all duration-1000 ease-in-out">
+                                 </a>
+                                 <div class="pt-4">
+                                    <h6 class="text-neutral-7 dark:text-neutral-1 text-[15px] leading-[1.6] font-semibold -tracking-[0.15px] mb-2"><a href="#" class="block">Fleet - Travel shopping</a></h6>
+                                    <p class="text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px] flex items-center gap-2">
+                                       <span><i class="fa-regular fa-star"></i></span>
+                                       <span>No ratings</span>
+                                    </p>
+                                 </div>
+                              </div>
+
+                              <!-- single card -->
+                              <div>
+                                 <a href="#" class="group overflow-hidden rounded-xl aspect-[1.54/1] block">
+                                    <img src="assets/img/thumbs/example-product-8.jpg" alt="product card" class="w-full h-full object-cover group-hover:scale-110 transition-all duration-1000 ease-in-out">
+                                 </a>
+                                 <div class="pt-4">
+                                    <h6 class="text-neutral-7 dark:text-neutral-1 text-[15px] leading-[1.6] font-semibold -tracking-[0.15px] mb-2"><a href="#" class="block">Fleet - Travel shopping</a></h6>
+                                    <p class="text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px] flex items-center gap-2">
+                                       <span><i class="fa-regular fa-star"></i></span>
+                                       <span>No ratings</span>
+                                    </p>
+                                 </div>
+                              </div>
+
+                              <!-- single card -->
+                              <div>
+                                 <a href="#" class="group overflow-hidden rounded-xl aspect-[1.54/1] block">
+                                    <img src="assets/img/thumbs/example-product-9.jpg" alt="product card" class="w-full h-full object-cover group-hover:scale-110 transition-all duration-1000 ease-in-out">
+                                 </a>
+                                 <div class="pt-4">
+                                    <h6 class="text-neutral-7 dark:text-neutral-1 text-[15px] leading-[1.6] font-semibold -tracking-[0.15px] mb-2"><a href="#" class="block">Fleet - Travel shopping</a></h6>
+                                    <p class="text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px] flex items-center gap-2">
+                                       <span><i class="fa-regular fa-star"></i></span>
+                                       <span>No ratings</span>
+                                    </p>
+                                 </div>
+                              </div>
+                           </div>
+                        </div>
+
+                        <!-- single tab group -->
+                        <input type="radio" name="portfolio-filter-tab" class="tab text-neutral-4! text-[15px] leading-6 font-semibold -tracking-[0.15px] px-4 py-2 rounded-lg bg-[#F4F4F4] dark:bg-transparent dark:hover:text-neutral-1! checked:text-white! dark:checked:text-neutral-1! checked:bg-theme-primary dark:checked:bg-neutral-6 mr-2 transition-all duration-300" aria-label="This month">
+                        <div class="tab-content pt-8">
+                           <!-- product cards -->
+                           <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-8">
+                              <!-- single card -->
+                              <div>
+                                 <a href="#" class="group overflow-hidden rounded-xl aspect-[1.54/1] block">
+                                    <img src="assets/img/thumbs/example-product-1.jpg" alt="product card" class="w-full h-full object-cover group-hover:scale-110 transition-all duration-1000 ease-in-out">
+                                 </a>
+                                 <div class="pt-4">
+                                    <h6 class="text-neutral-7 dark:text-neutral-1 text-[15px] leading-[1.6] font-semibold -tracking-[0.15px] mb-2"><a href="#" class="block">Fleet - Travel shopping</a></h6>
+                                    <p class="text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px]">Image</p>
+                                 </div>
+                              </div>
+
+                              <!-- single card -->
+                              <div>
+                                 <a href="#" class="group overflow-hidden rounded-xl aspect-[1.54/1] block">
+                                    <img src="assets/img/thumbs/example-product-2.jpg" alt="product card" class="w-full h-full object-cover group-hover:scale-110 transition-all duration-1000 ease-in-out">
+                                 </a>
+                                 <div class="pt-4">
+                                    <h6 class="text-neutral-7 dark:text-neutral-1 text-[15px] leading-[1.6] font-semibold -tracking-[0.15px] mb-2"><a href="#" class="block">Brand business card</a></h6>
+                                    <p class="text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px]">Image</p>
+                                 </div>
+                              </div>
+
+                              <!-- single card -->
+                              <div>
+                                 <a href="#" class="group overflow-hidden rounded-xl aspect-[1.54/1] block">
+                                    <img src="assets/img/thumbs/example-product-3.jpg" alt="product card" class="w-full h-full object-cover group-hover:scale-110 transition-all duration-1000 ease-in-out">
+                                 </a>
+                                 <div class="pt-4">
+                                    <h6 class="text-neutral-7 dark:text-neutral-1 text-[15px] leading-[1.6] font-semibold -tracking-[0.15px] mb-2"><a href="#" class="block">Bottle for my business, with black</a></h6>
+                                    <p class="text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px]">Image</p>
+                                 </div>
+                              </div>
+                           </div>
+                        </div>
+
+                        <!-- single tab group -->
+                        <input type="radio" name="portfolio-filter-tab" class="tab text-neutral-4! text-[15px] leading-6 font-semibold -tracking-[0.15px] px-4 py-2 rounded-lg bg-[#F4F4F4] dark:bg-transparent dark:hover:text-neutral-1! checked:text-white! dark:checked:text-neutral-1! checked:bg-theme-primary dark:checked:bg-neutral-6 mr-2 transition-all duration-300" aria-label="This year">
+                        <div class="tab-content pt-8">
+                           <!-- product cards -->
+                           <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-8">
+                              <!-- single card -->
+                              <div>
+                                 <a href="#" class="group overflow-hidden rounded-xl aspect-[1.54/1] block">
+                                    <img src="assets/img/thumbs/example-product-1.jpg" alt="product card" class="w-full h-full object-cover group-hover:scale-110 transition-all duration-1000 ease-in-out">
+                                 </a>
+                                 <div class="pt-4">
+                                    <h6 class="text-neutral-7 dark:text-neutral-1 text-[15px] leading-[1.6] font-semibold -tracking-[0.15px] mb-2"><a href="#" class="block">Fleet - Travel shopping</a></h6>
+                                    <p class="text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px]">Image</p>
+                                 </div>
+                              </div>
+
+                              <!-- single card -->
+                              <div>
+                                 <a href="#" class="group overflow-hidden rounded-xl aspect-[1.54/1] block">
+                                    <img src="assets/img/thumbs/example-product-2.jpg" alt="product card" class="w-full h-full object-cover group-hover:scale-110 transition-all duration-1000 ease-in-out">
+                                 </a>
+                                 <div class="pt-4">
+                                    <h6 class="text-neutral-7 dark:text-neutral-1 text-[15px] leading-[1.6] font-semibold -tracking-[0.15px] mb-2"><a href="#" class="block">Brand business card</a></h6>
+                                    <p class="text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px]">Image</p>
+                                 </div>
+                              </div>
+
+                              <!-- single card -->
+                              <div>
+                                 <a href="#" class="group overflow-hidden rounded-xl aspect-[1.54/1] block">
+                                    <img src="assets/img/thumbs/example-product-3.jpg" alt="product card" class="w-full h-full object-cover group-hover:scale-110 transition-all duration-1000 ease-in-out">
+                                 </a>
+                                 <div class="pt-4">
+                                    <h6 class="text-neutral-7 dark:text-neutral-1 text-[15px] leading-[1.6] font-semibold -tracking-[0.15px] mb-2"><a href="#" class="block">Bottle for my business, with black</a></h6>
+                                    <p class="text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px]">Image</p>
+                                 </div>
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+
+                     <!-- filter dropdown -->
+                     <div class="absolute top-0 right-0 max-md:hidden">
+                        <select title="filter dropdown" class="min-w-0 py-1.5 pl-3.5 pr-9.5 rounded-lg border-2 border-[#F4F4F4] dark:border-neutral-6 text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px] appearance-none focus:outline-none">
+                           <option value="Most recent">Most recent</option>
+                           <option value="Most relevant">Most relevant</option>
+                           <option value="Old">Old</option>
+                        </select>
+                        <span class="flex items-center justify-center w-4 h-4 text-neutral-4 text-sm absolute top-1/2 -translate-y-1/2 right-4 pointer-events-none"><i class="fa-solid fa-angle-down"></i></span>
+                     </div>
+                  </div>
+                  <!-- portfolio filter end -->
+                  <div class="pt-10 text-center">
+                     <button type="button" class="theme-btn-regular">Load more</button>
+                  </div>
+               </section>
+               <!-- portfolio section end -->
+            </div>
+         </main>
+      </div>
+
+      <!-- main js -->
+      <script src="assets/js/main.js"></script>
+   </body>
+
+</html>
