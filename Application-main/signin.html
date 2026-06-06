@@ -36,7 +36,7 @@
             <!-- signup main wrapper -->
             <div class="min-h-screen flex items-center justify-center overflow-auto p-10">
                <!-- signup form start -->
-               <form action="#" class="max-w-74">
+               <form action="#" id="signinForm" class="max-w-74">
                   <!-- logo -->
                   <a href="index.html" class="inline-block mb-8">
                      <img src="assets/img/logo/logo-icon.png" alt="logo" class="w-9 lg:w-12 aspect-square hidden dark:inline-block">
@@ -63,15 +63,16 @@
                      <h6 class="text-neutral-6 dark:text-white text-sm leading-6 font-semibold -tracking-[0.14px] mb-5">Or continue with email address</h6>
                      <div class="space-y-3 mb-8">
                         <div class="relative">
-                           <input type="email" title="email" class="w-full py-3 px-12 text-neutral-7 dark:text-neutral-1 placeholder:text-[#757185] text-[15px] leading-[1.6] font-semibold -tracking-[0.15px] caret-theme-primary rounded-xl bg-[#F4F4F4] dark:bg-neutral-8 focus:outline-none" placeholder="Email" value="tam@swamini.net">
+                           <input type="email" id="signinEmail" title="email" class="w-full py-3 px-12 text-neutral-7 dark:text-neutral-1 placeholder:text-[#757185] text-[15px] leading-[1.6] font-semibold -tracking-[0.15px] caret-theme-primary rounded-xl bg-[#F4F4F4] dark:bg-neutral-8 focus:outline-none" placeholder="Email" autocomplete="email">
                            <span class="flex items-center justify-center w-6 h-6 absolute top-1/2 -translate-y-1/2 left-3 pointer-events-none"><img src="assets/img/icon/envelope.svg" alt="envelope" class="w-full"></span>
                            <span class="flex items-center justify-center w-6 h-6 absolute top-1/2 -translate-y-1/2 right-3 pointer-events-none text-theme-primary-2 text-xl"><i class="fa-regular fa-check"></i></span>
                         </div>
                         <div class="relative">
-                           <input type="password" title="password" class="w-full py-3 px-12 text-neutral-7 dark:text-neutral-1 placeholder:text-[#757185] text-[15px] leading-[1.6] font-semibold -tracking-[0.15px] caret-theme-primary rounded-xl bg-[#F4F4F4] dark:bg-neutral-8 focus:outline-none" value="123456">
+                           <input type="password" id="signinPassword" title="password" class="w-full py-3 px-12 text-neutral-7 dark:text-neutral-1 placeholder:text-[#757185] text-[15px] leading-[1.6] font-semibold -tracking-[0.15px] caret-theme-primary rounded-xl bg-[#F4F4F4] dark:bg-neutral-8 focus:outline-none" placeholder="Password" autocomplete="current-password">
                            <span class="flex items-center justify-center w-6 h-6 absolute top-1/2 -translate-y-1/2 left-3 pointer-events-none"><img src="assets/img/icon/lock.svg" alt="lock" class="w-full"></span>
                         </div>
-                        <button type="button" class="theme-btn-primary w-full">Sign in</button>
+                        <p id="signinError" class="hidden text-red-500 text-sm leading-6 font-semibold -tracking-[0.14px]"></p>
+                        <button type="submit" id="signinSubmit" class="theme-btn-primary w-full">Sign in</button>
                      </div>
                      <p class="text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px]">This site is protected by reCAPTCHA and the Google Privacy Policy.</p>
                      <p class="mt-8 text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px]">Don’t have an account? <a href="signup.html" class="text-neutral-7 dark:text-neutral-1 hover:text-theme-primary dark:hover:text-white">Sign up</a></p>
@@ -96,6 +97,49 @@
 
       <!-- main js -->
       <script src="assets/js/main.js"></script>
+      <script src="assets/js/auth.js"></script>
+      <script>
+         (function () {
+            const form = document.getElementById('signinForm');
+            const emailEl = document.getElementById('signinEmail');
+            const passEl = document.getElementById('signinPassword');
+            const errEl = document.getElementById('signinError');
+            const btn = document.getElementById('signinSubmit');
+
+            // Already signed in → check plan and route accordingly.
+            if (window.Auth && Auth.isAuthenticated()) {
+               window.location.href = 'pricing.html';
+               return;
+            }
+
+            function showError(msg) {
+               errEl.textContent = msg;
+               errEl.classList.remove('hidden');
+            }
+
+            form.addEventListener('submit', async function (e) {
+               e.preventDefault();
+               errEl.classList.add('hidden');
+               const email = (emailEl.value || '').trim();
+               const password = passEl.value || '';
+               if (!email || !password) {
+                  showError('Please enter your email and password.');
+                  return;
+               }
+               btn.disabled = true;
+               const original = btn.textContent;
+               btn.textContent = 'Signing in…';
+               try {
+                  await Auth.login({ email, password });
+                  window.location.href = 'pricing.html';
+               } catch (err) {
+                  showError(err.message || 'Sign in failed.');
+                  btn.disabled = false;
+                  btn.textContent = original;
+               }
+            });
+         })();
+      </script>
    </body>
 
 </html>

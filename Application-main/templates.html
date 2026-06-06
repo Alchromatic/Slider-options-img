@@ -28,6 +28,7 @@
       <!-- main css -->
       <link rel="stylesheet" href="assets/css/output.css">
     <link rel="stylesheet" href="assets/css/palette-mixing.css">
+    <link rel="stylesheet" href="assets/css/canvas-preview.css">
    </head>
 
    <body class="bg-[#F4F4F4] dark:bg-neutral-8">
@@ -166,12 +167,27 @@
             </header>
             <!-- dashboard header end -->
 
-            <!-- rendering logic bar — OUTSIDE the scroller so it never scrolls -->
-            <section id="rendering-logic-section" class="rl-section hidden" style="padding:8px 24px; background:#111315; border-bottom:1px solid #1e2228;">
-               <div class="rl-card">
-                  <h5 class="rl-title">Rendering Logic</h5>
-                  <p class="rl-sub">Select a rendering order for shapes.</p>
-                  <div class="rl-toolbar">
+            <!-- TOP ICON TOOLBAR (matches palette-selection reference) -->
+            <section class="tpl-toolbar-section">
+               <div class="tpl-toolbar-row flex items-center gap-3 flex-nowrap">
+                  <div class="tpl-toolbar-pill">
+                     <div class="shrink-0 relative group">
+                        <button type="button" data-panel="sliders" class="tpl-icon-btn flex items-center justify-center"><img src="assets/img/icon/range-sliders.svg" alt="Unique Colors" class="tpl-icon-img"></button>
+                        <div class="tpl-tooltip w-38.5"><div class="bg-white dark:bg-neutral-8 p-2.5 rounded-lg text-center"><h6 class="text-neutral-7 dark:text-white text-sm leading-[17px] -tracking-[0.02em] mb-1">Unique Colors</h6><p class="text-[#5D6C76] text-xs leading-[15px] -tracking-[0.02em]">Palette mixing settings &amp; sliders</p></div></div>
+                     </div>
+                     <div class="shrink-0 relative group">
+                        <button type="button" data-panel="drag" class="tpl-icon-btn flex items-center justify-center"><img src="assets/img/icon/crop.svg" alt="Drag Colors" class="tpl-icon-img"></button>
+                        <div class="tpl-tooltip w-38.5"><div class="bg-white dark:bg-neutral-8 p-2.5 rounded-lg text-center"><h6 class="text-neutral-7 dark:text-white text-sm leading-[17px] -tracking-[0.02em] mb-1">Drag Colors</h6><p class="text-[#5D6C76] text-xs leading-[15px] -tracking-[0.02em]">Custom Sequence (Drag Colors)</p></div></div>
+                     </div>
+                     <div class="shrink-0 relative group">
+                        <button type="button" data-panel="filters" class="tpl-icon-btn flex items-center justify-center"><img src="assets/img/icon/filter-2.svg" alt="Filters" class="tpl-icon-img"></button>
+                        <div class="tpl-tooltip w-38.5"><div class="bg-white dark:bg-neutral-8 p-2.5 rounded-lg text-center"><h6 class="text-neutral-7 dark:text-white text-sm leading-[17px] -tracking-[0.02em] mb-1">Filters</h6><p class="text-[#5D6C76] text-xs leading-[15px] -tracking-[0.02em]">Image adjustments &amp; filters</p></div></div>
+                     </div>
+
+                  <!-- Rendering Logic icons — INSIDE the same pill, always visible -->
+                  <section id="rendering-logic-section" class="rl-section rl-inline tpl-rl-open">
+                     <div class="rl-card rl-card-row">
+                        <div class="rl-toolbar">
                      <button type="button" class="rendering-icon-btn active" data-logic="original" title="Original Order">
                         <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="15" x2="16" y2="15"/></svg>
                      </button>
@@ -208,9 +224,17 @@
                      <button type="button" class="rendering-icon-btn" id="selectiveResolutionIcon" title="Selective Resolution (Draw region to add detail)">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="6" y="6" width="8" height="8" rx="1" stroke-dasharray="2,1"/><circle cx="10" cy="10" r="2" fill="currentColor" stroke="none"/></svg>
                      </button>
-                  </div>
-               </div>
-            </section>
+                        </div>  <!-- /rl-toolbar -->
+                     </div>  <!-- /rl-card -->
+                  </section>  <!-- /#rendering-logic-section (inline) -->
+                  </div>  <!-- /.tpl-toolbar-pill -->
+
+                  <button type="button" id="tplChangeBtn" class="tpl-change-btn items-center border-2 border-neutral-3 dark:border-neutral-6 text-neutral-7 dark:text-white text-[15px] font-bold -tracking-[0.01em] hover:bg-neutral-3 dark:hover:bg-neutral-6 ml-auto shrink-0">
+                     <img class="w-5" src="assets/img/icon/gallery.svg" alt="change">
+                     Change Image
+                  </button>
+               </div>  <!-- /.tpl-toolbar-row -->
+            </section>  <!-- /.tpl-toolbar-section -->
 
             <!-- dashboard main wrapper -->
             <div class="overflow-auto md:p-6 2xl:p-10 pt-2 md:pt-6" id="dashScroller">
@@ -220,14 +244,30 @@
                   <!-- ===== LEFT COLUMN: canvas (top) + diagrams (bottom) ===== -->
                   <div class="pm-main-col">
                   <!-- canvas -->
-                  <div class="bg-white dark:bg-neutral-7 p-6 rounded-lg border-2 border-[#F4F4F4] dark:border-0 shadow-[0px_4px_14px_-6px_#F4F4F4] dark:shadow-none">
-                     <div id="dash-preview-wrap" class="relative flex items-center justify-center w-full h-77 md:h-147 bg-[#F4F4F4] dark:bg-neutral-6 rounded-xl overflow-hidden">
-                        <canvas id="dash-canvas" class="max-w-full max-h-full hidden cursor-crosshair"></canvas>
-                        <label id="dash-drop-zone" class="absolute inset-0 flex items-center justify-center cursor-pointer">
-                           <input id="dash-image-input" type="file" accept="image/*" class="sr-only">
-                           <span id="dash-drop-label" class="inline-flex items-center gap-2 text-neutral-6 dark:text-neutral-1 text-[15px] leading-[1.6] -tracking-[0.15px] font-bold px-4.5 py-2.5 bg-[#E0EBF2] dark:bg-neutral-7 border-2 border-[#E0EBF1] dark:border-neutral-6 rounded-xl cursor-pointer transition-all duration-300 hover:bg-[#d1e8f6] dark:hover:bg-neutral-6"><span class="text-neutral-4"><i class="fa-regular fa-arrow-up-from-bracket"></i></span> Click or drop image</span>
-                        </label>
-                        <div id="dash-status" class="hidden absolute top-2 left-2 z-10 px-3 py-1 rounded-lg bg-black/60 text-white text-xs font-semibold"></div>
+                  <div class="bg-white dark:bg-neutral-7 p-6 rounded-2xl border-2 border-[#F4F4F4] dark:border-0 shadow-[0px_4px_14px_-6px_#F4F4F4] dark:shadow-none">
+                     <div class="tpl-card-header max-md:hidden">
+                        <div>
+                           <h2 class="tpl-card-title">Colors</h2>
+                           <p class="tpl-card-subtitle">Extract, reorder and render the palette for your composition.</p>
+                        </div>
+                        <div class="tpl-card-meta">
+                           <span class="tpl-card-pill"><span class="dot"></span> Live preview</span>
+                        </div>
+                     </div>
+                     <div id="dash-preview-host" class="relative flex items-center justify-center w-full">
+                        <div id="dash-preview-wrap" class="relative flex items-center justify-center w-full h-77 md:h-147 bg-[#F4F4F4] dark:bg-neutral-6 rounded-xl overflow-hidden">
+                           <canvas id="dash-canvas" class="max-w-full max-h-full hidden cursor-crosshair"></canvas>
+                           <label id="dash-drop-zone" class="absolute inset-0 flex items-center justify-center cursor-pointer">
+                              <input id="dash-image-input" type="file" accept="image/*" class="sr-only">
+                              <span id="dash-drop-label" class="inline-flex items-center gap-2 text-neutral-6 dark:text-neutral-1 text-[15px] leading-[1.6] -tracking-[0.15px] font-bold px-4.5 py-2.5 bg-[#E0EBF2] dark:bg-neutral-7 border-2 border-[#E0EBF1] dark:border-neutral-6 rounded-xl cursor-pointer transition-all duration-300 hover:bg-[#d1e8f6] dark:hover:bg-neutral-6"><span class="text-neutral-4"><i class="fa-regular fa-arrow-up-from-bracket"></i></span> Click or drop image</span>
+                           </label>
+                           <div id="dash-status" class="hidden absolute top-2 left-2 z-10 px-3 py-1 rounded-lg bg-black/60 text-white text-xs font-semibold"></div>
+                           <!-- Resize handles (visible only when an image is loaded) -->
+                           <div class="canvas-resize-handle nw" data-corner="nw" title="Drag to resize"></div>
+                           <div class="canvas-resize-handle ne" data-corner="ne" title="Drag to resize"></div>
+                           <div class="canvas-resize-handle sw" data-corner="sw" title="Drag to resize"></div>
+                           <div class="canvas-resize-handle se" data-corner="se" title="Drag to resize"></div>
+                        </div>
                      </div>
                      <div id="dash-selection" class="hidden mt-4 flex items-center gap-3 flex-wrap text-sm">
                         <span class="text-neutral-4 font-semibold">Selected:</span>
@@ -237,22 +277,104 @@
                         <button id="dash-sel-delete" type="button" class="theme-btn-regular style-2">Delete shape</button>
                         <button id="dash-sel-clear" type="button" class="theme-btn-regular style-2">Clear selection</button>
                      </div>
-                     <!-- shape-count slider -->
-                     <div class="mt-6">
-                        <div class="flex items-center justify-between mb-2">
-                           <span class="text-neutral-6 dark:text-neutral-1 text-[15px] font-semibold -tracking-[0.15px]">Color Sequence</span>
-                           <span id="shapeSliderLabel" class="text-neutral-4 text-sm font-semibold -tracking-[0.14px]">Shapes: 0 / 0</span>
+                     <!-- color dragger bar + slider (matches reference screenshot, polished) — hidden until Drag Colors icon clicked -->
+                     <div class="tpl-drag-section" id="dragSection" style="display:none;">
+                        <div class="tpl-drag-label-row">
+                           <span class="tpl-drag-label">Color Order</span>
+                           <span class="tpl-drag-hint">Click to select • Drag to reorder</span>
                         </div>
-                        <input id="shapeSlider" type="range" min="0" max="0" value="0" class="tpl-range">
+                        <div class="tpl-drag-row">
+                           <div class="tpl-drag-strip-wrap" id="bandsScrollWrap">
+                              <div id="colorBandsStrip">
+                                 <div id="bandsEmpty" class="tpl-bands-empty">Load an image to extract its palette</div>
+                              </div>
+                           </div>
+                           <div class="tpl-count-pill">
+                              <button id="bandsMinusBtn" type="button" title="Remove color" class="flex items-center justify-center text-neutral-7 dark:text-white">
+                                 <i class="fa-regular fa-minus"></i>
+                              </button>
+                              <div id="bandsCountLabel" class="text-neutral-7 dark:text-white">00</div>
+                              <button id="bandsPlusBtn" type="button" title="Add color" class="flex items-center justify-center text-neutral-7 dark:text-white">
+                                 <i class="fa-regular fa-plus"></i>
+                              </button>
+                           </div>
+                        </div>
+
+                        <!-- shape-count slider (always visible — drives rendering) -->
+                        <div class="mt-7" id="shapeSliderWrap">
+                           <input id="shapeSlider" type="range" min="0" max="0" value="0" class="tpl-range-big">
+                           <div class="tpl-slider-footer">
+                              <span class="tpl-slider-footer-label">Color Sequence</span>
+                              <span id="shapeSliderLabel" class="tpl-slider-footer-value">00 / 00</span>
+                           </div>
+                        </div>
                      </div>
-                     <!-- color order -->
-                     <div class="mt-6">
+
+                     <!-- FILTERS / ADJUST panel — hidden until Filters icon clicked -->
+                     <div class="tpl-filters-section" id="filtersSection" style="display:none;">
+                        <!-- Hidden label/reset (kept for compatibility with existing JS) -->
+                        <span id="adjustSelectedLabel" style="display:none;"></span>
+                        <button id="resetAdjustBtn" type="button" style="display:none;"></button>
+
+                        <!-- ADJUST view -->
+                        <div class="tpl-filters-view" id="adjustView">
+                           <div class="tpl-filters-icons-wrap">
+                              <button type="button" class="tpl-filters-scroll-arrow left" id="filtersScrollLeft" aria-hidden="true">‹</button>
+                              <div class="tpl-filters-icons" id="adjustIconsScroll">
+                                 <button class="adjust-icon-btn active" data-adjust="brightness" data-label="Brightness" title="Brightness"><span class="tpl-fi-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5" stroke-width="1.6" fill="none"/><g stroke-width="1.6" stroke-linecap="round"><line x1="12" y1="2.5" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="21.5"/><line x1="2.5" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="21.5" y2="12"/><line x1="5.2" y1="5.2" x2="6.9" y2="6.9"/><line x1="17.1" y1="17.1" x2="18.8" y2="18.8"/><line x1="5.2" y1="18.8" x2="6.9" y2="17.1"/><line x1="17.1" y1="6.9" x2="18.8" y2="5.2"/></g></svg></span></button>
+                                 <button class="adjust-icon-btn" data-adjust="contrast" data-label="Contrast" title="Contrast"><span class="tpl-fi-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-width="1.6" fill="none"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg></span></button>
+                                 <button class="adjust-icon-btn" data-adjust="exposure" data-label="Brilliance" title="Brilliance"><span class="tpl-fi-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-width="1.6" fill="none"/><path d="M3 12a9 9 0 0 0 18 0z" fill="currentColor"/></svg></span></button>
+                                 <button class="adjust-icon-btn" data-adjust="highlights" data-label="Highlights" title="Highlights"><span class="tpl-fi-box"><svg viewBox="0 0 24 24"><path d="M4 18 L12 6 L20 18" stroke-width="1.6" stroke-linejoin="round" fill="none"/></svg></span></button>
+                                 <button class="adjust-icon-btn" data-adjust="shadows" data-label="Shadows" title="Shadows"><span class="tpl-fi-box"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="9" ry="6" stroke-width="1.6" fill="none"/><path d="M3 12a9 6 0 0 0 18 0z" fill="currentColor"/></svg></span></button>
+                                 <button class="adjust-icon-btn" data-adjust="warmth" data-label="Warmth" title="Warmth"><span class="tpl-fi-box"><svg viewBox="0 0 24 24"><path d="M10 14V5a2 2 0 1 1 4 0v9a4 4 0 1 1-4 0z" stroke-width="1.6" fill="none"/><circle cx="12" cy="17" r="1.6" fill="currentColor"/></svg></span></button>
+                                 <button class="adjust-icon-btn" data-adjust="saturation" data-label="Saturation" title="Saturation"><span class="tpl-fi-box tpl-fi-stripes"><span class="tpl-fi-stripes-inner"><i style="background:#ff3b30"></i><i style="background:#ff9500"></i><i style="background:#ffcc00"></i><i style="background:#34c759"></i><i style="background:#00c7be"></i><i style="background:#007aff"></i><i style="background:#af52de"></i></span></span></button>
+                                 <button class="adjust-icon-btn" data-adjust="vibrance" data-label="Vibrance" title="Vibrance"><span class="tpl-fi-box tpl-fi-stripes"><span class="tpl-fi-stripes-inner"><i style="background:#ff3b30"></i><i style="background:#ff9500"></i><i style="background:#ffcc00"></i><i style="background:#34c759"></i><i style="background:#007aff"></i></span></span></button>
+                                 <button class="adjust-icon-btn" data-adjust="sharpness" data-label="Sharpness" title="Sharpness"><span class="tpl-fi-box"><svg viewBox="0 0 24 24"><polygon points="4,20 20,20 12,4" stroke-width="1.6" stroke-linejoin="round" fill="none"/></svg></span></button>
+                                 <button class="adjust-icon-btn" data-adjust="blackpoint" data-label="Black Point" title="Black Point"><span class="tpl-fi-box"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2.5" stroke-width="1.6" fill="none"/></svg></span></button>
+                              </div>
+                              <button type="button" class="tpl-filters-scroll-arrow right" id="filtersScrollRight" aria-hidden="true">›</button>
+                           </div>
+
+                           <div class="tpl-filters-ruler-wrap">
+                              <div class="tpl-filters-value" id="adjustValueDisplay">0</div>
+                              <div class="tpl-filters-ruler-scale">
+                                 <span>-20</span><span>-10</span><span class="tpl-fr-zero">0</span><span>10</span><span>20</span>
+                              </div>
+                              <div class="tpl-filters-ruler">
+                                 <input type="range" class="tpl-filters-slider" id="adjustSlider" min="-100" max="100" value="0" step="1">
+                                 <div class="tpl-filters-ruler-ticks" id="rulerTicks"></div>
+                                 <div class="tpl-filters-ruler-thumb" id="rulerThumb"></div>
+                              </div>
+                           </div>
+                        </div>
+
+                        <!-- Hidden per-adjustment value stores (used by applyAdjustments) -->
+                        <div style="display:none;">
+                           <input type="range" id="brilliance-slider" min="-100" max="100" value="0">
+                           <input type="range" id="exposure-slider" min="-100" max="100" value="0">
+                           <input type="range" id="highlights-slider" min="-100" max="100" value="0">
+                           <input type="range" id="shadows-slider" min="-100" max="100" value="0">
+                           <input type="range" id="brightness-slider" min="-100" max="100" value="0">
+                           <input type="range" id="contrast-slider" min="-100" max="100" value="0">
+                           <input type="range" id="saturation-slider" min="-100" max="100" value="0">
+                           <input type="range" id="vibrance-slider" min="-100" max="100" value="0">
+                           <input type="range" id="warmth-slider" min="-100" max="100" value="0">
+                           <input type="range" id="tint-slider" min="-100" max="100" value="0">
+                           <input type="range" id="blackpoint-slider" min="-100" max="100" value="0">
+                           <input type="range" id="sharpness-slider" min="0" max="100" value="0">
+                           <input type="range" id="definition-slider" min="-100" max="100" value="0">
+                           <input type="range" id="noise-slider" min="0" max="100" value="0">
+                           <input type="range" id="vignette-slider" min="-100" max="100" value="0">
+                        </div>
+                     </div>
+                     <!-- color order trigger (kept hidden; opened via crop icon in top toolbar) -->
+                     <div class="hidden">
                         <button id="dragColorBtn" type="button" class="theme-btn-regular style-2 inline-flex! items-center justify-center gap-2"><span class="text-neutral-4"><i class="fa-regular fa-arrow-down-arrow-up"></i></span> Drag &amp; Drop Color Order</button>
                      </div>
                   </div>
 
                   <!-- ===== DIAGRAMS (bottom of left column) ===== -->
-                  <div class="pm-panel pm-diagrams">
+                  <div class="pm-panel pm-diagrams tpl-panel" data-panel-name="distribution" style="display:none;">
                      <div class="section">
                         <div class="cd-section-header">
                            <h4>Color Distribution</h4>
@@ -294,7 +416,7 @@
                   </div>
                   </div>
                   <!-- ===== RIGHT COLUMN: palette mixing ===== -->
-                  <div class="pm-right-col">
+                  <div class="pm-right-col tpl-panel" data-panel-name="sliders" style="display:none;">
                   <div class="pm-panel pm-settings">
 <!-- ====================== 7. PALETTE MIXING (Trycolors Style) ======================== -->
 <div class="section trycolors-section">
@@ -369,6 +491,7 @@
 </div>
                   </div>
                   </div> <!-- /pm-right-col -->
+
                </div>
                <!-- geometrize canvas + rendering logic end -->
             </div>
@@ -399,6 +522,8 @@
       <!-- carry the generated canvas forward from the Dashboard -->
       <script>window.GEOMAGIC_RESTORE = true;</script>
       <script src="assets/js/dashboard-geometrize.js"></script>
+      <!-- shared canvas preview: fit, resize, status badge -->
+      <script src="assets/js/canvas-preview.js"></script>
       <!-- palette mixing (unmix) — calls the backend API -->
       <script>
          function rgbToHex(r, g, b) {
@@ -423,37 +548,894 @@
             upd();
          });
 
-         // Adjust scroller height when rendering bar shows/hides
+         // Adjust scroller height when rendering bar shows/hides (account for top toolbar too)
          (function() {
             var rl = document.getElementById('rendering-logic-section');
             var sc = document.getElementById('dashScroller');
+            var tb = document.querySelector('.tpl-toolbar-section');
             if (!rl || !sc) return;
-            var obs = new MutationObserver(function() {
-               var barH = rl.classList.contains('hidden') ? 0 : rl.offsetHeight;
-               sc.style.height = 'calc(100vh - ' + (96 + barH) + 'px)';
-            });
+            function recalc() {
+               // Rendering Logic now lives INSIDE the top toolbar (.tpl-toolbar-section),
+               // so its height is already accounted for by tb.offsetHeight. Don't add it twice.
+               var tbH = tb ? tb.offsetHeight : 0;
+               sc.style.height = 'calc(100vh - ' + (96 + tbH) + 'px)';
+            }
+            var obs = new MutationObserver(recalc);
             obs.observe(rl, { attributes: true, attributeFilter: ['class'] });
+            window.addEventListener('resize', recalc);
+            // Run now, after layout settles (rAF), on full load, and once web fonts
+            // are ready — otherwise the first recalc can capture a stale toolbar height
+            // (before fonts/wrapping settle) and leave the scroller too short.
+            recalc();
+            requestAnimationFrame(function(){ requestAnimationFrame(recalc); });
+            window.addEventListener('load', recalc);
+            if (document.fonts && document.fonts.ready) document.fonts.ready.then(recalc);
+         })();
+
+         // ===== Change Image → clear saved canvas + return to Dashboard =====
+         (function() {
+            var btn = document.getElementById('tplChangeBtn');
+            if (!btn) return;
+            btn.addEventListener('click', function(e) {
+               e.preventDefault();
+               // Wipe both the carried-forward canvas state and any user-resize so the
+               // Dashboard starts fresh, no leftover image.
+               try { sessionStorage.removeItem('geomagic:state'); } catch (_) {}
+               try { sessionStorage.removeItem('geomagic-state'); } catch (_) {}
+               window.location.href = 'dashboard.html';
+            });
+         })();
+
+         // ===== Top icon toolbar: panel toggling =====
+         (function() {
+            var btns = document.querySelectorAll('.tpl-icon-btn[data-panel]');
+            var panels = document.querySelectorAll('.tpl-panel[data-panel-name]');
+            var rlSection = document.getElementById('rendering-logic-section');
+            var dragBtn = document.getElementById('dragColorBtn');
+            var dragIconBtn = document.querySelector('.tpl-icon-btn[data-panel="drag"]');
+
+            function setActive(btn, on) {
+               if (!btn) return;
+               if (on) btn.classList.add('active'); else btn.classList.remove('active');
+            }
+
+            function showPanel(name) {
+               panels.forEach(function(p) {
+                  if (p.getAttribute('data-panel-name') === name) p.style.display = '';
+               });
+            }
+            function hidePanel(name) {
+               panels.forEach(function(p) {
+                  if (p.getAttribute('data-panel-name') === name) p.style.display = 'none';
+               });
+            }
+            function isPanelVisible(name) {
+               for (var i = 0; i < panels.length; i++) {
+                  if (panels[i].getAttribute('data-panel-name') === name) {
+                     return panels[i].style.display !== 'none';
+                  }
+               }
+               return false;
+            }
+
+            btns.forEach(function(btn) {
+               btn.addEventListener('click', function() {
+                  var name = btn.getAttribute('data-panel');
+                  if (name === 'rendering') {
+                     var isOpen = rlSection.classList.contains('tpl-rl-open');
+                     if (!isOpen) {
+                        rlSection.classList.add('tpl-rl-open');
+                        rlSection.classList.remove('hidden');
+                        setActive(btn, true);
+                     } else {
+                        rlSection.classList.remove('tpl-rl-open');
+                        setActive(btn, false);
+                     }
+                     return;
+                  }
+                  if (name === 'drag') {
+                     // Toggle the inline Color Order section
+                     var section = document.getElementById('dragSection');
+                     if (!section) return;
+                     var hidden = section.style.display === 'none' || getComputedStyle(section).display === 'none';
+                     if (hidden) {
+                        section.style.display = '';
+                        setActive(btn, true);
+                        // Make sure bands are populated (auto-poll runs every 600ms but trigger now for instant feel)
+                        var palette = document.getElementById('colorPalette');
+                        if (palette && !palette.children.length && dragBtn) {
+                           var origAlert = window.alert; window.alert = function(){};
+                           var modalEl = document.getElementById('dragModal');
+                           if (modalEl) modalEl.classList.add('tpl-modal-suppress');
+                           try { dragBtn.click(); } catch (e) {}
+                           window.alert = origAlert;
+                           if (modalEl) { modalEl.classList.remove('tpl-modal-suppress'); modalEl.style.display = 'none'; }
+                           if (palette.children.length) {
+                              var colors = Array.from(palette.children).map(function(chip) {
+                                 try {
+                                    var rgba = JSON.parse(chip.dataset.color);
+                                    return '#' + [rgba[0], rgba[1], rgba[2]].map(function(v){ return ('0'+Number(v).toString(16)).slice(-2); }).join('').toUpperCase();
+                                 } catch (e) { return '#888888'; }
+                              });
+                              window.__tplApplyBands && window.__tplApplyBands(colors);
+                           }
+                        }
+                     } else {
+                        section.style.display = 'none';
+                        setActive(btn, false);
+                     }
+                     return;
+                  }
+                  if (name === 'sliders') {
+                     if (isPanelVisible('sliders')) { hidePanel('sliders'); setActive(btn, false); }
+                     else { showPanel('sliders'); setActive(btn, true); }
+                     return;
+                  }
+                  if (name === 'filters') {
+                     var fs = document.getElementById('filtersSection');
+                     if (!fs) return;
+                     var hidden = fs.style.display === 'none' || getComputedStyle(fs).display === 'none';
+                     fs.style.display = hidden ? '' : 'none';
+                     setActive(btn, hidden);
+                     // Filters and the recipe-diagrams panel share the area below the canvas
+                     // → keep them mutually exclusive.
+                     if (hidden && typeof window.__tplHideDiagrams === 'function') {
+                        window.__tplHideDiagrams();
+                     }
+                     return;
+                  }
+               });
+            });
+         })();
+
+         // ===== Color dragger: +/- counter, click-select, inline drag-reorder =====
+         (function() {
+            var minus = document.getElementById('bandsMinusBtn');
+            var plus = document.getElementById('bandsPlusBtn');
+            var label = document.getElementById('bandsCountLabel');
+            var strip = document.getElementById('colorBandsStrip');
+            var slider = document.getElementById('shapeSlider');
+            var sliderLabel = document.getElementById('shapeSliderLabel');
+            if (!minus || !plus || !label || !strip) return;
+
+            var MAX_BANDS = 24;     // upper cap; actual max is fullPalette.length
+            var bandColors = [];    // currently visible bands (subset of fullPalette in current order)
+            var fullPalette = [];   // FULL extracted palette in dominance order — source of truth
+            var selectedIndex = 0;
+
+            function pad2(n) { return n < 10 ? '0' + n : String(n); }
+            function getCount() { return parseInt(label.textContent, 10) || 8; }
+
+            function applyBandOrderToModel() {
+               // Reorder the modal's #colorPalette to match the inline bands, then click #saveDragBtn
+               // so the existing custom_sequence renderer picks up the new order. This reuses the
+               // already-working pipeline from dashboard-geometrize.js (no need to expose baseShapes).
+               try {
+                  var palette = document.getElementById('colorPalette');
+                  var saveBtn = document.getElementById('saveDragBtn');
+                  if (!palette || !palette.children.length) return;
+                  var chipsByHex = {};
+                  Array.from(palette.children).forEach(function(chip) {
+                     try {
+                        var c = JSON.parse(chip.dataset.color);
+                        var hx = '#' + [c[0],c[1],c[2]].map(function(v){return ('0'+Number(v).toString(16)).slice(-2);}).join('').toUpperCase();
+                        chipsByHex[hx] = chip;
+                     } catch (e) {}
+                  });
+                  // Reorder the palette children to match bandColors order
+                  bandColors.forEach(function(hex) {
+                     var chip = chipsByHex[hex.toUpperCase()];
+                     if (chip) palette.appendChild(chip);
+                  });
+                  // Renumber & trigger save
+                  Array.from(palette.children).forEach(function(c, i) {
+                     var n = c.querySelector('.chip-number');
+                     if (n) n.textContent = '#' + (i+1);
+                  });
+                  if (saveBtn) saveBtn.click();
+               } catch (e) {}
+            }
+
+            function paint() {
+               strip.innerHTML = '';
+               if (!bandColors.length) {
+                  var empty = document.createElement('div');
+                  empty.id = 'bandsEmpty';
+                  empty.className = 'tpl-bands-empty';
+                  empty.textContent = 'Load an image to extract its palette';
+                  strip.appendChild(empty);
+                  return;
+               }
+               bandColors.forEach(function(hex, i) {
+                  var d = document.createElement('div');
+                  d.className = 'tpl-band' + (i === selectedIndex ? ' selected' : '');
+                  d.style.background = hex;
+                  d.setAttribute('data-band', String(i));
+                  d.setAttribute('data-hex', String(hex).toUpperCase());
+                  d.draggable = true;
+                  d.addEventListener('click', function() {
+                     selectedIndex = i;
+                     paint();
+                  });
+                  d.addEventListener('dragstart', function(e) {
+                     e.dataTransfer.effectAllowed = 'move';
+                     e.dataTransfer.setData('text/plain', String(i));
+                     d.classList.add('dragging');
+                  });
+                  d.addEventListener('dragend', function() { d.classList.remove('dragging'); });
+                  d.addEventListener('dragover', function(e) {
+                     e.preventDefault();
+                     d.classList.add('drop-target');
+                  });
+                  d.addEventListener('dragleave', function() { d.classList.remove('drop-target'); });
+                  d.addEventListener('drop', function(e) {
+                     e.preventDefault();
+                     d.classList.remove('drop-target');
+                     var from = parseInt(e.dataTransfer.getData('text/plain'), 10);
+                     var to = i;
+                     if (isNaN(from) || from === to) return;
+                     var moved = bandColors.splice(from, 1)[0];
+                     bandColors.splice(to, 0, moved);
+                     selectedIndex = to;
+                     paint();
+                     applyBandOrderToModel();
+                  });
+                  strip.appendChild(d);
+               });
+            }
+
+            function setCount(n) {
+               // Cap at fullPalette length — never pad with hardcoded colors
+               var hardMax = Math.min(MAX_BANDS, fullPalette.length || MAX_BANDS);
+               n = Math.max(1, Math.min(hardMax, n));
+               if (!fullPalette.length) return; // nothing to show yet
+               // Preserve any user-applied reorder by intersecting with current bandColors order
+               // when shrinking, and appending the NEXT unused colors from fullPalette when growing.
+               if (n <= bandColors.length) {
+                  bandColors = bandColors.slice(0, n);
+               } else {
+                  var seen = new Set(bandColors.map(function(h){ return h.toUpperCase(); }));
+                  var i = 0;
+                  while (bandColors.length < n && i < fullPalette.length) {
+                     var hex = fullPalette[i++].toUpperCase();
+                     if (!seen.has(hex)) { bandColors.push(hex); seen.add(hex); }
+                  }
+               }
+               label.textContent = pad2(bandColors.length);
+               if (selectedIndex >= bandColors.length) selectedIndex = Math.max(0, bandColors.length - 1);
+               paint();
+               // Mirror to shape slider so rendering scales with visible band count
+               if (slider && parseInt(slider.max, 10) > 0) {
+                  var ratio = bandColors.length / hardMax;
+                  slider.value = String(Math.max(1, Math.round(parseInt(slider.max, 10) * ratio)));
+                  slider.dispatchEvent(new Event('input', { bubbles: true }));
+               }
+            }
+
+            // Expose a setter so the Drag Colors icon can push the modal's extracted palette in here
+            window.__tplApplyBands = function(hexList) {
+               if (!Array.isArray(hexList) || !hexList.length) return;
+               fullPalette = hexList.map(function(h) { return String(h).toUpperCase(); });
+               var initialN = Math.min(fullPalette.length, 8);
+               bandColors = fullPalette.slice(0, initialN);
+               selectedIndex = 0;
+               label.textContent = pad2(bandColors.length);
+               paint();
+            };
+
+            // No hardcoded placeholder bands — start empty. The strip will be populated automatically
+            // from the extracted palette as soon as an image is processed (or restored from session).
+            bandColors = [];
+            selectedIndex = 0;
+            label.textContent = pad2(0);
+
+            // ----- Auto-pull palette from the existing modal (frequency-counted via populateColorPalette) -----
+            // The modal logic in dashboard-geometrize.js builds #colorPalette chips from baseShapes.
+            // We trigger that pipeline invisibly, read the chips, and mirror them to the inline bands.
+            var dragBtn = document.getElementById('dragColorBtn');
+            var dragModalEl = document.getElementById('dragModal');
+            var paletteEl = document.getElementById('colorPalette');
+
+            function pullPaletteFromModal() {
+               if (!dragBtn || !dragModalEl || !paletteEl) return false;
+               // Suppress the "Generate an image first" alert when no shapes exist yet
+               var origAlert = window.alert;
+               window.alert = function() {};
+               dragModalEl.classList.add('tpl-modal-suppress'); // hide flash
+               try { dragBtn.click(); } catch (e) {}
+               window.alert = origAlert;
+               var chips = Array.from(paletteEl.children || []);
+               dragModalEl.classList.remove('tpl-modal-suppress');
+               dragModalEl.style.display = 'none';
+               if (!chips.length) return false;
+               var hexList = chips.map(function(chip) {
+                  try {
+                     var c = JSON.parse(chip.dataset.color);
+                     return '#' + [c[0],c[1],c[2]].map(function(v){ return ('0'+Number(v).toString(16)).slice(-2); }).join('').toUpperCase();
+                  } catch (e) { return '#888888'; }
+               });
+               fullPalette = hexList;
+               // Default to showing first 8 (or full palette if smaller)
+               var initialN = Math.min(hexList.length, 8);
+               bandColors = hexList.slice(0, initialN);
+               selectedIndex = 0;
+               label.textContent = pad2(bandColors.length);
+               paint();
+               return true;
+            }
+
+            // Try once on init (in case state was restored from sessionStorage before this script ran),
+            // then poll for changes via the slider's max value (proxy for "image processed").
+            setTimeout(pullPaletteFromModal, 200);
+            if (slider) {
+               var lastMax = parseInt(slider.max, 10) || 0;
+               setInterval(function() {
+                  var mx = parseInt(slider.max, 10) || 0;
+                  if (mx !== lastMax) {
+                     lastMax = mx;
+                     pullPaletteFromModal();
+                  }
+               }, 600);
+            }
+
+            minus.addEventListener('click', function() {
+               if (!bandColors.length) return; // no-op when empty
+               setCount(getCount() - 1);
+            });
+            plus.addEventListener('click', function() {
+               if (!bandColors.length) return; // require image first
+               setCount(getCount() + 1);
+            });
+
+            // ----- Edge fade hints when strip is horizontally scrollable -----
+            var scrollWrap = document.getElementById('bandsScrollWrap');
+            function updateScrollHints() {
+               if (!scrollWrap) return;
+               var canL = strip.scrollLeft > 4;
+               var canR = strip.scrollLeft + strip.clientWidth < strip.scrollWidth - 4;
+               scrollWrap.classList.toggle('scroll-left', canL);
+               scrollWrap.classList.toggle('scroll-right', canR);
+            }
+            strip.addEventListener('scroll', updateScrollHints);
+            window.addEventListener('resize', updateScrollHints);
+            // Re-check after each paint
+            var _origPaint = paint;
+            paint = function() { _origPaint(); setTimeout(updateScrollHints, 0); };
+
+            // ----- Auto-scroll during drag near edges -----
+            var autoScrollRAF = null;
+            function startAutoScroll(dir) {
+               if (autoScrollRAF) return;
+               function tick() {
+                  strip.scrollLeft += dir * 14;
+                  autoScrollRAF = requestAnimationFrame(tick);
+               }
+               autoScrollRAF = requestAnimationFrame(tick);
+            }
+            function stopAutoScroll() {
+               if (autoScrollRAF) { cancelAnimationFrame(autoScrollRAF); autoScrollRAF = null; }
+            }
+            strip.addEventListener('dragover', function(e) {
+               var r = strip.getBoundingClientRect();
+               var edge = 60;
+               if (e.clientX < r.left + edge) { startAutoScroll(-1); }
+               else if (e.clientX > r.right - edge) { startAutoScroll(1); }
+               else { stopAutoScroll(); }
+            });
+            strip.addEventListener('dragleave', stopAutoScroll);
+            strip.addEventListener('drop', stopAutoScroll);
+            document.addEventListener('dragend', stopAutoScroll);
+         })();
+
+         // (Rendering Logic visibility is now controlled entirely by CSS + the .tpl-rl-open class
+         //  set by the toolbar icon — no interval needed.)
+
+         // ===== Slider filled-track sync (sets --pct) =====
+         (function() {
+            var s = document.getElementById('shapeSlider');
+            if (!s) return;
+            function sync() {
+               var min = parseFloat(s.min) || 0;
+               var max = parseFloat(s.max) || 0;
+               var v = parseFloat(s.value) || 0;
+               var pct = max > min ? ((v - min) / (max - min)) * 100 : 0;
+               s.style.setProperty('--pct', pct + '%');
+            }
+            s.addEventListener('input', sync);
+            s.addEventListener('change', sync);
+            // also poll for external max updates
+            var lastSig = '';
+            setInterval(function() {
+               var sig = s.min + ':' + s.max + ':' + s.value;
+               if (sig !== lastSig) { lastSig = sig; sync(); }
+            }, 400);
+            sync();
+         })();
+
+         // ==================== FILTERS / ADJUST runtime ====================
+         (function() {
+            var iconsScroll = document.getElementById('adjustIconsScroll');
+            var slider = document.getElementById('adjustSlider');
+            var rulerTicks = document.getElementById('rulerTicks');
+            var rulerThumb = document.getElementById('rulerThumb');
+            var valueDisplay = document.getElementById('adjustValueDisplay');
+            var selectedLabel = document.getElementById('adjustSelectedLabel');
+            var resetBtn = document.getElementById('resetAdjustBtn');
+            var leftArrow = document.getElementById('filtersScrollLeft');
+            var rightArrow = document.getElementById('filtersScrollRight');
+            if (!slider || !rulerTicks) return;
+
+            // Generate ticks (41 total, every 5 units from -100..100)
+            (function gen() {
+               rulerTicks.innerHTML = '';
+               for (var i = 0; i < 41; i++) {
+                  var t = document.createElement('div');
+                  t.className = 'adjust-ruler-tick';
+                  if (i === 20) t.classList.add('center');
+                  else if (i % 10 === 0) t.classList.add('large');
+                  else if (i % 2 === 0) t.classList.add('medium');
+                  else t.classList.add('small');
+                  rulerTicks.appendChild(t);
+               }
+            })();
+
+            var values = {};
+            var current = null;
+
+            function updateThumb(v) {
+               var min = parseFloat(slider.min) || -100;
+               var max = parseFloat(slider.max) || 100;
+               var pct = ((v - min) / (max - min)) * 100;
+               if (rulerThumb) rulerThumb.style.left = pct + '%';
+            }
+            function updateTicks(v) {
+               var ticks = rulerTicks.querySelectorAll('.adjust-ruler-tick');
+               var center = 20;
+               var nActive = Math.round(Math.abs(v) / 5);
+               ticks.forEach(function(t, i) {
+                  t.classList.remove('active');
+                  if (v > 0 && i > center && i <= center + nActive) t.classList.add('active');
+                  else if (v < 0 && i < center && i >= center - nActive) t.classList.add('active');
+               });
+            }
+
+            function applyFilters() {
+               var canvas = document.getElementById('dash-canvas');
+               if (!canvas) return;
+               var f = [];
+               if (values.exposure) f.push('brightness(' + (1 + values.exposure / 100) + ')');
+               if (values.brightness) f.push('brightness(' + (1 + values.brightness / 100) + ')');
+               if (values.contrast) f.push('contrast(' + (1 + values.contrast / 100) + ')');
+               if (values.saturation) f.push('saturate(' + (1 + values.saturation / 100) + ')');
+               if (values.vibrance) f.push('saturate(' + (1 + values.vibrance / 80) + ')');
+               if (values.warmth) {
+                  if (values.warmth > 0) f.push('sepia(' + (values.warmth / 200) + ')');
+                  else f.push('hue-rotate(' + (values.warmth / 4) + 'deg)');
+               }
+               if (values.tint) f.push('hue-rotate(' + (values.tint / 4) + 'deg)');
+               if (values.highlights) f.push('brightness(' + (1 + values.highlights / 200) + ')');
+               if (values.shadows) f.push('brightness(' + (1 + values.shadows / 300) + ') contrast(' + (1 + Math.abs(values.shadows) / 400) + ')');
+               if (values.blackpoint) f.push('contrast(' + (1 + values.blackpoint / 100) + ')');
+               if (values.sharpness) f.push('contrast(' + (1 + values.sharpness / 200) + ')');
+               canvas.style.filter = f.length ? f.join(' ') : 'none';
+            }
+
+            function selectAdjustment(btn) {
+               document.querySelectorAll('.tpl-filters-icons .adjust-icon-btn').forEach(function(b) { b.classList.remove('active'); });
+               btn.classList.add('active');
+               current = btn.dataset.adjust;
+               if (selectedLabel) {
+                  selectedLabel.textContent = btn.dataset.label || current;
+                  selectedLabel.classList.add('has-value');
+               }
+               var cur = values[current] || 0;
+               slider.value = cur;
+               updateTicks(cur);
+               updateThumb(cur);
+               if (valueDisplay) valueDisplay.textContent = String(cur);
+            }
+            document.querySelectorAll('.tpl-filters-icons .adjust-icon-btn').forEach(function(btn) {
+               btn.addEventListener('click', function() { selectAdjustment(btn); });
+            });
+            // Pre-select the first adjustment (Brightness) so the panel mirrors the reference
+            var defaultBtn = document.querySelector('.tpl-filters-icons .adjust-icon-btn.active') || document.querySelector('.tpl-filters-icons .adjust-icon-btn');
+            if (defaultBtn) selectAdjustment(defaultBtn);
+
+            slider.addEventListener('input', function() {
+               var v = parseInt(slider.value, 10) || 0;
+               if (current) {
+                  values[current] = v;
+                  var hidden = document.getElementById(current + '-slider');
+                  if (hidden) hidden.value = v;
+                  var btn = document.querySelector('.tpl-filters-icons .adjust-icon-btn[data-adjust="' + current + '"]');
+                  if (btn) btn.classList.toggle('modified', v !== 0);
+               }
+               if (valueDisplay) valueDisplay.textContent = String(v);
+               updateTicks(v);
+               updateThumb(v);
+               applyFilters();
+            });
+
+            if (resetBtn) resetBtn.addEventListener('click', function() {
+               values = {};
+               slider.value = 0;
+               updateTicks(0); updateThumb(0);
+               if (valueDisplay) valueDisplay.textContent = '0';
+               document.querySelectorAll('.tpl-filters-icons .adjust-icon-btn').forEach(function(b) { b.classList.remove('modified'); });
+               applyFilters();
+            });
+
+            if (leftArrow && iconsScroll) leftArrow.addEventListener('click', function() { iconsScroll.scrollBy({left:-160, behavior:'smooth'}); });
+            if (rightArrow && iconsScroll) rightArrow.addEventListener('click', function() { iconsScroll.scrollBy({left:160, behavior:'smooth'}); });
+
+            // Detect overflow → show/hide scroll arrows
+            var iconsWrap = iconsScroll && iconsScroll.parentElement;
+            function syncOverflow() {
+               if (!iconsScroll || !iconsWrap) return;
+               var has = iconsScroll.scrollWidth > iconsScroll.clientWidth + 1;
+               iconsWrap.classList.toggle('has-overflow', has);
+            }
+            window.addEventListener('resize', syncOverflow);
+            requestAnimationFrame(syncOverflow);
+            setTimeout(syncOverflow, 250);
+
+            updateThumb(0);
+         })();
+
+         // ===== Get Recipe → reveal diagrams panel, hide filter section =====
+         (function() {
+            function getDiagramsPanel() { return document.querySelector('.pm-panel.pm-diagrams[data-panel-name="distribution"]'); }
+            function getFiltersSection() { return document.getElementById('filtersSection'); }
+            function getFiltersIconBtn() { return document.querySelector('.tpl-icon-btn[data-panel="filters"]'); }
+
+            function showDiagrams() {
+               var d = getDiagramsPanel(); if (d) d.style.display = '';
+               var fs = getFiltersSection(); if (fs) fs.style.display = 'none';
+               var fb = getFiltersIconBtn(); if (fb) fb.classList.remove('active');
+            }
+            function hideDiagrams() {
+               var d = getDiagramsPanel(); if (d) d.style.display = 'none';
+            }
+
+            // Expose for other handlers (e.g. the toolbar code can call it)
+            window.__tplShowDiagrams = showDiagrams;
+            window.__tplHideDiagrams = hideDiagrams;
+
+            // Wire up Get Recipe button — capture so we run before async work returns
+            function wire() {
+               var btn = document.getElementById('trycolorsBtn');
+               if (!btn) return false;
+               if (btn.__diagramsWired) return true;
+               btn.__diagramsWired = true;
+               btn.addEventListener('click', function() {
+                  var hex = (document.getElementById('trycolorsInput') || {}).value;
+                  if (!hex || !String(hex).trim()) return;
+                  showDiagrams();
+               });
+               // Also handle Enter in the input (palette-mixing.js triggers .click() so the above fires)
+               return true;
+            }
+            if (!wire()) {
+               var iv = setInterval(function() { if (wire()) clearInterval(iv); }, 200);
+               setTimeout(function() { clearInterval(iv); }, 8000);
+            }
+
+            // Clicking a palette swatch fills the target — treat it as “selecting palette”
+            // and ALSO hide the filter bar so the diagrams area is unobstructed.
+            document.addEventListener('click', function(e) {
+               var sw = e.target.closest && e.target.closest('#trycolorsPaletteGrid .trycolors-palette-swatch, #trycolorsPaletteGrid [data-hex]');
+               if (sw) {
+                  var fs = getFiltersSection(); if (fs) fs.style.display = 'none';
+                  var fb = getFiltersIconBtn(); if (fb) fb.classList.remove('active');
+               }
+            });
+         })();
+
+         // ===== Reformat shapeSliderLabel from "Shapes: X / Y" to "XX / YY" =====
+         (function() {
+            var lbl = document.getElementById('shapeSliderLabel');
+            if (!lbl) return;
+            function fmt() {
+               var t = lbl.textContent || '';
+               var m = t.match(/(\d+)\s*\/\s*(\d+)/);
+               if (m) {
+                  var a = parseInt(m[1], 10), b = parseInt(m[2], 10);
+                  var pad = function(n) { return n < 10 ? '0' + n : String(n); };
+                  var nice = pad(a) + ' / ' + pad(b);
+                  if (lbl.textContent !== nice) lbl.textContent = nice;
+               }
+            }
+            new MutationObserver(fmt).observe(lbl, { childList: true, characterData: true, subtree: true });
+            fmt();
          })();
       </script>
          <!-- rendering logic styles (self-contained so no Tailwind rebuild is needed) -->
       <style>
+         /* ==================== TOP ICON TOOLBAR ==================== */
+         .tpl-toolbar-section { padding: 18px 28px; background: #FCFCFC; border-bottom: 1px solid #ececec; }
+         .dark .tpl-toolbar-section { background: #1a1d1f; border-bottom: 1px solid #25282b; }
+         /* The pill wraps BOTH the 4 main buttons AND the rendering-logic icons so they
+            all sit inside one container with one background. */
+         .tpl-toolbar-pill { display: inline-flex; align-items: center; gap: 14px; padding: 8px 10px; border-radius: 14px; background: #f2f2f3; border: 1px solid #e6e6e8; box-shadow: 0 1px 0 rgba(0,0,0,0.02); overflow: visible; }
+         .dark .tpl-toolbar-pill { background: #14171a; border-color: #25282b; box-shadow: 0 1px 0 rgba(0,0,0,0.4) inset; }
+         .tpl-change-btn { display: none; height: 52px; padding: 0 20px; gap: 10px; border-radius: 12px; transition: background 0.15s, border-color 0.15s, transform 0.15s; }
+         .tpl-change-btn:hover { transform: translateY(-1px); }
+         @media (min-width: 1024px) { .tpl-change-btn { display: inline-flex; } }
+         .tpl-icon-btn { position: relative; width: 56px; height: 56px; border-radius: 12px; background: #ffffff; border: 1px solid #e3e3e6; box-shadow: 0 1px 2px rgba(16,24,40,0.04); transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease; cursor: pointer; }
+         .dark .tpl-icon-btn { background: #1f2226; border-color: #2c2f34; box-shadow: 0 1px 0 rgba(255,255,255,0.02) inset; }
+         .tpl-icon-img { width: 26px; height: 26px; filter: drop-shadow(0 1px 0 rgba(0,0,0,0.06)); }
+         .dark .tpl-icon-img { filter: none; }
+         .tpl-icon-btn:hover { transform: translateY(-1px); border-color: #d1d5db; box-shadow: 0 4px 12px rgba(16,24,40,0.06); }
+         .dark .tpl-icon-btn:hover { border-color: #3a3f45; background: #25292e; box-shadow: 0 4px 12px rgba(0,0,0,0.35); }
+         .tpl-icon-btn.active { background: #eaf2ff !important; border-color: #2a85ff !important; box-shadow: 0 0 0 3px rgba(42,133,255,0.18), 0 6px 14px rgba(42,133,255,0.18) !important; }
+         .dark .tpl-icon-btn.active { background: #11243f !important; border-color: #2a85ff !important; }
+         .tpl-icon-btn.active .tpl-icon-img { filter: brightness(1.05); }
+         /* Tooltips */
+         .tpl-tooltip { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); padding-top: 12px; z-index: 30; opacity: 0; visibility: hidden; transition: opacity 0.18s ease, transform 0.18s ease; pointer-events: none; }
+         .group:hover .tpl-tooltip { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(2px); }
+         .tpl-tooltip > div { box-shadow: 0 12px 28px rgba(16,24,40,0.16), 0 2px 4px rgba(16,24,40,0.06); border: 1px solid rgba(0,0,0,0.04); }
+         .dark .tpl-tooltip > div { box-shadow: 0 12px 28px rgba(0,0,0,0.55); border-color: #2c2f34; }
+         @media (max-width: 768px) { .tpl-tooltip { display: none; } }
+         .w-38\.5 { width: 9.625rem; }
+         .w-50 { width: 12.5rem; }
+         /* Toolbar scroll on mobile */
+         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+         .no-scrollbar::-webkit-scrollbar { display: none; }
+
+         /* ==================== CANVAS CARD ==================== */
+         .tpl-card-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid #f0f0f2; }
+         .dark .tpl-card-header { border-bottom-color: #25282b; }
+         .tpl-card-title { font-size: 26px; line-height: 1.15; font-weight: 700; letter-spacing: -0.02em; color: #1a1d1f; }
+         .dark .tpl-card-title { color: #fcfcfc; }
+         .tpl-card-subtitle { font-size: 13px; color: #6f767e; margin-top: 4px; letter-spacing: -0.01em; }
+         .tpl-card-meta { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #6f767e; }
+         .tpl-card-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: #f2f2f3; color: #6f767e; font-size: 11px; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; }
+         .dark .tpl-card-pill { background: #1f2226; color: #9aa0a6; }
+         .tpl-card-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: #2a85ff; box-shadow: 0 0 0 3px rgba(42,133,255,0.18); }
+
+         /* Drop zone polish (canvas-preview.css handles loaded state + resize + status) */
+         #dash-preview-wrap:not(.tpl-canvas-loaded) { background: radial-gradient(circle at 30% 20%, rgba(42,133,255,0.06), transparent 60%), #F4F4F4 !important; border: 1px dashed transparent; transition: border-color 0.2s; }
+         .dark #dash-preview-wrap:not(.tpl-canvas-loaded) { background: radial-gradient(circle at 30% 20%, rgba(42,133,255,0.08), transparent 60%), #1f2226 !important; }
+         #dash-preview-wrap:not(.tpl-canvas-loaded):hover { border-color: rgba(42,133,255,0.35); }
+         #dash-drop-label { transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease; padding: 12px 20px !important; }
+         #dash-drop-label:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(16,24,40,0.08); }
+
+         /* ==================== DRAG COLORS view (bands + counter + slider) ==================== */
+         .tpl-drag-section { padding: 18px; border-radius: 16px; background: #fafafa; border: 1px solid #ececec; margin-top: 20px; }
+         .dark .tpl-drag-section { background: #16181b; border-color: #25282b; }
+         .tpl-drag-row { display: flex; align-items: center; gap: 12px; }
+         .tpl-drag-label-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+         .tpl-drag-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #8c9097; }
+         .tpl-drag-hint { font-size: 11px; color: #8c9097; }
+         #colorBandsStrip { flex: 1 1 auto; display: flex; align-items: center; gap: 8px; min-width: 0; padding: 6px; background: rgba(255,255,255,0.6); border-radius: 14px; min-height: 72px; border: 1px solid #ececec; overflow-x: auto; overflow-y: hidden; scroll-behavior: smooth; scrollbar-width: thin; scrollbar-color: rgba(160,160,170,0.4) transparent; position: relative; }
+         #colorBandsStrip::-webkit-scrollbar { height: 6px; }
+         #colorBandsStrip::-webkit-scrollbar-track { background: transparent; }
+         #colorBandsStrip::-webkit-scrollbar-thumb { background: rgba(160,160,170,0.4); border-radius: 999px; }
+         .dark #colorBandsStrip::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); }
+         /* Edge gradient hints when scrollable */
+         .tpl-drag-strip-wrap { position: relative; flex: 1 1 auto; min-width: 0; }
+         .tpl-drag-strip-wrap::before, .tpl-drag-strip-wrap::after { content: ''; position: absolute; top: 6px; bottom: 6px; width: 28px; pointer-events: none; z-index: 2; opacity: 0; transition: opacity 0.2s; border-radius: 14px; }
+         .tpl-drag-strip-wrap::before { left: 1px; background: linear-gradient(to right, rgba(22,24,27,0.95), transparent); }
+         .tpl-drag-strip-wrap::after { right: 1px; background: linear-gradient(to left, rgba(22,24,27,0.95), transparent); }
+         .tpl-drag-strip-wrap.scroll-left::before { opacity: 1; }
+         .tpl-drag-strip-wrap.scroll-right::after { opacity: 1; }
+         .tpl-bands-empty { flex: 1; padding: 0 14px; font-size: 12px; color: #8c9097; letter-spacing: -0.01em; }
+         /* Modal hidden override used during invisible auto-populate */
+         .tpl-modal-suppress { display: none !important; }
+         .dark #colorBandsStrip { background: rgba(0,0,0,0.25); border-color: #25282b; }
+         .tpl-band { flex: 1 0 140px; max-width: 220px; height: 60px; border-radius: 12px; cursor: grab; position: relative; transition: transform 0.18s ease, box-shadow 0.18s ease, outline 0.15s; box-shadow: inset 0 -2px 6px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.18); }
+         .tpl-band:active { cursor: grabbing; }
+         .tpl-band:hover { transform: translateY(-2px); box-shadow: inset 0 -2px 6px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.18), 0 6px 14px rgba(0,0,0,0.18); }
+         .tpl-band.selected { outline: 3px solid #ffffff; outline-offset: -3px; transform: translateY(-2px); box-shadow: inset 0 -2px 6px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.22), 0 0 0 1px rgba(0,0,0,0.25), 0 8px 18px rgba(0,0,0,0.22); }
+         .tpl-band.dragging { opacity: 0.45; transform: scale(0.96); }
+         .tpl-band.drop-target { outline: 3px dashed #2a85ff; outline-offset: -3px; }
+         /* Hex code overlay on hover */
+         .tpl-band::after { content: attr(data-hex); position: absolute; bottom: -26px; left: 50%; transform: translateX(-50%); font-size: 10px; font-weight: 700; letter-spacing: 0.04em; color: #6f767e; opacity: 0; transition: opacity 0.15s; pointer-events: none; white-space: nowrap; font-family: 'Source Code Pro', monospace; }
+         .tpl-band:hover::after, .tpl-band.selected::after { opacity: 1; }
+
+         /* +/- count pill */
+         .tpl-count-pill { display: flex; align-items: center; height: 72px; padding: 4px; background: #ffffff; border: 1px solid #ececec; border-radius: 14px; box-shadow: 0 1px 2px rgba(16,24,40,0.04); }
+         .dark .tpl-count-pill { background: #1f2226; border-color: #2c2f34; box-shadow: 0 1px 0 rgba(255,255,255,0.02) inset; }
+         #bandsMinusBtn, #bandsPlusBtn { width: 36px; height: 60px; border-radius: 10px; transition: background 0.15s, color 0.15s; }
+         #bandsMinusBtn:hover, #bandsPlusBtn:hover { background: #f2f2f3; color: #2a85ff; }
+         .dark #bandsMinusBtn:hover, .dark #bandsPlusBtn:hover { background: #25292e; color: #2a85ff; }
+         #bandsCountLabel { min-width: 38px; height: 60px; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 700; font-feature-settings: 'tnum'; letter-spacing: 0.02em; padding: 0 6px; }
+
+         /* Slider — track fills to thumb position via --pct (set in JS) */
+         .tpl-range-big { -webkit-appearance: none; appearance: none; width: 100%; height: 8px; border-radius: 999px; outline: none; cursor: pointer; background: linear-gradient(to right, #2a85ff 0%, #2a85ff var(--pct, 0%), #e6e8eb var(--pct, 0%), #e6e8eb 100%); transition: background 0.05s linear; }
+         .dark .tpl-range-big { background: linear-gradient(to right, #2a85ff 0%, #2a85ff var(--pct, 0%), #2c2f34 var(--pct, 0%), #2c2f34 100%); }
+         .tpl-range-big::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 22px; height: 22px; border-radius: 50%; background: #ffffff; border: 3px solid #FF9A2E; box-shadow: 0 2px 6px rgba(255,154,46,0.45), 0 1px 2px rgba(16,24,40,0.18); cursor: pointer; transition: transform 0.15s; }
+         .tpl-range-big::-webkit-slider-thumb:hover { transform: scale(1.1); }
+         .tpl-range-big::-webkit-slider-thumb:active { transform: scale(1.15); }
+         .tpl-range-big::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: #ffffff; border: 3px solid #FF9A2E; box-shadow: 0 2px 6px rgba(255,154,46,0.45), 0 1px 2px rgba(16,24,40,0.18); cursor: pointer; }
+         .tpl-slider-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; }
+         .tpl-slider-footer-label { font-size: 12px; font-weight: 600; letter-spacing: -0.01em; color: #8c9097; }
+         .tpl-slider-footer-value { font-size: 14px; font-weight: 700; font-feature-settings: 'tnum'; letter-spacing: 0.02em; color: #1a1d1f; }
+         .dark .tpl-slider-footer-value { color: #ffffff; }
+
+         /* ==================== FILTERS / ADJUST PANEL (polished) ==================== */
+         .tpl-filters-section { margin-top: 20px; border-radius: 16px; background: linear-gradient(180deg, #181b1f 0%, #14171a 100%); border: 1px solid #25282b; color: #fff; overflow: hidden; padding-top: 22px; }
+
+         .tpl-filters-icons-wrap { position: relative; padding: 0 28px 6px; }
+         .tpl-filters-icons { display: flex; align-items: center; justify-content: center; gap: 12px; overflow-x: auto; padding: 4px 0 4px; scrollbar-width: none; scroll-behavior: smooth; width: 100%; }
+         .tpl-filters-icons::-webkit-scrollbar { display: none; }
+         .tpl-filters-icons .adjust-icon-btn { flex: 0 0 auto; padding: 0; background: transparent; border: none; cursor: pointer; display: flex; justify-content: center; }
+         .tpl-fi-box { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 10px; background: #1f2226; border: 1.5px solid #2c2f34; color: #b0b6bc; transition: border-color 0.18s, background 0.18s, transform 0.18s, color 0.18s, box-shadow 0.18s; }
+         .tpl-fi-box svg { width: 20px; height: 20px; stroke: currentColor; fill: none; }
+         .adjust-icon-btn:hover .tpl-fi-box { transform: translateY(-1px); border-color: #3a3f45; background: #25292e; color: #fff; }
+         .adjust-icon-btn.active .tpl-fi-box { background: #1f2226; border-color: #ffffff; color: #ffffff; box-shadow: 0 0 0 1px rgba(255,255,255,0.35); }
+         .adjust-icon-btn.modified .tpl-fi-box { border-color: #ffffff; }
+         .tpl-fi-stripes { padding: 0; overflow: hidden; }
+         .tpl-fi-stripes .tpl-fi-stripes-inner { display: flex; width: 100%; height: 100%; }
+         .tpl-fi-stripes .tpl-fi-stripes-inner i { flex: 1; height: 100%; display: block; }
+         .tpl-filters-scroll-arrow { position: absolute; top: 50%; transform: translateY(-55%); width: 24px; height: 44px; display: none; align-items: center; justify-content: center; background: transparent; border: none; color: #6f767e; font-size: 20px; cursor: pointer; z-index: 2; transition: color 0.15s, opacity 0.18s; }
+         .tpl-filters-icons-wrap.has-overflow .tpl-filters-scroll-arrow { display: flex; }
+         .tpl-filters-scroll-arrow:hover { color: #fff; }
+         .tpl-filters-scroll-arrow.left { left: 2px; background: linear-gradient(to right, rgba(24,27,31,0.95), transparent); }
+         .tpl-filters-scroll-arrow.right { right: 2px; background: linear-gradient(to left, rgba(24,27,31,0.95), transparent); }
+
+
+         /* Ruler */
+         .tpl-filters-ruler-wrap { padding: 0 28px 22px; }
+         .tpl-filters-value { text-align: center; font-size: 20px; font-weight: 600; color: #ffffff; font-feature-settings: 'tnum'; letter-spacing: 0.01em; margin: 2px 0 10px; line-height: 1; }
+         .tpl-filters-ruler-scale { display: flex; justify-content: space-between; padding: 0 4px; font-size: 13px; font-weight: 500; color: #8c9097; font-feature-settings: 'tnum'; }
+         .tpl-filters-ruler-scale .tpl-fr-zero { color: #fff; font-weight: 600; }
+         .tpl-filters-ruler { position: relative; height: 36px; display: flex; align-items: center; justify-content: center; margin-top: 4px; }
+         .tpl-filters-ruler-ticks { display: flex; align-items: flex-end; justify-content: space-between; width: 100%; height: 22px; padding: 0; }
+         .adjust-ruler-tick { width: 1px; background: #3a3f45; transition: background 0.15s, height 0.15s; align-self: flex-end; }
+         .adjust-ruler-tick.small { height: 6px; }
+         .adjust-ruler-tick.medium { height: 10px; }
+         .adjust-ruler-tick.large { height: 16px; background: #8c9097; }
+         .adjust-ruler-tick.center { display: none; }
+         .adjust-ruler-tick.active { background: #ffffff; }
+         .tpl-filters-slider { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 4; }
+         /* Thumb: rounded pill */
+         .tpl-filters-ruler-thumb { position: absolute; top: 0; bottom: 0; left: 50%; width: 4px; border-radius: 999px; background: #ffffff; box-shadow: 0 0 0 1px rgba(0,0,0,0.4); transform: translateX(-50%); pointer-events: none; transition: left 0.05s linear; }
+
+         /* ==================== PALETTE MIXING DARK POLISH ==================== */
+         .pm-panel.pm-settings { background: #16181b !important; border: 1px solid #25282b !important; border-radius: 16px !important; padding: 22px !important; }
+         .pm-panel.pm-settings .trycolors-section { padding: 0 !important; background: transparent !important; }
+         .pm-panel.pm-settings h4 { font-family: Inter, sans-serif; font-size: 17px; font-weight: 700; color: #ffffff; margin: 0 0 4px; letter-spacing: -0.02em; }
+         .pm-panel.pm-settings p { color: #8c9097 !important; font-size: 12px !important; margin: 0 0 16px !important; }
+         .pm-panel.pm-settings label { color: #8c9097 !important; font-size: 11px !important; font-weight: 600 !important; letter-spacing: 0.04em !important; text-transform: uppercase; }
+         .pm-panel.pm-settings .trycolors-input-row { gap: 10px !important; align-items: stretch !important; }
+         .pm-panel.pm-settings .trycolors-color-input input { background: #1f2226 !important; border: 1px solid #2c2f34 !important; border-radius: 10px !important; color: #fff !important; padding: 10px 14px !important; font-size: 14px !important; font-family: 'Source Code Pro', monospace !important; letter-spacing: 0.04em; transition: border-color 0.15s; }
+         .pm-panel.pm-settings .trycolors-color-input input:focus { outline: none !important; border-color: #2a85ff !important; }
+         .pm-panel.pm-settings .trycolors-preview { width: 44px !important; height: 44px !important; border-radius: 10px !important; border: 1px solid #2c2f34 !important; background: #25292e; }
+         .pm-panel.pm-settings .trycolors-btn { background: #2a85ff !important; color: #fff !important; border: none !important; border-radius: 10px !important; padding: 10px 18px !important; font-size: 14px !important; font-weight: 700 !important; letter-spacing: -0.01em; cursor: pointer; transition: background 0.15s, transform 0.15s; box-shadow: 0 4px 12px rgba(42,133,255,0.25); width: 100%; margin-top: 12px !important; }
+         .pm-panel.pm-settings .trycolors-btn:hover { background: #1f78f0 !important; transform: translateY(-1px); }
+         .pm-panel.pm-settings #trycolorsModelSelect { background: #1f2226 !important; border: 1px solid #2c2f34 !important; border-radius: 10px !important; color: #fff !important; padding: 10px 14px !important; font-size: 13px !important; }
+         .pm-panel.pm-settings #trycolorsModelNote { color: #6f767e !important; font-size: 11px !important; }
+         .pm-panel.pm-settings .pm-sliders { display: flex; flex-direction: column; gap: 18px; margin-top: 18px; padding-top: 18px; border-top: 1px solid #25282b; }
+         .pm-panel.pm-settings .pm-slider { display: flex; flex-direction: column; gap: 8px; }
+         .pm-panel.pm-settings .pm-slider-head { display: flex; align-items: center; justify-content: space-between; }
+         .pm-panel.pm-settings .pm-slider-label { display: flex; align-items: center; gap: 8px; font-size: 14px !important; font-weight: 600 !important; color: #ffffff !important; text-transform: none !important; letter-spacing: -0.01em !important; }
+         .pm-panel.pm-settings .pm-slider-label i { color: #6f767e; }
+         .pm-panel.pm-settings .pm-slider-val { font-size: 13px; font-weight: 700; color: #ffffff; font-feature-settings: 'tnum'; }
+         .pm-panel.pm-settings .pm-range { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 999px; background: linear-gradient(to right, #2a85ff 0%, #2a85ff var(--pct,0%), #2c2f34 var(--pct,0%), #2c2f34 100%); outline: none; cursor: pointer; }
+         .pm-panel.pm-settings .pm-range::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #2a85ff; border: 3px solid #ffffff; box-shadow: 0 2px 6px rgba(42,133,255,0.45); cursor: pointer; }
+         .pm-panel.pm-settings .pm-range::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #2a85ff; border: 3px solid #ffffff; box-shadow: 0 2px 6px rgba(42,133,255,0.45); cursor: pointer; }
+         .pm-panel.pm-settings .trycolors-palette-selector { margin-top: 18px; padding-top: 18px; border-top: 1px solid #25282b; display: flex; align-items: center; gap: 10px; }
+         .pm-panel.pm-settings .trycolors-palette-selector label { margin: 0; }
+         .pm-panel.pm-settings .trycolors-palette-selector select { flex: 1; background: #1f2226 !important; border: 1px solid #2c2f34 !important; border-radius: 10px !important; color: #fff !important; padding: 8px 12px !important; font-size: 13px !important; }
+         .pm-panel.pm-settings .trycolors-palette-selector button { background: #2a85ff !important; color: #fff !important; border: none !important; border-radius: 10px !important; padding: 8px 14px !important; font-size: 13px !important; font-weight: 600 !important; cursor: pointer; }
+         .pm-panel.pm-settings .trycolors-palette-toggle summary { font-size: 13px !important; color: #ffffff !important; font-weight: 600 !important; padding: 8px 0; cursor: pointer; list-style: none; }
+         .pm-panel.pm-settings .trycolors-palette-toggle summary::-webkit-details-marker { display: none; }
+         .pm-panel.pm-settings .trycolors-palette-hint { color: #6f767e !important; font-size: 11px !important; margin: 4px 0 10px !important; }
+
+         /* Always hide rendering-logic section unless user explicitly opens it via the toolbar icon.
+            This overrides any code path (e.g. restoreState) that removes the .hidden class. */
+         #rendering-logic-section { display: none !important; }
+         #rendering-logic-section.tpl-rl-open { display: inline-flex !important; }
+
          .rl-section { margin: 0; }
-         .rl-card { background: #fff; border: 2px solid #f4f4f4; border-radius: 0.5rem; padding: 1.5rem; box-shadow: 0px 4px 14px -6px #f4f4f4; }
+         .rl-card { background: #fff; border: 2px solid #f4f4f4; border-radius: 0.5rem; padding: 1rem 1.5rem; box-shadow: 0px 4px 14px -6px #f4f4f4; }
          .dark .rl-card { background: #1a1d1f; border: 0; box-shadow: none; }
-         .rl-title { position: relative; padding-left: 1.25rem; color: #272b30; font-size: 1.25rem; line-height: 1.6; font-weight: 600; letter-spacing: -0.4px; }
+         .rl-card-row { display: flex; align-items: center; gap: 18px; flex-wrap: nowrap; }
+         .rl-head { flex: 0 0 auto; min-width: 0; }
+         .rl-card-row .rl-toolbar { flex: 1 1 auto; min-width: 0; padding: 0.5rem 0.75rem; }
+         .rl-title { position: relative; padding-left: 1.25rem; color: #272b30; font-size: 1.05rem; line-height: 1.4; font-weight: 600; letter-spacing: -0.4px; margin: 0; white-space: nowrap; }
          .dark .rl-title { color: #fcfcfc; }
-         .rl-title::before { content: ""; position: absolute; left: 0; top: 2px; bottom: 2px; width: 5px; border-radius: 4px; background: #b1e5fc; }
-         .rl-sub { color: #6f767e; font-size: 0.875rem; margin: 0.5rem 0 1.25rem; }
-         .rl-toolbar { display: flex; gap: 0.5rem; flex-wrap: wrap; padding: 0.75rem; border-radius: 0.5rem; background: #f8f9fa; }
+         .rl-title::before { content: ""; position: absolute; left: 0; top: 2px; bottom: 2px; width: 4px; border-radius: 4px; background: #b1e5fc; }
+         .rl-sub { color: #6f767e; font-size: 0.78rem; margin: 2px 0 0; white-space: nowrap; }
+         .rl-card-row .rl-sub { display: none; }
+         .rl-toolbar { display: flex; gap: 0.5rem; flex-wrap: nowrap; padding: 0.75rem; border-radius: 0.5rem; background: #f8f9fa; overflow-x: auto; scrollbar-width: thin; }
+         .rl-toolbar::-webkit-scrollbar { height: 4px; }
+         .rl-toolbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 999px; }
          .dark .rl-toolbar { background: #111315; }
-         .rendering-icon-btn { position: relative; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 8px; background: #fff; border: 2px solid #d1d1d6; color: #333; cursor: pointer; transition: all 0.2s ease; }
+
+         /* INLINE variant — rendering icons live inside the SAME pill as the 4 main
+            buttons. Strip ALL chrome from these wrappers so the .tpl-toolbar-pill bg
+            is the only background visible. */
+         #rendering-logic-section.rl-inline { padding: 0 !important; background: transparent !important; border: 0 !important; flex: 0 1 auto; min-width: 0; display: none; }
+         #rendering-logic-section.rl-inline.tpl-rl-open { display: inline-flex !important; align-items: center; }
+         .rl-inline .rl-card { background: transparent; border: 0; padding: 0; box-shadow: none; }
+         .rl-inline .rl-card-row { gap: 0; }
+         .rl-inline .rl-head { display: none; }
+         .rl-inline .rl-toolbar { display: inline-flex; align-items: center; padding: 0 0 0 14px; gap: 14px; background: transparent; border: 0; border-radius: 0; box-shadow: none; margin-left: 4px; border-left: 1px solid #d9dadd; overflow: visible; }
+         .dark .rl-inline .rl-toolbar { border-left-color: #2c2f34; }
+
+         .rendering-icon-btn { position: relative; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 8px; background: #fff; border: 2px solid #d1d1d6; color: #333; cursor: pointer; transition: all 0.2s ease; }
          .dark .rendering-icon-btn { background: #272b30; border-color: #33383f; color: #c9ced3; }
          .rendering-icon-btn:hover { border-color: #2a85ff; transform: scale(1.05); }
          .rendering-icon-btn.active { border-color: #2a85ff; color: #2a85ff; box-shadow: 0 0 0 2px rgba(42, 133, 255, 0.25); }
          .dark .rendering-icon-btn.active { background: #1b2a44; }
-         .rendering-icon-btn svg { width: 24px; height: 24px; stroke: currentColor; stroke-width: 1.5; fill: none; }
+         .rendering-icon-btn svg { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.5; fill: none; }
          .rendering-icon-btn[title]::after { content: attr(title); position: absolute; bottom: -27px; left: 50%; transform: translateX(-50%); background: #000; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 100; }
          .rendering-icon-btn:hover[title]::after { opacity: 1; }
+
+         /* Inline rendering icons match the .tpl-icon-btn dimensions exactly so the
+            whole toolbar reads as ONE row of identically-sized icons. */
+         .rl-inline .rendering-icon-btn { width: 56px; height: 56px; border-radius: 12px; border: 1px solid #e3e3e6; background: #ffffff; color: #333; box-shadow: 0 1px 2px rgba(16,24,40,0.04); }
+         .rl-inline .rendering-icon-btn svg { width: 26px; height: 26px; }
+         .dark .rl-inline .rendering-icon-btn { background: #1f2226; border-color: #2c2f34; color: #c9ced3; box-shadow: 0 1px 0 rgba(255,255,255,0.02) inset; }
+         .rl-inline .rendering-icon-btn:hover { transform: translateY(-1px); border-color: #d1d5db; box-shadow: 0 4px 12px rgba(16,24,40,0.06); }
+         .dark .rl-inline .rendering-icon-btn:hover { border-color: #3a3f45; background: #25292e; box-shadow: 0 4px 12px rgba(0,0,0,0.35); }
+         .rl-inline .rendering-icon-btn.active { background: #eaf2ff; border-color: #2a85ff; color: #2a85ff; box-shadow: 0 0 0 3px rgba(42,133,255,0.18), 0 6px 14px rgba(42,133,255,0.18); }
+         .dark .rl-inline .rendering-icon-btn.active { background: #11243f; border-color: #2a85ff; color: #2a85ff; }
+
+         /* ==================== MOBILE RESPONSIVE ==================== */
+         @media (max-width: 1023px) {
+            /* Top icon toolbar: smaller buttons, horizontal scroll on mobile only */
+            .tpl-toolbar-section { padding: 12px 16px; }
+            .tpl-toolbar-row { flex-wrap: nowrap; min-width: 0; }
+            .tpl-toolbar-pill { max-width: 100%; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -ms-overflow-style: none; flex: 1 1 auto; min-width: 0; }
+            .tpl-toolbar-pill::-webkit-scrollbar { display: none; }
+            /* Inline rendering icons must NOT create their own scroll context on mobile —
+               the outer pill is the single scrollable surface. */
+            .rl-inline .rl-toolbar { overflow: visible; flex: 0 0 auto; }
+            .tpl-icon-btn { width: 44px; height: 44px; border-radius: 10px; }
+            .tpl-icon-img { width: 22px; height: 22px; }
+            .rl-inline .rendering-icon-btn { width: 44px; height: 44px; border-radius: 10px; }
+            .rl-inline .rendering-icon-btn svg { width: 22px; height: 22px; }
+
+            /* Canvas card: tighter padding so the canvas itself gets the space */
+            .pm-grid-2 { grid-template-columns: 1fr; gap: 16px; }
+            #dash-preview-host { padding: 6px 0; min-height: 200px; }
+
+            /* Rendering Logic: still single row, scrollable */
+            #rendering-logic-section { padding: 6px 14px !important; }
+            .rl-card { padding: 10px 12px; }
+            .rl-card-row { gap: 12px; }
+            .rl-title { font-size: 0.95rem; padding-left: 0.8rem; }
+            .rl-title::before { width: 3px; }
+            .rendering-icon-btn { width: 36px; height: 36px; }
+            .rendering-icon-btn svg { width: 18px; height: 18px; }
+
+            /* Filters / Adjust panel: keep dense */
+            .tpl-filters-icons { gap: 8px; justify-content: flex-start; padding-left: 4px; padding-right: 4px; }
+            .tpl-filters-icons-wrap { padding: 0 16px 6px; }
+            .tpl-fi-box { width: 36px; height: 36px; }
+            .tpl-fi-box svg { width: 18px; height: 18px; }
+            .tpl-filters-ruler-wrap { padding: 0 16px 18px; }
+            .tpl-filters-value { font-size: 18px; }
+
+            /* Drag colors row stacks count pill below the bands strip */
+            .tpl-drag-row { flex-wrap: wrap; }
+            .tpl-count-pill { height: 56px; }
+            #bandsMinusBtn, #bandsPlusBtn { height: 48px; }
+            #bandsCountLabel { height: 48px; }
+
+            /* Palette mixing right column collapses naturally with pm-grid-2 1fr */
+            .pm-panel.pm-settings { padding: 16px !important; }
+         }
+
+         @media (max-width: 640px) {
+            .tpl-toolbar-section { padding: 10px 12px; }
+            .tpl-icon-btn { width: 40px; height: 40px; }
+            .tpl-icon-img { width: 20px; height: 20px; }
+            .tpl-change-btn { display: none; }
+
+            /* Rendering Logic: head + toolbar wrap onto two rows on tiny screens */
+            .rl-card-row { flex-wrap: wrap; gap: 8px; }
+            .rl-head { flex: 1 1 100%; }
+            .rl-card-row .rl-toolbar { flex: 1 1 100%; }
+
+            /* Adjust ruler scale labels — smaller */
+            .tpl-filters-ruler-scale { font-size: 11px; }
+
+            /* Sidebar: full-width on tiny screens (Tailwind already handles via xl: prefix) */
+         }
 
          /* shape-count slider */
          .tpl-range { width: 100%; height: 6px; border-radius: 4px; cursor: pointer; accent-color: #2a85ff; }
@@ -472,6 +1454,11 @@
          .color-chip .chip-number, .color-chip .rgb-value, .color-chip .count { background: rgba(0,0,0,0.72); color: #fff; font-size: 11px; font-weight: 600; line-height: 1.4; padding: 1px 6px; border-radius: 4px; }
          @media (max-width: 640px) { .color-palette { grid-template-columns: repeat(3, 1fr); } }
       </style>
+      <!-- auth guard -->
+      <script src="assets/js/auth.js"></script>
+      <script>(function(){ if (window.Auth) Auth.requireAuth('signin.html'); })();</script>
+      <!-- billing: gate rendering-logic icons + paint-palette dropdown by plan -->
+      <script src="assets/js/entitlements.js"></script>
    </body>
 
 </html>

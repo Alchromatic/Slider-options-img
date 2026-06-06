@@ -130,6 +130,23 @@ app.mount("/GIFs", StaticFiles(directory="GIFs"), name="GIFs")
 from m4_balanced_router import router as m4_router
 app.include_router(m4_router)
 
+# ==================== AUTH (login / sign up) ====================
+# Shares the same `auth_users` Supabase table as the
+# sunnysanwar_integrated_multi_model_cmprxn_role project.
+from auth_routes import router as auth_router
+from auth_db import init_auth_tables
+app.include_router(auth_router)
+
+# ==================== BILLING / PLANS (Stripe, test mode) ====================
+from billing import router as billing_router, init_billing_tables
+app.include_router(billing_router)
+
+
+@app.on_event("startup")
+def _init_auth():
+    init_auth_tables()
+    init_billing_tables()
+
 from version_router import router as version_router
 app.include_router(version_router)
 
@@ -2680,5 +2697,17 @@ def add_grid_lines(img: np.ndarray) -> np.ndarray:
         cv2.line(result, (x, 0), (x, h), 200, 1)
     for y in range(grid_size, h, grid_size):
         cv2.line(result, (0, y), (w, y), 200, 1)
-    
+
     return result
+
+
+# ==================== STATIC FRONTEND ====================
+# Serve the Application-main HTML/assets from the backend so the whole app lives
+# on ONE origin (http://127.0.0.1:8000). This is required for the Stripe checkout
+# flow: Stripe can only redirect to an http(s) URL, and keeping a single origin
+# means the JWT in localStorage survives the round-trip back from Stripe.
+# Mounted LAST so every API route defined above takes priority; html=True lets
+# /pricing.html, /dashboard.html, etc. resolve directly.
+_FRONTEND_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Application-main")
+if os.path.isdir(_FRONTEND_DIR):
+    app.mount("/", StaticFiles(directory=_FRONTEND_DIR, html=True), name="frontend")

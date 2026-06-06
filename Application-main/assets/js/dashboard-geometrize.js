@@ -249,18 +249,22 @@
             const px = cx.getImageData(0, 0, width, height).data;
 
             const data = new Array(width * height);
-            let rSum = 0, gSum = 0, bSum = 0;
+            // Weight by alpha so transparent pixels of a PNG don't drag the
+            // average toward the canvas-default white (or black), which would
+            // otherwise make the engine's starting bg-rect nearly invisible
+            // against a light page and the build look "blank".
+            let rSum = 0, gSum = 0, bSum = 0, aSum = 0;
             for (let i = 0; i < width * height; i++) {
                const r = px[i * 4], g = px[i * 4 + 1], b = px[i * 4 + 2], a = px[i * 4 + 3];
-               rSum += r; gSum += g; bSum += b;
+               rSum += r * a; gSum += g * a; bSum += b * a; aSum += a;
                data[i] = ((r & 255) << 24) | ((g & 255) << 16) | ((b & 255) << 8) | (a & 255);
             }
-            const n = width * height;
+            const denom = aSum || (width * height * 255); // fully-transparent → safe fallback
             URL.revokeObjectURL(img.src);
             resolve({
                width, height, data,
                originalWidth: img.width, originalHeight: img.height,
-               avgColor: [Math.round(rSum / n), Math.round(gSum / n), Math.round(bSum / n), 255],
+               avgColor: [Math.round(rSum / denom), Math.round(gSum / denom), Math.round(bSum / denom), 255],
             });
          };
          img.onerror = reject;
@@ -822,6 +826,19 @@
       let G;
       try { G = engine(); }
       catch (err) { setStatus("Error: " + err.message); console.error(err); return; }
+
+      // ---- plan enforcement: each generation consumes one image ----
+      if (window.Billing && typeof window.Billing.consumeImage === "function") {
+         setStatus("Checking your plan…");
+         const quota = await window.Billing.consumeImage();
+         if (quota && quota.allowed === false) {
+            setStatus("");
+            window.Billing.showUpgrade
+               ? window.Billing.showUpgrade(quota.reason || "You're out of images.")
+               : alert(quota.reason || "You're out of images.");
+            return;
+         }
+      }
 
       const maxLimit = clampInt(maxShapeEl && maxShapeEl.value, 1, 10000, 4000);
       count = clampInt(count, 1, maxLimit, 255);

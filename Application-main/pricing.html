@@ -168,7 +168,15 @@
             <!-- dashboard main wrapper -->
             <div class="min-h-[calc(100vh-96px)] overflow-auto md:p-6 2xl:p-10 pt-2 md:pt-6">
                <!-- pricing section start -->
-               <section class="p-12 bg-white dark:bg-neutral-7 border-2 border-[#f4f4f4] dark:border-0 shadow-[0px_4px_14px_-6px_#F4F4F4] dark:shadow-none rounded-lg">
+               <div class="mb-8">
+                  <h3 class="text-neutral-7 dark:text-neutral-1 text-3xl font-semibold -tracking-[0.96px] mb-2">Choose your plan</h3>
+                  <p id="planStatus" class="text-neutral-4 text-[15px] font-semibold -tracking-[0.15px]">Pick the plan that fits how you create. <span class="text-theme-primary-2">Test mode</span> — use card 4242 4242 4242 4242.</p>
+               </div>
+               <div id="plansGrid" class="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+                  <p class="text-neutral-4">Loading plans…</p>
+               </div>
+
+               <section class="hidden p-12 bg-white dark:bg-neutral-7 border-2 border-[#f4f4f4] dark:border-0 shadow-[0px_4px_14px_-6px_#F4F4F4] dark:shadow-none rounded-lg">
                   <div class="grid md:grid-cols-[1fr_1px_1fr] gap-20 max-lg:gap-x-15">
                      <div class="flex flex-col justify-between gap-18">
                         <div>
@@ -259,6 +267,115 @@
 
       <!-- main js -->
       <script src="assets/js/main.js"></script>
+      <script src="assets/js/auth.js"></script>
+      <script src="assets/js/entitlements.js"></script>
+      <script>
+         (function () {
+            if (window.Auth && !Auth.requireAuth('signin.html')) return;
+
+            const grid = document.getElementById('plansGrid');
+            const statusEl = document.getElementById('planStatus');
+
+            // When Stripe redirects back here (?session_id=...&status=success) we must
+            // ACTIVATE the plan before checking it — otherwise the plan still reads as
+            // "free". Do it explicitly here (don't rely on the concurrent boot() in
+            // entitlements.js, which races with this script).
+            async function handleStripeReturn() {
+               const qs = new URLSearchParams(location.search);
+               const sessionId = qs.get('session_id');
+               if (!sessionId || !window.Billing) return;
+               if (statusEl) statusEl.textContent = 'Confirming your payment…';
+               try {
+                  await Billing.verifySession(sessionId);   // server activates the subscription / adds credits
+                  await Billing.load(true);                 // refresh entitlements from the DB
+               } catch (e) { /* fall through to normal render */ }
+               // Strip the query so a refresh doesn't re-verify.
+               window.history.replaceState({}, '', location.origin + location.pathname);
+            }
+
+            function planFeatures(p) {
+               const e = p.entitlements || {};
+               const out = [];
+               if (p.billing_type === 'one_time') {
+                  out.push(`${e.image_credits} image credits per purchase`);
+                  out.push('Credits stack on top of your plan');
+                  out.push('Never expire');
+               } else {
+                  out.push(e.unlimited_images ? 'Unlimited images / month'
+                     : `${e.images_per_month} images / month`);
+                  if (e.palettes === 'all') out.push('All paint palettes');
+                  else if (e.palettes === 'single') out.push('One paint palette');
+                  else out.push('Basic colors');
+                  const n = (e.rendering_logics || []).length;
+                  out.push(e.palettes === 'all' ? 'All rendering styles' : `${n} rendering styles`);
+               }
+               return out;
+            }
+
+            function ctaLabel(p, current) {
+               if (p.billing_type === 'free') return current === p.plan_id ? 'Current plan' : 'Free';
+               if (p.billing_type === 'one_time') return `Buy — $${p.price.toFixed(2)}`;
+               if (current === p.plan_id) return 'Current plan';
+               return `Choose — $${p.price.toFixed(2)}/mo`;
+            }
+
+            function card(p, current) {
+               const recommended = p.plan_id === 'maestro';
+               const isCurrent = current === p.plan_id;
+               const price = p.billing_type === 'one_time'
+                  ? `$${p.price.toFixed(2)}<span class="text-[#9A9FA5] text-sm font-semibold"> /5 images</span>`
+                  : (p.price === 0 ? 'Free'
+                     : `$${p.price.toFixed(2)}<span class="text-[#9A9FA5] text-sm font-semibold"> /mo</span>`);
+               const feats = planFeatures(p).map((f) =>
+                  `<li class="flex items-center gap-3 text-neutral-7 dark:text-neutral-3 text-sm font-semibold -tracking-[0.14px]">
+                     <span class="text-theme-primary-2 text-lg flex items-center justify-center w-5 h-5"><i class="fa-regular fa-check"></i></span><span>${f}</span></li>`).join('');
+               const disabled = p.billing_type === 'free' || isCurrent;
+               const btnClass = (recommended && !disabled) ? 'theme-btn-primary' : 'theme-btn-regular style-2';
+               return `
+                  <div class="relative flex flex-col p-6 bg-white dark:bg-neutral-7 rounded-2xl border-2 ${recommended ? 'border-theme-primary' : 'border-[#F4F4F4] dark:border-neutral-6'} shadow-[0px_4px_14px_-6px_#F4F4F4] dark:shadow-none">
+                     ${recommended ? '<span class="absolute -top-3 left-6 px-3 py-1 text-neutral-7 text-xs font-bold bg-[#B5E4CA] rounded-full">Recommended</span>' : ''}
+                     <h5 class="text-neutral-7 dark:text-neutral-1 text-lg font-semibold -tracking-[0.4px] mb-1">${p.name}</h5>
+                     <p class="text-neutral-4 text-xs font-semibold -tracking-[0.12px] mb-4 min-h-8">${p.description || ''}</p>
+                     <div class="text-neutral-7 dark:text-neutral-1 text-4xl leading-none font-semibold -tracking-[1.2px] mb-5">${price}</div>
+                     <ul class="space-y-3 mb-6 grow">${feats}</ul>
+                     <button data-plan="${p.plan_id}" data-type="${p.billing_type}" ${disabled ? 'disabled' : ''}
+                        class="plan-cta ${btnClass} w-full text-center ${disabled ? 'opacity-60 cursor-default' : ''}">${ctaLabel(p, current)}</button>
+                  </div>`;
+            }
+
+            async function render() {
+               // 1) If returning from Stripe, activate the plan first.
+               await handleStripeReturn();
+               let current = null;
+               try { const me = await Billing.load(); if (me) current = me.plan_id; } catch (e) {}
+               if (current && statusEl) {
+                  const me = Billing.ent;
+                  const left = me.unlimited_images ? 'unlimited' : me.images_remaining;
+                  statusEl.innerHTML = `You're on <strong>${me.plan_name}</strong> — ${left} images left this month` +
+                     (me.credits ? ` (+${me.credits} credits)` : '') +
+                     `. <span class="text-theme-primary-2">Test mode</span> — use card 4242 4242 4242 4242.`;
+               }
+               let plans = [];
+               try { plans = await Billing.plans(); } catch (e) {
+                  grid.innerHTML = '<p class="text-red-500">Could not load plans. Is the backend running?</p>';
+                  return;
+               }
+               grid.innerHTML = plans.map((p) => card(p, current)).join('');
+               grid.querySelectorAll('.plan-cta').forEach((btn) => {
+                  if (btn.disabled) return;
+                  btn.addEventListener('click', async () => {
+                     const planId = btn.dataset.plan;
+                     btn.disabled = true;
+                     const orig = btn.textContent;
+                     btn.textContent = 'Redirecting…';
+                     try { await Billing.startCheckout(planId); }
+                     catch (err) { alert(err.message || 'Checkout failed'); btn.disabled = false; btn.textContent = orig; }
+                  });
+               });
+            }
+            render();
+         })();
+      </script>
    </body>
 
 </html>

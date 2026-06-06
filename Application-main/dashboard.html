@@ -27,6 +27,7 @@
 
       <!-- main css -->
       <link rel="stylesheet" href="assets/css/output.css">
+      <link rel="stylesheet" href="assets/css/canvas-preview.css">
    </head>
 
    <body class="bg-[#F4F4F4] dark:bg-neutral-8">
@@ -142,9 +143,9 @@
                      <button type="button" class="flex items-center justify-center w-12 h-12">
                         <span class="relative flex items-center justify-center w-6 h-6 after:w-2.5 after:h-2.5 after:bg-theme-primary-3 after:rounded-full dark:after:outline-2 dark:after:outline-neutral-7 after:absolute after:right-0 after:top-0"><img src="assets/img/icon/bell.svg" alt="bell" class="w-full aspect-square"></span>
                      </button>
-                     <div>
+                     <button type="button" id="profileMenu" title="Account — click to log out" class="cursor-pointer">
                         <img src="assets/img/icon/profile-avatar.jpg" alt="profile-avatar" class="w-12 aspect-square rounded-full object-cover">
-                     </div>
+                     </button>
                   </div>
 
 
@@ -175,7 +176,7 @@
                            <h5 class="text-neutral-6 dark:text-neutral-1 text-xl leading-[1.6] font-semibold -tracking-[0.4px] relative pl-5 mb-9 before:w-[5px] before:h-full before:bg-secondary-3 before:rounded before:absolute before:left-0 before:top-0">Generate Images</h5>
                            <div>
                               <h6 class="text-neutral-6 dark:text-neutral-3 text-sm leading-6 font-semibold -tracking-[0.14px] py-0.5 mb-3">Images Preview <button type="button" title="info" class="text-[#6F767E] hover:text-white ml-1"><i class="fa-solid fa-circle-info"></i></button></h6>
-                              <div>
+                              <div id="dash-preview-host" class="relative flex items-center justify-center w-full">
                                  <div id="dash-preview-wrap" class="relative flex items-center justify-center w-full h-77 md:h-147 bg-[#F4F4F4] dark:bg-neutral-6 rounded-xl overflow-hidden">
                                  <canvas id="dash-canvas" class="max-w-full max-h-full hidden cursor-crosshair"></canvas>
                                  <label id="dash-drop-zone" class="absolute inset-0 flex items-center justify-center cursor-pointer">
@@ -183,6 +184,10 @@
                                     <span class="inline-flex items-center gap-2 text-neutral-6 dark:text-neutral-1 text-[15px] leading-[1.6] -tracking-[0.15px] font-bold px-4.5 py-2.5 bg-[#E0EBF2] dark:bg-neutral-7 border-2 border-[#E0EBF1] dark:border-neutral-6 rounded-xl shadow-[0px_4px_4px_0px_rgba(0,0,0,0.10),_0px_12px_13px_-6px_rgba(0,0,0,0.04)] dark:shadow-[0px_2px_4px_0px_#31353B_inset,_0px_4px_4px_0px_rgba(0,0,0,0.25),_0px_12px_13px_-6px_rgba(0,0,0,.04)] cursor-pointer transition-all duration-300 hover:bg-[#d1e8f6] dark:hover:bg-neutral-6"><span class="text-neutral-4"><i class="fa-regular fa-arrow-up-from-bracket"></i></span> Click or drop image</span>
                                  </label>
                                  <div id="dash-status" class="hidden absolute top-2 left-2 z-10 px-3 py-1 rounded-lg bg-black/60 text-white text-xs font-semibold"></div>
+                                 <div class="canvas-resize-handle nw" data-corner="nw" title="Drag to resize"></div>
+                                 <div class="canvas-resize-handle ne" data-corner="ne" title="Drag to resize"></div>
+                                 <div class="canvas-resize-handle sw" data-corner="sw" title="Drag to resize"></div>
+                                 <div class="canvas-resize-handle se" data-corner="se" title="Drag to resize"></div>
                                  </div>
                                  <div id="dash-selection" class="hidden mt-4 flex items-center gap-3 flex-wrap text-sm">
                                     <span class="text-neutral-4 font-semibold">Selected:</span>
@@ -307,6 +312,33 @@
       <script src="assets/js/geometrize.js"></script>
       <!-- dashboard geometrize wiring -->
       <script src="assets/js/dashboard-geometrize.js"></script>
+      <!-- shared canvas preview: fit, resize, status badge -->
+      <script src="assets/js/canvas-preview.js"></script>
+      <!-- auth guard + logout -->
+      <script src="assets/js/auth.js"></script>
+      <!-- billing: image quota metering + plan badge -->
+      <script src="assets/js/entitlements.js"></script>
+      <script>
+         (function () {
+            if (window.Auth && !Auth.requireAuth('signin.html')) return;
+
+            // Load billing entitlements (no redirect — free users can still view the dashboard).
+            if (window.Billing) {
+               Billing.load(true).catch(function () {});
+            }
+
+            const btn = document.getElementById('profileMenu');
+            if (btn) {
+               const user = window.Auth && Auth.getUser();
+               if (user && (user.name || user.email)) {
+                  btn.title = `${user.name || user.email} — click to log out`;
+               }
+               btn.addEventListener('click', function () {
+                  if (confirm('Log out of GeoMagic?')) Auth.logout('signin.html');
+               });
+            }
+         })();
+      </script>
    </body>
 
 </html>
