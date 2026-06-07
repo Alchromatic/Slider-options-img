@@ -297,9 +297,9 @@
                const e = p.entitlements || {};
                const out = [];
                if (p.billing_type === 'one_time') {
-                  out.push(`${e.image_credits} image credits per purchase`);
-                  out.push('Credits stack on top of your plan');
-                  out.push('Never expire');
+                  out.push(`${e.image_credits} images per $${p.price.toFixed(2)} pack`);
+                  out.push('Buy any quantity');
+                  out.push('Credits stack on your plan & never expire');
                } else {
                   out.push(e.unlimited_images ? 'Unlimited images / month'
                      : `${e.images_per_month} images / month`);
@@ -314,7 +314,7 @@
 
             function ctaLabel(p, current) {
                if (p.billing_type === 'free') return current === p.plan_id ? 'Current plan' : 'Free';
-               if (p.billing_type === 'one_time') return `Buy — $${p.price.toFixed(2)}`;
+               if (p.billing_type === 'one_time') return 'Buy credits';
                if (current === p.plan_id) return 'Current plan';
                return `Choose — $${p.price.toFixed(2)}/mo`;
             }
@@ -322,13 +322,25 @@
             function card(p, current) {
                const recommended = p.plan_id === 'maestro';
                const isCurrent = current === p.plan_id;
-               const price = p.billing_type === 'one_time'
-                  ? `$${p.price.toFixed(2)}<span class="text-[#9A9FA5] text-sm font-semibold"> /5 images</span>`
+               const oneTime = p.billing_type === 'one_time';
+               const perPack = (p.entitlements && p.entitlements.image_credits) || 5; // images per $price pack
+               // PAYG: the headline shows a LIVE total that tracks the quantity input below.
+               const price = oneTime
+                  ? `<span id="total-${p.plan_id}">$${p.price.toFixed(2)}</span>`
                   : (p.price === 0 ? 'Free'
                      : `$${p.price.toFixed(2)}<span class="text-[#9A9FA5] text-sm font-semibold"> /mo</span>`);
                const feats = planFeatures(p).map((f) =>
                   `<li class="flex items-center gap-3 text-neutral-7 dark:text-neutral-3 text-sm font-semibold -tracking-[0.14px]">
                      <span class="text-theme-primary-2 text-lg flex items-center justify-center w-5 h-5"><i class="fa-regular fa-check"></i></span><span>${f}</span></li>`).join('');
+               // Quantity picker (one-time / PAYG only): number of images in multiples of one pack.
+               const qtyControl = oneTime ? `
+                     <div class="mb-6">
+                        <label for="qty-${p.plan_id}" class="block text-neutral-4 text-xs font-semibold -tracking-[0.12px] mb-2">Number of images</label>
+                        <input id="qty-${p.plan_id}" type="number" min="${perPack}" max="${perPack * 20000}" step="${perPack}" value="${perPack}"
+                           data-price="${p.price}" data-per-pack="${perPack}"
+                           class="payg-qty w-full px-4 py-3 text-neutral-7 dark:text-neutral-1 text-[15px] font-semibold rounded-xl bg-[#F4F4F4] dark:bg-neutral-6 focus:outline-none">
+                        <p class="text-neutral-4 text-xs font-semibold -tracking-[0.12px] mt-2">Sold in packs of ${perPack} · $${p.price.toFixed(2)} each</p>
+                     </div>` : '';
                const disabled = p.billing_type === 'free' || isCurrent;
                const btnClass = (recommended && !disabled) ? 'theme-btn-primary' : 'theme-btn-regular style-2';
                return `
@@ -338,7 +350,8 @@
                      <p class="text-neutral-4 text-xs font-semibold -tracking-[0.12px] mb-4 min-h-8">${p.description || ''}</p>
                      <div class="text-neutral-7 dark:text-neutral-1 text-4xl leading-none font-semibold -tracking-[1.2px] mb-5">${price}</div>
                      <ul class="space-y-3 mb-6 grow">${feats}</ul>
-                     <button data-plan="${p.plan_id}" data-type="${p.billing_type}" ${disabled ? 'disabled' : ''}
+                     ${qtyControl}
+                     <button data-plan="${p.plan_id}" data-type="${p.billing_type}" data-per-pack="${perPack}" ${disabled ? 'disabled' : ''}
                         class="plan-cta ${btnClass} w-full text-center ${disabled ? 'opacity-60 cursor-default' : ''}">${ctaLabel(p, current)}</button>
                   </div>`;
             }
@@ -361,14 +374,45 @@
                   return;
                }
                grid.innerHTML = plans.map((p) => card(p, current)).join('');
+
+               // Normalize a PAYG images input to a positive multiple of the pack size.
+               function packsFor(input) {
+                  const perPack = parseInt(input.dataset.perPack, 10) || 5;
+                  let images = parseInt(input.value, 10);
+                  if (!Number.isFinite(images) || images < perPack) images = perPack;
+                  const packs = Math.max(1, Math.round(images / perPack));
+                  return { perPack, packs, images: packs * perPack };
+               }
+
+               // Live total for each PAYG quantity input.
+               grid.querySelectorAll('.payg-qty').forEach((input) => {
+                  const planId = input.id.replace(/^qty-/, '');
+                  const price = parseFloat(input.dataset.price) || 0;
+                  const totalEl = document.getElementById('total-' + planId);
+                  const update = (snap) => {
+                     const { packs, images } = packsFor(input);
+                     if (snap) input.value = images;   // snap to a valid multiple on blur
+                     if (totalEl) totalEl.textContent = '$' + (packs * price).toFixed(2);
+                  };
+                  input.addEventListener('input', () => update(false));
+                  input.addEventListener('change', () => update(true));
+                  update(false);
+               });
+
                grid.querySelectorAll('.plan-cta').forEach((btn) => {
                   if (btn.disabled) return;
                   btn.addEventListener('click', async () => {
                      const planId = btn.dataset.plan;
+                     // PAYG: derive the number of packs from the images input.
+                     let quantity;
+                     if (btn.dataset.type === 'one_time') {
+                        const input = document.getElementById('qty-' + planId);
+                        quantity = input ? packsFor(input).packs : 1;
+                     }
                      btn.disabled = true;
                      const orig = btn.textContent;
                      btn.textContent = 'Redirecting…';
-                     try { await Billing.startCheckout(planId); }
+                     try { await Billing.startCheckout(planId, quantity); }
                      catch (err) { alert(err.message || 'Checkout failed'); btn.disabled = false; btn.textContent = orig; }
                   });
                });

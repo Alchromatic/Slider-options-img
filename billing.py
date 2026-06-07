@@ -38,6 +38,10 @@ print(f"[Stripe] Publishable key loaded: {'YES' if STRIPE_PUBLISHABLE_KEY else '
 
 UNLIMITED = -1
 
+# Max PAYG packs per single checkout (safety bound against fat-finger amounts).
+# 20000 packs × 5 = 100,000 images per purchase.
+MAX_PAYG_PACKS = 20000
+
 # All rendering-logic icons (data-logic values used by dashboard-geometrize.js).
 ALL_RENDERING_LOGICS = [
     "original", "exterior_to_center", "center_to_exterior", "top_to_bottom",
@@ -76,11 +80,11 @@ PLAN_CONFIG = {
         "name": "Pay as you go",
         "price": 0.99,
         "billing_type": "one_time",      # one-time payment, adds credits
-        "image_credits": 5,              # +5 images per purchase
+        "image_credits": 5,              # +5 images per $0.99 pack
         "images_per_month": 0,           # not a subscription; entitlements stay at current tier
         "rendering_logics": FEW_RENDERING_LOGICS,
         "palettes": "basic",
-        "description": "$0.99 for 5 images. Top up any time — credits stack on your plan.",
+        "description": "5 images for $0.99 — buy as many as you like, credits stack on your plan.",
         "order": 1,
     },
     "apprentice": {
@@ -463,6 +467,7 @@ router = APIRouter(prefix="/api/billing", tags=["Billing"])
 
 class CheckoutRequest(BaseModel):
     plan_id: str
+    quantity: Optional[int] = 1      # number of one-time packs to buy (ignored for subscriptions)
     success_url: Optional[str] = None
     cancel_url: Optional[str] = None
 
@@ -584,12 +589,24 @@ async def create_checkout_session(req: CheckoutRequest, request: Request):
     mode = "subscription" if plan["billing_type"] == "subscription" else "payment"
     meta = {"user_id": user_id, "plan_id": req.plan_id, "kind": plan["billing_type"]}
 
+    # One-time (PAYG) purchases are quantity-driven: the user buys N $0.99 packs and
+    # receives N × image_credits credits. Subscriptions always use quantity 1.
+    qty = 1
+    if plan["billing_type"] == "one_time":
+        qty = int(req.quantity or 1)
+        if qty < 1 or qty > MAX_PAYG_PACKS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Quantity must be between 1 and {MAX_PAYG_PACKS} packs ({MAX_PAYG_PACKS * plan.get('image_credits', 5)} images)",
+            )
+        meta["credits"] = str(qty * plan.get("image_credits", 0))
+
     try:
         kwargs = dict(
             customer=customer_id,
             payment_method_types=["card"],
             mode=mode,
-            line_items=[{"price": price_id, "quantity": 1}],
+            line_items=[{"price": price_id, "quantity": qty}],
             success_url=success_url,
             cancel_url=cancel_url,
             metadata=meta,
@@ -669,7 +686,10 @@ def _fulfill(user_id: str, plan_id: str, kind: str, session) -> dict:
         return {"activated": True, "type": "duplicate", "plan_id": plan_id}
 
     if kind == "one_time" or PLAN_CONFIG.get(plan_id, {}).get("billing_type") == "one_time":
-        amount = PLAN_CONFIG.get(plan_id, {}).get("image_credits", 0)
+        # Credits purchased are carried in the session metadata (quantity × image_credits).
+        # Fall back to the plan default for older sessions that predate variable quantity.
+        meta = _stripe_meta(session)
+        amount = int(meta.get("credits") or PLAN_CONFIG.get(plan_id, {}).get("image_credits", 0))
         add_credits(user_id, amount)
         return {"activated": True, "type": "credits", "added": amount, "plan_id": plan_id}
 

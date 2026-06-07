@@ -3,9 +3,18 @@
  * Exposes window.Billing. Auto-applies gating (rendering icons + palette dropdown)
  * and meters image generation via Billing.consumeImage(). */
 (function () {
+   // Resolution order:
+   //   1. ?api=… query string override (used for local-backend testing)
+   //   2. Same-origin when the page is served over http(s) — the backend mounts the
+   //      frontend at /, so loading from http://127.0.0.1:8001 must talk to 8001,
+   //      NOT the deployed default. This is what makes self-hosted setups work.
+   //   3. The deployed default — used only when the file is opened from disk
+   //      (file://) or some other non-http origin without an explicit override.
    const API_BASE =
       (new URLSearchParams(location.search).get('api') || '').replace(/\/$/, '') ||
-      'https://alchromaticdemo.up.railway.app';
+      (location.protocol === 'http:' || location.protocol === 'https:'
+         ? location.origin
+         : 'https://alchromaticdemo.up.railway.app');
 
    const BASIC_PALETTE = 'Common Color Names & Values';
 
@@ -62,19 +71,26 @@
          }
       },
 
-      async startCheckout(planId) {
+      async startCheckout(planId, quantity) {
          if (!token()) { window.location.href = 'signin.html'; return; }
          // Stripe can only redirect to an http(s) URL. When the app is served from
          // the backend (the supported setup) location.origin is that http origin and
          // the token survives the round-trip. If opened via file://, redirect Stripe
          // back to the backend-hosted copy of the page instead.
-         const success = location.protocol === 'file:'
+         let success = location.protocol === 'file:'
             ? 'https://alchromaticdemo.up.railway.app/' + (location.pathname.split('/').pop() || 'pricing.html')
             : location.origin + location.pathname;
+         // Preserve the ?api= override across the Stripe round-trip so verify-session
+         // (run on return) targets the SAME backend that created the session.
+         const apiParam = new URLSearchParams(location.search).get('api');
+         if (apiParam) success += (success.includes('?') ? '&' : '?') + 'api=' + encodeURIComponent(apiParam);
+         const cancel = success + (success.includes('?') ? '&' : '?') + 'status=cancelled';
+         const body = { plan_id: planId, success_url: success, cancel_url: cancel };
+         if (quantity) body.quantity = quantity;   // number of one-time packs (PAYG only)
          const res = await fetch(`${API_BASE}/api/billing/create-checkout-session`, {
             method: 'POST',
             headers: authHeaders({ 'Content-Type': 'application/json' }),
-            body: JSON.stringify({ plan_id: planId, success_url: success, cancel_url: success + '?status=cancelled' }),
+            body: JSON.stringify(body),
          });
          const data = await res.json().catch(() => ({}));
          if (!res.ok || !data.checkout_url) throw new Error(data.detail || 'Could not start checkout');
