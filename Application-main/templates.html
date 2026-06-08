@@ -269,6 +269,17 @@
                            <div class="canvas-resize-handle se" data-corner="se" title="Drag to resize"></div>
                         </div>
                      </div>
+                     <!-- Optimizing: flatten transparency so re-ordering can't change the look -->
+                     <div class="mt-4 flex items-center justify-between gap-3 flex-wrap rounded-xl bg-[#F4F4F4] dark:bg-neutral-8 px-4 py-3">
+                        <div class="min-w-0">
+                           <h6 class="text-neutral-6 dark:text-neutral-1 text-sm font-bold -tracking-[0.14px]">Optimizing</h6>
+                           <p class="text-neutral-4 text-xs font-semibold">Bakes opacity into each shape to fix order issues.</p>
+                        </div>
+                        <button type="button" id="bakeOpaqueBtn" title="Makes shapes order-independent by baking opacity into each shape" class="inline-flex items-center justify-center gap-2 h-12 px-7 shrink-0 rounded-xl bg-theme-primary text-white text-[15px] font-bold -tracking-[0.01em] shadow-[0px_4px_14px_-4px_rgba(43,133,255,0.6)] hover:opacity-90 transition-all duration-200">
+                           <i class="fa-regular fa-wand-magic-sparkles"></i> Bake Opaque
+                        </button>
+                     </div>
+
                      <div id="dash-selection" class="hidden mt-4 flex items-center gap-3 flex-wrap text-sm">
                         <span class="text-neutral-4 font-semibold">Selected:</span>
                         <span id="dash-sel-type" class="text-neutral-6 dark:text-neutral-1 font-semibold"></span>
@@ -473,6 +484,7 @@
             <option value="default">Default Artist Palette (20 colors)</option>
         </select>
         <button id="trycolorsLoadPaletteBtn">Load</button>
+        <button id="colorLibraryBtn" type="button" title="Add & edit your own named colors">Edit Library</button>
     </div>
 
     <details class="trycolors-palette-toggle" open>
@@ -533,6 +545,8 @@
       <!-- embedded palette presets (so they work under file:// where fetch() is blocked) -->
       <script src="assets/js/colors-data.js"></script>
       <script src="assets/js/palette-mixing.js"></script>
+      <!-- editable named-color library that feeds the unmixer palette -->
+      <script src="assets/js/color-library.js"></script>
       <script>
          // value badges + blue-fill track for the palette-mixing sliders
          document.querySelectorAll('.pm-range').forEach(function (r) {

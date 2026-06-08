@@ -46,14 +46,13 @@
                   <div>
                      <h6 class="text-neutral-8 dark:text-white text-sm leading-6 font-semibold -tracking-[0.14px] mb-5">Sign up with Open account</h6>
                      <div class="flex items-center gap-2">
-                        <button type="button" class="grow flex items-center justify-center gap-2 px-4.5 py-2.5 text-neutral-8 dark:text-neutral-1 text-[15px] leading-[1.6] font-bold -tracking-[0.15px] border-2 border-[#F4F4F4] dark:border-neutral-6 rounded-xl bg-[#F4F4F4] dark:bg-transparent dark:hover:bg-neutral-6">
+                        <button type="button" id="googleSigninBtn" class="grow flex items-center justify-center gap-2 px-4.5 py-2.5 text-neutral-8 dark:text-neutral-1 text-[15px] leading-[1.6] font-bold -tracking-[0.15px] border-2 border-[#F4F4F4] dark:border-neutral-6 rounded-xl bg-[#F4F4F4] dark:bg-transparent dark:hover:bg-neutral-6">
                            <img src="assets/img/icon/google.svg" alt="google" class="w-6 aspect-square">
                            <span>Google</span>
                         </button>
-                        <button type="button" class="grow flex items-center justify-center gap-2 px-4.5 py-2.5 text-neutral-8 dark:text-neutral-1 text-[15px] leading-[1.6] font-bold -tracking-[0.15px] border-2 border-[#F4F4F4] dark:border-neutral-6 rounded-xl bg-[#F4F4F4] dark:bg-transparent dark:hover:bg-neutral-6">
-                           <img src="assets/img/icon/apple.svg" alt="apple" class="w-6 aspect-square hidden dark:block">
-                           <img src="assets/img/icon/apple-black.svg" alt="apple" class="w-6 aspect-square dark:hidden">
-                           <span>Apple ID</span>
+                        <button type="button" id="facebookSigninBtn" class="grow flex items-center justify-center gap-2 px-4.5 py-2.5 text-neutral-8 dark:text-neutral-1 text-[15px] leading-[1.6] font-bold -tracking-[0.15px] border-2 border-[#F4F4F4] dark:border-neutral-6 rounded-xl bg-[#F4F4F4] dark:bg-transparent dark:hover:bg-neutral-6">
+                           <img src="assets/img/icon/facebook.svg" alt="facebook" class="w-6 aspect-square">
+                           <span>Facebook</span>
                         </button>
                      </div>
                   </div>
@@ -116,6 +115,13 @@
                errEl.textContent = msg;
                errEl.classList.remove('hidden');
             }
+
+            document.getElementById('googleSigninBtn').addEventListener('click', function () {
+               window.location.href = Auth.apiBase + '/api/auth/oauth/google';
+            });
+            document.getElementById('facebookSigninBtn').addEventListener('click', function () {
+               window.location.href = Auth.apiBase + '/api/auth/oauth/facebook';
+            });
 
             form.addEventListener('submit', async function (e) {
                e.preventDefault();

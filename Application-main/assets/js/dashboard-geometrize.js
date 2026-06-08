@@ -99,6 +99,9 @@
    let selectiveMode = false;  // Selective Resolution: draw a region to add detail
    let srDrawing = false;      // true while dragging out the region
    let srPath = [];            // freehand region path (canvas px)
+   // Click-to-pick cycling: clicking an overlapping spot picks the smallest shape
+   // first, and clicking the same spot again cycles through the others.
+   let pickKey = "", pickList = [], pickPos = 0;
 
    // carries the generated result across pages (dashboard -> templates)
    const STORE_KEY = "geomagic:state";
@@ -313,18 +316,33 @@
       setTimeout(finish, 32);
    });
 
-   // topmost shape under (x,y) in canvas pixel space; skip background (index 0)
-   function hitTest(x, y) {
+   // Approx pixel area of a shape — used to prefer small detail over the
+   // big "widest" shape that normally sits on top under the cursor.
+   function shapeArea(s) {
+      const d = s.data;
+      switch (s.type) {
+         case 0: case 1: return Math.abs((d[2] - d[0]) * (d[3] - d[1]));
+         case 2: return Math.abs((d[0] * (d[3] - d[5]) + d[2] * (d[5] - d[1]) + d[4] * (d[1] - d[3])) / 2);
+         case 3: case 4: return Math.PI * Math.abs(d[2] * d[3]);
+         case 5: return Math.PI * d[2] * d[2];
+         case 6: case 7: return Math.hypot((d[2] || 0) - d[0], (d[3] || 0) - d[1]) * Math.max(6, canvas.width / 80);
+         default: return Infinity;
+      }
+   }
+
+   // All shapes under (x,y) (skipping background index 0), sorted SMALLEST first
+   // so the default pick is the fine detail, not the largest covering shape.
+   function shapesUnder(x, y) {
+      const hits = [];
       for (let i = shapes.length - 1; i >= 1; i--) {
          const mode = tracePath(shapes[i]);
-         if (mode === "fill") {
-            if (ctx.isPointInPath(x, y)) return i;
-         } else {
-            ctx.lineWidth = Math.max(6, canvas.width / 80);
-            if (ctx.isPointInStroke(x, y)) return i;
-         }
+         let inside;
+         if (mode === "fill") inside = ctx.isPointInPath(x, y);
+         else { ctx.lineWidth = Math.max(6, canvas.width / 80); inside = ctx.isPointInStroke(x, y); }
+         if (inside) hits.push(i);
       }
-      return null;
+      hits.sort((a, b) => shapeArea(shapes[a]) - shapeArea(shapes[b]));
+      return hits;
    }
 
    function updateSelectionInfo() {
@@ -334,7 +352,11 @@
       }
       const s = shapes[selectedIndex];
       const [r, g, b, a = 255] = s.color;
-      if (selType) selType.textContent = `#${selectedIndex} · ${SHAPE_NAME[s.type] || s.type}`;
+      if (selType) {
+         let label = `#${selectedIndex} · ${SHAPE_NAME[s.type] || s.type}`;
+         if (pickList.length > 1) label += ` · ${pickPos + 1}/${pickList.length} here — click to cycle`;
+         selType.textContent = label;
+      }
       if (selColor) selColor.style.background = `rgba(${r},${g},${b},${a / 255})`;
       if (selRgba) selRgba.textContent = `rgba(${r}, ${g}, ${b}, ${a})`;
       if (selBar) selBar.classList.remove("hidden");
@@ -362,13 +384,25 @@
       persistState();
    }
 
+   // When the refine tool (dashboard-advanced.js) is driving the canvas, lock
+   // out geometrize's own click-to-select / selective-resolution interactions
+   // so the two modules don't fight over the same <canvas>.
+   let interactionLocked = false;
+
    // ---- canvas selection events ----
    canvas.addEventListener("click", (e) => {
+      if (interactionLocked) return;
       if (!shapes.length || animating || selectiveMode) return;
       const rect = canvas.getBoundingClientRect();
       const x = (e.clientX - rect.left) * (canvas.width / rect.width);
       const y = (e.clientY - rect.top) * (canvas.height / rect.height);
-      selectedIndex = hitTest(x, y);
+      const list = shapesUnder(x, y);
+      if (!list.length) { selectedIndex = null; pickList = []; pickKey = ""; render(); updateSelectionInfo(); return; }
+      const key = list.join(",");
+      if (key === pickKey) pickPos = (pickPos + 1) % list.length; // same overlap stack → cycle
+      else { pickKey = key; pickPos = 0; }                        // new spot → smallest first
+      pickList = list;
+      selectedIndex = list[pickPos];
       render();
       updateSelectionInfo();
    });
@@ -559,11 +593,13 @@
       ctx.restore();
    }
    canvas.addEventListener("mousedown", (e) => {
+      if (interactionLocked) return;
       if (!selectiveMode || animating) return;
       srDrawing = true;
       srPath = [canvasPt(e)];
    });
    canvas.addEventListener("mousemove", (e) => {
+      if (interactionLocked) return;
       if (!selectiveMode || !srDrawing) return;
       srPath.push(canvasPt(e));
       render();
@@ -690,6 +726,152 @@
       updateSelectionInfo();
       persistState();
       setStatus(`${shapes.length} shapes — click one to select`);
+   }
+
+   // Re-geometrize a rectangular box (in canvas pixels) by sampling the current
+   // render and running the engine on it — adds genuinely new detail shapes in
+   // that area (same approach as Selective Resolution, but box-driven). Returns
+   // the number of shapes added. onProgress(frac, msg) is optional.
+   async function regeometrizeBox(bx, by, bw, bh, steps, onProgress) {
+      let G;
+      try { G = engine(); } catch (err) { setStatus("Error: " + err.message); return 0; }
+
+      bx = Math.max(0, Math.floor(bx));
+      by = Math.max(0, Math.floor(by));
+      bw = Math.min(canvas.width, Math.ceil(bx + bw)) - bx;
+      bh = Math.min(canvas.height, Math.ceil(by + bh)) - by;
+      if (bw < 8 || bh < 8) return 0;
+
+      // crop the current render and downscale to a working size for the engine
+      const crop = document.createElement("canvas");
+      crop.width = bw; crop.height = bh;
+      crop.getContext("2d").drawImage(canvas, bx, by, bw, bh, 0, 0, bw, bh);
+
+      const maxDim = 256;
+      let ww = bw, wh = bh;
+      if (ww > maxDim || wh > maxDim) {
+         const r = Math.min(maxDim / ww, maxDim / wh);
+         ww = Math.max(1, Math.floor(ww * r));
+         wh = Math.max(1, Math.floor(wh * r));
+      }
+      const work = document.createElement("canvas");
+      work.width = ww; work.height = wh;
+      const wctx = work.getContext("2d");
+      wctx.drawImage(crop, 0, 0, ww, wh);
+      const px = wctx.getImageData(0, 0, ww, wh).data;
+
+      const data = new Array(ww * wh);
+      let rS = 0, gS = 0, bS = 0;
+      for (let i = 0; i < ww * wh; i++) {
+         const r = px[i * 4], g = px[i * 4 + 1], b = px[i * 4 + 2], a = px[i * 4 + 3];
+         rS += r; gS += g; bS += b;
+         data[i] = ((r & 255) << 24) | ((g & 255) << 16) | ((b & 255) << 8) | (a & 255);
+      }
+      const n = ww * wh || 1;
+      const bgPacked = ((Math.round(rS / n) & 255) << 24) | ((Math.round(gS / n) & 255) << 16)
+                     | ((Math.round(bS / n) & 255) << 8) | 255;
+
+      const options = {
+         shapeTypes: selectedShapeCodes(),
+         alpha: opacity(),
+         candidateShapesPerStep: 30,
+         shapeMutationsPerStep: 50,
+      };
+      const scaleX = bw / ww, scaleY = bh / wh;
+      const STEPS = steps || 40;
+      let addedCount = 0;
+
+      const runner = new G.runner.ImageRunner({ width: ww, height: wh, data }, bgPacked);
+      for (let step = 1; step <= STEPS; step++) {
+         const results = runner.step(options);
+         const json = G.exporter.ShapeJsonExporter.exportShapes(results);
+         if (json && json.length > 0) {
+            const added = parseScaleOffsetShapes(json, scaleX, scaleY, bx, by);
+            shapes.push(...added);
+            baseShapes.push(...added);
+            addedCount += added.length;
+         }
+         if (step % 5 === 0 || step === STEPS) {
+            render();
+            if (onProgress) onProgress(step / STEPS, `Adding detail… ${step} / ${STEPS}`);
+            await yieldFrame();
+         }
+      }
+      return addedCount;
+   }
+
+   // ---- Bake Opaque: make shapes order-independent ----
+   // Rewrites every shape's colour to the visible RGB it shows in the final
+   // composite, at full alpha (mirrors the backend /bake_opaque). We average the
+   // composite over several points INSIDE each shape (not just the centre) so the
+   // flattened image matches the original closely — a single centre sample paints
+   // big shapes with one possibly-wrong colour, which visibly shifts the picture.
+   function bakeSamplePoints(s) {
+      const d = s.data, pts = [];
+      const lerp = (ax, ay, bx, by, t) => [ax + (bx - ax) * t, ay + (by - ay) * t];
+      switch (s.type) {
+         case 0: { const [x1, y1, x2, y2] = d, cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
+            pts.push([cx, cy], [(cx + x1) / 2, (cy + y1) / 2], [(cx + x2) / 2, (cy + y1) / 2], [(cx + x1) / 2, (cy + y2) / 2], [(cx + x2) / 2, (cy + y2) / 2]); break; }
+         case 1: { const [x1, y1, x2, y2, ang = 0] = d, cx = (x1 + x2) / 2, cy = (y1 + y2) / 2, w = Math.abs(x2 - x1), h = Math.abs(y2 - y1);
+            const r = (ang || 0) * Math.PI / 180, co = Math.cos(r), si = Math.sin(r); pts.push([cx, cy]);
+            [[-w / 2, -h / 2], [w / 2, -h / 2], [w / 2, h / 2], [-w / 2, h / 2]].forEach(([px, py]) => pts.push(lerp(cx, cy, cx + px * co - py * si, cy + px * si + py * co, 0.5))); break; }
+         case 2: { const [ax, ay, bx, by, cxx, cyy] = d, gx = (ax + bx + cxx) / 3, gy = (ay + by + cyy) / 3;
+            pts.push([gx, gy], lerp(gx, gy, ax, ay, 0.5), lerp(gx, gy, bx, by, 0.5), lerp(gx, gy, cxx, cyy, 0.5)); break; }
+         case 3: case 4: { const [cx, cy, rx, ry] = d; pts.push([cx, cy], [cx + rx * 0.5, cy], [cx - rx * 0.5, cy], [cx, cy + ry * 0.5], [cx, cy - ry * 0.5]); break; }
+         case 5: { const [cx, cy, r] = d; pts.push([cx, cy], [cx + r * 0.5, cy], [cx - r * 0.5, cy], [cx, cy + r * 0.5], [cx, cy - r * 0.5]); break; }
+         case 6: { const [x1, y1, x2, y2] = d; pts.push([(x1 + x2) / 2, (y1 + y2) / 2], lerp(x1, y1, x2, y2, 0.25), lerp(x1, y1, x2, y2, 0.75)); break; }
+         case 7: { const [x1, y1, cx, cy, x2, y2] = d, bez = (t) => { const m = 1 - t; return [m * m * x1 + 2 * m * t * cx + t * t * x2, m * m * y1 + 2 * m * t * cy + t * t * y2]; };
+            pts.push(bez(0.25), bez(0.5), bez(0.75)); break; }
+         default: { const c = rlCenter(s, { width: canvas.width, height: canvas.height }); pts.push([c[0], c[1]]); }
+      }
+      return pts;
+   }
+
+   function bakeOpaque() {
+      if (!shapes.length) return 0;
+      const prevLimit = shapeLimit;
+      shapeLimit = shapes.length;
+      render(shapes.length);               // ensure the full image is composited
+      const W = canvas.width, H = canvas.height;
+      let buf;
+      try { buf = ctx.getImageData(0, 0, W, H).data; }
+      catch (e) { console.error("bakeOpaque: cannot read canvas", e); shapeLimit = prevLimit; return 0; }
+      let n = 0;
+      for (const s of shapes) {
+         if (s.type === 0) continue;       // keep the background rectangle
+         let R = 0, G = 0, B = 0, cnt = 0;
+         for (const [x, y] of bakeSamplePoints(s)) {
+            const px = Math.max(0, Math.min(W - 1, Math.round(x)));
+            const py = Math.max(0, Math.min(H - 1, Math.round(y)));
+            const o = (py * W + px) * 4;
+            R += buf[o]; G += buf[o + 1]; B += buf[o + 2]; cnt++;
+         }
+         if (cnt) { s.color = [Math.round(R / cnt), Math.round(G / cnt), Math.round(B / cnt), 255]; n++; }
+      }
+      // NOTE: do NOT reassign baseShapes here. `shapes` holds the same shape
+      // objects as baseShapes (rlOrder only reorders references), so the colour
+      // edits above already apply to baseShapes — and its ORIGINAL order is kept,
+      // so the "Original Order" button still works after baking.
+      shapeLimit = prevLimit;
+      selectedIndex = null;
+      render();
+      updateSelectionInfo();
+      persistState();
+      setStatus(`Baked ${n} shapes — transparency flattened`);
+      return n;
+   }
+
+   const bakeOpaqueBtn = $("#bakeOpaqueBtn");
+   if (bakeOpaqueBtn) {
+      bakeOpaqueBtn.addEventListener("click", () => {
+         if (animating) return;
+         if (!shapes.length) { alert("Generate or load an image first."); return; }
+         const prev = bakeOpaqueBtn.innerHTML;
+         bakeOpaqueBtn.disabled = true;
+         const n = bakeOpaque();
+         bakeOpaqueBtn.innerHTML = `<i class="fa-regular fa-check"></i> Baked ${n}`;
+         setTimeout(() => { bakeOpaqueBtn.innerHTML = prev; bakeOpaqueBtn.disabled = false; }, 1800);
+      });
    }
 
    // ---- shape-count slider (limits how many shapes are drawn) ----
@@ -867,14 +1049,19 @@
       }
 
       const { width, height, data, originalWidth, originalHeight, avgColor } = bitmap;
-      const scaleX = originalWidth / width, scaleY = originalHeight / height;
+      // Respect the Advanced Settings Canvas Size if the user has set one;
+      // otherwise fall back to the source image dimensions.
+      const chosen = (typeof window.getChosenCanvasSize === "function") ? window.getChosenCanvasSize() : null;
+      const outW = (chosen && chosen.width)  ? chosen.width  : originalWidth;
+      const outH = (chosen && chosen.height) ? chosen.height : originalHeight;
+      const scaleX = outW / width, scaleY = outH / height;
       const [aR, aG, aB] = avgColor;
       const bgPacked = ((aR & 255) << 24) | ((aG & 255) << 16) | ((aB & 255) << 8) | 255;
 
-      // Reset canvas to source size; start with the background rectangle.
-      canvas.width = originalWidth;
-      canvas.height = originalHeight;
-      shapes = [{ type: 0, data: [0, 0, originalWidth, originalHeight], color: avgColor, score: 0 }];
+      // Reset canvas to the chosen output size; start with the background rectangle.
+      canvas.width = outW;
+      canvas.height = outH;
+      shapes = [{ type: 0, data: [0, 0, outW, outH], color: avgColor, score: 0 }];
       showCanvas();
       render();
       await yieldFrame();
@@ -978,4 +1165,81 @@
    // Pages that opt in (e.g. Templates) carry forward the result generated
    // elsewhere by restoring the saved shapes on load.
    if (window.GEOMAGIC_RESTORE) restoreState();
+
+   // ---- public API for sibling modules (dashboard-advanced.js refine tool) ----
+   // Lets the refine tool treat geometrize as the single source of truth for the
+   // canvas + shapes instead of running a competing renderer.
+   window.DashGeo = {
+      canvas,
+      // Load a flat shapes array (e.g. from imported JSON) as the current image.
+      loadShapes(shapesArr, w, h) {
+         if (!Array.isArray(shapesArr) || !shapesArr.length) return;
+         baseShapes = shapesArr.slice();
+         shapes = baseShapes.slice();
+         currentLogic = "original";
+         customColorOrder = null;
+         shapeLimit = shapes.length;
+         selectedIndex = null;
+         if (w && h) { canvas.width = w; canvas.height = h; }
+         showCanvas();
+         syncSlider();
+         render();
+         updateSelectionInfo();
+         persistState();
+         setStatus(`${shapes.length} shapes — click one to select`);
+      },
+      // Append shapes (refine/enhance) to both the live and base arrays.
+      appendShapes(arr) {
+         if (!Array.isArray(arr) || !arr.length) return;
+         shapes.push(...arr);
+         baseShapes.push(...arr);
+         shapeLimit = shapes.length;
+         selectedIndex = null;
+         syncSlider();
+         render();
+         updateSelectionInfo();
+         persistState();
+         setStatus(`${shapes.length} shapes — click one to select`);
+      },
+      getBaseShapes() { return baseShapes.slice(); },
+      hasShapes() { return shapes.length > 0; },
+      // Repaint current shapes (used by the refine tool before drawing overlays).
+      render() { render(); },
+      // Lock/unlock geometrize's own canvas interactions.
+      setInteractionLocked(v) { interactionLocked = !!v; },
+      // Make shapes order-independent by baking the composited colour into each.
+      bakeOpaque() { return bakeOpaque(); },
+      // The image the user uploaded to the main canvas (so the Drawing panel can
+      // reuse it instead of having its own separate file picker).
+      getUploadedFile() { return uploadedFile; },
+      // Engine-based region enhancement: re-geometrize each rectangle (canvas px)
+      // by sampling the current render — adds new detail shapes there, no extra
+      // JSON needed. rects: [{x1,y1,x2,y2}, ...]. Returns total shapes added.
+      async enhanceRegions(rects, onProgress) {
+         if (!Array.isArray(rects) || !rects.length || !shapes.length) return 0;
+         animating = true; setBusy(true);
+         selectedIndex = null;
+         let total = 0;
+         try {
+            for (let i = 0; i < rects.length; i++) {
+               const r = rects[i];
+               const bx = Math.min(r.x1, r.x2), by = Math.min(r.y1, r.y2);
+               const bw = Math.abs(r.x2 - r.x1), bh = Math.abs(r.y2 - r.y1);
+               total += await regeometrizeBox(bx, by, bw, bh, 40, (frac, msg) => {
+                  if (onProgress) onProgress((i + frac) / rects.length, `Region ${i + 1}/${rects.length}: ${msg}`);
+               });
+            }
+         } catch (err) {
+            console.error("enhanceRegions error:", err);
+         }
+         animating = false; setBusy(false);
+         shapeLimit = shapes.length;
+         syncSlider();
+         render();
+         updateSelectionInfo();
+         persistState();
+         setStatus(`${shapes.length} shapes — click one to select`);
+         return total;
+      },
+   };
 })();

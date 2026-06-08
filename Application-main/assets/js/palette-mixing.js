@@ -544,7 +544,30 @@ function populateTrycolorsPaletteSelector() {
         option.textContent = `${paletteName} (${colorCount} colors)`;
         select.appendChild(option);
     });
+
+    // Add the user's editable Color Library (if any) — see color-library.js.
+    if (window.ColorLibrary && window.ColorLibrary.size() > 0) {
+        const opt = document.createElement('option');
+        opt.value = '__mycolors__';
+        opt.textContent = `★ My Colors (${window.ColorLibrary.size()} colors)`;
+        select.appendChild(opt);
+    }
 }
+
+// Push an arbitrary [{hex, name}] palette into the Trycolors unmixer. Used by the
+// Color Library editor so user-named colors flow into the unmix request.
+window.applyUnmixerPalette = function (colors, sourceName) {
+    if (!Array.isArray(colors)) return;
+    defaultPaletteData = colors.map(c => ({ hex: c.hex, name: c.name || null }));
+    currentTrycolorsPaletteSource = sourceName || 'custom';
+    silencedColors.clear();
+    renderPaletteGrid();
+};
+
+// Read the palette currently loaded in the unmixer (used by the Color Library "Import").
+window.getUnmixerPalette = function () {
+    return (defaultPaletteData || []).map(c => ({ hex: c.hex, name: c.name || null }));
+};
 
 // Load a preset palette into trycolors
 function loadTrycolorsPalette(paletteName) {
@@ -552,7 +575,13 @@ function loadTrycolorsPalette(paletteName) {
         loadDefaultPalette();
         return;
     }
-    
+
+    // User's editable Color Library (names + RGB) — see color-library.js.
+    if (paletteName === '__mycolors__' && window.ColorLibrary) {
+        window.applyUnmixerPalette(window.ColorLibrary.asPalette(), '__mycolors__');
+        return;
+    }
+
     if (!palettePresetsData || !palettePresetsData[paletteName]) {
         console.log('Palette not found:', paletteName);
         return;

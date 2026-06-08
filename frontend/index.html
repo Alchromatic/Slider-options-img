@@ -1490,7 +1490,7 @@ canvas.picking { cursor: crosshair; }
 </head>
 
 <body>
-<h2>Art-AI Renderer - Selective Resolution</h2>
+<h2 style="display:flex;align-items:center;gap:10px;"><img src="logo-icon.png" alt="logo" style="width:32px;height:32px;object-fit:contain;"> Art-AI Renderer - Selective Resolution</h2>
 
 <!-- Main Tabs Navigation -->
 <div class="main-tabs">
@@ -1736,7 +1736,7 @@ canvas.picking { cursor: crosshair; }
 
     <button id="selectRegionsBtn">Select Regions for Detail</button>
     <button id="clearRegionsBtn">Clear All Regions</button>
-    <button id="applyEnhanceBtn" style="background: #4CAF50; color: white;" onclick="enhanceSelectedRegions()">Enhance Selected Regions</button>
+    <button id="applyEnhanceBtn" style="background: #4CAF50; color: white;">Enhance Selected Regions</button>
     
     <div id="enhanceProgress" style="display: none; margin-top: 10px;">
         <div style="background: #e0e0e0; border-radius: 4px; overflow: hidden;">
@@ -2010,6 +2010,7 @@ canvas.picking { cursor: crosshair; }
             <option value="default">Default Artist Palette (20 colors)</option>
         </select>
         <button id="trycolorsLoadPaletteBtn" style="padding: 6px 12px; background: #4ECDC4; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600;">Load</button>
+        <button id="colorLibraryBtn" type="button" title="Add & edit your own named colors" style="padding: 6px 12px; background: #2a85ff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600;">Edit Library</button>
     </div>
     
     <details class="trycolors-palette-toggle" open>
@@ -2394,6 +2395,7 @@ const TRYCOLORS_LAB_URL = "https://slider-options-img-production-48cf.up.railway
 
 let baseShapes = [];
 let detailShapes = [];
+let detailW = 0, detailH = 0; // detail JSON's own coordinate space (for region enhance)
 let currentShapes = [];
 let groupedShapes = [];
 let regions = [];
@@ -2775,6 +2777,9 @@ let currentRegion = null;
 let isPickingColor = false;
 let selectedShapeIndex = null;
 let currentSelectedColor = null;
+// Click-to-pick cycling: prefer the smallest shape under the cursor, and cycle
+// through overlapping shapes on repeated clicks at the same spot.
+let pickKeyFE = "", pickListFE = [], pickPosFE = 0;
 
 // Geometrize elements (Client-Side)
 const geometrizeInput = document.getElementById("geometrizeInput");
@@ -3595,6 +3600,7 @@ geometrizeBtn.addEventListener("click", async () => {
             geometrizeStatus.textContent = `✓ Generated ${generatedShapes.length} shapes (${targetW}×${targetH})`;
         } else {
             detailShapes = [...generatedShapes];
+            detailW = targetW; detailH = targetH;
             detailFileStatus.textContent = `✓ Loaded ${generatedShapes.length} shapes`;
 
             geometrizeStatus.textContent = `✓ Generated ${generatedShapes.length} shapes as Detail (${targetW}×${targetH})`;
@@ -3718,7 +3724,12 @@ baseFileInput.addEventListener("change", async e => {
     if (!file) return;
 
     const text = await file.text();
-    baseShapes = JSON.parse(text);
+    // Accept either a bare shapes array OR a wrapped export { width, height, logic, shapes }.
+    const parsed = JSON.parse(text);
+    const wrapW = (parsed && !Array.isArray(parsed) && parsed.width) || null;
+    const wrapH = (parsed && !Array.isArray(parsed) && parsed.height) || null;
+    baseShapes = Array.isArray(parsed) ? parsed
+               : (parsed && Array.isArray(parsed.shapes) ? parsed.shapes : []);
 
     currentShapes = [...baseShapes];
     groupedShapes = [...currentShapes];
@@ -3727,9 +3738,12 @@ baseFileInput.addEventListener("change", async e => {
     window.sourceWidth = null;
     window.sourceHeight = null;
 
-    // Auto-size canvas to match the background shape dimensions
+    // Auto-size canvas to match the export size or the background shape dimensions
     const bg = baseShapes.find(s => s.type === 0);
-    if (bg && bg.data.length >= 4) {
+    if (wrapW && wrapH) {
+        canvas.width = wrapW;
+        canvas.height = wrapH;
+    } else if (bg && bg.data.length >= 4) {
         const bgW = Math.abs(bg.data[2] - bg.data[0]) || bg.data[2] || 600;
         const bgH = Math.abs(bg.data[3] - bg.data[1]) || bg.data[3] || 600;
         canvas.width = bgW;
@@ -3754,7 +3768,19 @@ detailFileInput.addEventListener("change", async e => {
     if (!file) return;
 
     const text = await file.text();
-    detailShapes = JSON.parse(text);
+    // Accept either a bare shapes array OR a wrapped export { width, height, shapes }.
+    const parsed = JSON.parse(text);
+    detailShapes = Array.isArray(parsed) ? parsed
+                 : (parsed && Array.isArray(parsed.shapes) ? parsed.shapes : []);
+    // Capture the detail's own coordinate space so region-based enhance can map
+    // correctly even when base and detail were generated at different sizes.
+    if (parsed && !Array.isArray(parsed) && parsed.width && parsed.height) {
+        detailW = parsed.width; detailH = parsed.height;
+    } else {
+        const dbg = detailShapes.find(s => s.type === 0);
+        detailW = dbg ? (Math.abs(dbg.data[2] - dbg.data[0]) || dbg.data[2] || 0) : 0;
+        detailH = dbg ? (Math.abs(dbg.data[3] - dbg.data[1]) || dbg.data[3] || 0) : 0;
+    }
     detailFileStatus.textContent = `Loaded (${detailShapes.length} shapes)`;
 });
 
@@ -4032,6 +4058,87 @@ function getImageRect() {
 // Enhance multiplier - how many times more shapes to generate in selected regions
 const ENHANCE_MULTIPLIER = 3; // Generate 3x more shapes in regions
 
+// ---- Region centre + geometry helpers for JSON-based enhance ----
+function regionShapeCenter(s) {
+    const d = s.data;
+    switch (s.type) {
+        case 2: case 7: return { x: (d[0] + d[2] + d[4]) / 3, y: (d[1] + d[3] + d[5]) / 3 };
+        case 3: case 4: case 5: return { x: d[0], y: d[1] };
+        default: return { x: (d[0] + d[2]) / 2, y: (d[1] + d[3]) / 2 }; // 0,1,6
+    }
+}
+function pointInPolygon(pt, poly) {
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+        const xi = poly[i].x, yi = poly[i].y, xj = poly[j].x, yj = poly[j].y;
+        const hit = ((yi > pt.y) !== (yj > pt.y)) &&
+            (pt.x < (xj - xi) * (pt.y - yi) / ((yj - yi) || 1e-9) + xi);
+        if (hit) inside = !inside;
+    }
+    return inside;
+}
+// Scale a shape from the detail coordinate space into the base/image space.
+function scaleDetailShape(s, sx, sy) {
+    const d = s.data, r = (v) => Math.round(v), avg = (sx + sy) / 2;
+    let nd;
+    switch (s.type) {
+        case 0: case 2: case 6: case 7: nd = d.map((v, i) => r(v * (i % 2 === 0 ? sx : sy))); break;
+        case 1: nd = [r(d[0]*sx), r(d[1]*sy), r(d[2]*sx), r(d[3]*sy), d[4]]; break;
+        case 3: nd = [r(d[0]*sx), r(d[1]*sy), r(d[2]*sx), r(d[3]*sy)]; break;
+        case 4: nd = [r(d[0]*sx), r(d[1]*sy), r(d[2]*sx), r(d[3]*sy), d[4]]; break;
+        case 5: nd = [r(d[0]*sx), r(d[1]*sy), r(d[2]*avg)]; break;
+        default: nd = d.map((v, i) => r(v * (i % 2 === 0 ? sx : sy)));
+    }
+    return { type: s.type, data: nd, color: s.color, score: s.score };
+}
+
+// Enhance by importing detail-JSON shapes that fall inside the selected regions.
+// Regions store points in IMAGE (base-shape) coordinates; detail shapes live in
+// the detail JSON's own space, so we scale detail -> base before testing/appending.
+function enhanceFromDetailJson() {
+    const img = getImageRect();              // base image dims (w,h)
+    const baseW = img.w, baseH = img.h;
+    const sx = detailW ? baseW / detailW : 1;
+    const sy = detailH ? baseH / detailH : 1;
+
+    const progressDiv = document.getElementById('enhanceProgress');
+    const progressFill = document.getElementById('enhanceProgressFill');
+    const progressText = document.getElementById('enhanceProgressText');
+    if (progressDiv) progressDiv.style.display = 'block';
+
+    const added = [];
+    for (let i = 0; i < detailShapes.length; i++) {
+        const s = detailShapes[i];
+        if (!s || s.type === 0 || !Array.isArray(s.data)) continue; // skip bg / malformed
+        const scaled = scaleDetailShape(s, sx, sy);
+        const c = regionShapeCenter(scaled);
+        for (const region of regions) {
+            const poly = region.points || region;
+            if (poly && poly.length >= 3 && pointInPolygon(c, poly)) { added.push(scaled); break; }
+        }
+        if (progressFill && i % 200 === 0) progressFill.style.width = ((i / detailShapes.length) * 90) + '%';
+    }
+
+    if (added.length) {
+        currentShapes.push(...added);
+        baseShapes.push(...added);
+        groupedShapes = [...currentShapes];
+    }
+
+    regions = [];
+    updateRegionUI();
+    if (slider) { slider.max = currentShapes.length; slider.value = currentShapes.length; }
+    if (sliderLabel) sliderLabel.textContent = `Shapes: ${currentShapes.length} / ${currentShapes.length}`;
+    drawCanvas();
+    if (typeof populateSequenceFilterChips === 'function') populateSequenceFilterChips();
+
+    if (progressFill) progressFill.style.width = '100%';
+    if (progressText) progressText.textContent = added.length
+        ? `Done! Added ${added.length} detail shapes. Total: ${currentShapes.length}`
+        : 'No detail shapes fell inside the selected regions.';
+    setTimeout(() => { if (progressDiv) progressDiv.style.display = 'none'; }, 2500);
+}
+
 // Make function global
 window.enhanceSelectedRegions = async function() {
     console.log("=== ENHANCE STARTED (OPTIMIZED) ===");
@@ -4044,7 +4151,15 @@ window.enhanceSelectedRegions = async function() {
         alert("Select regions first by drawing on the canvas.");
         return;
     }
-    
+
+    // ---- JSON-based enhance: no source image, but a Detail JSON is loaded ----
+    // Pull the detail shapes whose centre falls inside a selected region into the
+    // base image. Works across different base/detail resolutions by scaling.
+    if (!window.sourceImageData && detailShapes && detailShapes.length) {
+        enhanceFromDetailJson();
+        return;
+    }
+
     // Get settings from UI - use reduced values for enhance mode (speed over perfect quality)
     const shapesPerRegion = Math.max(20, Math.round(currentShapes.length * 0.25 / regions.length));
     const alpha = parseInt(geometrizeAlpha.value) || 128;
@@ -4766,11 +4881,11 @@ function isPointInTriangle(px, py, x1, y1, x2, y2, x3, y3) {
 function findShapeAtPoint(x, y) {
     const imgRect = getImageRect();
     const working = groupedShapes.length ? groupedShapes : currentShapes;
-    
+
     // Get currently displayed shapes based on slider
     const limit = parseInt(slider.value);
     const displayedShapes = limit > 0 ? working.slice(0, limit) : working;
-    
+
     // Search from top (last rendered) to bottom (first rendered)
     for (let i = displayedShapes.length - 1; i >= 0; i--) {
         const shape = displayedShapes[i];
@@ -4779,6 +4894,33 @@ function findShapeAtPoint(x, y) {
         }
     }
     return null;
+}
+
+// Approx pixel area of a shape (used to prefer small detail over the widest shape).
+function shapeAreaFE(s) {
+    const d = s.data;
+    switch (s.type) {
+        case 1: return Math.PI * d[2] * d[2];                              // circle [cx,cy,r]
+        case 2: return Math.abs((d[0]*(d[3]-d[5]) + d[2]*(d[5]-d[1]) + d[4]*(d[1]-d[3])) / 2); // triangle
+        case 4: return Math.PI * Math.abs(d[2] * d[3]);                    // ellipse [cx,cy,rx,ry]
+        default: return Infinity;                                          // background / unknown
+    }
+}
+
+// All shapes under (x,y), smallest-area first, so the default pick is the fine
+// detail rather than the largest covering shape ("widest color" problem).
+function findShapesAtPoint(x, y) {
+    const imgRect = getImageRect();
+    const working = groupedShapes.length ? groupedShapes : currentShapes;
+    const limit = parseInt(slider.value);
+    const displayedShapes = limit > 0 ? working.slice(0, limit) : working;
+    const hits = [];
+    for (let i = displayedShapes.length - 1; i >= 0; i--) {
+        const shape = displayedShapes[i];
+        if (isPointInShape(x, y, shape, imgRect)) hits.push({ shape, index: i });
+    }
+    hits.sort((a, b) => shapeAreaFE(a.shape) - shapeAreaFE(b.shape));
+    return hits;
 }
 
 function displayShapeInfo(shape, index) {
@@ -4894,14 +5036,29 @@ canvas.addEventListener("click", e => {
 
     const { x, y } = getCanvasPoint(e);
 
-    const result = findShapeAtPoint(x, y);
-    
-    if (result) {
-        selectedShapeIndex = result.index;
-        displayShapeInfo(result.shape, result.index);
-    } else {
+    const list = findShapesAtPoint(x, y);
+
+    if (!list.length) {
         colorPickerPanel.classList.remove("active");
         clearShapeHighlight();
+        pickListFE = []; pickKeyFE = "";
+        return;
+    }
+
+    // Same overlapping spot clicked again → cycle to the next shape; a new spot
+    // resets to the smallest (most specific) shape there.
+    const key = list.map(h => h.index).join(",");
+    if (key === pickKeyFE) pickPosFE = (pickPosFE + 1) % list.length;
+    else { pickKeyFE = key; pickPosFE = 0; }
+    pickListFE = list;
+
+    const chosen = list[pickPosFE];
+    selectedShapeIndex = chosen.index;
+    displayShapeInfo(chosen.shape, chosen.index);
+
+    // Hint that more overlapping shapes are available here.
+    if (list.length > 1 && typeof shapeTypeValue !== 'undefined' && shapeTypeValue) {
+        shapeTypeValue.textContent += `  ·  ${pickPosFE + 1}/${list.length} here, click to cycle`;
     }
 });
 
@@ -5691,7 +5848,29 @@ function populateTrycolorsPaletteSelector() {
         option.textContent = `${paletteName} (${colorCount} colors)`;
         select.appendChild(option);
     });
+
+    // Add the user's editable Color Library (if any) — see color-library.js.
+    if (window.ColorLibrary && window.ColorLibrary.size() > 0) {
+        const opt = document.createElement('option');
+        opt.value = '__mycolors__';
+        opt.textContent = `★ My Colors (${window.ColorLibrary.size()} colors)`;
+        select.appendChild(opt);
+    }
 }
+
+// Push an arbitrary [{hex, name}] palette into the Trycolors unmixer (used by the
+// Color Library editor so user-named colors flow into the unmix request).
+window.applyUnmixerPalette = function (colors, sourceName) {
+    if (!Array.isArray(colors)) return;
+    defaultPaletteData = colors.map(c => ({ hex: c.hex, name: c.name || null }));
+    currentTrycolorsPaletteSource = sourceName || 'custom';
+    silencedColors.clear();
+    renderPaletteGrid();
+};
+// Read the palette currently loaded in the unmixer (used by the Color Library "Import").
+window.getUnmixerPalette = function () {
+    return (defaultPaletteData || []).map(c => ({ hex: c.hex, name: c.name || null }));
+};
 
 // Load a preset palette into trycolors
 function loadTrycolorsPalette(paletteName) {
@@ -5699,7 +5878,13 @@ function loadTrycolorsPalette(paletteName) {
         loadDefaultPalette();
         return;
     }
-    
+
+    // User's editable Color Library (names + RGB) — see color-library.js.
+    if (paletteName === '__mycolors__' && window.ColorLibrary) {
+        window.applyUnmixerPalette(window.ColorLibrary.asPalette(), '__mycolors__');
+        return;
+    }
+
     if (!palettePresetsData || !palettePresetsData[paletteName]) {
         console.log('Palette not found:', paletteName);
         return;
@@ -9540,6 +9725,9 @@ geometrize_shape_ShapeTypes.QUADRATIC_BEZIER = 7;
     });
 })();
 </script>
+
+<!-- editable named-color library that feeds the unmixer palette -->
+<script src="color-library.js"></script>
 
 </body>
 </html>

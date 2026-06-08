@@ -200,12 +200,141 @@
                               </div>
                            </div>
                         </div>
-                        <div class="bg-white dark:bg-neutral-7 p-6 max-md:py-3 rounded-lg flex items-center gap-4 flex-wrap border-2 border-[#F4F4F4] dark:border-0 shadow-[0px_4px_14px_-6px_#F4F4F4] dark:shadow-none">
-                           <button id="btn-reset" type="button" class="theme-btn-regular style-2 inline-flex! items-center justify-center gap-2 grow"><span class="text-neutral-4"><i class="fa-regular fa-arrows-rotate-reverse"></i></span> Reset</button>
-                           <button id="btn-random" type="button" class="theme-btn-regular style-2 inline-flex! items-center justify-center gap-2 grow"><span class="text-neutral-4"><i class="fa-regular fa-layer-group"></i></span> Random</button>
-                           <button id="btn-step" type="button" class="theme-btn-regular style-2 inline-flex! items-center justify-center gap-2 grow"><span class="text-neutral-4"><i class="fa-regular fa-paper-plane-top"></i></span> Step</button>
-                           <button id="btn-generate" type="button" class="theme-btn-primary inline-flex! items-center justify-center gap-2 grow group"><span class="text-white dark:group-hover:text-neutral-6 transition-all duration-300"><i class="fa-regular fa-play"></i></span> Generate</button>
+                        <!-- ============================ Configuration (tabbed) ============================ -->
+                        <div class="bg-white dark:bg-neutral-7 p-6 rounded-lg border-2 border-[#F4F4F4] dark:border-0 shadow-[0px_4px_14px_-6px_#F4F4F4] dark:shadow-none">
+                           <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
+                              <h5 class="text-neutral-6 dark:text-neutral-1 text-xl leading-[1.6] font-semibold -tracking-[0.4px] relative pl-5 before:w-[5px] before:h-full before:bg-secondary-3 before:rounded before:absolute before:left-0 before:top-0">Configuration</h5>
+                              <button id="downloadJsonBtn" type="button" class="theme-btn-regular style-2 inline-flex! items-center gap-2"><span class="text-neutral-4"><i class="fa-regular fa-file-arrow-down"></i></span> Download JSON</button>
+                           </div>
+
+                           <div class="tabs flex flex-wrap items-start gap-2 mb-6">
+                              <!-- ===== TAB: Output ===== -->
+                              <input type="radio" name="config-tab" class="tab order-1 text-neutral-4! text-sm leading-6 font-semibold -tracking-[0.14px] px-5 py-2.5 rounded-xl bg-[#F4F4F4] dark:bg-neutral-8 hover:text-neutral-7! dark:hover:text-neutral-1! checked:text-white! dark:checked:text-white! checked:bg-theme-primary dark:checked:bg-theme-primary transition-all duration-300" aria-label="Output" checked>
+                              <div class="tab-content order-3 w-full pt-2">
+                                 <div class="grid lg:grid-cols-2 gap-x-8 gap-y-6">
+                                    <div>
+                                       <h6 class="text-neutral-4 text-xs leading-6 font-bold uppercase tracking-wider mb-3">Canvas Size</h6>
+                                       <div class="flex items-end gap-3 flex-wrap">
+                                          <div class="grow">
+                                             <label for="canvasWidthInput" class="block text-neutral-4 text-xs font-bold -tracking-[0.12px] mb-2 cursor-pointer">Width</label>
+                                             <input type="number" id="canvasWidthInput" value="800" min="100" max="4000" step="1" class="w-full h-12 rounded-xl bg-[#F4F4F4] dark:bg-neutral-8 border border-[#F4F4F4] dark:border-neutral-6 px-5 text-neutral-8 dark:text-neutral-1 text-[15px] font-semibold -tracking-[0.15px] text-center focus:outline-none">
+                                          </div>
+                                          <span class="text-neutral-4 text-xl pb-3">&times;</span>
+                                          <div class="grow">
+                                             <label for="canvasHeightInput" class="block text-neutral-4 text-xs font-bold -tracking-[0.12px] mb-2 cursor-pointer">Height</label>
+                                             <input type="number" id="canvasHeightInput" value="450" min="100" max="4000" step="1" class="w-full h-12 rounded-xl bg-[#F4F4F4] dark:bg-neutral-8 border border-[#F4F4F4] dark:border-neutral-6 px-5 text-neutral-8 dark:text-neutral-1 text-[15px] font-semibold -tracking-[0.15px] text-center focus:outline-none">
+                                          </div>
+                                       </div>
+                                       <div class="mt-4">
+                                          <label for="aspectRatioSelect" class="block text-neutral-4 text-xs font-bold -tracking-[0.12px] mb-2 cursor-pointer">Aspect Ratio</label>
+                                          <div class="flex gap-3 items-stretch">
+                                             <div class="relative grow min-w-0">
+                                                <select id="aspectRatioSelect" class="w-full h-12 py-3 pl-4 pr-10 rounded-xl bg-[#F4F4F4] dark:bg-neutral-8 border border-[#F4F4F4] dark:border-neutral-6 text-neutral-7 dark:text-neutral-1 text-[15px] font-semibold -tracking-[0.15px] appearance-none focus:outline-none cursor-pointer">
+                                                   <option value="free">Free (use exact width × height)</option>
+                                                   <option value="1:1">1:1 (Square)</option>
+                                                   <option value="4:3">4:3 (Landscape)</option>
+                                                   <option value="3:4">3:4 (Portrait)</option>
+                                                   <option value="16:9" selected>16:9 (Widescreen)</option>
+                                                   <option value="9:16">9:16 (Tall)</option>
+                                                   <option value="3:2">3:2</option>
+                                                   <option value="2:3">2:3</option>
+                                                </select>
+                                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-4 pointer-events-none"><i class="fa-regular fa-chevron-down"></i></span>
+                                             </div>
+                                             <button id="autoCalibrateBtn" type="button" class="theme-btn-primary inline-flex! items-center gap-2 h-12 shrink-0 group"><span class="text-white dark:group-hover:text-neutral-6 transition-all duration-300"><i class="fa-regular fa-wand-magic-sparkles"></i></span> Calibrate</button>
+                                          </div>
+                                          <div id="calibrateInfo" class="text-neutral-4 text-xs font-semibold mt-2">Pick a ratio, then press Calibrate to set the height.</div>
+                                       </div>
+                                    </div>
+
+                                    <div class="flex flex-col gap-5">
+                                       <div>
+                                          <h6 class="text-neutral-4 text-xs leading-6 font-bold uppercase tracking-wider mb-3">Output Quality</h6>
+                                          <div class="grid grid-cols-2 gap-3">
+                                             <label class="relative cursor-pointer block">
+                                                <input type="radio" name="geometrizeTarget" value="base" class="sr-only peer" checked>
+                                                <span class="block px-4 py-3 rounded-xl bg-[#F4F4F4] dark:bg-neutral-8 border border-transparent peer-checked:border-theme-primary peer-checked:bg-theme-primary/5 transition-all duration-300">
+                                                   <span class="flex items-center gap-2 text-neutral-7 dark:text-neutral-1 text-[13px] font-semibold -tracking-[0.14px]"><span class="text-neutral-4"><i class="fa-regular fa-gauge-high"></i></span> Base</span>
+                                                   <span class="block text-neutral-4 text-[11px] font-semibold mt-0.5">Faster, fewer shapes</span>
+                                                </span>
+                                             </label>
+                                             <label class="relative cursor-pointer block">
+                                                <input type="radio" name="geometrizeTarget" value="detail" class="sr-only peer">
+                                                <span class="block px-4 py-3 rounded-xl bg-[#F4F4F4] dark:bg-neutral-8 border border-transparent peer-checked:border-theme-primary peer-checked:bg-theme-primary/5 transition-all duration-300">
+                                                   <span class="flex items-center gap-2 text-neutral-7 dark:text-neutral-1 text-[13px] font-semibold -tracking-[0.14px]"><span class="text-neutral-4"><i class="fa-regular fa-gem"></i></span> Detail</span>
+                                                   <span class="block text-neutral-4 text-[11px] font-semibold mt-0.5">Slower, high detail</span>
+                                                </span>
+                                             </label>
+                                          </div>
+                                       </div>
+                                    </div>
+                                 </div>
+
+                                 <!-- generate actions live with the size controls -->
+                                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-6 pt-6 border-t border-[#F4F4F4] dark:border-neutral-6">
+                                    <button id="btn-reset" type="button" class="theme-btn-regular style-2 inline-flex! items-center justify-center gap-2"><span class="text-neutral-4"><i class="fa-regular fa-arrows-rotate-reverse"></i></span> Reset</button>
+                                    <button id="btn-random" type="button" class="theme-btn-regular style-2 inline-flex! items-center justify-center gap-2"><span class="text-neutral-4"><i class="fa-regular fa-layer-group"></i></span> Random</button>
+                                    <button id="btn-step" type="button" class="theme-btn-regular style-2 inline-flex! items-center justify-center gap-2"><span class="text-neutral-4"><i class="fa-regular fa-paper-plane-top"></i></span> Step</button>
+                                    <button id="btn-generate" type="button" class="theme-btn-primary inline-flex! items-center justify-center gap-2 group"><span class="text-white dark:group-hover:text-neutral-6 transition-all duration-300"><i class="fa-regular fa-play"></i></span> Generate</button>
+                                 </div>
+                              </div>
+
+                              <!-- ===== TAB: Import & Refine ===== -->
+                              <input type="radio" name="config-tab" class="tab order-2 text-neutral-4! text-sm leading-6 font-semibold -tracking-[0.14px] px-5 py-2.5 rounded-xl bg-[#F4F4F4] dark:bg-neutral-8 hover:text-neutral-7! dark:hover:text-neutral-1! checked:text-white! dark:checked:text-white! checked:bg-theme-primary dark:checked:bg-theme-primary transition-all duration-300" aria-label="Import & Refine">
+                              <div class="tab-content order-4 w-full pt-2">
+                                 <!-- Step 1: Import -->
+                                 <h6 class="text-neutral-4 text-xs leading-6 font-bold uppercase tracking-wider mb-3">1 · Import Shapes JSON</h6>
+                                 <div class="grid md:grid-cols-2 gap-5">
+                                    <div>
+                                       <label for="baseFileInput" class="flex items-center gap-3 w-full h-12 px-3 cursor-pointer rounded-xl bg-[#F4F4F4] dark:bg-neutral-8 border border-[#F4F4F4] dark:border-neutral-6 hover:border-theme-primary/40 transition-all duration-300">
+                                          <input type="file" id="baseFileInput" accept=".json" class="sr-only">
+                                          <span class="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-white dark:bg-neutral-7 text-theme-primary"><i class="fa-regular fa-file-code"></i></span>
+                                          <span class="min-w-0 flex-1">
+                                             <span class="block text-neutral-4 text-[10px] font-bold uppercase tracking-wider leading-none">Base · Low-Res JSON</span>
+                                             <span id="baseFileName" class="block text-neutral-6 dark:text-neutral-1 text-[13px] font-semibold -tracking-[0.14px] truncate mt-0.5">Choose JSON file</span>
+                                          </span>
+                                       </label>
+                                       <span id="baseFileStatus" class="block text-neutral-4 text-xs font-semibold mt-2"></span>
+                                    </div>
+                                    <div>
+                                       <label for="detailFileInput" class="flex items-center gap-3 w-full h-12 px-3 cursor-pointer rounded-xl bg-[#F4F4F4] dark:bg-neutral-8 border border-[#F4F4F4] dark:border-neutral-6 hover:border-theme-primary/40 transition-all duration-300">
+                                          <input type="file" id="detailFileInput" accept=".json" class="sr-only">
+                                          <span class="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-white dark:bg-neutral-7 text-theme-primary"><i class="fa-regular fa-file-code"></i></span>
+                                          <span class="min-w-0 flex-1">
+                                             <span class="block text-neutral-4 text-[10px] font-bold uppercase tracking-wider leading-none truncate">Detail · High-Res JSON</span>
+                                             <span id="detailFileName" class="block text-neutral-6 dark:text-neutral-1 text-[13px] font-semibold -tracking-[0.14px] truncate mt-0.5">Choose JSON file</span>
+                                          </span>
+                                       </label>
+                                       <span id="detailFileStatus" class="block text-neutral-4 text-xs font-semibold mt-2"></span>
+                                    </div>
+                                 </div>
+
+                                 <!-- Step 2: Refine -->
+                                 <div class="mt-6 pt-6 border-t border-[#F4F4F4] dark:border-neutral-6">
+                                    <div class="flex items-center justify-between gap-4 flex-wrap mb-2">
+                                       <h6 class="text-neutral-4 text-xs leading-6 font-bold uppercase tracking-wider">2 · Refine Regions</h6>
+                                       <span id="regionCountBadge" class="inline-flex items-center gap-2 text-neutral-4 text-xs font-bold px-3 py-1.5 rounded-full bg-[#F4F4F4] dark:bg-neutral-6">
+                                          <span class="w-2 h-2 rounded-full bg-neutral-4" id="regionCountDot"></span>
+                                          <span><span id="regionCountValue">0</span> selected</span>
+                                       </span>
+                                    </div>
+                                    <p class="text-neutral-4 text-xs font-semibold mb-4">Click <em class="not-italic font-bold text-theme-primary">Select Regions</em>, drag boxes on the canvas over areas needing more detail (click a box to remove it), then <em class="not-italic font-bold text-theme-primary">Enhance</em>. With no Detail JSON loaded this re-generates extra shapes in those areas from the current image; if a Detail JSON is loaded it pulls matching detail from there.</p>
+                                    <div class="flex items-center gap-3 flex-wrap">
+                                       <button id="selectRegionsBtn" type="button" class="theme-btn-regular style-2 inline-flex! items-center gap-2 grow"><span class="text-neutral-4"><i class="fa-regular fa-vector-square"></i></span> <span class="select-regions-label">Select Regions</span></button>
+                                       <button id="clearRegionsBtn" type="button" class="theme-btn-regular style-2 inline-flex! items-center gap-2 grow"><span class="text-neutral-4"><i class="fa-regular fa-eraser"></i></span> Clear All</button>
+                                       <button id="applyEnhanceBtn" type="button" class="theme-btn-primary inline-flex! items-center gap-2 grow group"><span class="text-white dark:group-hover:text-neutral-6 transition-all duration-300"><i class="fa-regular fa-wand-magic-sparkles"></i></span> Enhance</button>
+                                    </div>
+                                    <div id="enhanceProgress" class="hidden mt-4">
+                                       <div class="w-full h-2 rounded-full bg-[#F4F4F4] dark:bg-neutral-6 overflow-hidden">
+                                          <div id="enhanceProgressFill" class="h-full bg-theme-primary transition-[width] duration-300" style="width:0%"></div>
+                                       </div>
+                                       <div id="enhanceProgressText" class="text-neutral-4 text-xs font-semibold mt-2 text-center">Generating detail shapes…</div>
+                                    </div>
+                                 </div>
+                              </div>
+                           </div>
                         </div>
+                        <!-- Configuration end -->
                      </div>
                      <div class="flex flex-col gap-2 md:shrink-0 md:w-75 lg:w-85">
                         <div class="bg-white dark:bg-neutral-7 px-3 py-6 rounded-lg border-2 border-[#F4F4F4] dark:border-0 shadow-[0px_4px_14px_-6px_#F4F4F4] dark:shadow-none">
@@ -301,6 +430,84 @@
                </section>
                <!-- image generate section end -->
 
+               <!-- ============================ Drawing (Line) panel ============================ -->
+               <section class="mt-6">
+                  <div class="bg-white dark:bg-neutral-7 p-6 rounded-lg border-2 border-[#F4F4F4] dark:border-0 shadow-[0px_4px_14px_-6px_#F4F4F4] dark:shadow-none">
+                     <div class="flex items-start justify-between gap-4 flex-wrap mb-6">
+                        <div>
+                           <h5 class="text-neutral-6 dark:text-neutral-1 text-xl leading-[1.6] font-semibold -tracking-[0.4px] relative pl-5 before:w-[5px] before:h-full before:bg-secondary-3 before:rounded before:absolute before:left-0 before:top-0">Drawing</h5>
+                           <p class="text-neutral-4 text-sm leading-6 font-semibold -tracking-[0.14px] mt-1">Turns the image you uploaded above into a line drawing.</p>
+                        </div>
+                        <span id="lineDrawingSource" class="inline-flex items-center gap-2 text-neutral-4 text-xs font-bold px-3 py-1.5 rounded-full bg-[#F4F4F4] dark:bg-neutral-8">
+                           <span class="w-2 h-2 rounded-full bg-neutral-4"></span> No image yet
+                        </span>
+                     </div>
+
+                     <div class="grid md:grid-cols-2 gap-x-8 gap-y-7">
+                        <!-- Style -->
+                        <div>
+                           <h6 class="text-neutral-4 text-xs leading-6 font-bold uppercase tracking-wider mb-3">Style</h6>
+                           <div class="relative">
+                              <select id="lineDrawingStyle" class="w-full h-12 py-3 pl-4 pr-10 rounded-xl bg-[#F4F4F4] dark:bg-neutral-8 border border-[#F4F4F4] dark:border-neutral-6 text-neutral-7 dark:text-neutral-1 text-[15px] font-semibold -tracking-[0.15px] appearance-none focus:outline-none cursor-pointer">
+                                 <option value="stencil">Stencil (Outline Only)</option>
+                                 <option value="sketch">Pencil Sketch</option>
+                                 <option value="detailed" selected>Detailed Sketch</option>
+                                 <option value="crosshatch">Cross-Hatch Style</option>
+                                 <option value="architectural">Architectural</option>
+                              </select>
+                              <span class="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-4 pointer-events-none"><i class="fa-regular fa-chevron-down"></i></span>
+                           </div>
+                        </div>
+
+                        <!-- Options -->
+                        <div>
+                           <h6 class="text-neutral-4 text-xs leading-6 font-bold uppercase tracking-wider mb-3">Options</h6>
+                           <div class="flex items-center gap-8 h-12">
+                              <label class="relative cursor-pointer flex items-center gap-3 text-neutral-7 dark:text-neutral-1 text-sm font-semibold -tracking-[0.14px]">
+                                 <input type="checkbox" id="lineDrawingOutlineOnly" class="sr-only peer">
+                                 <span class="shrink-0 w-6 h-6 flex items-center justify-center rounded-md bg-[#F4F4F4] dark:bg-transparent border border-[#6F767E66] text-white text-[0px] peer-checked:text-base peer-checked:bg-theme-primary peer-checked:border-theme-primary transition-all duration-300"><i class="fa-regular fa-check"></i></span>
+                                 <span>Outline Only</span>
+                              </label>
+                              <label class="relative cursor-pointer flex items-center gap-3 text-neutral-7 dark:text-neutral-1 text-sm font-semibold -tracking-[0.14px]">
+                                 <input type="checkbox" id="lineDrawingGrid" class="sr-only peer">
+                                 <span class="shrink-0 w-6 h-6 flex items-center justify-center rounded-md bg-[#F4F4F4] dark:bg-transparent border border-[#6F767E66] text-white text-[0px] peer-checked:text-base peer-checked:bg-theme-primary peer-checked:border-theme-primary transition-all duration-300"><i class="fa-regular fa-check"></i></span>
+                                 <span>Show Grid Lines</span>
+                              </label>
+                           </div>
+                        </div>
+
+                        <!-- Detail -->
+                        <div>
+                           <div class="flex items-center justify-between mb-3">
+                              <h6 class="text-neutral-4 text-xs leading-6 font-bold uppercase tracking-wider">Detail</h6>
+                              <span class="text-neutral-6 dark:text-neutral-1 text-sm font-bold font-mono"><span id="ldDetailVal">80</span>%</span>
+                           </div>
+                           <input id="lineDrawingDetail" type="range" title="line-drawing-detail" class="range-slider w-full cursor-pointer" min="20" max="100" value="80">
+                        </div>
+
+                        <!-- Line Weight -->
+                        <div>
+                           <div class="flex items-center justify-between mb-3">
+                              <h6 class="text-neutral-4 text-xs leading-6 font-bold uppercase tracking-wider">Line Weight</h6>
+                              <span class="text-neutral-6 dark:text-neutral-1 text-sm font-bold font-mono" id="ldWeightVal">2</span>
+                           </div>
+                           <input id="lineDrawingWeight" type="range" title="line-drawing-weight" class="range-slider w-full cursor-pointer" min="1" max="4" value="2">
+                        </div>
+                     </div>
+
+                     <div class="flex items-center gap-4 flex-wrap mt-8">
+                        <button id="generateLineDrawingBtn" type="button" class="theme-btn-primary inline-flex! items-center justify-center gap-2 grow group">
+                           <span class="text-white dark:group-hover:text-neutral-6 transition-all duration-300"><i class="fa-regular fa-pen-nib"></i></span> Generate Drawing
+                        </button>
+                        <button id="downloadLineDrawingBtn" type="button" class="theme-btn-regular style-2 inline-flex! items-center justify-center gap-2 grow hidden">
+                           <span class="text-neutral-4"><i class="fa-regular fa-download"></i></span> Download PNG
+                        </button>
+                     </div>
+                     <div id="lineDrawingStatus" class="text-neutral-4 text-sm font-semibold mt-4 text-center"></div>
+                  </div>
+               </section>
+               <!-- Drawing panel end -->
+
                <!-- rendering logic lives on the Templates page -->
             </div>
          </main>
@@ -312,6 +519,8 @@
       <script src="assets/js/geometrize.js"></script>
       <!-- dashboard geometrize wiring -->
       <script src="assets/js/dashboard-geometrize.js"></script>
+      <!-- dashboard advanced controls: line drawing, canvas size, engine, JSON export -->
+      <script src="assets/js/dashboard-advanced.js"></script>
       <!-- shared canvas preview: fit, resize, status badge -->
       <script src="assets/js/canvas-preview.js"></script>
       <!-- auth guard + logout -->

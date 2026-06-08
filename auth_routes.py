@@ -1,15 +1,20 @@
 """
-Auth routes — login / sign up / current-user.
+Auth routes — login / sign up / current-user / OAuth (Google, Facebook).
 
 Mirrors the /api/auth/* endpoints from the
 sunnysanwar_integrated_multi_model_cmprxn_role project and writes to the same
 `auth_users` table, so accounts are shared between the two apps.
 """
 
+import os
 import uuid
+import secrets
 from typing import Optional
+from urllib.parse import urlencode
 
+import httpx
 from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 
 from auth_db import (
@@ -22,6 +27,14 @@ from auth_db import (
 )
 
 router = APIRouter(prefix="/api/auth", tags=["Auth"])
+
+# ─── OAuth configuration ────────────────────────────────────────────────────
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
+FACEBOOK_APP_ID = os.getenv("FACEBOOK_APP_ID", "")
+FACEBOOK_APP_SECRET = os.getenv("FACEBOOK_APP_SECRET", "")
+OAUTH_REDIRECT_BASE = os.getenv("OAUTH_REDIRECT_BASE", "https://alchromaticdemo.up.railway.app")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "")
 
 
 class AuthRegisterRequest(BaseModel):
@@ -145,3 +158,166 @@ async def auth_me(request: Request):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ─── OAuth helpers ───────────────────────────────────────────────────────────
+
+def _oauth_upsert_user(email: str, name: Optional[str] = None) -> dict:
+    """Find or create a user by email (for OAuth logins). Returns token + user."""
+    with get_db() as conn:
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute("SELECT * FROM auth_users WHERE email = %s", (email,))
+        user = cursor.fetchone()
+
+        if user:
+            token = generate_jwt_token(user["id"], user["email"])
+            return {
+                "access_token": token,
+                "refresh_token": token,
+                "user": {
+                    "id": user["id"],
+                    "email": user["email"],
+                    "name": user["name"],
+                    "organization_name": user["organization_name"],
+                    "workspace_id": user["workspace_id"],
+                },
+            }
+
+        user_id = str(uuid.uuid4())
+        workspace_id = str(uuid.uuid4())
+        pw_hash, _ = hash_password(secrets.token_hex(32))
+
+        cursor.execute(
+            """
+            INSERT INTO auth_users (id, email, password_hash, name, workspace_id)
+            VALUES (%s, %s, %s, %s, %s)
+            """,
+            (user_id, email, pw_hash, name, workspace_id),
+        )
+        conn.commit()
+
+        token = generate_jwt_token(user_id, email)
+        return {
+            "access_token": token,
+            "refresh_token": token,
+            "user": {
+                "id": user_id,
+                "email": email,
+                "name": name,
+                "organization_name": None,
+                "workspace_id": workspace_id,
+            },
+        }
+
+
+# ─── Google OAuth ────────────────────────────────────────────────────────────
+
+@router.get("/oauth/google")
+async def oauth_google_redirect():
+    """Redirect user to Google's OAuth consent screen."""
+    if not GOOGLE_CLIENT_ID:
+        raise HTTPException(status_code=500, detail="Google OAuth not configured")
+    params = {
+        "client_id": GOOGLE_CLIENT_ID,
+        "redirect_uri": f"{OAUTH_REDIRECT_BASE}/api/auth/oauth/google/callback",
+        "response_type": "code",
+        "scope": "openid email profile",
+        "access_type": "offline",
+        "prompt": "select_account",
+    }
+    return RedirectResponse(f"https://accounts.google.com/o/oauth2/v2/auth?{urlencode(params)}")
+
+
+@router.get("/oauth/google/callback")
+async def oauth_google_callback(code: str = "", error: str = ""):
+    """Handle the callback from Google after user consent."""
+    if error or not code:
+        return RedirectResponse(f"{FRONTEND_URL}/signin.html?error=oauth_cancelled")
+
+    async with httpx.AsyncClient() as client:
+        token_res = await client.post(
+            "https://oauth2.googleapis.com/token",
+            data={
+                "code": code,
+                "client_id": GOOGLE_CLIENT_ID,
+                "client_secret": GOOGLE_CLIENT_SECRET,
+                "redirect_uri": f"{OAUTH_REDIRECT_BASE}/api/auth/oauth/google/callback",
+                "grant_type": "authorization_code",
+            },
+        )
+        if token_res.status_code != 200:
+            return RedirectResponse(f"{FRONTEND_URL}/signin.html?error=oauth_failed")
+        tokens = token_res.json()
+
+        userinfo_res = await client.get(
+            "https://www.googleapis.com/oauth2/v2/userinfo",
+            headers={"Authorization": f"Bearer {tokens['access_token']}"},
+        )
+        if userinfo_res.status_code != 200:
+            return RedirectResponse(f"{FRONTEND_URL}/signin.html?error=oauth_failed")
+        userinfo = userinfo_res.json()
+
+    email = userinfo.get("email")
+    name = userinfo.get("name")
+    if not email:
+        return RedirectResponse(f"{FRONTEND_URL}/signin.html?error=no_email")
+
+    import json as _json
+    session = _oauth_upsert_user(email, name)
+    qs = urlencode({"token": session["access_token"], "user": _json.dumps(session["user"])})
+    return RedirectResponse(f"{FRONTEND_URL}/oauth-callback.html?{qs}")
+
+
+# ─── Facebook OAuth ──────────────────────────────────────────────────────────
+
+@router.get("/oauth/facebook")
+async def oauth_facebook_redirect():
+    """Redirect user to Facebook's OAuth consent screen."""
+    if not FACEBOOK_APP_ID:
+        raise HTTPException(status_code=500, detail="Facebook OAuth not configured")
+    params = {
+        "client_id": FACEBOOK_APP_ID,
+        "redirect_uri": f"{OAUTH_REDIRECT_BASE}/api/auth/oauth/facebook/callback",
+        "response_type": "code",
+        "scope": "email,public_profile",
+    }
+    return RedirectResponse(f"https://www.facebook.com/v19.0/dialog/oauth?{urlencode(params)}")
+
+
+@router.get("/oauth/facebook/callback")
+async def oauth_facebook_callback(code: str = "", error: str = ""):
+    """Handle the callback from Facebook after user consent."""
+    if error or not code:
+        return RedirectResponse(f"{FRONTEND_URL}/signin.html?error=oauth_cancelled")
+
+    async with httpx.AsyncClient() as client:
+        token_res = await client.get(
+            "https://graph.facebook.com/v19.0/oauth/access_token",
+            params={
+                "client_id": FACEBOOK_APP_ID,
+                "client_secret": FACEBOOK_APP_SECRET,
+                "redirect_uri": f"{OAUTH_REDIRECT_BASE}/api/auth/oauth/facebook/callback",
+                "code": code,
+            },
+        )
+        if token_res.status_code != 200:
+            return RedirectResponse(f"{FRONTEND_URL}/signin.html?error=oauth_failed")
+        tokens = token_res.json()
+
+        userinfo_res = await client.get(
+            "https://graph.facebook.com/me",
+            params={"fields": "id,name,email", "access_token": tokens["access_token"]},
+        )
+        if userinfo_res.status_code != 200:
+            return RedirectResponse(f"{FRONTEND_URL}/signin.html?error=oauth_failed")
+        userinfo = userinfo_res.json()
+
+    email = userinfo.get("email")
+    name = userinfo.get("name")
+    if not email:
+        return RedirectResponse(f"{FRONTEND_URL}/signin.html?error=no_email")
+
+    import json as _json
+    session = _oauth_upsert_user(email, name)
+    qs = urlencode({"token": session["access_token"], "user": _json.dumps(session["user"])})
+    return RedirectResponse(f"{FRONTEND_URL}/oauth-callback.html?{qs}")

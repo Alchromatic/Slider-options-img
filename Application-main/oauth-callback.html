@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+   <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Signing in... | GeoMagic</title>
+      <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon/favicon-32x32.png">
+      <link rel="stylesheet" href="assets/css/output.css">
+   </head>
+
+   <body class="bg-white dark:bg-neutral-7 min-h-screen flex items-center justify-center">
+      <div class="text-center">
+         <p id="status" class="text-neutral-6 dark:text-neutral-1 text-lg font-semibold">Signing you in...</p>
+         <p id="error" class="hidden text-red-500 text-sm mt-4 font-semibold"></p>
+      </div>
+
+      <script src="assets/js/auth.js"></script>
+      <script>
+         (function () {
+            const params = new URLSearchParams(window.location.search);
+            const token = params.get('token');
+            const userStr = params.get('user');
+            const error = params.get('error');
+
+            if (error) {
+               document.getElementById('status').classList.add('hidden');
+               const errEl = document.getElementById('error');
+               errEl.classList.remove('hidden');
+               const messages = {
+                  oauth_cancelled: 'Sign in was cancelled.',
+                  oauth_failed: 'OAuth authentication failed. Please try again.',
+                  no_email: 'Could not retrieve your email from the provider.',
+               };
+               errEl.textContent = messages[error] || 'Sign in failed.';
+               setTimeout(function () { window.location.href = 'signin.html'; }, 3000);
+               return;
+            }
+
+            if (token && userStr) {
+               try {
+                  const user = JSON.parse(userStr);
+                  Auth.saveSession({ access_token: token, user: user });
+                  window.location.href = 'pricing.html';
+               } catch (e) {
+                  document.getElementById('status').textContent = 'Something went wrong. Redirecting...';
+                  setTimeout(function () { window.location.href = 'signin.html'; }, 2000);
+               }
+            } else {
+               window.location.href = 'signin.html';
+            }
+         })();
+      </script>
+   </body>
+
+</html>
