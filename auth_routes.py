@@ -281,7 +281,7 @@ async def oauth_facebook_redirect():
         "response_type": "code",
         "scope": "email,public_profile",
     }
-    return RedirectResponse(f"https://www.facebook.com/v19.0/dialog/oauth?{urlencode(params)}")
+    return RedirectResponse(f"https://www.facebook.com/v22.0/dialog/oauth?{urlencode(params)}")
 
 
 @router.get("/oauth/facebook/callback")
@@ -292,7 +292,7 @@ async def oauth_facebook_callback(code: str = "", error: str = ""):
 
     async with httpx.AsyncClient() as client:
         token_res = await client.get(
-            "https://graph.facebook.com/v19.0/oauth/access_token",
+            "https://graph.facebook.com/v22.0/oauth/access_token",
             params={
                 "client_id": FACEBOOK_APP_ID,
                 "client_secret": FACEBOOK_APP_SECRET,
