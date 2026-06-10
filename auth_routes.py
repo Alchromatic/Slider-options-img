@@ -270,6 +270,20 @@ async def oauth_google_callback(code: str = "", error: str = ""):
 
 # ─── Facebook OAuth ──────────────────────────────────────────────────────────
 
+@router.get("/oauth/debug")
+async def oauth_debug():
+    """Debug: check which OAuth env vars are loaded."""
+    return {
+        "google_client_id_set": bool(GOOGLE_CLIENT_ID),
+        "google_client_id_preview": GOOGLE_CLIENT_ID[:10] + "..." if GOOGLE_CLIENT_ID else "",
+        "facebook_app_id_set": bool(FACEBOOK_APP_ID),
+        "facebook_app_id": FACEBOOK_APP_ID,
+        "facebook_secret_set": bool(FACEBOOK_APP_SECRET),
+        "oauth_redirect_base": OAUTH_REDIRECT_BASE,
+        "frontend_url": FRONTEND_URL,
+    }
+
+
 @router.get("/oauth/facebook")
 async def oauth_facebook_redirect():
     """Redirect user to Facebook's OAuth consent screen."""
