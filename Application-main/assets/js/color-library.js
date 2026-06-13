@@ -148,7 +148,7 @@
          color.addEventListener("input", () => { hex.value = color.value.toUpperCase(); ColorLibrary.update(i, name.value, color.value); });
          hex.addEventListener("input", () => { const h = normHex(hex.value); if (h) { color.value = h; ColorLibrary.update(i, name.value, h); } });
          name.addEventListener("input", () => ColorLibrary.update(i, name.value, hex.value));
-         row.querySelector('[data-role=del]').addEventListener("click", () => { ColorLibrary.remove(i); renderList(); });
+         row.querySelector('[data-role=del]').addEventListener("click", () => { ColorLibrary.remove(i); renderList(); afterLibraryMutation(); });
       });
    }
 
@@ -187,6 +187,19 @@
       if (lib.length === 0) { if (opt) opt.remove(); return; }
       if (!opt) { opt = document.createElement("option"); opt.value = "__mycolors__"; sel.appendChild(opt); }
       opt.textContent = `★ My Colors (${lib.length} colors)`;
+   }
+
+   // After a structural change to the library (e.g. removing a color), keep
+   // everything that mirrors it in sync: the dropdown count/option AND — if the
+   // unmixer is currently showing "★ My Colors" — its loaded palette grid, so a
+   // removed color disappears immediately instead of lingering until the next
+   // "Save & Use in Unmixer".
+   function afterLibraryMutation() {
+      refreshSelector();
+      const sel = document.getElementById("trycolorsPaletteSelect");
+      if (sel && sel.value === "__mycolors__" && typeof window.applyUnmixerPalette === "function") {
+         window.applyUnmixerPalette(ColorLibrary.asPalette(), "__mycolors__");
+      }
    }
 
    function saveAndUse() {

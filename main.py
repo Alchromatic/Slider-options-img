@@ -150,6 +150,13 @@ def _init_auth():
 from version_router import router as version_router
 app.include_router(version_router)
 
+# ==================== CUSTOM PALETTE UNMIX ====================
+# New endpoint: runs the M7.1-style unmixer over the user's own Color Library
+# colors (instead of the fixed measured 8-pigment palette). Self-contained;
+# adds POST /unmix/custom only. See custom_palette_unmix.py.
+from custom_palette_unmix import router as custom_unmix_router
+app.include_router(custom_unmix_router)
+
 class ShapeModel(BaseModel):
     type: int
     data: List[float]

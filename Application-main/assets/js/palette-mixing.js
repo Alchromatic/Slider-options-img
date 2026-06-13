@@ -1,5 +1,14 @@
-// Backend API base (prod by default; override with ?api=<url>)
-const API_BASE = (new URLSearchParams(location.search).get('api') || '').replace(/\/$/, '') || 'https://alchromaticdemo.up.railway.app';
+// Backend API base. Resolution order (matches entitlements.js / auth.js):
+//   1. ?api=<url> query override — point a separately-served frontend at a backend.
+//   2. Same-origin when served over http(s) — main.py mounts this frontend at "/",
+//      so opening http://localhost:8000/templates.html talks to localhost:8000.
+//      This is what makes the local /unmix/custom endpoint reachable instead of prod.
+//   3. Deployed default — only when opened from disk (file://) without an override.
+const API_BASE =
+   (new URLSearchParams(location.search).get('api') || '').replace(/\/$/, '') ||
+   (location.protocol === 'http:' || location.protocol === 'https:'
+      ? location.origin
+      : 'https://alchromaticdemo.up.railway.app');
 
 // Palette presets (filled from colors.json by loadPalettePresets()).
 let palettePresetsData = null;
@@ -694,8 +703,20 @@ trycolorsBtn.addEventListener('click', async () => {
     trycolorsResults.innerHTML = '<div class="trycolors-loading">Finding best recipe</div>';
     trycolorsBtn.disabled = true;
 
-    // Versioned models (M7.1 / M7) use the fixed measured palette via a different endpoint.
+    // Custom model: run the M7.1-style ranked unmixer over the user's OWN loaded
+    // palette (Color Library) via /unmix/custom. Must be checked before the
+    // versioned path below, which targets the fixed-palette /version/unmix.
     const selectedUnmixVersion = (document.getElementById('trycolorsModelSelect') || {}).value || 'km_baseline';
+    if (selectedUnmixVersion === 'custom') {
+        try {
+            await runCustomUnmix(targetColor);
+        } finally {
+            trycolorsBtn.disabled = false;
+        }
+        return;
+    }
+
+    // Versioned models (M7.1 / M7) use the fixed measured palette via a different endpoint.
     if (selectedUnmixVersion && selectedUnmixVersion !== 'km_baseline') {
         try {
             await runVersionedUnmix(targetColor, selectedUnmixVersion);
@@ -885,6 +906,7 @@ async function loadVersionRegistry() {
     } catch (e) {
         console.warn('Could not load /versions (using static options):', e.message);
     }
+    ensureCustomModelOption();  // idempotent; also covers the static-options fallback
     updateUnmixModelNote();
     updateForwardModelNote();
 }
@@ -907,6 +929,26 @@ function applyVersionRegistry() {
     };
     fill('trycolorsModelSelect', _versionRegistry.unmix || []);
     fill('fwdModelSelect', _versionRegistry.forward || []);
+    // The registry (from /versions) doesn't include the client-only "custom"
+    // model, and fill() wipes the <select>, so re-add it afterwards.
+    ensureCustomModelOption();
+}
+
+// The "Custom (My Colors)" unmix model is handled entirely on the client: it
+// runs the M7.1-style unmixer over the palette loaded above (your Color Library)
+// via POST /unmix/custom, instead of the fixed measured 8-pigment palette. Make
+// sure the option exists even after the registry repopulates the dropdown.
+function ensureCustomModelOption() {
+    const sel = document.getElementById('trycolorsModelSelect');
+    if (!sel) return;
+    if ([...sel.options].some(o => o.value === 'custom')) return;
+    const opt = document.createElement('option');
+    opt.value = 'custom';
+    opt.textContent = 'Custom (My Colors)';
+    // Place it right after km_baseline if present, else append.
+    const km = [...sel.options].find(o => o.value === 'km_baseline');
+    if (km && km.nextSibling) sel.insertBefore(opt, km.nextSibling);
+    else sel.appendChild(opt);
 }
 
 function _versionMeta(mode, id) {
@@ -918,6 +960,11 @@ function updateUnmixModelNote() {
     const sel = document.getElementById('trycolorsModelSelect');
     const note = document.getElementById('trycolorsModelNote');
     if (!sel || !note) return;
+    if (sel.value === 'custom') {
+        note.textContent = 'Runs the M7.1-style ranked unmixer over the palette loaded above '
+            + '(load ★ My Colors to use your saved Color Library). Works with any colors you add.';
+        return;
+    }
     const v = _versionMeta('unmix', sel.value);
     let txt = v ? (v.note || v.reason || '') : '';
     if (sel.value && sel.value !== 'km_baseline') {
@@ -1061,6 +1108,54 @@ async function runVersionedUnmix(targetColor, version) {
         renderVersionedUnmix(data);
     } catch (error) {
         console.error('Versioned unmix error:', error);
+        trycolorsResults.innerHTML = `
+            <div style="color:#f44336; text-align:center; padding:20px;">
+                ⚠️ API Error: ${error.message}<br>
+                <small>Make sure the backend is running at ${API_BASE}</small>
+            </div>`;
+    }
+}
+
+// "Custom (My Colors)" model — runs the M7.1-style ranked unmixer over the
+// user's OWN loaded palette (Color Library) via /unmix/custom, and renders the
+// result through the same ranked-proposals UI as the measured models.
+async function runCustomUnmix(targetColor) {
+    // Use the palette currently loaded in the unmixer grid, minus excluded
+    // colors. Fall back to the saved Color Library if nothing is loaded.
+    let palette = (defaultPaletteData || [])
+        .filter(c => !silencedColors.has(c.hex))
+        .map(c => ({ hex: c.hex, name: c.name || null }));
+    if (palette.length === 0 && window.ColorLibrary && window.ColorLibrary.size() > 0) {
+        palette = window.ColorLibrary.asPalette().map(c => ({ hex: c.hex, name: c.name || null }));
+    }
+    if (palette.length === 0) {
+        trycolorsResults.innerHTML = `<div style="background:#fff3cd; border:1px solid #ffc107; color:#856404; padding:14px; border-radius:6px; font-size:12px;">
+            <strong>No palette loaded.</strong><br>Load <strong>★ My Colors</strong> (or any palette) above, then try again.</div>`;
+        return;
+    }
+    try {
+        const maxColors = parseInt(document.getElementById('trycolorsMaxColors').value) || 4;
+        const maxParts = parseInt(document.getElementById('trycolorsMaxParts').value) || 6;
+        const prefilterTopN = parseInt(document.getElementById('prefilterTopNInput').value);
+        const topK = parseInt(document.getElementById('topKInput').value) || 5;
+        const response = await fetch(`${API_BASE}/unmix/custom`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                target_color: targetColor,
+                palette: palette,
+                max_colors: Math.min(5, Math.max(1, maxColors)),
+                total_parts: Math.max(2, Math.min(12, maxParts)),
+                prefilter_top_n: isNaN(prefilterTopN) ? 12 : prefilterTopN,
+                top_n: topK,
+                mix_method: 'kubelka_munk',
+            })
+        });
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        const data = await response.json();
+        renderVersionedUnmix(data);
+    } catch (error) {
+        console.error('Custom unmix error:', error);
         trycolorsResults.innerHTML = `
             <div style="color:#f44336; text-align:center; padding:20px;">
                 ⚠️ API Error: ${error.message}<br>
