@@ -156,6 +156,10 @@
    // =========================================================================
    function allowedPaletteName(name, brandKeys, mode) {
       if (mode === 'all') return true;
+      // The user's OWN colors are never gated — "★ My Colors" and any palette
+      // they saved to their account (see color-library.js) are personal, not
+      // premium brand presets. Without this, plan gating strips them out.
+      if (name === '__mycolors__' || (typeof name === 'string' && name.indexOf('__srvpal__:') === 0)) return true;
       if (name === 'default' || name === BASIC_PALETTE) return true; // basic always allowed
       if (mode === 'single') return brandKeys.length && name === brandKeys[0];
       return false; // basic

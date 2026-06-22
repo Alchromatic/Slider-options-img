@@ -561,6 +561,11 @@ function populateTrycolorsPaletteSelector() {
         opt.textContent = `★ My Colors (${window.ColorLibrary.size()} colors)`;
         select.appendChild(opt);
     }
+
+    // Also list the user's other saved palettes from their account (DB).
+    if (window.ColorLibrary && typeof window.ColorLibrary.appendServerOptions === 'function') {
+        window.ColorLibrary.appendServerOptions(select);
+    }
 }
 
 // Push an arbitrary [{hex, name}] palette into the Trycolors unmixer. Used by the
@@ -589,6 +594,15 @@ function loadTrycolorsPalette(paletteName) {
     if (paletteName === '__mycolors__' && window.ColorLibrary) {
         window.applyUnmixerPalette(window.ColorLibrary.asPalette(), '__mycolors__');
         return;
+    }
+
+    // A server-saved palette chosen from the dropdown (see color-library.js).
+    if (paletteName && paletteName.indexOf('__srvpal__:') === 0 && window.ColorLibrary) {
+        const sp = window.ColorLibrary.getServerPalette(paletteName.split(':')[1]);
+        if (sp) {
+            window.applyUnmixerPalette((sp.colors || []).map(c => ({ hex: c.hex, name: c.name || null })), '__srvpal__');
+            return;
+        }
     }
 
     if (!palettePresetsData || !palettePresetsData[paletteName]) {
@@ -1154,6 +1168,22 @@ async function runCustomUnmix(targetColor) {
         if (!response.ok) throw new Error(`API error: ${response.status}`);
         const data = await response.json();
         renderVersionedUnmix(data);
+        // Surface which mixing path ran so the measured profile is visible in the UI.
+        try {
+            const prof = data.measured_profile;
+            let badge;
+            if (data.palette_mode === 'custom_measured_profile' && prof) {
+                const cov = data.candidate_mix_sources || {};
+                badge = `<div style="background:#e6f4ea; border:1px solid #34a853; color:#1e6b32; padding:8px 12px; border-radius:6px; font-size:12px; margin-bottom:10px;">
+                    <strong>Measured palette profile in use.</strong> TryColors ${prof.mixer_mode}/${prof.engine}, v${prof.profile_version}
+                    (${prof.present_count}/${prof.expected_count} comparisons${prof.complete ? ', complete' : ''}).
+                    ${cov.measured_profile || 0} candidates measured, ${cov.physical_km || 0} KM fallback.</div>`;
+            } else {
+                badge = `<div style="background:#f1f3f4; border:1px solid #bdc1c6; color:#5f6368; padding:8px 12px; border-radius:6px; font-size:12px; margin-bottom:10px;">
+                    <strong>Physical KM model.</strong> No measured profile for this palette, so ranking uses the physical mixing model.</div>`;
+            }
+            trycolorsResults.insertAdjacentHTML('afterbegin', badge);
+        } catch (e) { /* badge is best-effort */ }
     } catch (error) {
         console.error('Custom unmix error:', error);
         trycolorsResults.innerHTML = `

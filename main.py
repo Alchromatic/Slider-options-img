@@ -125,6 +125,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# Always revalidate JS/CSS so frontend changes are picked up without a manual
+# hard-refresh (browsers were caching old palette-mixing.js / color-library.js).
+@app.middleware("http")
+async def _revalidate_static_assets(request, call_next):
+    response = await call_next(request)
+    path = request.url.path
+    if path.endswith((".js", ".css")):
+        response.headers["Cache-Control"] = "no-cache"
+    return response
+
+
 app.mount("/GIFs", StaticFiles(directory="GIFs"), name="GIFs")
 
 from m4_balanced_router import router as m4_router
@@ -141,11 +153,16 @@ app.include_router(auth_router)
 from billing import router as billing_router, init_billing_tables
 app.include_router(billing_router)
 
+# ==================== USER PALETTES (saved per-user in Supabase) ====================
+from palettes_routes import router as palettes_router, init_palettes_tables
+app.include_router(palettes_router)
+
 
 @app.on_event("startup")
 def _init_auth():
     init_auth_tables()
     init_billing_tables()
+    init_palettes_tables()
 
 from version_router import router as version_router
 app.include_router(version_router)
@@ -156,6 +173,11 @@ app.include_router(version_router)
 # adds POST /unmix/custom only. See custom_palette_unmix.py.
 from custom_palette_unmix import router as custom_unmix_router
 app.include_router(custom_unmix_router)
+
+# Admin-only measured-palette-profile generation/inspection (offline path, R5).
+# Gated by ADMIN_TOKEN; the TryColors key stays server-side (R8).
+from profile_admin_routes import router as profile_admin_router
+app.include_router(profile_admin_router)
 
 class ShapeModel(BaseModel):
     type: int

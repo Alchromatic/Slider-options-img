@@ -20,6 +20,64 @@
    let lib = load();
    function persist() { try { localStorage.setItem(KEY, JSON.stringify(lib)); } catch (_) {} }
 
+   // ---- server sync: per-user palettes saved in the DB (/api/palettes) ----
+   // Lets a signed-in user's colors follow them across devices instead of
+   // living only in this browser's localStorage. Best-effort: if logged out or
+   // offline, everything still works locally.
+   const MY = "My Colors";
+   let serverPalettes = [];               // [{id, name, colors:[{hex,name}]}]
+   function apiBase() {
+      try {
+         const q = (new URLSearchParams(location.search).get("api") || "").replace(/\/$/, "");
+         if (q) return q;
+      } catch (_) {}
+      return (location.protocol.indexOf("http") === 0) ? location.origin : "";
+   }
+   function authToken() { try { return localStorage.getItem("gm_access_token"); } catch (_) { return null; } }
+   function authHeaders() {
+      const h = { "Content-Type": "application/json" };
+      const t = authToken();
+      if (t) h["Authorization"] = "Bearer " + t;
+      return h;
+   }
+   async function serverSave(name, colors) {
+      if (!authToken()) return null;
+      try {
+         const r = await fetch(apiBase() + "/api/palettes", {
+            method: "POST", headers: authHeaders(),
+            body: JSON.stringify({ name: name, colors: colors }),
+         });
+         return r.ok ? await r.json() : null;
+      } catch (_) { return null; }
+   }
+   function rememberServer(saved) {
+      if (!saved) return;
+      serverPalettes = serverPalettes.filter((p) => p.name !== saved.name);
+      serverPalettes.unshift(saved);
+   }
+   function syncMyColors() { serverSave(MY, lib).then(rememberServer); }
+   async function serverLoad() {
+      if (!authToken()) return;
+      try {
+         const r = await fetch(apiBase() + "/api/palettes", { headers: authHeaders() });
+         if (!r.ok) return;
+         const data = await r.json();
+         serverPalettes = Array.isArray(data.palettes) ? data.palettes : [];
+         const mine = serverPalettes.find((p) => p.name === MY);
+         if (mine && Array.isArray(mine.colors) && mine.colors.length) {
+            lib = mine.colors.filter((c) => c && c.hex).map((c) => ({ name: c.name || "", hex: c.hex }));
+            persist();
+         } else if (lib.length) {
+            rememberServer(await serverSave(MY, lib));   // first-time migration up
+         }
+      } catch (_) {}
+      refreshSelector();
+      const sel = document.getElementById("trycolorsPaletteSelect");
+      if (sel && sel.value === "__mycolors__" && typeof window.applyUnmixerPalette === "function") {
+         window.applyUnmixerPalette(ColorLibrary.asPalette(), "__mycolors__");
+      }
+   }
+
    function normHex(h) {
       if (!h) return null;
       h = String(h).trim();
@@ -41,6 +99,22 @@
       add(name, hex) { const H = normHex(hex); if (!H) return false; lib.push({ name: (name || "").trim() || H, hex: H }); persist(); return true; },
       update(i, name, hex) { if (!lib[i]) return; const H = normHex(hex); lib[i] = { name: (name || "").trim() || lib[i].name, hex: H || lib[i].hex }; persist(); },
       remove(i) { if (lib[i]) { lib.splice(i, 1); persist(); } },
+      // server-saved palettes (DB) for the unmixer dropdown
+      serverPalettes: () => serverPalettes.slice(),
+      getServerPalette: (id) => serverPalettes.find((p) => String(p.id) === String(id)) || null,
+      appendServerOptions(select) {
+         if (!select) return;
+         serverPalettes.forEach((p) => {
+            if (p.name === MY) return;   // "My Colors" is already shown via the editable library
+            const v = "__srvpal__:" + p.id;
+            if (Array.from(select.options).some((o) => o.value === v)) return;
+            const o = document.createElement("option");
+            o.value = v;
+            o.textContent = "★ " + p.name + " (" + ((p.colors || []).length) + " colors)";
+            select.appendChild(o);
+         });
+      },
+      reloadFromServer: () => serverLoad(),
    };
 
    // ---- one-time CSS (scoped, theme-aware) ----
@@ -79,6 +153,9 @@
       .dark .cl-addrow .cl-name, .dark .cl-addrow .cl-hex { background:#16181a; border-color:#33383f; color:#e9eef2; }
       .cl-addrow .cl-name { flex:1 1 auto; min-width:0; font-weight:600; }
       .cl-addrow .cl-hex { width:96px; text-align:center; font-family:monospace; }
+      .cl-saverow { display:flex; align-items:center; gap:10px; margin-top:10px; }
+      .cl-saverow input { flex:1 1 auto; min-width:0; height:38px; border-radius:8px; border:1px solid #e0e0e0; background:#fff; color:#1a1a1a; padding:0 10px; font-size:14px; font-weight:600; }
+      .dark .cl-saverow input, html[data-theme=dark] .cl-saverow input { background:#16181a; border-color:#33383f; color:#e9eef2; }
       .cl-empty { text-align:center; color:#8a8f94; font-size:13px; padding:18px 0; }
       #colorLibraryBtn { margin-left:8px; }
       `;
@@ -95,7 +172,7 @@
       modal.innerHTML = `
          <div class="cl-modal-card">
             <h3 class="cl-title">Color Library</h3>
-            <div class="cl-info">Add and name colors with their RGB. Saved on this device and selectable as <strong>★ My Colors</strong> in the unmixer palette.</div>
+            <div class="cl-info">Add colors with their RGB, give the palette a name, and click <strong>Save palette</strong> &mdash; it appears in the unmixer's palette dropdown and is saved to your account. Or use <strong>Save &amp; Use as My Colors</strong> for your quick everyday set.</div>
             <div id="colorLibraryList" class="cl-list"></div>
             <div class="cl-addrow">
                <input type="color" id="clNewColor" value="#cc4444" title="Pick color">
@@ -103,11 +180,15 @@
                <input type="text" class="cl-hex" id="clNewHex" placeholder="#CC4444" maxlength="7">
                <button id="clAddBtn" type="button" class="cl-btn cl-btn-primary">Add</button>
             </div>
+            <div class="cl-saverow">
+               <input type="text" id="clPaletteName" placeholder="Name this palette (e.g. Studio Set)" maxlength="80">
+               <button id="clSaveAsBtn" type="button" class="cl-btn cl-btn-primary">Save palette</button>
+            </div>
             <div class="cl-actions">
                <button id="clImportBtn" type="button" class="cl-btn">Import current palette</button>
                <span style="flex:1 1 auto;"></span>
                <button id="clCloseBtn" type="button" class="cl-btn">Close</button>
-               <button id="clSaveUseBtn" type="button" class="cl-btn cl-btn-primary">Save &amp; Use in Unmixer</button>
+               <button id="clSaveUseBtn" type="button" class="cl-btn">Save &amp; Use as My Colors</button>
             </div>
          </div>`;
       document.body.appendChild(modal);
@@ -117,6 +198,7 @@
       modal.querySelector("#clCloseBtn").addEventListener("click", close);
       modal.querySelector("#clSaveUseBtn").addEventListener("click", saveAndUse);
       modal.querySelector("#clImportBtn").addEventListener("click", importCurrent);
+      modal.querySelector("#clSaveAsBtn").addEventListener("click", saveAsNew);
       modal.querySelector("#clAddBtn").addEventListener("click", addFromInputs);
 
       // keep the color picker and hex field in sync in the add row
@@ -125,6 +207,7 @@
       nh.addEventListener("input", () => { const h = normHex(nh.value); if (h) nc.value = h; });
       nh.addEventListener("keydown", (e) => { if (e.key === "Enter") addFromInputs(); });
       modal.querySelector("#clNewName").addEventListener("keydown", (e) => { if (e.key === "Enter") addFromInputs(); });
+      modal.querySelector("#clPaletteName").addEventListener("keydown", (e) => { if (e.key === "Enter") saveAsNew(); });
    }
 
    function rgbLabel(hex) { const r = hexToRgb(hex); return r ? `rgb(${r[0]}, ${r[1]}, ${r[2]})` : ""; }
@@ -177,6 +260,10 @@
          window.populateTrycolorsPaletteSelector();
       }
       ensureOption();
+      // Ensure the user's saved palettes are listed even if the preset list
+      // hasn't loaded yet (populate bails early without palettePresetsData).
+      const sel = document.getElementById("trycolorsPaletteSelect");
+      if (sel) ColorLibrary.appendServerOptions(sel);
    }
    // Make sure the "★ My Colors" option exists/updates even if the preset list
    // hasn't loaded yet (populate bails early without palettePresetsData).
@@ -195,6 +282,7 @@
    // removed color disappears immediately instead of lingering until the next
    // "Save & Use in Unmixer".
    function afterLibraryMutation() {
+      syncMyColors();          // keep the DB copy in sync after add/remove
       refreshSelector();
       const sel = document.getElementById("trycolorsPaletteSelect");
       if (sel && sel.value === "__mycolors__" && typeof window.applyUnmixerPalette === "function") {
@@ -202,8 +290,32 @@
       }
    }
 
+   async function saveAsNew() {
+      if (!authToken()) { alert("Sign in to save palettes to your account."); return; }
+      if (!lib.length) { alert("Add some colors first."); return; }
+      const input = modal && modal.querySelector("#clPaletteName");
+      const name = (input ? input.value : "").trim();
+      if (!name) { alert("Type a name for the palette first."); if (input) input.focus(); return; }
+      const saved = await serverSave(name, lib);
+      if (!saved) { alert("Could not save the palette. Please try again."); return; }
+      rememberServer(saved);
+      refreshSelector();
+      // Select + load the saved palette in the unmixer so it's usable right away.
+      const sel = document.getElementById("trycolorsPaletteSelect");
+      if (sel) {
+         sel.value = "__srvpal__:" + saved.id;
+         if (typeof window.applyUnmixerPalette === "function") {
+            window.applyUnmixerPalette((saved.colors || []).map((c) => ({ hex: c.hex, name: c.name || null })), "__srvpal__");
+         }
+      }
+      if (input) input.value = "";
+      alert('Saved "' + name + '". It now appears in the palette dropdown.');
+      close();
+   }
+
    function saveAndUse() {
       persist();
+      syncMyColors();          // remember this palette for the user in the DB
       refreshSelector();
       const sel = document.getElementById("trycolorsPaletteSelect");
       if (lib.length && typeof window.applyUnmixerPalette === "function") {
@@ -224,9 +336,9 @@
       if (btn && !btn.dataset.wired) { btn.dataset.wired = "1"; btn.addEventListener("click", open); }
    }
    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", () => { wireButton(); refreshSelector(); });
+      document.addEventListener("DOMContentLoaded", () => { wireButton(); refreshSelector(); serverLoad(); });
    } else {
-      wireButton(); refreshSelector();
+      wireButton(); refreshSelector(); serverLoad();
    }
 
    window.ColorLibrary.open = open; // allow programmatic open

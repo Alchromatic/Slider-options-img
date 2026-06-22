@@ -12,6 +12,10 @@ node_modules/
 # Environment
 .env
 .env.*
+!.env.example
+
+# Measured palette profiles (may embed generated data; regenerate via profile_generator.py)
+profiles/
 
 # OS
 .DS_Store

@@ -143,6 +143,12 @@ VERSION_REGISTRY: List[Dict[str, Any]] = [
     {"id": "m7_1", "mode": "unmix", "label": "M7.1 measured pairwise (current)",
      "status": "current closure candidate", "available": True,
      "note": "Measured-pairwise unmix over the fixed 8-pigment palette, incl. observed n-ary anchors."},
+    {"id": "m7_2", "mode": "unmix", "label": "M7.2 measured profile (custom palette)",
+     "status": "current closure candidate", "available": True, "endpoint": "/unmix/custom",
+     "note": "Same M7.1 algorithm over your own Color Library, driven by a measured palette "
+             "profile (TryColors pro/2025) generated offline; falls back to the KM physical "
+             "model for any recipe the profile does not cover. Served by POST /unmix/custom "
+             "(pass palette_id); profiles are built by profile_generator.py / the admin endpoint."},
 ]
 
 

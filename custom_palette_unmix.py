@@ -48,6 +48,8 @@ from typing import Dict, List, Optional, Tuple
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
+import measured_profile as mp
+
 router = APIRouter(tags=["13. Custom palette unmix"])
 
 
@@ -182,6 +184,24 @@ def _tier_and_penalty(n_colors: int, de: float) -> Tuple[str, float]:
 # Candidate generation + scoring (the M7.1 unmix loop, over the user palette).
 # ---------------------------------------------------------------------------
 
+def _load_profile_model(palette_id: Optional[str], colors: List[Tuple[str, str]]):
+    """Load a measured palette profile (if one exists) for this palette.
+
+    Returns (model, profile) or (None, None).  The lookup uses an explicit
+    ``palette_id`` when given, otherwise the deterministic id derived from this
+    color set -- so a palette the admin already measured is auto-upgraded to
+    measured behavior, while an unmeasured palette stays on the KM model (R7).
+    """
+    try:
+        pid = palette_id or mp.palette_id_for([{"hex": h} for _, h in colors])
+        profile = mp.load_profile(pid)
+        if not profile or not profile.get("comparisons"):
+            return None, None
+        return mp.MeasuredProfileModel(profile), profile
+    except Exception:
+        return None, None
+
+
 def unmix_custom_palette(
     target_color: str,
     palette: List[Dict[str, Optional[str]]],
@@ -190,6 +210,7 @@ def unmix_custom_palette(
     prefilter_top_n: int = 12,
     top_n: int = 5,
     mix_method: str = "kubelka_munk",
+    palette_id: Optional[str] = None,
 ) -> Dict:
     """
     Propose recipes for ``target_color`` using only the user-supplied ``palette``.
@@ -197,6 +218,12 @@ def unmix_custom_palette(
     palette: list of {"hex": "#RRGGBB", "name": "optional name"}.
     Returns a dict shaped like version_dispatch.unmix() so the existing
     versioned-unmix UI can render it unchanged.
+
+    If a measured palette profile exists for this palette (generated offline via
+    profile_generator.py / TryColors pro/2025), each candidate it covers is
+    predicted from that measured mixing behavior (the M7.1/M7.2 algorithm); any
+    candidate it does not cover falls back to the physical Kubelka-Munk model
+    (R7).  With no profile present, behavior is exactly the KM model as before.
     """
     m71 = _m71()
     method = (mix_method or "kubelka_munk").lower().strip()
@@ -230,6 +257,9 @@ def unmix_custom_palette(
                 "target_color": target_hex, "proposals": [],
                 "error": "No valid palette colors provided."}
 
+    # --- load a measured palette profile if one exists for this palette (R7) ---
+    profile_model, profile = _load_profile_model(palette_id, colors)
+
     # --- clamp controls (bound the combinatorial search) ---
     max_colors = max(1, min(5, int(max_colors)))
     total_parts = max(2, min(12, int(total_parts)))
@@ -247,6 +277,8 @@ def unmix_custom_palette(
     max_colors = min(max_colors, len(pool))
 
     # --- generate candidate recipes (combinations x part-compositions) ---
+    n_measured = 0
+    n_physical = 0
     scored: List[Dict] = []
     for k in range(1, max_colors + 1):
         for combo in itertools.combinations(range(len(pool)), k):
@@ -255,9 +287,29 @@ def unmix_custom_palette(
                 names = [pool[idx][0] for idx in combo]
                 hexes = [pool[idx][1] for idx in combo]
                 weights = m71.normalize(parts)
-                pred_hex = _mix_hex(hexes, list(parts), method=method)
+
+                # Measured profile where it covers this recipe, else KM (R7).
+                ids = None
+                if profile_model is not None:
+                    mapped = [profile_model.hex_to_id.get(h) for h in hexes]
+                    if all(i is not None for i in mapped):
+                        ids = mapped
+                anchor_name = ""
+                if ids is not None and profile_model.covers(ids, list(parts)):
+                    pred_hex, meta = profile_model.predict_recipe(ids, list(parts))
+                    tier = meta.get("confidence_tier", "measured")
+                    penalty = mp.risk_penalty(tier)
+                    anchor_name = meta.get("anchor_trycolors_name", "") or ""
+                    mix_source = "measured_profile"
+                    n_measured += 1
+                else:
+                    pred_hex = _mix_hex(hexes, list(parts), method=method)
+                    de_tmp = m71.de00_hex(pred_hex, target_hex)
+                    tier, penalty = _tier_and_penalty(k, de_tmp)
+                    mix_source = "physical_km"
+                    n_physical += 1
+
                 de = m71.de00_hex(pred_hex, target_hex)
-                tier, penalty = _tier_and_penalty(k, de)
                 scored.append({
                     "pigment_names": names,
                     "pigment_abbr": names,            # no abbreviations for user colors
@@ -270,7 +322,8 @@ def unmix_custom_palette(
                     "score_with_risk_penalty": round(de + penalty, 3),
                     "risk_penalty": round(penalty, 2),
                     "confidence_tier": tier,
-                    "anchor_trycolors_name": "",
+                    "mix_source": mix_source,
+                    "anchor_trycolors_name": anchor_name,
                     "_sort": de + penalty,
                 })
 
@@ -280,6 +333,35 @@ def unmix_custom_palette(
         row.pop("_sort", None)
         row["rank"] = rank
         proposals.append(row)
+
+    if profile is not None:
+        comp = profile.get("completeness", {})
+        note = ("Unmix over your loaded Color Library using the M7.1/M7.2 algorithm "
+                "and CIEDE2000 calcs. Candidates covered by your measured palette "
+                f"profile (TryColors {profile.get('mixer_mode', 'pro')}/"
+                f"{profile.get('engine', '2025')}) use that measured mixing behavior; "
+                f"the rest fall back to a physical ({method}) mix model.")
+        return {
+            "version": "custom",
+            "mode": "unmix",
+            "available": True,
+            "target_color": target_hex,
+            "palette_mode": "custom_measured_profile",
+            "mix_method": method,
+            "measured_profile": {
+                "palette_id": profile.get("palette_id"),
+                "profile_version": profile.get("profile_version"),
+                "engine": profile.get("engine"),
+                "mixer_mode": profile.get("mixer_mode"),
+                "present_count": comp.get("present_count"),
+                "expected_count": comp.get("expected_count"),
+                "complete": comp.get("complete"),
+            },
+            "candidate_mix_sources": {"measured_profile": n_measured, "physical_km": n_physical},
+            "palette": [{"name": n, "hex": h} for n, h in colors],
+            "note": note,
+            "proposals": proposals,
+        }
 
     return {
         "version": "custom",
@@ -314,7 +396,10 @@ class CustomUnmixRequest(BaseModel):
     total_parts: int = Field(6, ge=2, le=12, description="Total parts to split across colors (ratio precision).")
     prefilter_top_n: int = Field(12, ge=0, le=60, description="Pre-filter palette to the N closest colors (0 = use all).")
     top_n: int = Field(5, ge=1, le=50, description="Number of ranked proposals to return.")
-    mix_method: str = Field("kubelka_munk", description="kubelka_munk | yn_km | linear")
+    mix_method: str = Field("kubelka_munk", description="kubelka_munk | yn_km | linear (KM fallback when no measured profile).")
+    palette_id: Optional[str] = Field(
+        None, description="Optional palette id of a pre-generated measured profile. "
+                          "If omitted, a profile is looked up by this exact color set.")
 
 
 @router.post("/unmix/custom", tags=["13. Custom palette unmix"])
@@ -360,6 +445,7 @@ def unmix_custom(req: CustomUnmixRequest):
             prefilter_top_n=req.prefilter_top_n,
             top_n=req.top_n,
             mix_method=req.mix_method,
+            palette_id=req.palette_id,
         )
     except Exception as e:  # pragma: no cover - defensive
         return {"version": "custom", "mode": "unmix", "available": True,
