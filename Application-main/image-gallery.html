@@ -24,6 +24,9 @@
       @media (min-width: 1024px) { .masonry { column-count: 3; } }
       @media (min-width: 1440px) { .masonry { column-count: 4; } }
       .masonry > * { break-inside: avoid; margin-bottom: 16px; }
+      /* Reserve space before the image loads so lazy-loading triggers reliably
+         and tiles don't collapse to 0 height. */
+      .tile { min-height: 160px; }
       .tile img { transition: transform .35s ease; }
       .tile:hover img { transform: scale(1.04); }
       .tile-cap { background: linear-gradient(to top, rgba(0,0,0,.82) 0%, rgba(0,0,0,.45) 45%, rgba(0,0,0,0) 100%); }

@@ -141,6 +141,9 @@ def download_image(
 # ===========================================================================
 
 PROXY_CACHE_DIR = os.path.join(IMAGE_LIBRARY_DIR, "_cache")
+# Gallery grid thumbnails, baked as committed static files so they ship with the
+# deploy and load instantly (no runtime fetch). Served at /assets/library/<id>.jpg.
+BAKED_THUMB_DIR = os.path.join(_APP_DIR, "Application-main", "assets", "library")
 _THUMB_MAX = 420       # px — grid thumbnails
 _FULL_MAX = 1600       # px — lightbox / detail view
 _proxy_client_singleton: Optional[httpx.Client] = None
@@ -201,6 +204,16 @@ def render_cached_image(
     except Exception as e:
         print(f"[imglib] proxy render failed: {e}")
         return None
+
+
+def bake_thumbnail(artwork_id: int, candidate_urls: List[str], local_abs: Optional[str] = None) -> bool:
+    """Generate the static gallery thumbnail
+    ``Application-main/assets/library/<id>.jpg`` for an artwork (used by the
+    ingestion worker so new images show instantly in the gallery). Returns True
+    on success."""
+    os.makedirs(BAKED_THUMB_DIR, exist_ok=True)
+    path = os.path.join(BAKED_THUMB_DIR, f"{artwork_id}.jpg")
+    return render_cached_image(path, [u for u in candidate_urls if u], "thumb", local_abs) is not None
 
 
 # ===========================================================================
@@ -531,9 +544,11 @@ SOURCE_LABELS = {
 __all__ = [
     "IMAGE_LIBRARY_DIR",
     "PROXY_CACHE_DIR",
+    "BAKED_THUMB_DIR",
     "ADAPTERS",
     "SOURCE_LABELS",
     "download_image",
     "render_cached_image",
+    "bake_thumbnail",
     "make_client",
 ]

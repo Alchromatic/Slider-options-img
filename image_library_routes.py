@@ -39,7 +39,7 @@ from pydantic import BaseModel, Field
 import image_library_db as db
 from image_sources import (
     ADAPTERS, IMAGE_LIBRARY_DIR, PROXY_CACHE_DIR, SOURCE_LABELS,
-    download_image, make_client, render_cached_image,
+    bake_thumbnail, render_cached_image,
 )
 
 router = APIRouter(prefix="/api/library", tags=["15. Reference image library"])
@@ -70,7 +70,6 @@ def _require_admin(token: Optional[str]) -> None:
 def _run_job(job_id: int, source: str, params: dict, limit: int) -> None:
     cancel = _CANCEL.setdefault(job_id, threading.Event())
     adapter = ADAPTERS[source]
-    client = make_client()
     saved = skipped = failed = fetched = 0
 
     def status(msg: str) -> None:
@@ -85,27 +84,31 @@ def _run_job(job_id: int, source: str, params: dict, limit: int) -> None:
             if saved >= limit:
                 break
             fetched += 1
-            # Skip the (slow) download entirely for items we already have.
+            # Skip items we already have.
             if db.artwork_exists(source, meta["source_id"]):
                 skipped += 1
                 continue
-            dl = download_image(client, meta.get("image_url"), source, meta["source_id"])
-            if not dl:
-                failed += 1
-            else:
-                meta.update(dl)
-                if db.insert_artwork(meta):
-                    saved += 1
-                else:
-                    skipped += 1
+            # Store metadata first (no slow full-res download — the proxy serves
+            # full size on demand), then bake the static gallery thumbnail so the
+            # new image shows instantly in the gallery grid.
+            meta["local_path"] = None
+            art_id = db.insert_artwork(meta)
+            if not art_id:
+                skipped += 1
+                continue
+            saved += 1
+            baked = bake_thumbnail(art_id, [meta.get("thumb_url"), meta.get("image_url")])
+            if not baked:
+                failed += 1  # metadata saved, but no thumbnail (gallery proxy will retry)
             if fetched % 3 == 0 or saved >= limit:
                 db.update_job(
                     job_id, fetched=fetched, saved=saved, skipped=skipped, failed=failed,
-                    message=f"Downloaded {saved}/{limit}…",
+                    message=f"Imported {saved}/{limit}…",
                 )
         db.update_job(
             job_id, status="done", fetched=fetched, saved=saved, skipped=skipped,
-            failed=failed, message=f"Done. {saved} new, {skipped} duplicates, {failed} failed.",
+            failed=failed,
+            message=f"Done. {saved} imported, {skipped} duplicates, {failed} without thumbnail.",
         )
     except Exception as e:  # noqa: BLE001
         db.update_job(
@@ -113,7 +116,6 @@ def _run_job(job_id: int, source: str, params: dict, limit: int) -> None:
             failed=failed, message=f"Error: {e}",
         )
     finally:
-        client.close()
         _CANCEL.pop(job_id, None)
 
 

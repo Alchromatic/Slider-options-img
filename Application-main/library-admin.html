@@ -111,10 +111,16 @@
             </div>
 
             <p class="text-[11px] text-neutral-600 mt-4 leading-relaxed">
-               NGA pulls from the official CC0 dataset (first run downloads the
-               dataset, then it's cached). Artvee &amp; PublicDomainPictures are
-               scraped and may be rate-limited or blocked by their anti-bot
-               protection.
+               Each import saves the artwork's metadata and bakes a gallery
+               thumbnail (full size is fetched on demand) so new images appear
+               instantly in the gallery. NGA pulls from the official CC0 dataset
+               (first run downloads it, then it's cached); Artvee &amp;
+               PublicDomainPictures are scraped and may be rate-limited or blocked
+               by their anti-bot protection.
+               <br><br>
+               <strong class="text-neutral-500">Note:</strong> on a redeploy,
+               thumbnails baked at runtime are not persisted — commit
+               <code>Application-main/assets/library/</code> to ship them.
             </p>
          </section>
 
@@ -265,13 +271,9 @@
          renderGallery(data);
       }
 
-      function imgSrc(a) {
-         if (a.local_path) return `${API_BASE}/image-library/${a.local_path}`;
-         return a.thumb_url || a.image_url || '';
-      }
+      // Baked static thumbnail (shipped with the deploy); fall back to the proxy.
+      function imgSrc(a) { return `assets/library/${a.id}.jpg`; }
 
-      // If the locally-served file isn't on this host (e.g. ingested elsewhere),
-      // fall back to the public remote thumbnail/full image, then give up.
       function imgFallback(el) {
          const fb = el.getAttribute('data-fb');
          if (fb) { el.removeAttribute('data-fb'); el.src = fb; }
@@ -289,7 +291,7 @@
             <div class="bg-neutral-900 border border-neutral-800 rounded-lg overflow-hidden group">
                <a href="${a.source_url || imgSrc(a)}" target="_blank" rel="noopener">
                   <img class="card-img w-full" loading="lazy" src="${imgSrc(a)}" alt="${esc(a.title)}"
-                       data-fb="${a.local_path ? (a.thumb_url || a.image_url || '') : ''}"
+                       data-fb="${API_BASE}/api/library/img/${a.id}?size=thumb"
                        onerror="imgFallback(this)">
                </a>
                <div class="p-2.5">

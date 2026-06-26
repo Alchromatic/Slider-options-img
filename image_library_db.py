@@ -106,9 +106,10 @@ _ARTWORK_FIELDS = (
 )
 
 
-def insert_artwork(meta: Dict[str, Any]) -> bool:
-    """Insert one artwork row. Returns True if a new row was created, False if it
-    already existed (same source + source_id) and was skipped."""
+def insert_artwork(meta: Dict[str, Any]) -> Optional[int]:
+    """Insert one artwork row. Returns the new row's id, or None if it already
+    existed (same source + source_id) and was skipped. (Truthy on insert, so
+    existing ``if insert_artwork(...)`` callers keep working.)"""
     row = {k: meta.get(k) for k in _ARTWORK_FIELDS}
     row["tags"] = json.dumps(row.get("tags") or [])
     cols = ", ".join(_ARTWORK_FIELDS)
@@ -124,9 +125,9 @@ def insert_artwork(meta: Dict[str, Any]) -> bool:
             """,
             [row[k] for k in _ARTWORK_FIELDS],
         )
-        created = cur.fetchone() is not None
+        result = cur.fetchone()
         conn.commit()
-        return created
+        return result[0] if result else None
 
 
 def artwork_exists(source: str, source_id: str) -> bool:
