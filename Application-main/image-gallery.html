@@ -112,10 +112,17 @@
          return res.json();
       }
 
-      // Images are served through the backend proxy: cached, resized, same-origin
-      // — fast and never blocked by remote hotlink protection.
+      // Grid thumbnails are baked into the deploy as static files (instant, no
+      // runtime fetch). If one is missing (e.g. a freshly-ingested image), fall
+      // back to the backend proxy, then dim. Full-size goes through the proxy.
+      function bakedThumb(a) { return `assets/library/${a.id}.jpg`; }
       function proxyThumb(a) { return `${API_BASE}/api/library/img/${a.id}?size=thumb`; }
       function fullOf(a) { return `${API_BASE}/api/library/img/${a.id}?size=full`; }
+      function thumbFallback(el) {
+         const fb = el.getAttribute('data-fb');
+         if (fb) { el.removeAttribute('data-fb'); el.src = fb; }
+         else { el.style.opacity = 0.12; }
+      }
 
       async function loadSources() {
          try {
@@ -164,8 +171,8 @@
          g.innerHTML = data.artworks.map((a, i) => {
             return `
             <figure class="tile relative rounded-xl overflow-hidden bg-neutral-900 cursor-pointer group" data-i="${i}">
-               <img loading="lazy" src="${esc(proxyThumb(a))}" alt="${esc(a.title)}"
-                    class="w-full block" onerror="this.style.opacity=0.12">
+               <img loading="lazy" src="${esc(bakedThumb(a))}" data-fb="${esc(proxyThumb(a))}" alt="${esc(a.title)}"
+                    class="w-full block" onerror="thumbFallback(this)">
                <figcaption class="tile-cap absolute inset-x-0 bottom-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
                   <p class="text-white text-sm font-semibold leading-tight line-clamp-2">${esc(a.title)}</p>
                   <p class="text-neutral-300 text-xs mt-0.5">${esc(a.artist || '')}${a.date_text ? ' · ' + esc(a.date_text) : ''}</p>
