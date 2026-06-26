@@ -1171,6 +1171,10 @@
    // canvas + shapes instead of running a competing renderer.
    window.DashGeo = {
       canvas,
+      // Load an image File into the preview/generate pipeline — same path as a
+      // local upload. Used by the "Browse library" picker so a library image
+      // behaves exactly like an uploaded one (Generate works on it).
+      loadImageFile(file) { loadFile(file); },
       // Load a flat shapes array (e.g. from imported JSON) as the current image.
       loadShapes(shapesArr, w, h) {
          if (!Array.isArray(shapesArr) || !shapesArr.length) return;

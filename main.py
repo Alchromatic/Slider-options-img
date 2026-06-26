@@ -163,6 +163,7 @@ def _init_auth():
     init_auth_tables()
     init_billing_tables()
     init_palettes_tables()
+    init_image_library_tables()
 
 from version_router import router as version_router
 app.include_router(version_router)
@@ -178,6 +179,18 @@ app.include_router(custom_unmix_router)
 # Gated by ADMIN_TOKEN; the TryColors key stays server-side (R8).
 from profile_admin_routes import router as profile_admin_router
 app.include_router(profile_admin_router)
+
+# ==================== REFERENCE IMAGE LIBRARY (admin bulk ingest) ====================
+# Admin-only tool to mass-download public-domain artwork (NGA Open Access, Artvee,
+# publicdomainpictures.net) into Postgres with searchable metadata. Gated by
+# ADMIN_TOKEN. Downloaded image files live under IMAGE_LIBRARY_DIR and are served
+# at /image-library (mounted below, before the catch-all frontend mount).
+from image_library_routes import router as image_library_router
+from image_library_db import init_image_library_tables
+from image_sources import IMAGE_LIBRARY_DIR
+app.include_router(image_library_router)
+os.makedirs(IMAGE_LIBRARY_DIR, exist_ok=True)
+app.mount("/image-library", StaticFiles(directory=IMAGE_LIBRARY_DIR), name="image-library")
 
 class ShapeModel(BaseModel):
     type: int

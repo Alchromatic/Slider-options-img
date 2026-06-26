@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Image Library | GeoMagic</title>
+
+   <link rel="shortcut icon" type="image/x-icon" href="assets/img/favicon/favicon.ico">
+   <link rel="preconnect" href="https://fonts.googleapis.com">
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..800&display=swap" rel="stylesheet">
+   <link rel="stylesheet" href="assets/fontawesome/fontawesome.min.css">
+
+   <script src="https://cdn.tailwindcss.com"></script>
+   <script>
+      tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } } };
+   </script>
+   <style>
+      body { font-family: 'Inter', sans-serif; }
+      /* Masonry via CSS columns — natural aspect ratios, gallery feel */
+      .masonry { column-gap: 16px; }
+      @media (min-width: 640px)  { .masonry { column-count: 2; } }
+      @media (min-width: 1024px) { .masonry { column-count: 3; } }
+      @media (min-width: 1440px) { .masonry { column-count: 4; } }
+      .masonry > * { break-inside: avoid; margin-bottom: 16px; }
+      .tile img { transition: transform .35s ease; }
+      .tile:hover img { transform: scale(1.04); }
+      .tile-cap { background: linear-gradient(to top, rgba(0,0,0,.82) 0%, rgba(0,0,0,.45) 45%, rgba(0,0,0,0) 100%); }
+   </style>
+</head>
+
+<body class="bg-neutral-950 text-neutral-200 min-h-screen">
+   <div class="max-w-[1600px] mx-auto px-4 sm:px-8 py-8">
+
+      <!-- Header -->
+      <header class="flex flex-wrap items-end justify-between gap-4 mb-7">
+         <div>
+            <a href="dashboard.html" class="text-xs text-neutral-500 hover:text-neutral-300">
+               <i class="fa-solid fa-arrow-left mr-1"></i> Dashboard
+            </a>
+            <h1 class="text-3xl font-bold text-white mt-2 flex items-center gap-3">
+               <i class="fa-solid fa-images text-blue-500"></i> Image Library
+            </h1>
+            <p id="subtitle" class="text-sm text-neutral-400 mt-1">Public-domain artwork you can search and reuse.</p>
+         </div>
+      </header>
+
+      <!-- Filter bar -->
+      <div class="flex flex-wrap items-center gap-3 mb-7 sticky top-0 z-20 bg-neutral-950/90 backdrop-blur py-3">
+         <div class="relative flex-1 min-w-[220px]">
+            <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500 text-sm"></i>
+            <input id="search" placeholder="Search title, artist, or description…"
+               class="w-full bg-neutral-900 border border-neutral-800 rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none focus:border-blue-500">
+         </div>
+         <select id="source"
+            class="bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500">
+            <option value="">All sources</option>
+         </select>
+         <button id="apply"
+            class="bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-5 py-3 rounded-xl">Search</button>
+      </div>
+
+      <!-- Status -->
+      <p id="status" class="text-sm text-neutral-500 mb-4"></p>
+
+      <!-- Gallery -->
+      <div id="gallery" class="masonry"></div>
+
+      <!-- Pager -->
+      <div id="pager" class="flex items-center justify-center gap-4 mt-8 mb-4 text-sm text-neutral-400"></div>
+   </div>
+
+   <!-- Lightbox -->
+   <div id="lightbox" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/85 backdrop-blur-sm p-4">
+      <button id="lbClose" class="absolute top-5 right-6 text-white/80 hover:text-white text-3xl">&times;</button>
+      <div class="max-w-5xl w-full max-h-full flex flex-col items-center">
+         <img id="lbImg" class="max-h-[72vh] max-w-full rounded-lg shadow-2xl object-contain" alt="">
+         <div class="mt-4 text-center max-w-2xl">
+            <h3 id="lbTitle" class="text-lg font-semibold text-white"></h3>
+            <p id="lbMeta" class="text-sm text-neutral-400 mt-1"></p>
+            <a id="lbSource" target="_blank" rel="noopener"
+               class="inline-block mt-3 text-sm text-blue-400 hover:text-blue-300">
+               View at source <i class="fa-solid fa-arrow-up-right-from-square ml-1 text-xs"></i>
+            </a>
+         </div>
+      </div>
+      <!-- Primary action: send this image to the shape generator -->
+      <button id="lbUse"
+         class="absolute bottom-6 right-6 inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm px-5 py-3 rounded-xl shadow-lg disabled:opacity-50">
+         <i class="fa-solid fa-wand-magic-sparkles"></i> Use this image
+      </button>
+   </div>
+
+   <script>
+      // Served from the backend, so the API lives on the same origin. `?api=`
+      // overrides it for split local dev (static server + separate backend).
+      const API_BASE =
+         (new URLSearchParams(location.search).get('api') || '').replace(/\/$/, '') ||
+         location.origin;
+      const $ = (id) => document.getElementById(id);
+      const PAGE_SIZE = 48;
+      let page = 1;
+
+      function esc(s) {
+         return String(s || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+      }
+
+      async function getJSON(path) {
+         const res = await fetch(API_BASE + path);
+         if (!res.ok) throw new Error('HTTP ' + res.status);
+         return res.json();
+      }
+
+      // Images are served through the backend proxy: cached, resized, same-origin
+      // — fast and never blocked by remote hotlink protection.
+      function proxyThumb(a) { return `${API_BASE}/api/library/img/${a.id}?size=thumb`; }
+      function fullOf(a) { return `${API_BASE}/api/library/img/${a.id}?size=full`; }
+
+      async function loadSources() {
+         try {
+            const { sources } = await getJSON('/api/library/sources');
+            $('source').innerHTML = '<option value="">All sources</option>' +
+               sources.map((s) => `<option value="${s.id}">${s.label}</option>`).join('');
+         } catch (e) { /* non-fatal */ }
+      }
+
+      async function loadStats() {
+         try {
+            const s = await getJSON('/api/library/stats');
+            const parts = Object.entries(s.by_source || {}).map(([k, v]) => `${v} ${k}`);
+            $('subtitle').textContent =
+               `${s.total} public-domain works` + (parts.length ? ` · ${parts.join(' · ')}` : '');
+         } catch (e) { /* non-fatal */ }
+      }
+
+      async function load() {
+         $('status').textContent = 'Loading…';
+         const params = new URLSearchParams({ page, page_size: PAGE_SIZE });
+         if ($('search').value.trim()) params.set('search', $('search').value.trim());
+         if ($('source').value) params.set('source', $('source').value);
+         let data;
+         try {
+            data = await getJSON('/api/library/artworks?' + params.toString());
+         } catch (e) {
+            $('status').textContent = '';
+            $('gallery').innerHTML =
+               `<p class="text-red-400 text-sm">Couldn't reach the library API (${esc(e.message)}). ` +
+               `If you're running locally, open this page from the backend origin (e.g. http://127.0.0.1:8000/image-gallery.html).</p>`;
+            return;
+         }
+         render(data);
+      }
+
+      function render(data) {
+         const g = $('gallery');
+         if (!data.artworks.length) {
+            g.innerHTML = '';
+            $('status').textContent = 'No artwork matches your filters.';
+            $('pager').innerHTML = '';
+            return;
+         }
+         $('status').textContent = `${data.total} result${data.total === 1 ? '' : 's'}`;
+         g.innerHTML = data.artworks.map((a, i) => {
+            return `
+            <figure class="tile relative rounded-xl overflow-hidden bg-neutral-900 cursor-pointer group" data-i="${i}">
+               <img loading="lazy" src="${esc(proxyThumb(a))}" alt="${esc(a.title)}"
+                    class="w-full block" onerror="this.style.opacity=0.12">
+               <figcaption class="tile-cap absolute inset-x-0 bottom-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <p class="text-white text-sm font-semibold leading-tight line-clamp-2">${esc(a.title)}</p>
+                  <p class="text-neutral-300 text-xs mt-0.5">${esc(a.artist || '')}${a.date_text ? ' · ' + esc(a.date_text) : ''}</p>
+                  <span class="inline-block mt-1 text-[10px] uppercase tracking-wide text-neutral-400">${esc(a.source)}</span>
+               </figcaption>
+            </figure>`;
+         }).join('');
+
+         // bind lightbox
+         [...g.querySelectorAll('.tile')].forEach((el) => {
+            el.onclick = () => openLightbox(data.artworks[+el.dataset.i]);
+         });
+
+         const pages = Math.max(1, Math.ceil(data.total / data.page_size));
+         $('pager').innerHTML = `
+            <button ${page <= 1 ? 'disabled' : ''} data-p="${page - 1}"
+               class="px-4 py-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 disabled:opacity-30">Prev</button>
+            <span>Page ${page} / ${pages}</span>
+            <button ${page >= pages ? 'disabled' : ''} data-p="${page + 1}"
+               class="px-4 py-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 disabled:opacity-30">Next</button>`;
+         [...$('pager').querySelectorAll('button[data-p]')].forEach((b) => {
+            b.onclick = () => { if (!b.disabled) { page = +b.dataset.p; window.scrollTo({ top: 0 }); load(); } };
+         });
+      }
+
+      // Lightbox
+      let currentArt = null;
+      function openLightbox(a) {
+         currentArt = a;
+         $('lbImg').src = fullOf(a);
+         $('lbTitle').textContent = a.title || 'Untitled';
+         $('lbMeta').textContent = [a.artist, a.date_text, a.medium].filter(Boolean).join(' · ');
+         const src = $('lbSource');
+         if (a.source_url) { src.href = a.source_url; src.style.display = ''; }
+         else { src.style.display = 'none'; }
+         $('lightbox').classList.remove('hidden');
+         $('lightbox').classList.add('flex');
+      }
+      function closeLightbox() {
+         $('lightbox').classList.add('hidden');
+         $('lightbox').classList.remove('flex');
+         $('lbImg').src = '';
+      }
+      $('lbClose').onclick = closeLightbox;
+      $('lightbox').onclick = (e) => { if (e.target === $('lightbox')) closeLightbox(); };
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLightbox(); });
+
+      // "Use this image" — hand the chosen artwork to the dashboard's generator.
+      $('lbUse').onclick = () => {
+         if (!currentArt) return;
+         localStorage.setItem('gm_pending_library_image', JSON.stringify({
+            id: currentArt.id,
+            title: currentArt.title,
+            url: `${API_BASE}/api/library/img/${currentArt.id}?size=full`,
+         }));
+         location.href = 'dashboard.html' + (location.search || '');
+      };
+
+      // Filters
+      $('apply').onclick = () => { page = 1; load(); };
+      $('search').addEventListener('keydown', (e) => { if (e.key === 'Enter') { page = 1; load(); } });
+      $('source').addEventListener('change', () => { page = 1; load(); });
+
+      // Boot
+      loadSources();
+      loadStats();
+      load();
+   </script>
+</body>
+
+</html>

@@ -168,6 +168,24 @@
 
             <!-- dashboard main wrapper -->
             <div class="min-h-[calc(100vh-96px)] overflow-auto md:p-6 2xl:p-10 2xl:pt-9">
+               <!-- reference image library entry -->
+               <a id="libraryLink" href="image-gallery.html"
+                  class="bg-white dark:bg-neutral-7 p-6 rounded-lg border-2 border-[#F4F4F4] dark:border-0 shadow-[0px_4px_14px_-6px_#F4F4F4] dark:shadow-none"
+                  style="display:flex;align-items:center;gap:20px;margin-bottom:24px;text-decoration:none;cursor:pointer">
+                  <span style="flex-shrink:0;display:flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:14px;background:rgba(42,133,255,.12);color:var(--color-theme-primary);font-size:22px">
+                     <i class="fa-solid fa-images"></i>
+                  </span>
+                  <div style="flex-grow:1;min-width:0">
+                     <h5 class="text-neutral-6 dark:text-neutral-1" style="font-size:18px;font-weight:600;letter-spacing:-0.3px;margin:0">Image Library</h5>
+                     <p class="text-neutral-4 dark:text-neutral-3" style="font-size:14px;line-height:1.6;letter-spacing:-0.14px;margin:4px 0 0">Browse public-domain artwork (NGA, Artvee) in a searchable gallery.</p>
+                  </div>
+                  <span class="theme-btn-primary" style="flex-shrink:0;display:inline-flex;align-items:center;gap:8px">Open <i class="fa-regular fa-arrow-right"></i></span>
+               </a>
+               <script>
+                  (function () { var l = document.getElementById('libraryLink'); if (l && location.search) l.href = 'image-gallery.html' + location.search; })();
+               </script>
+               <!-- reference image library entry end -->
+
                <!-- image generate section start -->
                <section>
                   <div class="flex gap-2 max-md:flex-col">
@@ -546,6 +564,43 @@
                   if (confirm('Log out of GeoMagic?')) Auth.logout('signin.html');
                });
             }
+         })();
+      </script>
+
+      <!-- ===== Receive an image chosen on the Image Library page (image-gallery.html) ===== -->
+      <script>
+         (function () {
+            const KEY = 'gm_pending_library_image';
+            const raw = localStorage.getItem(KEY);
+            if (!raw) return;
+            localStorage.removeItem(KEY);
+            let pending;
+            try { pending = JSON.parse(raw); } catch (e) { return; }
+            if (!pending || !pending.url) return;
+
+            // Fetch the chosen artwork (full size, via the backend proxy) and load
+            // it into the preview canvas exactly like a local upload.
+            (async function () {
+               try {
+                  const resp = await fetch(pending.url);
+                  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                  const blob = await resp.blob();
+                  const safe = (pending.title || 'artwork').replace(/[^\w.-]+/g, '_').slice(0, 60);
+                  const file = new File([blob], `${safe}.jpg`, { type: blob.type || 'image/jpeg' });
+                  if (window.DashGeo && typeof DashGeo.loadImageFile === 'function') {
+                     DashGeo.loadImageFile(file);
+                  } else {
+                     const input = document.getElementById('dash-image-input');
+                     if (input) {
+                        const dt = new DataTransfer(); dt.items.add(file);
+                        input.files = dt.files;
+                        input.dispatchEvent(new Event('change', { bubbles: true }));
+                     }
+                  }
+               } catch (e) {
+                  console.warn('Could not load library image:', e);
+               }
+            })();
          })();
       </script>
    </body>

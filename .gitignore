@@ -17,6 +17,9 @@ node_modules/
 # Measured palette profiles (may embed generated data; regenerate via profile_generator.py)
 profiles/
 
+# Bulk-downloaded reference image library (regenerate via the admin ingest tool)
+image_library/
+
 # OS
 .DS_Store
 Thumbs.db

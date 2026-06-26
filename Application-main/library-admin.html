@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Image Library · Admin | GeoMagic</title>
+
+   <link rel="shortcut icon" type="image/x-icon" href="assets/img/favicon/favicon.ico">
+   <link rel="preconnect" href="https://fonts.googleapis.com">
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..800&display=swap" rel="stylesheet">
+   <link rel="stylesheet" href="assets/fontawesome/fontawesome.min.css">
+
+   <script src="https://cdn.tailwindcss.com"></script>
+   <script>
+      tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } } };
+   </script>
+   <style>
+      body { font-family: 'Inter', sans-serif; }
+      .card-img { aspect-ratio: 1 / 1; object-fit: cover; background: #1c1c1c; }
+      input::placeholder { color: #6b7280; }
+   </style>
+</head>
+
+<body class="bg-neutral-950 text-neutral-200 min-h-screen">
+   <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+
+      <!-- Header -->
+      <header class="flex flex-wrap items-center justify-between gap-4 mb-8">
+         <div>
+            <h1 class="text-2xl font-bold text-white flex items-center gap-3">
+               <i class="fa-solid fa-images text-blue-500"></i> Reference Image Library
+            </h1>
+            <p class="text-sm text-neutral-400 mt-1">
+               Bulk-download public-domain artwork (NGA Open Access, Artvee,
+               PublicDomainPictures) into the database with searchable metadata.
+            </p>
+         </div>
+         <div id="stats" class="text-sm text-neutral-400 text-right"></div>
+      </header>
+
+      <!-- Admin token -->
+      <section class="bg-neutral-900 border border-neutral-800 rounded-xl p-4 mb-6">
+         <label class="block text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-2">
+            Admin token <span class="text-neutral-600">(X-Admin-Token — never your user password)</span>
+         </label>
+         <div class="flex flex-wrap gap-3">
+            <input id="adminToken" type="password" placeholder="Paste ADMIN_TOKEN…"
+               class="flex-1 min-w-[220px] bg-neutral-950 border border-neutral-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500">
+            <button id="saveToken"
+               class="bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-4 py-2 rounded-lg">
+               Save &amp; verify
+            </button>
+            <span id="tokenStatus" class="self-center text-sm"></span>
+         </div>
+      </section>
+
+      <div class="grid lg:grid-cols-[360px_1fr] gap-6">
+
+         <!-- Ingest controls -->
+         <section class="bg-neutral-900 border border-neutral-800 rounded-xl p-5 h-fit">
+            <h2 class="text-lg font-semibold text-white mb-4">New ingestion</h2>
+
+            <label class="block text-xs font-semibold text-neutral-400 mb-1">Source</label>
+            <select id="source"
+               class="w-full bg-neutral-950 border border-neutral-700 rounded-lg px-3 py-2 text-sm mb-4 focus:outline-none focus:border-blue-500"></select>
+
+            <label class="block text-xs font-semibold text-neutral-400 mb-1">Keyword</label>
+            <input id="search" placeholder="e.g. oil painting, portrait, landscape"
+               class="w-full bg-neutral-950 border border-neutral-700 rounded-lg px-3 py-2 text-sm mb-4 focus:outline-none focus:border-blue-500">
+
+            <label class="block text-xs font-semibold text-neutral-400 mb-1">
+               Classification <span class="text-neutral-600">(NGA)</span>
+            </label>
+            <input id="classification" value="painting" placeholder="painting"
+               class="w-full bg-neutral-950 border border-neutral-700 rounded-lg px-3 py-2 text-sm mb-4 focus:outline-none focus:border-blue-500">
+
+            <div class="grid grid-cols-2 gap-3 mb-4">
+               <div>
+                  <label class="block text-xs font-semibold text-neutral-400 mb-1">Year from</label>
+                  <input id="yearFrom" type="number" placeholder="-499"
+                     class="w-full bg-neutral-950 border border-neutral-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500">
+               </div>
+               <div>
+                  <label class="block text-xs font-semibold text-neutral-400 mb-1">Year to</label>
+                  <input id="yearTo" type="number" placeholder="1618"
+                     class="w-full bg-neutral-950 border border-neutral-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500">
+               </div>
+            </div>
+
+            <label class="block text-xs font-semibold text-neutral-400 mb-1">How many images</label>
+            <input id="limit" type="number" value="50" min="1" max="1000"
+               class="w-full bg-neutral-950 border border-neutral-700 rounded-lg px-3 py-2 text-sm mb-4 focus:outline-none focus:border-blue-500">
+
+            <button id="startBtn"
+               class="w-full bg-green-600 hover:bg-green-500 disabled:opacity-40 text-white text-sm font-semibold px-4 py-2.5 rounded-lg">
+               <i class="fa-solid fa-cloud-arrow-down mr-1"></i> Start ingestion
+            </button>
+
+            <!-- Live job -->
+            <div id="jobPanel" class="hidden mt-5 bg-neutral-950 border border-neutral-800 rounded-lg p-4">
+               <div class="flex items-center justify-between mb-2">
+                  <span class="text-sm font-semibold text-white">Job <span id="jobId"></span></span>
+                  <button id="cancelBtn" class="text-xs text-red-400 hover:text-red-300">Cancel</button>
+               </div>
+               <div class="w-full bg-neutral-800 rounded-full h-2 mb-2 overflow-hidden">
+                  <div id="jobBar" class="bg-blue-500 h-2 w-0 transition-all"></div>
+               </div>
+               <p id="jobMsg" class="text-xs text-neutral-400"></p>
+            </div>
+
+            <p class="text-[11px] text-neutral-600 mt-4 leading-relaxed">
+               NGA pulls from the official CC0 dataset (first run downloads the
+               dataset, then it's cached). Artvee &amp; PublicDomainPictures are
+               scraped and may be rate-limited or blocked by their anti-bot
+               protection.
+            </p>
+         </section>
+
+         <!-- Gallery -->
+         <section>
+            <div class="flex flex-wrap items-end gap-3 mb-4">
+               <div class="flex-1 min-w-[160px]">
+                  <label class="block text-xs font-semibold text-neutral-400 mb-1">Filter library</label>
+                  <input id="gSearch" placeholder="Search title / artist / description"
+                     class="w-full bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500">
+               </div>
+               <select id="gSource"
+                  class="bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500">
+                  <option value="">All sources</option>
+               </select>
+               <button id="gApply"
+                  class="bg-neutral-700 hover:bg-neutral-600 text-white text-sm px-4 py-2 rounded-lg">Apply</button>
+            </div>
+
+            <div id="gallery" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3"></div>
+
+            <div id="pager" class="flex items-center justify-center gap-4 mt-6 text-sm text-neutral-400"></div>
+         </section>
+      </div>
+   </div>
+
+   <script>
+      // ---- API base ----
+      // Served by the backend, so the API is on the same origin. `?api=`
+      // overrides for split local dev (static server + separate backend).
+      const API_BASE =
+         (new URLSearchParams(location.search).get('api') || '').replace(/\/$/, '') ||
+         location.origin;
+      const TOKEN_KEY = 'gm_admin_token';
+      const $ = (id) => document.getElementById(id);
+
+      let token = localStorage.getItem(TOKEN_KEY) || '';
+      let pollTimer = null;
+      let gPage = 1;
+
+      function headers() { return { 'X-Admin-Token': token, 'Content-Type': 'application/json' }; }
+
+      async function api(path, opts = {}) {
+         const res = await fetch(API_BASE + path, { ...opts, headers: { ...headers(), ...(opts.headers || {}) } });
+         if (res.status === 401 || res.status === 503) {
+            const d = await res.json().catch(() => ({}));
+            throw new Error(d.detail || 'Unauthorized');
+         }
+         if (!res.ok) {
+            const d = await res.json().catch(() => ({}));
+            throw new Error(d.detail || ('HTTP ' + res.status));
+         }
+         return res.json();
+      }
+
+      // ---- Token ----
+      $('adminToken').value = token;
+      $('saveToken').onclick = async () => {
+         token = $('adminToken').value.trim();
+         localStorage.setItem(TOKEN_KEY, token);
+         await verify();
+      };
+
+      async function verify() {
+         const el = $('tokenStatus');
+         if (!token) { el.innerHTML = '<span class="text-neutral-500">No token set</span>'; return false; }
+         try {
+            await loadSources();
+            await refreshStats();
+            await loadGallery();
+            el.innerHTML = '<span class="text-green-400"><i class="fa-solid fa-check"></i> Connected</span>';
+            return true;
+         } catch (e) {
+            el.innerHTML = '<span class="text-red-400"><i class="fa-solid fa-xmark"></i> ' + e.message + '</span>';
+            return false;
+         }
+      }
+
+      async function loadSources() {
+         const { sources } = await api('/api/library/sources');
+         const ing = $('source'), gal = $('gSource');
+         ing.innerHTML = sources.map((s) => `<option value="${s.id}">${s.label}</option>`).join('');
+         gal.innerHTML = '<option value="">All sources</option>' +
+            sources.map((s) => `<option value="${s.id}">${s.label}</option>`).join('');
+      }
+
+      async function refreshStats() {
+         const s = await api('/api/library/stats');
+         const parts = Object.entries(s.by_source || {}).map(([k, v]) => `${k}: ${v}`);
+         $('stats').innerHTML =
+            `<span class="text-white font-semibold text-lg">${s.total}</span> images` +
+            (parts.length ? `<br><span class="text-xs">${parts.join(' · ')}</span>` : '');
+      }
+
+      // ---- Ingestion ----
+      $('startBtn').onclick = async () => {
+         const body = {
+            source: $('source').value,
+            search: $('search').value.trim(),
+            classification: $('classification').value.trim(),
+            year_from: $('yearFrom').value === '' ? null : Number($('yearFrom').value),
+            year_to: $('yearTo').value === '' ? null : Number($('yearTo').value),
+            limit: Number($('limit').value) || 50,
+         };
+         try {
+            $('startBtn').disabled = true;
+            const { job_id } = await api('/api/library/ingest', { method: 'POST', body: JSON.stringify(body) });
+            pollJob(job_id, body.limit);
+         } catch (e) {
+            alert('Could not start: ' + e.message);
+            $('startBtn').disabled = false;
+         }
+      };
+
+      function pollJob(jobId, limit) {
+         $('jobPanel').classList.remove('hidden');
+         $('jobId').textContent = '#' + jobId;
+         $('cancelBtn').onclick = () => api(`/api/library/jobs/${jobId}/cancel`, { method: 'POST' }).catch(() => {});
+         clearInterval(pollTimer);
+         pollTimer = setInterval(async () => {
+            try {
+               const j = await api(`/api/library/jobs/${jobId}`);
+               const pct = Math.min(100, Math.round((j.saved / (j.requested || limit)) * 100));
+               $('jobBar').style.width = pct + '%';
+               $('jobMsg').textContent = j.message || j.status;
+               if (['done', 'error', 'cancelled'].includes(j.status)) {
+                  clearInterval(pollTimer);
+                  $('startBtn').disabled = false;
+                  refreshStats();
+                  loadGallery();
+               }
+            } catch (e) {
+               clearInterval(pollTimer);
+               $('startBtn').disabled = false;
+            }
+         }, 1500);
+      }
+
+      // ---- Gallery ----
+      $('gApply').onclick = () => { gPage = 1; loadGallery(); };
+      $('gSearch').addEventListener('keydown', (e) => { if (e.key === 'Enter') { gPage = 1; loadGallery(); } });
+
+      async function loadGallery() {
+         const params = new URLSearchParams({ page: gPage, page_size: 24 });
+         if ($('gSearch').value.trim()) params.set('search', $('gSearch').value.trim());
+         if ($('gSource').value) params.set('source', $('gSource').value);
+         const data = await api('/api/library/artworks?' + params.toString());
+         renderGallery(data);
+      }
+
+      function imgSrc(a) {
+         if (a.local_path) return `${API_BASE}/image-library/${a.local_path}`;
+         return a.thumb_url || a.image_url || '';
+      }
+
+      // If the locally-served file isn't on this host (e.g. ingested elsewhere),
+      // fall back to the public remote thumbnail/full image, then give up.
+      function imgFallback(el) {
+         const fb = el.getAttribute('data-fb');
+         if (fb) { el.removeAttribute('data-fb'); el.src = fb; }
+         else { el.style.opacity = 0.2; }
+      }
+
+      function renderGallery(data) {
+         const g = $('gallery');
+         if (!data.artworks.length) {
+            g.innerHTML = '<p class="col-span-full text-neutral-500 text-sm py-12 text-center">No images yet — run an ingestion above.</p>';
+            $('pager').innerHTML = '';
+            return;
+         }
+         g.innerHTML = data.artworks.map((a) => `
+            <div class="bg-neutral-900 border border-neutral-800 rounded-lg overflow-hidden group">
+               <a href="${a.source_url || imgSrc(a)}" target="_blank" rel="noopener">
+                  <img class="card-img w-full" loading="lazy" src="${imgSrc(a)}" alt="${esc(a.title)}"
+                       data-fb="${a.local_path ? (a.thumb_url || a.image_url || '') : ''}"
+                       onerror="imgFallback(this)">
+               </a>
+               <div class="p-2.5">
+                  <p class="text-xs font-semibold text-white truncate" title="${esc(a.title)}">${esc(a.title)}</p>
+                  <p class="text-[11px] text-neutral-400 truncate">${esc(a.artist || '—')}</p>
+                  <div class="flex items-center justify-between mt-1.5">
+                     <span class="text-[10px] uppercase tracking-wide text-neutral-500">${a.source} · ${a.date_text || '—'}</span>
+                     <button onclick="del(${a.id})" class="text-[11px] text-red-400 hover:text-red-300" title="Delete">
+                        <i class="fa-solid fa-trash"></i>
+                     </button>
+                  </div>
+               </div>
+            </div>`).join('');
+
+         const pages = Math.max(1, Math.ceil(data.total / data.page_size));
+         $('pager').innerHTML = `
+            <button ${gPage <= 1 ? 'disabled' : ''} onclick="gotoPage(${gPage - 1})"
+               class="px-3 py-1 rounded bg-neutral-800 disabled:opacity-30">Prev</button>
+            <span>Page ${gPage} / ${pages} · ${data.total} total</span>
+            <button ${gPage >= pages ? 'disabled' : ''} onclick="gotoPage(${gPage + 1})"
+               class="px-3 py-1 rounded bg-neutral-800 disabled:opacity-30">Next</button>`;
+      }
+
+      function gotoPage(p) { gPage = p; loadGallery(); }
+
+      async function del(id) {
+         if (!confirm('Delete this image from the library?')) return;
+         try { await api(`/api/library/artworks/${id}`, { method: 'DELETE' }); refreshStats(); loadGallery(); }
+         catch (e) { alert(e.message); }
+      }
+
+      function esc(s) {
+         return String(s || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+      }
+
+      // ---- Boot ----
+      if (token) verify();
+      else $('tokenStatus').innerHTML = '<span class="text-neutral-500">Enter your admin token to begin</span>';
+   </script>
+</body>
+
+</html>
