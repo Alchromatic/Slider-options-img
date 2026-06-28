@@ -41,6 +41,8 @@ from typing import Any, Callable, Dict, Iterator, List, Optional
 import httpx
 from PIL import Image, ImageFile
 
+import library_normalize as norm
+
 # Salvage partially-downloaded JPEGs instead of failing outright.
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
@@ -271,6 +273,35 @@ def _to_int(value: Any) -> Optional[int]:
         return None
 
 
+def nga_nationality_index(client: httpx.Client, on_status: StatusCb = None) -> Dict[str, str]:
+    """Map NGA objectid -> artist nationality, by joining the official
+    objects_constituents (object↔artist) and constituents (artist↔nationality)
+    datasets. Used to normalize NGA nationality."""
+    con_path = _ensure_nga_csv("constituents", client, on_status)
+    nat_by_cid: Dict[str, str] = {}
+    with open(con_path, newline="", encoding="utf-8") as fh:
+        for row in csv.DictReader(fh):
+            nat = norm.clean_nationality(
+                row.get("visualbrowsernationality") or row.get("nationality")
+            )
+            if nat:
+                nat_by_cid[row.get("constituentid")] = nat
+
+    oc_path = _ensure_nga_csv("objects_constituents", client, on_status)
+    out: Dict[str, str] = {}
+    with open(oc_path, newline="", encoding="utf-8") as fh:
+        for row in csv.DictReader(fh):
+            if (row.get("roletype") or "").lower() != "artist":
+                continue
+            objid = row.get("objectid")
+            if not objid or objid in out:
+                continue
+            nat = nat_by_cid.get(row.get("constituentid"))
+            if nat:
+                out[objid] = nat
+    return out
+
+
 def fetch_nga(params: Dict[str, Any], limit: int, on_status: StatusCb = None) -> Iterator[Dict[str, Any]]:
     """Yield NGA Open Access artworks matching the filters.
 
@@ -284,6 +315,7 @@ def fetch_nga(params: Dict[str, Any], limit: int, on_status: StatusCb = None) ->
     client = make_client()
     try:
         images = _nga_image_index(client, on_status)
+        nationality_by_obj = nga_nationality_index(client, on_status)
         _status(on_status, f"NGA: {len(images)} open-access images indexed; scanning objects…")
         objects_path = _ensure_nga_csv("objects", client, on_status)
 
@@ -330,6 +362,10 @@ def fetch_nga(params: Dict[str, Any], limit: int, on_status: StatusCb = None) ->
                     "source_url": f"https://www.nga.gov/artworks/{objid}",
                     "image_url": f"{img['iiifurl']}/full/!2000,2000/0/default.jpg",
                     "thumb_url": img["thumb_url"],
+                    # normalized cross-source filters
+                    "nationality": nationality_by_obj.get(objid),
+                    "genre": norm.infer_genre(title, medium, img["description"]),
+                    "era": norm.era_bucket(ys, ye),
                 }
                 yielded += 1
                 # Yield a comfortable surplus so the worker can skip dupes/failures.
@@ -351,6 +387,7 @@ def fetch_artvee(params: Dict[str, Any], limit: int, on_status: StatusCb = None)
 
     search = (params.get("search") or "oil painting").strip()
     client = make_client()
+    nat_cache: Dict[str, Optional[str]] = {}
     seen = 0
     try:
         for page in range(1, 26):  # safety cap on pagination
@@ -384,20 +421,23 @@ def fetch_artvee(params: Dict[str, Any], limit: int, on_status: StatusCb = None)
                     thumb = img.get("data-src") or img.get("src")
                 title_el = it.select_one(".product-title, h3, .title")
                 title = title_el.get_text(strip=True) if title_el else "Untitled"
-                artist_el = it.select_one(".product-artist, .artist")
-                artist = artist_el.get_text(strip=True) if artist_el else ""
 
-                image_url = _artvee_full_image(client, detail) or thumb
+                # Detail page gives the full image + artist + date (+ artist link).
+                meta = _artvee_detail_meta(client, detail)
+                image_url = meta.get("image_url") or thumb
                 if not image_url:
                     continue
+                artist = meta.get("artist") or ""
+                ys, ye = meta.get("year_start"), meta.get("year_end")
+                nationality = _artvee_artist_nationality(client, meta.get("artist_url"), nat_cache)
                 yield {
                     "source": "artvee",
                     "source_id": source_id,
                     "title": title,
                     "artist": artist,
-                    "date_text": "",
-                    "year_start": None,
-                    "year_end": None,
+                    "date_text": meta.get("date_text") or "",
+                    "year_start": ys,
+                    "year_end": ye,
                     "medium": "",
                     "classification": "painting",
                     "description": "",
@@ -405,6 +445,10 @@ def fetch_artvee(params: Dict[str, Any], limit: int, on_status: StatusCb = None)
                     "source_url": detail,
                     "image_url": image_url,
                     "thumb_url": thumb,
+                    # normalized cross-source filters
+                    "nationality": nationality,
+                    "genre": norm.infer_genre(title, search),
+                    "era": norm.era_bucket(ys, ye),
                 }
                 seen += 1
                 if seen >= limit * 2:
@@ -414,20 +458,82 @@ def fetch_artvee(params: Dict[str, Any], limit: int, on_status: StatusCb = None)
         client.close()
 
 
-def _artvee_full_image(client: httpx.Client, detail_url: str) -> Optional[str]:
-    """Fetch an Artvee detail page and pull the full-size image (og:image)."""
+_ARTVEE_DATE_RE = re.compile(r"\((?:c\.?\s*)?(\d{3,4})(?:\s*[-–]\s*(\d{3,4}))?\)")
+_CENTURY_RE = re.compile(r"(\d{1,2})(?:st|nd|rd|th)\s+century", re.I)
+
+
+def _artvee_parse_date(text: str):
+    """Parse (year_start, year_end, date_text) from an Artvee title/date string."""
+    if not text:
+        return None, None, ""
+    m = _ARTVEE_DATE_RE.search(text)
+    if m:
+        ys = int(m.group(1))
+        ye = int(m.group(2)) if m.group(2) else ys
+        return ys, ye, m.group(0).strip("()")
+    m = _CENTURY_RE.search(text)
+    if m:
+        c = int(m.group(1))
+        mid = (c - 1) * 100 + 50
+        return mid, mid, m.group(0)
+    return None, None, ""
+
+
+def _artvee_detail_meta(client: httpx.Client, detail_url: str) -> Dict[str, Any]:
+    """Fetch an Artvee detail page: full image (og:image), artist (+ artist page
+    URL), and date parsed from the title."""
+    out: Dict[str, Any] = {"image_url": None, "artist": "", "artist_url": None,
+                           "date_text": "", "year_start": None, "year_end": None}
     try:
         from bs4 import BeautifulSoup
         resp = client.get(detail_url)
         if resp.status_code != 200:
-            return None
+            return out
         soup = BeautifulSoup(resp.text, "html.parser")
         og = soup.select_one('meta[property="og:image"]')
         if og and og.get("content"):
-            return og["content"]
+            out["image_url"] = og["content"]
+        a = soup.select_one('a[href*="/artist/"]')
+        if a:
+            out["artist"] = a.get_text(strip=True)
+            out["artist_url"] = a.get("href")
+        h1 = soup.select_one("h1, .product_title, .entry-title")
+        title_text = h1.get_text(" ", strip=True) if h1 else ""
+        ys, ye, dt = _artvee_parse_date(title_text)
+        out.update(year_start=ys, year_end=ye, date_text=dt)
     except Exception:
+        pass
+    return out
+
+
+def _artvee_artist_nationality(
+    client: httpx.Client, artist_url: Optional[str], cache: Dict[str, Optional[str]]
+) -> Optional[str]:
+    """Best-effort: read an artist's nationality from their Artvee artist page
+    (cached per run so each artist page is fetched once)."""
+    if not artist_url:
         return None
-    return None
+    if artist_url in cache:
+        return cache[artist_url]
+    nat = None
+    try:
+        from bs4 import BeautifulSoup
+        resp = client.get(artist_url)
+        if resp.status_code == 200:
+            text = BeautifulSoup(resp.text, "html.parser").get_text(" ", strip=True)
+            m = re.search(
+                r"\b(American|British|English|Scottish|Welsh|Irish|French|Italian|"
+                r"Dutch|Flemish|German|Spanish|Belgian|Swiss|Austrian|Russian|"
+                r"Chinese|Japanese|Danish|Swedish|Norwegian|Polish|Greek|Mexican|"
+                r"Canadian|Portuguese|Hungarian|Czech|Finnish)\b",
+                text,
+            )
+            if m:
+                nat = norm.clean_nationality(m.group(1))
+    except Exception:
+        nat = None
+    cache[artist_url] = nat
+    return nat
 
 
 # ===========================================================================
@@ -535,9 +641,9 @@ ADAPTERS: Dict[str, Callable[..., Iterator[Dict[str, Any]]]] = {
 }
 
 SOURCE_LABELS = {
+    "bucket": "Wikimedia",
     "nga": "National Gallery of Art (Open Access)",
     "artvee": "Artvee",
-    "publicdomainpictures": "PublicDomainPictures.net",
 }
 
 

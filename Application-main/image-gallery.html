@@ -60,8 +60,22 @@
             class="bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500">
             <option value="">All sources</option>
          </select>
+         <select id="era"
+            class="bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500">
+            <option value="">Any era</option>
+         </select>
+         <select id="genre"
+            class="bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500">
+            <option value="">Any type</option>
+         </select>
+         <select id="nationality"
+            class="bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500">
+            <option value="">Any nationality</option>
+         </select>
          <button id="apply"
             class="bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-5 py-3 rounded-xl">Search</button>
+         <button id="clear"
+            class="text-neutral-400 hover:text-white text-sm px-3 py-3">Clear</button>
       </div>
 
       <!-- Status -->
@@ -115,12 +129,19 @@
          return res.json();
       }
 
-      // Grid thumbnails are baked into the deploy as static files (instant, no
-      // runtime fetch). If one is missing (e.g. a freshly-ingested image), fall
-      // back to the backend proxy, then dim. Full-size goes through the proxy.
-      function bakedThumb(a) { return `assets/library/${a.id}.jpg`; }
+      // Thumbnails: bucket images use a fast presigned URL from object storage;
+      // NGA/Artvee use the baked static file. Both fall back to the backend proxy.
       function proxyThumb(a) { return `${API_BASE}/api/library/img/${a.id}?size=thumb`; }
-      function fullOf(a) { return `${API_BASE}/api/library/img/${a.id}?size=full`; }
+      function gridThumb(a) {
+         // Bucket: stable proxy URL (7-day cache header → browser-cached, 0 latency
+         // on repeat). NGA/Artvee: baked static file. Both fall back to the proxy.
+         if (a.source === 'bucket') return proxyThumb(a);
+         return `assets/library/${a.id}.jpg`;
+      }
+      function fullOf(a) {
+         if (a.source === 'bucket') return a.image_url || `${API_BASE}/api/library/img/${a.id}?size=full`;
+         return `${API_BASE}/api/library/img/${a.id}?size=full`;
+      }
       function thumbFallback(el) {
          const fb = el.getAttribute('data-fb');
          if (fb) { el.removeAttribute('data-fb'); el.src = fb; }
@@ -132,6 +153,21 @@
             const { sources } = await getJSON('/api/library/sources');
             $('source').innerHTML = '<option value="">All sources</option>' +
                sources.map((s) => `<option value="${s.id}">${s.label}</option>`).join('');
+         } catch (e) { /* non-fatal */ }
+      }
+
+      // Populate the normalized filter dropdowns (era / type / nationality).
+      async function loadFacets() {
+         try {
+            const f = await getJSON('/api/library/facets');
+            const fill = (id, label, items) => {
+               $(id).innerHTML = `<option value="">${label}</option>` +
+                  (items || []).map((o) =>
+                     `<option value="${esc(o.value)}">${esc(o.value)} (${o.count})</option>`).join('');
+            };
+            fill('era', 'Any era', f.era);
+            fill('genre', 'Any type', f.genre);
+            fill('nationality', 'Any nationality', f.nationality);
          } catch (e) { /* non-fatal */ }
       }
 
@@ -149,6 +185,9 @@
          const params = new URLSearchParams({ page, page_size: PAGE_SIZE });
          if ($('search').value.trim()) params.set('search', $('search').value.trim());
          if ($('source').value) params.set('source', $('source').value);
+         if ($('era').value) params.set('era', $('era').value);
+         if ($('genre').value) params.set('genre', $('genre').value);
+         if ($('nationality').value) params.set('nationality', $('nationality').value);
          let data;
          try {
             data = await getJSON('/api/library/artworks?' + params.toString());
@@ -174,7 +213,7 @@
          g.innerHTML = data.artworks.map((a, i) => {
             return `
             <figure class="tile relative rounded-xl overflow-hidden bg-neutral-900 cursor-pointer group" data-i="${i}">
-               <img loading="lazy" src="${esc(bakedThumb(a))}" data-fb="${esc(proxyThumb(a))}" alt="${esc(a.title)}"
+               <img loading="lazy" src="${esc(gridThumb(a))}" data-fb="${esc(proxyThumb(a))}" alt="${esc(a.title)}"
                     class="w-full block" onerror="thumbFallback(this)">
                <figcaption class="tile-cap absolute inset-x-0 bottom-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
                   <p class="text-white text-sm font-semibold leading-tight line-clamp-2">${esc(a.title)}</p>
@@ -207,7 +246,8 @@
          currentArt = a;
          $('lbImg').src = fullOf(a);
          $('lbTitle').textContent = a.title || 'Untitled';
-         $('lbMeta').textContent = [a.artist, a.date_text, a.medium].filter(Boolean).join(' · ');
+         $('lbMeta').textContent =
+            [a.artist, a.nationality, a.date_text || a.era, a.genre, a.medium].filter(Boolean).join(' · ');
          const src = $('lbSource');
          if (a.source_url) { src.href = a.source_url; src.style.display = ''; }
          else { src.style.display = 'none'; }
@@ -237,10 +277,16 @@
       // Filters
       $('apply').onclick = () => { page = 1; load(); };
       $('search').addEventListener('keydown', (e) => { if (e.key === 'Enter') { page = 1; load(); } });
-      $('source').addEventListener('change', () => { page = 1; load(); });
+      ['source', 'era', 'genre', 'nationality'].forEach((id) =>
+         $(id).addEventListener('change', () => { page = 1; load(); }));
+      $('clear').onclick = () => {
+         ['search', 'source', 'era', 'genre', 'nationality'].forEach((id) => { $(id).value = ''; });
+         page = 1; load();
+      };
 
       // Boot
       loadSources();
+      loadFacets();
       loadStats();
       load();
    </script>

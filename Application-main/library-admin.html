@@ -98,6 +98,11 @@
                <i class="fa-solid fa-cloud-arrow-down mr-1"></i> Start ingestion
             </button>
 
+            <button id="syncBucketBtn" title="Import every image already in the object-storage bucket"
+               class="w-full mt-3 bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 disabled:opacity-40 text-white text-sm font-semibold px-4 py-2.5 rounded-lg">
+               <i class="fa-solid fa-database mr-1 text-blue-400"></i> Sync uploaded bucket
+            </button>
+
             <!-- Live job -->
             <div id="jobPanel" class="hidden mt-5 bg-neutral-950 border border-neutral-800 rounded-lg p-4">
                <div class="flex items-center justify-between mb-2">
@@ -235,6 +240,18 @@
          }
       };
 
+      $('syncBucketBtn').onclick = async () => {
+         if (!confirm('Import every image currently in the uploaded bucket? Safe to re-run after uploading more files.')) return;
+         try {
+            $('syncBucketBtn').disabled = true;
+            const { job_id } = await api('/api/library/sync-bucket', { method: 'POST' });
+            pollJob(job_id, null);   // no fixed target → indeterminate progress
+         } catch (e) {
+            alert('Could not start bucket sync: ' + e.message);
+            $('syncBucketBtn').disabled = false;
+         }
+      };
+
       function pollJob(jobId, limit) {
          $('jobPanel').classList.remove('hidden');
          $('jobId').textContent = '#' + jobId;
@@ -243,18 +260,28 @@
          pollTimer = setInterval(async () => {
             try {
                const j = await api(`/api/library/jobs/${jobId}`);
-               const pct = Math.min(100, Math.round((j.saved / (j.requested || limit)) * 100));
-               $('jobBar').style.width = pct + '%';
+               const denom = j.requested || limit;
+               if (denom) {
+                  $('jobBar').style.width = Math.min(100, Math.round((j.saved / denom) * 100)) + '%';
+                  $('jobBar').classList.remove('animate-pulse');
+               } else {
+                  // Indeterminate (bucket sync has no fixed target) — pulse instead.
+                  $('jobBar').style.width = '100%';
+                  $('jobBar').classList.add('animate-pulse');
+               }
                $('jobMsg').textContent = j.message || j.status;
                if (['done', 'error', 'cancelled'].includes(j.status)) {
                   clearInterval(pollTimer);
+                  $('jobBar').classList.remove('animate-pulse');
                   $('startBtn').disabled = false;
+                  $('syncBucketBtn').disabled = false;
                   refreshStats();
                   loadGallery();
                }
             } catch (e) {
                clearInterval(pollTimer);
                $('startBtn').disabled = false;
+               $('syncBucketBtn').disabled = false;
             }
          }, 1500);
       }

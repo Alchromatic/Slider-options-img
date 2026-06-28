@@ -37,10 +37,27 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 import image_library_db as db
+import bucket_storage as bs
 from image_sources import (
     ADAPTERS, IMAGE_LIBRARY_DIR, PROXY_CACHE_DIR, SOURCE_LABELS,
     bake_thumbnail, render_cached_image,
 )
+
+
+def _resolve_bucket_urls(rows: list) -> list:
+    """For object-storage (bucket) rows, swap in short-lived presigned URLs:
+    a small thumbnail for the grid and a medium image for the lightbox/use."""
+    if not bs.is_configured():
+        return rows
+    for r in rows:
+        if r.get("source") == "bucket" and r.get("thumb_key"):
+            try:
+                r["thumb_url"] = bs.presigned_url(r["thumb_key"])
+                if r.get("storage_key"):
+                    r["image_url"] = bs.presigned_url(bs.medium_key_for(r["storage_key"]))
+            except Exception:
+                pass
+    return rows
 
 router = APIRouter(prefix="/api/library", tags=["15. Reference image library"])
 
@@ -150,6 +167,13 @@ def stats():
     return db.library_stats()
 
 
+@router.get("/facets")
+def facets():
+    """Distinct values (with counts) for the normalized filter dropdowns
+    (era / genre / nationality). Public — used by the gallery filter UI."""
+    return db.library_facets()
+
+
 @router.post("/ingest")
 def start_ingest(req: IngestRequest, x_admin_token: Optional[str] = Header(None)):
     _require_admin(x_admin_token)
@@ -166,6 +190,33 @@ def start_ingest(req: IngestRequest, x_admin_token: Optional[str] = Header(None)
         target=_run_job, args=(job_id, req.source, params, req.limit), daemon=True
     )
     t.start()
+    return {"job_id": job_id, "status": "started"}
+
+
+@router.post("/sync-bucket")
+def sync_bucket_endpoint(x_admin_token: Optional[str] = Header(None)):
+    """Admin: import every image in the object-storage bucket (generate
+    thumbnails + rows). Idempotent — run again after uploading more files."""
+    _require_admin(x_admin_token)
+    if not bs.is_configured():
+        raise HTTPException(status_code=503, detail="Object storage not configured (S3_* env).")
+    from bucket_sync import sync_bucket
+    job_id = db.create_job("bucket", {}, 0)
+
+    def run() -> None:
+        db.update_job(job_id, status="running", message="Listing bucket…")
+        try:
+            res = sync_bucket(on_status=lambda m: db.update_job(job_id, message=m))
+            db.update_job(
+                job_id, status="done", saved=res.get("saved", 0),
+                skipped=res.get("skipped", 0), failed=res.get("failed", 0),
+                message=f"Done. {res.get('saved', 0)} new from bucket, "
+                        f"{res.get('skipped', 0)} existing.",
+            )
+        except Exception as e:  # noqa: BLE001
+            db.update_job(job_id, status="error", message=f"Error: {e}")
+
+    threading.Thread(target=run, daemon=True).start()
     return {"job_id": job_id, "status": "started"}
 
 
@@ -207,6 +258,23 @@ def image_proxy(artwork_id: int, size: str = "thumb"):
         raise HTTPException(status_code=404, detail="No such artwork.")
 
     cache_path = os.path.join(PROXY_CACHE_DIR, f"{artwork_id}_{size}.jpg")
+
+    # Object-storage (bucket) images: the thumb/medium are pre-generated in the
+    # bucket — fetch and cache them (served same-origin as a fallback to the
+    # presigned URLs the gallery normally uses).
+    if art.get("storage_key") and bs.is_configured():
+        if not (os.path.isfile(cache_path) and os.path.getsize(cache_path) > 0):
+            key = art["thumb_key"] if size == "thumb" else bs.medium_key_for(art["storage_key"])
+            try:
+                data = bs.get_bytes(key)
+                os.makedirs(PROXY_CACHE_DIR, exist_ok=True)
+                with open(cache_path, "wb") as fh:
+                    fh.write(data)
+            except Exception:
+                raise HTTPException(status_code=502, detail="Image unavailable from storage.")
+        return FileResponse(cache_path, media_type="image/jpeg",
+                            headers={"Cache-Control": "public, max-age=604800"})
+
     if size == "thumb":
         candidates = [art.get("thumb_url"), art.get("image_url")]
     else:
@@ -231,13 +299,19 @@ def artworks(
     classification: Optional[str] = None,
     year_from: Optional[int] = None,
     year_to: Optional[int] = None,
+    era: Optional[str] = None,
+    genre: Optional[str] = None,
+    artist: Optional[str] = None,
+    nationality: Optional[str] = None,
     page: int = 1,
     page_size: int = Query(40, ge=1, le=200),
 ):
     rows, total = db.query_artworks(
         source=source, search=search, classification=classification,
-        year_from=year_from, year_to=year_to, page=page, page_size=page_size,
+        year_from=year_from, year_to=year_to, era=era, genre=genre,
+        artist=artist, nationality=nationality, page=page, page_size=page_size,
     )
+    rows = _resolve_bucket_urls(rows)
     return {"total": total, "page": page, "page_size": page_size, "artworks": rows}
 
 

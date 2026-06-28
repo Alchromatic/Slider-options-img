@@ -62,10 +62,17 @@ def init_image_library_tables() -> None:
                 )
                 """
             )
+            # Normalized cross-source filter columns + object-storage keys
+            # (added separately so existing tables upgrade in place).
+            for col in ("nationality", "genre", "era", "storage_key", "thumb_key"):
+                cur.execute(f"ALTER TABLE image_library ADD COLUMN IF NOT EXISTS {col} TEXT")
             for stmt in (
                 "CREATE INDEX IF NOT EXISTS idx_imglib_source ON image_library(source)",
                 "CREATE INDEX IF NOT EXISTS idx_imglib_classification ON image_library(classification)",
                 "CREATE INDEX IF NOT EXISTS idx_imglib_year ON image_library(year_start)",
+                "CREATE INDEX IF NOT EXISTS idx_imglib_genre ON image_library(genre)",
+                "CREATE INDEX IF NOT EXISTS idx_imglib_era ON image_library(era)",
+                "CREATE INDEX IF NOT EXISTS idx_imglib_nationality ON image_library(nationality)",
             ):
                 cur.execute(stmt)
 
@@ -102,7 +109,7 @@ _ARTWORK_FIELDS = (
     "source", "source_id", "title", "artist", "date_text", "year_start",
     "year_end", "medium", "classification", "description", "tags",
     "source_url", "image_url", "thumb_url", "local_path", "width", "height",
-    "file_size",
+    "file_size", "nationality", "genre", "era", "storage_key", "thumb_key",
 )
 
 
@@ -149,6 +156,10 @@ def query_artworks(
     classification: Optional[str] = None,
     year_from: Optional[int] = None,
     year_to: Optional[int] = None,
+    era: Optional[str] = None,
+    genre: Optional[str] = None,
+    artist: Optional[str] = None,
+    nationality: Optional[str] = None,
     page: int = 1,
     page_size: int = 40,
 ) -> Tuple[List[Dict[str, Any]], int]:
@@ -171,6 +182,18 @@ def query_artworks(
     if year_to is not None:
         where.append("year_start <= %s")
         args.append(year_to)
+    if era:
+        where.append("era = %s")
+        args.append(era)
+    if genre:
+        where.append("genre = %s")
+        args.append(genre)
+    if nationality:
+        where.append("nationality = %s")
+        args.append(nationality)
+    if artist:
+        where.append("artist ILIKE %s")
+        args.append(f"%{artist}%")
     clause = ("WHERE " + " AND ".join(where)) if where else ""
 
     page = max(1, int(page))
@@ -212,6 +235,24 @@ def delete_artwork(artwork_id: int) -> Optional[str]:
         row = cur.fetchone()
         conn.commit()
         return row[0] if row else None
+
+
+def library_facets() -> Dict[str, Any]:
+    """Distinct values (with counts) for the normalized filter dropdowns."""
+    out: Dict[str, Any] = {}
+    with get_db() as conn:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        for field in ("era", "genre", "nationality"):
+            cur.execute(
+                f"""
+                SELECT {field} AS value, COUNT(*) AS n
+                FROM image_library
+                WHERE {field} IS NOT NULL AND TRIM({field}) <> ''
+                GROUP BY {field} ORDER BY n DESC
+                """
+            )
+            out[field] = [{"value": r["value"], "count": r["n"]} for r in cur.fetchall()]
+    return out
 
 
 def library_stats() -> Dict[str, Any]:
@@ -289,6 +330,7 @@ __all__ = [
     "get_artwork",
     "delete_artwork",
     "library_stats",
+    "library_facets",
     "create_job",
     "update_job",
     "get_job",
