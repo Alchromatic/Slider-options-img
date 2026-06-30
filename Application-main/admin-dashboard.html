@@ -1,0 +1,559 @@
+<!doctype html><html lang="en"><head>  <meta charset="utf-8" />  <meta name="viewport" content="width=device-width,initial-scale=1" />  <title>Super Admin -- CEO Dashboard</title>  <style>    :root{      --bg:#0b1220;      --panel:#101a2f;      --panel2:#0f1730;      --border:rgba(255,255,255,.08);      --muted:rgba(255,255,255,.65);      --text:rgba(255,255,255,.92);      --good:#2fe38c;      --warn:#ffcc66;      --bad:#ff6b6b;      --accent:#7aa7ff;      --chip:#18284a;      --shadow: 0 10px 30px rgba(0,0,0,.35);      --radius:14px;      --radius2:10px;      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";    }    *{box-sizing:border-box}    body{      margin:0;      background:linear-gradient(180deg,#070b14, #0b1220 18%, #0b1220);      color:var(--text);      font-family:var(--sans);    }    a{color:inherit}    .app{      display:grid;      grid-template-columns: 270px 1fr;      min-height:100vh;    }    /* Sidebar */    .sidebar{      border-right:1px solid var(--border);      padding:18px 14px;      background:linear-gradient(180deg,#0a1020,#070b14);      position:sticky; top:0; height:100vh;    }    .brand{      display:flex; align-items:center; gap:10px; padding:10px 10px 14px;    }    .logo{      width:34px;height:34px;border-radius:10px;      background: radial-gradient(circle at 30% 30%, #7aa7ff, #2f55ff 55%, #14224a);      box-shadow: var(--shadow);    }    .brand h1{font-size:14px;margin:0}    .brand .sub{font-size:12px;color:var(--muted);margin-top:2px}    .nav{      margin-top:10px;      display:flex; flex-direction:column; gap:6px;    }    .nav a{      text-decoration:none;      padding:10px 10px;      border-radius:12px;      display:flex; align-items:center; justify-content:space-between;      border:1px solid transparent;      color:rgba(255,255,255,.82);    }    .nav a:hover{border-color:var(--border); background:rgba(255,255,255,.03)}    .nav a.active{background:rgba(122,167,255,.12); border-color:rgba(122,167,255,.25)}    .pill{      font-size:12px; padding:2px 8px; border-radius:999px;      background:rgba(255,255,255,.06);      color:rgba(255,255,255,.75);    }    /* Main */    .main{padding:18px 18px 60px}    .topbar{      position:sticky; top:0; z-index:5;      backdrop-filter: blur(10px);      background: rgba(11,18,32,.72);      border:1px solid var(--border);      border-radius: var(--radius);      box-shadow: var(--shadow);      padding:12px;    }    .topbarRow{      display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between;    }    .filters{display:flex; flex-wrap:wrap; gap:10px; align-items:center}    .control{      background: rgba(255,255,255,.05);      border:1px solid var(--border);      border-radius: 12px;      padding:8px 10px;      display:flex; align-items:center; gap:8px;      min-height:38px;    }    .control label{font-size:12px;color:var(--muted)}    .control select,.control input{      border:none; outline:none; background:transparent; color:var(--text);      font-size:13px; min-width:120px;    }    .control input{min-width:180px}    .btn{      border:none; cursor:pointer;      background: rgba(122,167,255,.18);      border:1px solid rgba(122,167,255,.28);      color:var(--text);      padding:9px 12px;      border-radius:12px;      font-weight:600;    }    .btn:hover{background: rgba(122,167,255,.24)}    .btn.secondary{      background: rgba(255,255,255,.06);      border-color: var(--border);      font-weight:600;    }    /* Sections */    .section{margin-top:16px}    .section h2{      margin:18px 0 10px;      font-size:14px; letter-spacing:.2px;      color:rgba(255,255,255,.88);      display:flex; align-items:center; gap:10px;    }    .chip{      font-size:12px;      color:rgba(255,255,255,.78);      background:rgba(255,255,255,.06);      border:1px solid var(--border);      padding:3px 8px;      border-radius:999px;    }    .grid{      display:grid;      grid-template-columns: repeat(12, 1fr);      gap:12px;    }    .card{      background: rgba(255,255,255,.04);      border:1px solid var(--border);      border-radius: var(--radius);      box-shadow: var(--shadow);      padding:12px;    }    .kpi{display:flex; flex-direction:column; gap:8px}    .kpi .label{font-size:12px;color:var(--muted)}    .kpi .value{font-size:20px;font-weight:800; letter-spacing:.2px}    .kpi .delta{font-size:12px}    .delta.good{color:var(--good)}    .delta.warn{color:var(--warn)}    .delta.bad{color:var(--bad)}    .placeholder{      height:240px;      background: linear-gradient(180deg, rgba(122,167,255,.06), rgba(255,255,255,.02));      border:1px dashed rgba(255,255,255,.16);      border-radius: 12px;      display:flex; align-items:center; justify-content:center;      color: rgba(255,255,255,.62);      font-family: var(--mono);      font-size:12px;      overflow:hidden;      position:relative;    }    .placeholder::after{      content:"";      position:absolute; inset:-40px;      background: radial-gradient(circle at 30% 20%, rgba(122,167,255,.18), transparent 50%),                  radial-gradient(circle at 80% 70%, rgba(47,227,140,.12), transparent 50%);      filter: blur(20px);      opacity:.9;    }    .placeholder span{position:relative; z-index:1}    /* Tables */    .tableWrap{overflow:auto; border-radius: var(--radius); border:1px solid var(--border)}    table{width:100%; border-collapse:separate; border-spacing:0; min-width:1100px; background: rgba(255,255,255,.02)}    thead th{      position:sticky; top:0;      background: rgba(16,26,47,.92);      backdrop-filter: blur(6px);      color: rgba(255,255,255,.72);      font-weight:600;      font-size:12px;      text-align:left;      padding:10px 12px;      border-bottom:1px solid var(--border);      white-space:nowrap;    }    tbody td{      padding:10px 12px;      border-bottom:1px solid rgba(255,255,255,.06);      font-size:13px;      white-space:nowrap;      color:rgba(255,255,255,.88);    }    tbody tr:hover{background: rgba(122,167,255,.06)}    .status{      display:inline-flex; align-items:center; gap:6px;      padding:3px 8px; border-radius:999px;      border:1px solid var(--border);      background: rgba(255,255,255,.04);      font-size:12px;      color: rgba(255,255,255,.8);    }    .dot{width:8px;height:8px;border-radius:50%}    .dot.good{background:var(--good)}    .dot.warn{background:var(--warn)}    .dot.bad{background:var(--bad)}    .mono{font-family:var(--mono); font-size:12px; color:rgba(255,255,255,.72)}    .right{text-align:right}    .muted{color:var(--muted)}    .rowActions{      display:flex; gap:8px;    }    .miniBtn{      padding:6px 8px;      border-radius:10px;      border:1px solid var(--border);      background: rgba(255,255,255,.05);      color: rgba(255,255,255,.86);      cursor:pointer;      font-size:12px;    }    .miniBtn:hover{background: rgba(255,255,255,.08)}    .danger{border-color: rgba(255,107,107,.32); background: rgba(255,107,107,.10)}    /* Modal / Drawer */    .drawer{      position:fixed; top:0; right:0; height:100vh; width:min(520px, 96vw);      background: rgba(16,26,47,.98);      border-left:1px solid var(--border);      box-shadow: var(--shadow);      transform: translateX(110%);      transition: transform .25s ease;      z-index:20;      padding:14px;      overflow:auto;    }    .drawer.open{transform: translateX(0)}    .drawerHeader{display:flex; align-items:flex-start; justify-content:space-between; gap:10px}    .drawerTitle{margin:0; font-size:14px}    .drawerGrid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px}    .kv{padding:10px; border-radius:12px; border:1px solid var(--border); background: rgba(255,255,255,.04)}    .kv .k{font-size:12px;color:var(--muted)}    .kv .v{font-size:13px;margin-top:4px}    .tabs{display:flex; gap:8px; margin:12px 0}    .tab{padding:8px 10px; border-radius:12px; border:1px solid var(--border); background: rgba(255,255,255,.04); font-size:12px; cursor:pointer}    .tab.active{background: rgba(122,167,255,.14); border-color: rgba(122,167,255,.25)}    .hr{height:1px; background:rgba(255,255,255,.08); margin:10px 0}    .small{font-size:12px;color:var(--muted)}    /* Responsive */    @media (max-width: 1000px){      .app{grid-template-columns: 1fr}      .sidebar{position:relative; height:auto}      table{min-width:900px}    }  </style></head><body>
+<!-- ===== Admin token gate (added; not part of the client mockup) ===== -->
+<div id="adminGate" style="position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#070b14,#0b1220);font-family:var(--sans)">
+  <div style="width:min(420px,92vw);background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:26px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+      <div style="width:30px;height:30px;border-radius:9px;background:radial-gradient(circle at 30% 30%,#7aa7ff,#2f55ff 55%,#14224a)"></div>
+      <div style="font-weight:800;font-size:15px;color:var(--text)">Super Admin</div>
+    </div>
+    <div style="color:var(--muted);font-size:13px;margin:6px 0 16px">Enter your admin token to open the CEO dashboard.</div>
+    <input id="adminGateToken" type="password" placeholder="Paste ADMIN_TOKEN…" autocomplete="off"
+      style="width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:12px;padding:11px 12px;color:var(--text);font-size:14px;outline:none" />
+    <button id="adminGateBtn"
+      style="width:100%;margin-top:12px;border:1px solid rgba(122,167,255,.28);background:rgba(122,167,255,.18);color:var(--text);font-weight:700;padding:11px;border-radius:12px;cursor:pointer">Unlock dashboard</button>
+    <div id="adminGateMsg" style="min-height:18px;margin-top:10px;font-size:12px;color:var(--bad)"></div>
+    <div style="margin-top:6px;font-size:11px;color:var(--muted)">Sent as the <span class="mono">X-Admin-Token</span> header — never a user password.</div>
+  </div>
+</div>
+
+<div class="app">  <!-- Sidebar -->  <aside class="sidebar">    <div class="brand">      <div class="logo"></div>      <div>        <h1>Super Admin</h1>        <div class="sub">CEO / Founder Dashboard</div>      </div>    </div>    <nav class="nav">      <a class="active" href="#overview">Overview <span class="pill">Live</span></a>      <a href="#credits">Credits & Economics <span class="pill">Unit</span></a>      <a href="#retention">Retention & Churn <span class="pill">Cohorts</span></a>      <a href="#customers">Customers <span class="pill">Table</span></a>      <a href="#transactions">Transactions <span class="pill">Table</span></a>      <a href="#ops">Ops & Risk <span class="pill">Infra</span></a>    </nav>    <div class="section">      <h2>Quick Presets <span class="chip">One click</span></h2>      <div style="display:flex;flex-direction:column;gap:8px">        <button class="btn secondary">Last 30 days -- Exec</button>        <button class="btn secondary">Plan performance</button>        <button class="btn secondary">Churn radar</button>        <button class="btn secondary">Power users</button>      </div>      <div class="hr"></div>      <div class="small">Tip: wire these to saved filter states.</div>    </div>  </aside>  <!-- Main -->  <main class="main">    <!-- Topbar / Filters -->    <div class="topbar">      <div class="topbarRow">        <div class="filters">          <div class="control">            <label>Date</label>            <select>              <option>Last 30 days</option>              <option>Last 7 days</option>              <option>MTD</option>              <option>QTD</option>              <option>YTD</option>              <option>Custom...</option>            </select>          </div>          <div class="control">            <label>Plan</label>            <select>              <option>All</option>              <option>Plan 1</option>              <option>Plan 2</option>              <option>Plan 3</option>            </select>          </div>          <div class="control">            <label>Platform</label>            <select>              <option>All</option>              <option>iOS</option>              <option>Android</option>              <option>Web</option>            </select>          </div>          <div class="control">            <label>Country</label>            <select>              <option>All</option>              <option>US</option>              <option>CA</option>              <option>UK</option>              <option>AU</option>            </select>          </div>          <div class="control">            <label>Status</label>            <select>              <option>All</option>              <option>trial</option>              <option>active</option>              <option>past_due</option>              <option>canceled</option>            </select>          </div>          <div class="control">            <label>Search</label>            <input placeholder="email / user id / customer id" />          </div>        </div>        <div style="display:flex; gap:10px; align-items:center">          <button class="btn secondary">Export</button>          <button class="btn">Create Alert</button>        </div>      </div>    </div>    <!-- Overview -->    <section id="overview" class="section">      <h2>Executive KPIs <span class="chip">Heartbeat</span></h2>      <div class="grid">        <div class="card kpi" style="grid-column: span 3;">          <div class="label">Gross Revenue (MTD)</div>          <div class="value">$24,525</div>          <div class="delta good">▲ 6.7% vs last period</div>        </div>        <div class="card kpi" style="grid-column: span 3;">          <div class="label">MRR</div>          <div class="value">$62,380</div>          <div class="delta good">▲ 3.1%</div>        </div>        <div class="card kpi" style="grid-column: span 3;">          <div class="label">Active Subscribers</div>          <div class="value">11,675</div>          <div class="delta bad">▼ 2.0%</div>        </div>        <div class="card kpi" style="grid-column: span 3;">          <div class="label">Churn Rate (Monthly)</div>          <div class="value">2.89%</div>          <div class="delta good">▼ 0.41%</div>        </div>        <div class="card kpi" style="grid-column: span 3;">          <div class="label">Credits Used (this cycle)</div>          <div class="value">26.1%</div>          <div class="delta good">▲ 5.2%</div>        </div>        <div class="card kpi" style="grid-column: span 3;">          <div class="label">Conversion (Trial → Paid)</div>          <div class="value">23.7%</div>          <div class="delta good">▲ 1.8%</div>        </div>        <div class="card kpi" style="grid-column: span 3;">          <div class="label">Payment Failure Rate</div>          <div class="value">5.7%</div>          <div class="delta warn">▲ 1.1%</div>        </div>        <div class="card kpi" style="grid-column: span 3;">          <div class="label">MAU</div>          <div class="value">83,920</div>          <div class="delta good">▲ 4.4%</div>        </div>      </div>      <div class="grid" style="margin-top:12px">        <div class="card" style="grid-column: span 8;">          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">            <div>              <div style="font-weight:800">Revenue over time</div>              <div class="small">Stacked by plan</div>            </div>            <span class="chip">Daily</span>          </div>          <div class="placeholder"><span>[Chart placeholder: revenue line/stacked bars]</span></div>        </div>        <div class="card" style="grid-column: span 4;">          <div style="font-weight:800;margin-bottom:6px">Plan Mix</div>          <div class="small">Share of subs + revenue</div>          <div class="placeholder" style="height:240px"><span>[Chart placeholder: donut / stacked bar]</span></div>        </div>        <div class="card" style="grid-column: span 6;">          <div style="font-weight:800;margin-bottom:6px">Subscriber Funnel</div>          <div class="small">Visitors → Signup → Activated → Subscribed</div>          <div class="placeholder"><span>[Chart placeholder: funnel]</span></div>        </div>        <div class="card" style="grid-column: span 6;">          <div style="font-weight:800;margin-bottom:6px">New vs Churned</div>          <div class="small">Net adds over time</div>          <div class="placeholder"><span>[Chart placeholder: bars + line]</span></div>        </div>      </div>    </section>    <!-- Credits & Economics -->    <section id="credits" class="section">      <h2>Credits & Unit Economics <span class="chip">$2.99 baseline</span></h2>      <div class="grid">        <div class="card" style="grid-column: span 7;">          <div style="font-weight:800;margin-bottom:6px">Credits Granted vs Used</div>          <div class="small">By plan, monthly</div>          <div class="placeholder"><span>[Chart placeholder: stacked bars]</span></div>        </div>        <div class="card" style="grid-column: span 5;">          <div style="font-weight:800;margin-bottom:6px">Wasted Credits</div>          <div class="small">Unused at month end (churn signal)</div>          <div class="placeholder"><span>[Chart placeholder: histogram]</span></div>        </div>        <div class="card" style="grid-column: span 6;">          <div style="font-weight:800;margin-bottom:6px">Power Users</div>          <div class="small">Top 1% by generation volume</div>          <div class="tableWrap">            <table>              <thead>                <tr>                  <th>User</th><th>Plan</th><th>Images (30d)</th><th>Used%</th><th>Churn Risk</th>                </tr>              </thead>              <tbody>                <tr>                  <td>aria@studio.io</td><td>Plan 3</td><td class="right">312</td><td class="right">98%</td>                  <td><span class="status"><span class="dot good"></span>Low</span></td>                </tr>                <tr>                  <td>mike@design.dev</td><td>Plan 2</td><td class="right">89</td><td class="right">100%</td>                  <td><span class="status"><span class="dot warn"></span>Med</span></td>                </tr>                <tr>                  <td>noah@art.fun</td><td>Plan 2</td><td class="right">77</td><td class="right">92%</td>                  <td><span class="status"><span class="dot warn"></span>Med</span></td>                </tr>              </tbody>            </table>          </div>        </div>        <div class="card" style="grid-column: span 6;">          <div style="font-weight:800;margin-bottom:6px">Implied Value Consumed</div>          <div class="small">Images generated × $2.99 (compare to plan price)</div>          <div class="placeholder"><span>[Chart placeholder: line or bar by plan]</span></div>        </div>      </div>    </section>    <!-- Retention -->    <section id="retention" class="section">      <h2>Retention & Churn <span class="chip">Cohorts</span></h2>      <div class="grid">        <div class="card" style="grid-column: span 7;">          <div style="font-weight:800;margin-bottom:6px">Retention Cohort Table</div>          <div class="small">Cohort = first paid month (or signup month)</div>          <div class="placeholder"><span>[Chart placeholder: cohort heatmap table]</span></div>        </div>        <div class="card" style="grid-column: span 5;">          <div style="font-weight:800;margin-bottom:6px">Churn Reasons</div>          <div class="small">From exit survey or support tags</div>          <div class="placeholder"><span>[Chart placeholder: bar chart]</span></div>        </div>        <div class="card" style="grid-column: span 6;">          <div style="font-weight:800;margin-bottom:6px">Health Score Distribution</div>          <div class="small">0-100 score (usage + billing + support)</div>          <div class="placeholder"><span>[Chart placeholder: histogram]</span></div>        </div>        <div class="card" style="grid-column: span 6;">          <div style="font-weight:800;margin-bottom:6px">Winback / Reactivation</div>          <div class="small">Canceled users + offer performance</div>          <div class="placeholder"><span>[Chart placeholder: table + conversion]</span></div>        </div>      </div>    </section>    <!-- Customers table -->    <section id="customers" class="section">      <h2>Customers <span class="chip">Subscribers table</span></h2>      <div class="card">        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px;flex-wrap:wrap">          <div>            <div style="font-weight:800">Subscribers</div>            <div class="small">Filter by plan, status, usage %, health score, country, platform</div>          </div>          <div style="display:flex;gap:10px;align-items:center">            <span class="chip">Showing 50</span>            <button class="btn secondary">Saved View</button>            <button class="btn secondary">Export CSV</button>          </div>        </div>        <div class="tableWrap">          <table>            <thead>              <tr>                <th>User</th>                <th>Plan</th>                <th>Status</th>                <th>Country</th>                <th>Platform</th>                <th>Lifetime $</th>                <th>Credits (cycle)</th>                <th>Used%</th>                <th>Last Active</th>                <th>Health</th>                <th class="right">Actions</th>              </tr>            </thead>            <tbody>              <tr>                <td>                  <div style="font-weight:700">aria@studio.io</div>                  <div class="mono">usr_9a83...</div>                </td>                <td>Plan 3</td>                <td><span class="status"><span class="dot good"></span>active</span></td>                <td>US</td>                <td>iOS</td>                <td>$219.00</td>                <td>50 / 49</td>                <td>98%</td>                <td>Today</td>                <td><span class="status"><span class="dot good"></span>92</span></td>                <td class="right">                  <div class="rowActions">                    <button class="miniBtn" onclick="openDrawer()">View</button>                    <button class="miniBtn">Credits</button>                    <button class="miniBtn danger">Cancel</button>                  </div>                </td>              </tr>              <tr>                <td>                  <div style="font-weight:700">mike@design.dev</div>                  <div class="mono">usr_1bd2...</div>                </td>                <td>Plan 2</td>                <td><span class="status"><span class="dot warn"></span>past_due</span></td>                <td>CA</td>                <td>Web</td>                <td>$49.00</td>                <td>10 / 10</td>                <td>100%</td>                <td>3d ago</td>                <td><span class="status"><span class="dot warn"></span>61</span></td>                <td class="right">                  <div class="rowActions">                    <button class="miniBtn" onclick="openDrawer()">View</button>                    <button class="miniBtn">Dunning</button>                    <button class="miniBtn danger">Cancel</button>                  </div>                </td>              </tr>              <tr>                <td>                  <div style="font-weight:700">sara@hobby.art</div>                  <div class="mono">usr_7c01...</div>                </td>                <td>Plan 1</td>                <td><span class="status"><span class="dot bad"></span>canceled</span></td>                <td>UK</td>                <td>Android</td>                <td>$9.99</td>                <td>1 / 0</td>                <td>0%</td>                <td>18d ago</td>                <td><span class="status"><span class="dot bad"></span>22</span></td>                <td class="right">                  <div class="rowActions">                    <button class="miniBtn" onclick="openDrawer()">View</button>                    <button class="miniBtn">Winback</button>                  </div>                </td>              </tr>            </tbody>          </table>        </div>      </div>    </section>    <!-- Transactions -->    <section id="transactions" class="section">      <h2>Transactions <span class="chip">Sales / Billing</span></h2>      <div class="card">        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px;flex-wrap:wrap">          <div>            <div style="font-weight:800">Transactions</div>            <div class="small">Purchases, renewals, upgrades, refunds, chargebacks</div>          </div>          <div style="display:flex;gap:10px;align-items:center">            <span class="chip">Gross $24,525</span>            <span class="chip">Refunds $413</span>            <span class="chip">Net $23,990</span>            <button class="btn secondary">Export CSV</button>          </div>        </div>        <div class="tableWrap">          <table>            <thead>              <tr>                <th>Txn</th>                <th>Date</th>                <th>User</th>                <th>Type</th>                <th>Plan</th>                <th class="right">Gross</th>                <th class="right">Fees</th>                <th class="right">Net</th>                <th>Status</th>                <th>Promo</th>              </tr>            </thead>            <tbody>              <tr>                <td class="mono">txn_88ac...</td>                <td>2026-01-29</td>                <td>aria@studio.io</td>                <td>renewal</td>                <td>Plan 3</td>                <td class="right">$29.99</td>                <td class="right">$1.19</td>                <td class="right">$28.80</td>                <td><span class="status"><span class="dot good"></span>paid</span></td>                <td class="mono">--</td>              </tr>              <tr>                <td class="mono">txn_1c3f...</td>                <td>2026-01-29</td>                <td>mike@design.dev</td>                <td>renewal</td>                <td>Plan 2</td>                <td class="right">$9.99</td>                <td class="right">$0.49</td>                <td class="right">$9.50</td>                <td><span class="status"><span class="dot warn"></span>failed</span></td>                <td class="mono">WELCOME10</td>              </tr>              <tr>                <td class="mono">txn_0aa9...</td>                <td>2026-01-28</td>                <td>sara@hobby.art</td>                <td>refund</td>                <td>Plan 1</td>                <td class="right">-$9.99</td>                <td class="right">$0.00</td>                <td class="right">-$9.99</td>                <td><span class="status"><span class="dot bad"></span>refunded</span></td>                <td class="mono">--</td>              </tr>            </tbody>          </table>        </div>      </div>    </section>    <!-- Ops -->    <section id="ops" class="section">      <h2>Ops & Risk <span class="chip">Payments + Infra</span></h2>      <div class="grid">        <div class="card" style="grid-column: span 4;">          <div style="font-weight:800;margin-bottom:6px">Payments</div>          <div class="small">Past due, dunning recovery</div>          <div class="placeholder" style="height:220px"><span>[Chart placeholder]</span></div>        </div>        <div class="card" style="grid-column: span 4;">          <div style="font-weight:800;margin-bottom:6px">Fraud / Abuse</div>          <div class="small">Multi-account devices, anomalies</div>          <div class="placeholder" style="height:220px"><span>[Rules + alerts placeholder]</span></div>        </div>        <div class="card" style="grid-column: span 4;">          <div style="font-weight:800;margin-bottom:6px">Generation Health</div>          <div class="small">Latency, error rate</div>          <div class="placeholder" style="height:220px"><span>[p50/p95 latency + errors]</span></div>        </div>      </div>    </section>  </main></div><!-- Customer 360 Drawer --><div id="drawer" class="drawer" aria-hidden="true">  <div class="drawerHeader">    <div>      <h3 class="drawerTitle">Customer 360 -- aria@studio.io</h3>      <div class="small">usr_9a83... • Stripe cus_... • Plan 3</div>    </div>    <button class="miniBtn" onclick="closeDrawer()">Close</button>  </div>  <div class="drawerGrid">    <div class="kv"><div class="k">Status</div><div class="v"><span class="status"><span class="dot good"></span>active</span></div></div>    <div class="kv"><div class="k">Health Score</div><div class="v"><span class="status"><span class="dot good"></span>92</span></div></div>    <div class="kv"><div class="k">Lifetime Revenue</div><div class="v">$219.00</div></div>    <div class="kv"><div class="k">Last Active</div><div class="v">Today</div></div>    <div class="kv"><div class="k">Cycle Credits</div><div class="v">50 granted / 49 used</div></div>    <div class="kv"><div class="k">Usage</div><div class="v">98%</div></div>  </div>  <div class="tabs">    <div class="tab active">Overview</div>    <div class="tab">Usage</div>    <div class="tab">Billing</div>    <div class="tab">Creations</div>    <div class="tab">Support</div>    <div class="tab">Admin</div>  </div>  <div class="card" style="background:rgba(255,255,255,.03)">    <div style="font-weight:800;margin-bottom:6px">Activity timeline</div>    <div class="small">Last 30 days events</div>    <div class="placeholder" style="height:220px"><span>[Timeline placeholder]</span></div>  </div>  <div class="hr"></div>  <div style="display:flex;gap:10px;flex-wrap:wrap">    <button class="btn secondary">Grant credits</button>    <button class="btn secondary">Comp month</button>    <button class="btn secondary">Send winback</button>    <button class="btn" style="background:rgba(255,107,107,.18); border-color:rgba(255,107,107,.28)">Ban / disable</button>  </div></div><script>  function openDrawer(){    const d = document.getElementById('drawer');    d.classList.add('open');    d.setAttribute('aria-hidden','false');  }  function closeDrawer(){    const d = document.getElementById('drawer');    d.classList.remove('open');    d.setAttribute('aria-hidden','true');  }</script>
+<!-- ===== Charts (added): Chart.js + live data hydration for /api/admin/* ===== -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+  const API_BASE = (new URLSearchParams(location.search).get('api') || '').replace(/\/$/, '') || location.origin;
+  const TOKEN_KEY = 'gm_admin_token';   // shared with library-admin.html
+  let token = localStorage.getItem(TOKEN_KEY) || '';
+
+  // ---- helpers ----
+  const $ = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const money = (v) => '$' + Number(v || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const num = (v) => Number(v || 0).toLocaleString('en-US');
+  const DASH = '—';
+  function fdate(iso) {
+    if (!iso) return DASH;
+    const d = new Date(iso);
+    if (isNaN(d)) return DASH;
+    return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+  function shortId(s, n) { s = String(s || ''); return s.length > (n || 12) ? s.slice(0, n || 12) + '…' : (s || DASH); }
+  function dotClass(status) {
+    const s = String(status || '').toLowerCase();
+    if (s === 'active') return 'good';
+    if (s === 'past_due' || s === 'trialing' || s === 'pending' || s === 'paused') return 'warn';
+    if (s === 'canceled' || s === 'cancelled' || s === 'past due') return 'bad';
+    return '';
+  }
+  function statusPill(status) {
+    const c = dotClass(status);
+    const style = c ? '' : ' style="background:rgba(255,255,255,.35)"';
+    return `<span class="status"><span class="dot ${c}"${style}></span>${esc(status || 'free')}</span>`;
+  }
+  function creditsCell(c) {
+    const granted = c.unlimited ? '∞' : (c.cycle_granted == null ? DASH : c.cycle_granted);
+    return `${granted} / ${c.cycle_used}`;
+  }
+  function pctCell(c) { return c.unlimited ? DASH : (c.used_pct == null ? DASH : c.used_pct + '%'); }
+
+  async function api(path) {
+    const res = await fetch(API_BASE + path, { headers: { 'X-Admin-Token': token } });
+    if (!res.ok) {
+      let d = {}; try { d = await res.json(); } catch (e) {}
+      const err = new Error(d.detail || ('HTTP ' + res.status));
+      err.status = res.status;
+      throw err;
+    }
+    return res.json();
+  }
+
+  // ---- token gate ----
+  const gate = $('#adminGate');
+  const gateInput = $('#adminGateToken');
+  const gateBtn = $('#adminGateBtn');
+  const gateMsg = $('#adminGateMsg');
+
+  async function unlock(t) {
+    gateMsg.textContent = '';
+    token = (t || '').trim();
+    if (!token) { gateMsg.textContent = 'Enter a token.'; return; }
+    try {
+      await api('/api/admin/verify');
+      localStorage.setItem(TOKEN_KEY, token);
+      gate.style.display = 'none';
+      hydrate();
+    } catch (e) {
+      gateMsg.textContent = e.status === 401 ? 'Invalid token.' : (e.message || 'Could not connect.');
+    }
+  }
+  gateBtn.addEventListener('click', () => unlock(gateInput.value));
+  gateInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') unlock(gateInput.value); });
+
+  // ---- KPI cards ----
+  function setKpi(label, value, delta) {
+    const card = $$('#overview .card.kpi').find((c) => {
+      const l = $('.label', c); return l && l.textContent.trim() === label;
+    });
+    if (!card) return;
+    const v = $('.value', card); if (v) v.textContent = value;
+    const d = $('.delta', card); if (d) { d.textContent = delta || ''; d.className = 'delta'; }
+  }
+  function renderOverview(o) {
+    setKpi('Gross Revenue (MTD)', money(o.gross_revenue_mtd));
+    setKpi('MRR', money(o.mrr));
+    setKpi('Active Subscribers', num(o.active_subscribers));
+    setKpi('Churn Rate (Monthly)', o.churn_rate == null ? DASH : o.churn_rate + '%');
+    setKpi('Credits Used (this cycle)', num(o.images_this_cycle));
+    setKpi('Conversion (Trial → Paid)', o.trial_conversion == null ? DASH : o.trial_conversion + '%');
+    setKpi('Payment Failure Rate', o.payment_failure_rate == null ? DASH : o.payment_failure_rate + '%');
+    setKpi('MAU', o.mau == null ? DASH : num(o.mau));
+
+    const tchips = $$('#transactions .chip');
+    tchips.forEach((ch) => {
+      const t = ch.textContent.trim();
+      if (t.startsWith('Gross')) ch.textContent = 'Gross ' + money(o.gross_revenue_total);
+      else if (t.startsWith('Refunds')) ch.textContent = 'Refunds ' + money(0);
+      else if (t.startsWith('Net')) ch.textContent = 'Net ' + money(o.gross_revenue_total);
+    });
+  }
+
+  // ---- Customers table ----
+  function renderCustomers(data) {
+    const tbody = $('#customers table tbody');
+    if (!tbody) return;
+    const rows = data.customers || [];
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="11" class="muted" style="padding:24px;text-align:center">No users found.</td></tr>';
+    } else {
+      tbody.innerHTML = rows.map((c) => `
+        <tr>
+          <td>
+            <div style="font-weight:700">${esc(c.email || DASH)}</div>
+            <div class="mono">${esc(shortId(c.id, 12))}</div>
+          </td>
+          <td>${esc(c.plan_name)}</td>
+          <td>${statusPill(c.status)}</td>
+          <td>${c.country ? esc(c.country) : DASH}</td>
+          <td>${c.platform ? esc(c.platform) : DASH}</td>
+          <td>${money(c.lifetime_revenue)}</td>
+          <td>${esc(creditsCell(c))}</td>
+          <td>${esc(pctCell(c))}</td>
+          <td>${fdate(c.last_active)}</td>
+          <td>${c.health == null ? DASH : esc(c.health)}</td>
+          <td class="right">
+            <div class="rowActions">
+              <button class="miniBtn" onclick="openCustomer('${esc(c.id)}')">View</button>
+            </div>
+          </td>
+        </tr>`).join('');
+    }
+    const chip = $$('#customers .chip').find((ch) => ch.textContent.trim().startsWith('Showing'));
+    if (chip) chip.textContent = 'Showing ' + rows.length + ' of ' + num(data.total);
+  }
+
+  function renderPowerUsers(customers) {
+    const tbody = $('#credits table tbody');
+    if (!tbody) return;
+    const top = [...customers].sort((a, b) => b.total_images - a.total_images).slice(0, 5);
+    if (!top.length) { tbody.innerHTML = '<tr><td colspan="5" class="muted" style="padding:16px;text-align:center">No usage yet.</td></tr>'; return; }
+    tbody.innerHTML = top.map((c) => `
+      <tr>
+        <td>${esc(c.email || DASH)}</td>
+        <td>${esc(c.plan_name)}</td>
+        <td class="right">${num(c.total_images)}</td>
+        <td class="right">${esc(pctCell(c))}</td>
+        <td>${DASH}</td>
+      </tr>`).join('');
+  }
+
+  // ---- Transactions table ----
+  function renderTransactions(data) {
+    const tbody = $('#transactions table tbody');
+    if (!tbody) return;
+    const rows = data.transactions || [];
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="10" class="muted" style="padding:24px;text-align:center">No transactions yet.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = rows.map((t) => `
+      <tr>
+        <td class="mono">${esc(shortId(t.session_id, 12))}</td>
+        <td>${fdate(t.occurred_at)}</td>
+        <td>${esc(t.email || DASH)}</td>
+        <td>${esc(t.type)}</td>
+        <td>${esc(t.plan_name)}</td>
+        <td class="right">${money(t.gross)}</td>
+        <td class="right">${t.fees == null ? DASH : money(t.fees)}</td>
+        <td class="right">${money(t.net)}</td>
+        <td>${statusPill(t.status)}</td>
+        <td class="mono">${t.promo ? esc(t.promo) : DASH}</td>
+      </tr>`).join('');
+  }
+
+  // ---- Customer 360 drawer ----
+  function setKv(label, valueHtml) {
+    const kv = $$('#drawer .drawerGrid .kv').find((k) => {
+      const kk = $('.k', k); return kk && kk.textContent.trim() === label;
+    });
+    if (kv) { const v = $('.v', kv); if (v) v.innerHTML = valueHtml; }
+  }
+  // Blank the client mockup's hard-coded sample values in the (off-screen)
+  // drawer so no fake data exists in the DOM before a real customer is opened.
+  function sanitizeDrawer() {
+    const d = $('#drawer'); if (!d) return;
+    const title = $('.drawerTitle', d); if (title) title.textContent = 'Customer 360';
+    const sub = $('.drawerHeader .small', d); if (sub) sub.textContent = 'Select “View” on a customer to load details';
+    $$('#drawer .drawerGrid .kv .v', d).forEach((v) => { v.textContent = DASH; });
+  }
+
+  window.openCustomer = async function (id) {
+    const d = $('#drawer');
+    try {
+      const c = await api('/api/admin/customer/' + encodeURIComponent(id));
+      const title = $('.drawerTitle', d); if (title) title.textContent = 'Customer 360 — ' + (c.email || c.id);
+      const sub = $('.drawerHeader .small', d);
+      if (sub) sub.innerHTML = `${esc(shortId(c.id, 14))} • ${c.stripe_customer_id ? esc(c.stripe_customer_id) : 'no Stripe customer'} • ${esc(c.plan_name)}`;
+      setKv('Status', statusPill(c.status));
+      setKv('Health Score', c.health == null ? DASH : esc(c.health));
+      setKv('Lifetime Revenue', money(c.lifetime_revenue));
+      setKv('Last Active', fdate(c.last_active));
+      setKv('Cycle Credits', `${c.unlimited ? '∞' : (c.cycle_granted == null ? DASH : c.cycle_granted)} granted / ${c.cycle_used} used`);
+      setKv('Usage', pctCell(c));
+
+      const card = $$('#drawer .card').find((x) => /Activity timeline/i.test(x.textContent));
+      const ph = card ? $('.placeholder', card) : null;
+      if (ph) {
+        if (!c.payments || !c.payments.length) {
+          ph.outerHTML = '<div class="small" style="padding:14px 0">No payments on record.</div>';
+        } else {
+          ph.outerHTML = `
+            <div class="tableWrap" style="min-width:0">
+              <table style="min-width:0">
+                <thead><tr><th>Date</th><th>Type</th><th>Plan</th><th class="right">Amount</th><th>Status</th></tr></thead>
+                <tbody>${c.payments.map((p) => `
+                  <tr>
+                    <td>${fdate(p.occurred_at)}</td>
+                    <td>${esc(p.type)}</td>
+                    <td>${esc(p.plan_name)}</td>
+                    <td class="right">${money(p.gross)}</td>
+                    <td>${statusPill(p.status)}</td>
+                  </tr>`).join('')}</tbody>
+              </table>
+            </div>`;
+        }
+      }
+      d.classList.add('open');
+      d.setAttribute('aria-hidden', 'false');
+    } catch (e) {
+      alert('Could not load customer: ' + (e.message || e));
+    }
+  };
+
+  // =====================================================================
+  // Charts (Chart.js) — real series only; cards without data show a state
+  // =====================================================================
+  const PLAN_COLORS = { free: '#6b7794', payg: '#9ad0ff', apprentice: '#7aa7ff', atelier: '#2fe38c', maestro: '#ffcc66', unknown: '#888' };
+  const planColor = (p) => PLAN_COLORS[p] || '#7aa7ff';
+  const chartsReady = () => typeof Chart !== 'undefined';
+  const liveCharts = [];
+
+  function chartsInit() {
+    if (!chartsReady()) return;
+    Chart.defaults.color = 'rgba(255,255,255,.6)';
+    Chart.defaults.borderColor = 'rgba(255,255,255,.07)';
+    Chart.defaults.font.family = 'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+    Chart.defaults.plugins.legend.labels.boxWidth = 10;
+    Chart.defaults.plugins.legend.labels.boxHeight = 10;
+    Chart.defaults.plugins.legend.labels.padding = 10;
+    Chart.defaults.maintainAspectRatio = false;
+    Chart.defaults.animation = false;
+  }
+
+  function mountCanvas(ph) {
+    const h = ph.offsetHeight || 240;
+    ph.classList.remove('placeholder');
+    ph.style.cssText = `height:${h}px;border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,.02);padding:10px;position:relative`;
+    ph.innerHTML = '';
+    const cv = document.createElement('canvas');
+    cv.style.width = '100%'; cv.style.height = '100%';
+    ph.appendChild(cv);
+    return cv;
+  }
+  function emptyCanvas(cv, msg) {
+    const p = cv.parentElement;
+    p.style.display = 'flex'; p.style.alignItems = 'center'; p.style.justifyContent = 'center';
+    p.innerHTML = `<div class="small">${esc(msg)}</div>`;
+  }
+  function renderNoData(ph, reason) {
+    const h = ph.offsetHeight || 220;
+    ph.classList.remove('placeholder');
+    ph.style.cssText = `height:${h}px;border:1px dashed rgba(255,255,255,.14);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:16px`;
+    ph.innerHTML = `<div class="small" style="opacity:.85;font-weight:600">No data yet</div>
+      <div class="small" style="max-width:280px;opacity:.7">${esc(reason)}</div>`;
+  }
+
+  function newChart(cv, cfg) { try { liveCharts.push(new Chart(cv, cfg)); } catch (e) { emptyCanvas(cv, 'Chart error'); } }
+
+  function renderRevenue(cv, a) {
+    const r = a.revenue_by_day || { days: [], by_plan: {}, plan_names: {} };
+    const plans = Object.keys(r.by_plan);
+    if (!plans.length) return emptyCanvas(cv, 'No revenue in the last 30 days');
+    newChart(cv, {
+      type: 'bar',
+      data: { labels: r.days.map((d) => d.slice(5)), datasets: plans.map((p) => ({ label: r.plan_names[p] || p, data: r.by_plan[p], backgroundColor: planColor(p), borderRadius: 3, stack: 'rev' })) },
+      options: { interaction: { mode: 'index', intersect: false }, scales: { x: { stacked: true, grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 8 } }, y: { stacked: true, beginAtZero: true, ticks: { callback: (v) => '$' + v } } }, plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: (c) => c.dataset.label + ': ' + money(c.raw) } } } },
+    });
+  }
+  function renderPlanMix(cv, a) {
+    const m = a.plan_mix || [];
+    if (!m.length) return emptyCanvas(cv, 'No users');
+    newChart(cv, {
+      type: 'doughnut',
+      data: { labels: m.map((x) => x.plan_name), datasets: [{ data: m.map((x) => x.count), backgroundColor: m.map((x) => planColor(x.plan_id)), borderColor: 'rgba(0,0,0,.25)', borderWidth: 1 }] },
+      options: { cutout: '60%', plugins: { legend: { position: 'right' }, tooltip: { callbacks: { label: (c) => c.label + ': ' + c.raw } } } },
+    });
+  }
+  function renderFunnel(cv, a) {
+    const f = a.funnel || { signed_up: 0, activated: 0, subscribed: 0 };
+    newChart(cv, {
+      type: 'bar',
+      data: { labels: ['Signed up', 'Activated', 'Subscribed'], datasets: [{ data: [f.signed_up, f.activated, f.subscribed], backgroundColor: ['#7aa7ff', '#2fe38c', '#ffcc66'], borderRadius: 4 }] },
+      options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, grid: { display: false }, ticks: { precision: 0 } }, y: { grid: { display: false } } } },
+    });
+  }
+  function renderNewChurned(cv, a) {
+    const n = a.new_users_by_day || { days: [], counts: [] };
+    newChart(cv, {
+      type: 'bar',
+      data: { labels: n.days.map((d) => d.slice(5)), datasets: [{ label: 'New signups', data: n.counts, backgroundColor: '#7aa7ff', borderRadius: 3 }] },
+      options: { plugins: { legend: { position: 'bottom' } }, scales: { x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 8 } }, y: { beginAtZero: true, ticks: { precision: 0 } } } },
+    });
+  }
+  function renderCreditsGU(cv, a) {
+    const im = a.images_by_month || { months: [], used: [] };
+    const cap = (a.credits && a.credits.granted_capacity) || 0;
+    newChart(cv, {
+      data: { labels: im.months.map((m) => m.slice(2)), datasets: [
+        { type: 'bar', label: 'Images used', data: im.used, backgroundColor: '#2fe38c', borderRadius: 3 },
+        { type: 'line', label: 'Monthly capacity (current)', data: im.months.map(() => cap), borderColor: '#ffcc66', borderDash: [6, 4], pointRadius: 0, borderWidth: 2, tension: 0 },
+      ] },
+      options: { plugins: { legend: { position: 'bottom' } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { precision: 0 } } } },
+    });
+  }
+  function renderWasted(cv, a) {
+    const u = a.usage_hist || { buckets: [], counts: [] };
+    newChart(cv, {
+      type: 'bar',
+      data: { labels: u.buckets, datasets: [{ label: 'Users', data: u.counts, backgroundColor: '#7aa7ff', borderRadius: 3 }] },
+      options: { plugins: { legend: { display: false }, tooltip: { callbacks: { title: (it) => it[0].label + ' of allowance used' } } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { precision: 0 } } } },
+    });
+  }
+  function renderImplied(cv, a) {
+    const v = a.value_by_plan || [];
+    if (!v.length) return emptyCanvas(cv, 'No usage yet');
+    newChart(cv, {
+      type: 'bar',
+      data: { labels: v.map((x) => x.plan_name), datasets: [
+        { label: 'Implied value (imgs × $' + (a.image_value || 2.99) + ')', data: v.map((x) => x.implied_value), backgroundColor: '#2fe38c', borderRadius: 3 },
+        { label: 'Revenue collected', data: v.map((x) => x.revenue), backgroundColor: '#7aa7ff', borderRadius: 3 },
+      ] },
+      options: { plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: (c) => c.dataset.label + ': ' + money(c.raw) } } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { callback: (v) => '$' + v } } } },
+    });
+  }
+  function renderPayments(cv, a) {
+    const ps = a.payment_status || {};
+    const labels = Object.keys(ps);
+    if (!labels.length) return emptyCanvas(cv, 'No subscriptions');
+    const cmap = { active: '#2fe38c', past_due: '#ffcc66', cancelled: '#ff6b6b', canceled: '#ff6b6b', pending: '#9ad0ff', none: '#6b7794', paused: '#ffcc66' };
+    newChart(cv, {
+      type: 'doughnut',
+      data: { labels, datasets: [{ data: labels.map((l) => ps[l]), backgroundColor: labels.map((l) => cmap[l] || '#7aa7ff'), borderColor: 'rgba(0,0,0,.25)', borderWidth: 1 }] },
+      options: { cutout: '60%', plugins: { legend: { position: 'right' } } },
+    });
+  }
+
+  const RENDER = {
+    'Revenue over time': renderRevenue,
+    'Plan Mix': renderPlanMix,
+    'Subscriber Funnel': renderFunnel,
+    'New vs Churned': renderNewChurned,
+    'Credits Granted vs Used': renderCreditsGU,
+    'Wasted Credits': renderWasted,
+    'Implied Value Consumed': renderImplied,
+    'Payments': renderPayments,
+  };
+  // Cards the live schema cannot back yet → honest empty state (no fake numbers).
+  const NODATA = {
+    'Retention Cohort': 'Needs cohort tracking (signup month × monthly activity).',
+    'Churn Reasons': 'Needs exit-survey data (a churn_surveys table).',
+    'Health Score': 'Needs a health-score rollup (usage + billing + support).',
+    'Winback': 'Needs cancellation timestamps + winback-offer tracking.',
+    'Fraud': 'Needs device / multi-account abuse signals.',
+    'Generation Health': 'Needs a generations table (latency, error rate).',
+  };
+
+  function renderCharts(a) {
+    const phs = $$('.main .card .placeholder');
+    if (!chartsReady()) { phs.forEach((ph) => renderNoData(ph, 'Charts library failed to load (offline?).')); return; }
+    chartsInit();
+    phs.forEach((ph) => {
+      const card = ph.closest('.card');
+      const titleEl = card.querySelector('div[style*="font-weight:800"]');
+      const title = titleEl ? titleEl.textContent.trim() : '';
+      const key = Object.keys(RENDER).find((k) => title.includes(k));
+      if (key) { RENDER[key](mountCanvas(ph), a); return; }
+      const nd = Object.keys(NODATA).find((k) => title.includes(k));
+      renderNoData(ph, nd ? NODATA[nd] : 'Not tracked in the current schema.');
+    });
+  }
+
+  // =====================================================================
+  // Filters, quick presets and CSV export — all operate on the real,
+  // already-fetched rows (no fabricated options or mock controls).
+  // =====================================================================
+  let allCustomers = [], curCustView = [], custGrandTotal = 0;
+  let allTransactions = [], curTxnView = [];
+  const custFilter = { search: '', plan: 'all', status: 'all' };
+  let txnRange = '30';
+  let planSel = null, statusSel = null, dateSel = null;
+
+  const debounce = (fn, ms) => { let h; return (...a) => { clearTimeout(h); h = setTimeout(() => fn(...a), ms); }; };
+  const optHtml = (pairs) => pairs.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+
+  function applyCustFilter() {
+    let rows = allCustomers;
+    if (custFilter.plan !== 'all') rows = rows.filter((c) => c.plan_id === custFilter.plan);
+    if (custFilter.status !== 'all') rows = rows.filter((c) => String(c.status).toLowerCase() === custFilter.status);
+    if (custFilter.search) {
+      const q = custFilter.search;
+      rows = rows.filter((c) => (c.email || '').toLowerCase().includes(q) || (c.id || '').toLowerCase().includes(q) || (c.name || '').toLowerCase().includes(q));
+    }
+    curCustView = rows;
+    renderCustomers({ customers: rows, total: custGrandTotal });
+  }
+
+  function cutoffFor(range) {
+    const now = new Date();
+    if (range === 'all') return null;
+    if (range === 'mtd') return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+    if (range === 'qtd') return new Date(Date.UTC(now.getUTCFullYear(), Math.floor(now.getUTCMonth() / 3) * 3, 1));
+    if (range === 'ytd') return new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
+    return new Date(now.getTime() - (parseInt(range, 10) || 30) * 86400000);
+  }
+  function applyTxnFilter() {
+    const cutoff = cutoffFor(txnRange);
+    let rows = allTransactions;
+    if (cutoff) rows = rows.filter((t) => t.occurred_at && new Date(t.occurred_at) >= cutoff);
+    curTxnView = rows;
+    renderTransactions({ transactions: rows });
+    const gross = rows.reduce((a, t) => a + (Number(t.gross) || 0), 0);
+    $$('#transactions .chip').forEach((ch) => {
+      const t = ch.textContent.trim();
+      if (t.startsWith('Gross')) ch.textContent = 'Gross ' + money(gross);
+      else if (t.startsWith('Refunds')) ch.textContent = 'Refunds ' + money(0);
+      else if (t.startsWith('Net')) ch.textContent = 'Net ' + money(gross);
+    });
+  }
+
+  // CSV export of the real, currently-filtered rows.
+  const csvEsc = (v) => { v = v == null ? '' : String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+  function downloadCSV(name, header, rows) {
+    const csv = [header.join(','), ...rows.map((r) => r.map(csvEsc).join(','))].join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    a.download = name; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+  }
+  function exportCustomers() {
+    const rows = (curCustView.length ? curCustView : allCustomers).map((c) => [c.email, c.id, c.plan_name, c.status, c.total_images, c.credits, c.cycle_used, c.unlimited ? 'unlimited' : c.cycle_granted, c.used_pct, c.lifetime_revenue, c.txn_count, c.last_active || '', c.created_at || '']);
+    downloadCSV('customers.csv', ['email', 'user_id', 'plan', 'status', 'total_images', 'credits', 'cycle_used', 'cycle_granted', 'used_pct', 'lifetime_usd', 'txn_count', 'last_active', 'created_at'], rows);
+  }
+  function exportTransactions() {
+    const rows = (curTxnView.length ? curTxnView : allTransactions).map((t) => [t.session_id, t.occurred_at || '', t.email, t.type, t.plan_name, t.gross, t.net, t.status]);
+    downloadCSV('transactions.csv', ['session_id', 'date', 'email', 'type', 'plan', 'gross_usd', 'net_usd', 'status'], rows);
+  }
+
+  function disableEl(b, reason) {
+    if (!b) return;
+    b.disabled = true; b.style.opacity = .45; b.style.cursor = 'not-allowed'; b.title = reason;
+    b.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); }, true);
+  }
+  const btnByText = (txt) => $$('.btn').find((b) => b.textContent.trim() === txt);
+
+  function setupControls() {
+    // Topbar filters: wire the ones the schema can back; drop the rest.
+    $$('.topbar .control').forEach((ctrl) => {
+      const labEl = ctrl.querySelector('label');
+      const lab = labEl ? labEl.textContent.trim() : '';
+      const sel = ctrl.querySelector('select');
+      const inp = ctrl.querySelector('input');
+      if (lab === 'Platform' || lab === 'Country') { ctrl.remove(); return; } // no such data in the schema
+      if (lab === 'Plan' && sel) {
+        sel.innerHTML = optHtml([['all', 'All plans'], ['free', 'Free'], ['apprentice', 'Apprentice'], ['atelier', 'Atelier'], ['maestro', 'Maestro']]);
+        planSel = sel; sel.onchange = () => { custFilter.plan = sel.value; applyCustFilter(); };
+      } else if (lab === 'Status' && sel) {
+        sel.innerHTML = optHtml([['all', 'All statuses'], ['active', 'active'], ['free', 'free'], ['past_due', 'past_due'], ['cancelled', 'cancelled'], ['paused', 'paused']]);
+        statusSel = sel; sel.onchange = () => { custFilter.status = sel.value; applyCustFilter(); };
+      } else if (lab === 'Date' && sel) {
+        sel.innerHTML = optHtml([['7', 'Last 7 days'], ['30', 'Last 30 days'], ['mtd', 'This month'], ['qtd', 'This quarter'], ['ytd', 'This year'], ['all', 'All time']]);
+        sel.value = '30'; dateSel = sel; sel.onchange = () => { txnRange = sel.value; applyTxnFilter(); };
+      } else if (lab === 'Search' && inp) {
+        inp.oninput = debounce(() => { custFilter.search = inp.value.trim().toLowerCase(); applyCustFilter(); }, 180);
+      }
+    });
+
+    // Exports → real CSV of the live rows.
+    const exportTop = btnByText('Export'); if (exportTop) exportTop.onclick = exportCustomers;
+    $$('.btn').forEach((b) => {
+      if (b.textContent.trim() === 'Export CSV') b.onclick = b.closest('#transactions') ? exportTransactions : exportCustomers;
+    });
+
+    // Controls with no backend → disabled so nothing pretends to work.
+    disableEl(btnByText('Create Alert'), 'Alerting is not configured');
+    disableEl(btnByText('Saved View'), 'Saved views are not available');
+    $$('#drawer .btn').forEach((b) => disableEl(b, 'This panel is read-only'));
+
+    // Quick presets → real filter / navigation actions.
+    $$('.sidebar .btn.secondary').forEach((b) => {
+      const t = b.textContent;
+      if (/Exec/.test(t)) b.onclick = () => { if (dateSel) { dateSel.value = '30'; txnRange = '30'; applyTxnFilter(); } document.querySelector('#overview').scrollIntoView({ behavior: 'smooth' }); };
+      else if (/Plan performance/.test(t)) b.onclick = () => { const c = $$('.card').find((x) => /Plan Mix/.test(x.textContent)); if (c) c.scrollIntoView({ behavior: 'smooth' }); };
+      else if (/Churn/.test(t)) b.onclick = () => { custFilter.status = 'past_due'; if (statusSel) statusSel.value = 'past_due'; applyCustFilter(); document.querySelector('#customers').scrollIntoView({ behavior: 'smooth' }); };
+      else if (/Power users/.test(t)) b.onclick = () => { document.querySelector('#credits').scrollIntoView({ behavior: 'smooth' }); };
+    });
+  }
+
+  // ---- boot ----
+  async function hydrate() {
+    setupControls();
+    try {
+      renderOverview(await api('/api/admin/overview'));
+    } catch (e) {
+      if (e.status === 401) { localStorage.removeItem(TOKEN_KEY); gate.style.display = 'flex'; gateMsg.textContent = 'Session expired — re-enter token.'; return; }
+      alert('Failed to load dashboard data: ' + (e.message || e));
+    }
+    try {
+      const cu = await api('/api/admin/customers?page=1&page_size=500');
+      allCustomers = cu.customers || []; custGrandTotal = cu.total;
+      renderPowerUsers(allCustomers);
+      applyCustFilter();
+    } catch (e) { /* overview path already surfaced auth errors */ }
+    try {
+      const tx = await api('/api/admin/transactions?page=1&page_size=500');
+      allTransactions = tx.transactions || [];
+      applyTxnFilter();
+    } catch (e) {}
+    try {
+      renderCharts(await api('/api/admin/analytics'));
+    } catch (e) {
+      $$('.main .card .placeholder').forEach((ph) => renderNoData(ph, 'Could not load analytics: ' + (e.message || e)));
+    }
+  }
+
+  sanitizeDrawer();
+  if (token) { gate.style.display = 'none'; unlock(token); }
+  else { gateInput.focus(); }
+})();
+</script>
+
+</body></html>

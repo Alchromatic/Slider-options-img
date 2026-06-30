@@ -132,7 +132,7 @@ app.add_middleware(
 async def _revalidate_static_assets(request, call_next):
     response = await call_next(request)
     path = request.url.path
-    if path.endswith((".js", ".css")):
+    if path.endswith((".js", ".css", ".html")) or path == "/":
         response.headers["Cache-Control"] = "no-cache"
     return response
 
@@ -191,6 +191,13 @@ from image_sources import IMAGE_LIBRARY_DIR
 app.include_router(image_library_router)
 os.makedirs(IMAGE_LIBRARY_DIR, exist_ok=True)
 app.mount("/image-library", StaticFiles(directory=IMAGE_LIBRARY_DIR), name="image-library")
+
+# ==================== SUPER-ADMIN / CEO DASHBOARD (read-only) ====================
+# Independent admin panel: every user's total image count, plan, lifetime revenue
+# and payment history. Gated by ADMIN_TOKEN (X-Admin-Token), same as the image
+# library admin. Serves Application-main/admin-dashboard.html (the client mockup).
+from admin_routes import router as admin_router
+app.include_router(admin_router)
 
 class ShapeModel(BaseModel):
     type: int
