@@ -24,6 +24,8 @@ Endpoints
     POST   /api/library/jobs/{id}/cancel -> request cancellation
     GET    /api/library/artworks         -> filtered, paginated listing
     DELETE /api/library/artworks/{id}    -> delete a row + its file
+    GET    /api/library/map              -> similarity-map points (public)
+    POST   /api/library/map/build        -> (re)build the similarity map
 """
 
 from __future__ import annotations
@@ -313,6 +315,31 @@ def artworks(
     )
     rows = _resolve_bucket_urls(rows)
     return {"total": total, "page": page, "page_size": page_size, "artworks": rows}
+
+
+# ---------------------------------------------------------------------------
+# Similarity map (PixPlot-style) — see image_map.py
+# ---------------------------------------------------------------------------
+
+@router.get("/map")
+def similarity_map():
+    """Public: every artwork's 2-D similarity-map position (+ metadata for the
+    hover card). Empty until an admin runs POST /map/build."""
+    points = db.map_points()
+    clusters = sorted({p["map_cluster"] for p in points if p["map_cluster"] is not None})
+    return {"count": len(points), "clusters": clusters, "points": points}
+
+
+@router.post("/map/build")
+def build_similarity_map(force: bool = False, x_admin_token: Optional[str] = Header(None)):
+    """Admin: (re)build the similarity map in the background — embed any artwork
+    without a feature vector (all of them with ``force=true``), then recompute
+    the 2-D layout. Poll GET /jobs/{id} for progress."""
+    _require_admin(x_admin_token)
+    from image_map import run_map_job
+    job_id = db.create_job("map", {"force": force}, 0)
+    threading.Thread(target=run_map_job, args=(job_id, force), daemon=True).start()
+    return {"job_id": job_id, "status": "started"}
 
 
 @router.delete("/artworks/{artwork_id}")

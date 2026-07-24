@@ -66,6 +66,12 @@ def init_image_library_tables() -> None:
             # (added separately so existing tables upgrade in place).
             for col in ("nationality", "genre", "era", "storage_key", "thumb_key"):
                 cur.execute(f"ALTER TABLE image_library ADD COLUMN IF NOT EXISTS {col} TEXT")
+            # Similarity-map columns (PixPlot-style layout): a CNN feature vector
+            # per artwork plus its cached 2-D UMAP/t-SNE position and cluster.
+            cur.execute("ALTER TABLE image_library ADD COLUMN IF NOT EXISTS embedding JSONB")
+            cur.execute("ALTER TABLE image_library ADD COLUMN IF NOT EXISTS map_x DOUBLE PRECISION")
+            cur.execute("ALTER TABLE image_library ADD COLUMN IF NOT EXISTS map_y DOUBLE PRECISION")
+            cur.execute("ALTER TABLE image_library ADD COLUMN IF NOT EXISTS map_cluster INTEGER")
             for stmt in (
                 "CREATE INDEX IF NOT EXISTS idx_imglib_source ON image_library(source)",
                 "CREATE INDEX IF NOT EXISTS idx_imglib_classification ON image_library(classification)",
@@ -268,6 +274,71 @@ def library_stats() -> Dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
+# Similarity map (PixPlot-style layout)
+# ---------------------------------------------------------------------------
+
+def artworks_for_embedding(force: bool = False) -> List[Dict[str, Any]]:
+    """Rows the map-build job must embed: everything (force) or only rows that
+    don't have a feature vector yet. Returns the fields needed to locate the
+    artwork's thumbnail."""
+    clause = "" if force else "WHERE embedding IS NULL"
+    with get_db() as conn:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute(
+            f"""
+            SELECT id, source, thumb_url, image_url, local_path, storage_key, thumb_key
+            FROM image_library {clause} ORDER BY id
+            """
+        )
+        return cur.fetchall()
+
+
+def set_embedding(artwork_id: int, vector: List[float]) -> None:
+    with get_db() as conn:
+        cur = conn.cursor()
+        cur.execute(
+            "UPDATE image_library SET embedding = %s::jsonb WHERE id = %s",
+            [json.dumps(vector), artwork_id],
+        )
+        conn.commit()
+
+
+def load_embeddings() -> List[Tuple[int, List[float]]]:
+    """All (id, vector) pairs that have an embedding — input to the 2-D layout."""
+    with get_db() as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT id, embedding FROM image_library WHERE embedding IS NOT NULL ORDER BY id")
+        return [(r[0], r[1]) for r in cur.fetchall()]
+
+
+def save_map_layout(rows: List[Tuple[int, float, float, int]]) -> None:
+    """Persist the computed layout: rows of (id, x, y, cluster)."""
+    with get_db() as conn:
+        cur = conn.cursor()
+        cur.executemany(
+            "UPDATE image_library SET map_x = %s, map_y = %s, map_cluster = %s WHERE id = %s",
+            [(x, y, c, art_id) for art_id, x, y, c in rows],
+        )
+        conn.commit()
+
+
+def map_points() -> List[Dict[str, Any]]:
+    """Every artwork with a computed map position (the viewer's payload)."""
+    with get_db() as conn:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute(
+            """
+            SELECT id, source, title, artist, date_text, era, genre, nationality,
+                   medium, source_url, width, height, map_x, map_y, map_cluster
+            FROM image_library
+            WHERE map_x IS NOT NULL AND map_y IS NOT NULL
+            ORDER BY id
+            """
+        )
+        return cur.fetchall()
+
+
+# ---------------------------------------------------------------------------
 # Ingestion jobs
 # ---------------------------------------------------------------------------
 
@@ -331,6 +402,11 @@ __all__ = [
     "delete_artwork",
     "library_stats",
     "library_facets",
+    "artworks_for_embedding",
+    "set_embedding",
+    "load_embeddings",
+    "save_map_layout",
+    "map_points",
     "create_job",
     "update_job",
     "get_job",

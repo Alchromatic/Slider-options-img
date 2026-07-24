@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Art Map | GeoMagic</title>
+
+   <link rel="shortcut icon" type="image/x-icon" href="assets/img/favicon/favicon.ico">
+   <link rel="preconnect" href="https://fonts.googleapis.com">
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..800&display=swap" rel="stylesheet">
+   <link rel="stylesheet" href="assets/fontawesome/fontawesome.min.css">
+
+   <script src="https://cdn.tailwindcss.com"></script>
+   <script>
+      tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } } };
+   </script>
+   <style>
+      body { font-family: 'Inter', sans-serif; overscroll-behavior: none; }
+      #map { cursor: grab; touch-action: none; }
+      #map.dragging { cursor: grabbing; }
+      #tooltip { pointer-events: none; transition: opacity .12s ease; }
+   </style>
+</head>
+
+<body class="bg-neutral-950 text-neutral-200 h-screen overflow-hidden flex flex-col">
+
+   <!-- Header -->
+   <header class="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 py-3 border-b border-neutral-900 z-30 bg-neutral-950">
+      <div class="flex items-center gap-4">
+         <a href="image-gallery.html" class="text-xs text-neutral-500 hover:text-neutral-300">
+            <i class="fa-solid fa-arrow-left mr-1"></i> Gallery
+         </a>
+         <h1 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-map text-blue-500"></i> Art Map
+         </h1>
+         <p id="subtitle" class="hidden sm:block text-xs text-neutral-500">
+            Visually similar artworks sit close together — drag to pan, scroll to zoom.
+         </p>
+      </div>
+      <div class="flex items-center gap-2">
+         <div id="hotspots" class="flex items-center gap-1.5 flex-wrap"></div>
+         <button id="resetView" title="Reset view"
+            class="text-xs bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 rounded-lg px-3 py-1.5">
+            <i class="fa-solid fa-compress mr-1"></i> Fit
+         </button>
+      </div>
+   </header>
+
+   <!-- Map -->
+   <div class="relative flex-1">
+      <canvas id="map" class="absolute inset-0 w-full h-full"></canvas>
+      <div id="tooltip"
+         class="absolute z-20 hidden max-w-[260px] bg-neutral-900/95 border border-neutral-800 rounded-lg px-3 py-2 shadow-xl opacity-0">
+         <p id="ttTitle" class="text-xs font-semibold text-white leading-tight"></p>
+         <p id="ttMeta" class="text-[11px] text-neutral-400 mt-0.5"></p>
+      </div>
+      <div id="empty" class="absolute inset-0 hidden items-center justify-center">
+         <div class="text-center max-w-sm px-6">
+            <i class="fa-solid fa-map text-3xl text-neutral-700"></i>
+            <p class="text-sm text-neutral-400 mt-3">The similarity map hasn't been built yet.</p>
+            <p class="text-xs text-neutral-600 mt-1">An administrator can build it from the Library admin page
+               ("Build similarity map").</p>
+         </div>
+      </div>
+      <p id="loadNote" class="absolute bottom-3 left-4 text-[11px] text-neutral-600 z-10"></p>
+   </div>
+
+   <!-- Lightbox (same behaviour as the gallery) -->
+   <div id="lightbox" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/85 backdrop-blur-sm p-4">
+      <button id="lbClose" class="absolute top-5 right-6 text-white/80 hover:text-white text-3xl">&times;</button>
+      <div class="max-w-5xl w-full max-h-full flex flex-col items-center">
+         <img id="lbImg" class="max-h-[72vh] max-w-full rounded-lg shadow-2xl object-contain" alt="">
+         <div class="mt-4 text-center max-w-2xl">
+            <h3 id="lbTitle" class="text-lg font-semibold text-white"></h3>
+            <p id="lbMeta" class="text-sm text-neutral-400 mt-1"></p>
+            <a id="lbSource" target="_blank" rel="noopener"
+               class="inline-block mt-3 text-sm text-blue-400 hover:text-blue-300">
+               View at source <i class="fa-solid fa-arrow-up-right-from-square ml-1 text-xs"></i>
+            </a>
+         </div>
+      </div>
+      <button id="lbUse"
+         class="absolute bottom-6 right-6 inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm px-5 py-3 rounded-xl shadow-lg disabled:opacity-50">
+         <i class="fa-solid fa-wand-magic-sparkles"></i> Use this image
+      </button>
+   </div>
+
+   <script>
+      const API_BASE =
+         (new URLSearchParams(location.search).get('api') || '').replace(/\/$/, '') ||
+         location.origin;
+      const $ = (id) => document.getElementById(id);
+      const esc = (s) => String(s || '').replace(/[&<>"]/g,
+         (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+      const canvas = $('map');
+      const ctx = canvas.getContext('2d');
+
+      // World space: map_x/map_y are in [0,1]; spread them over WORLD units so
+      // thumbnails (drawn ~TILE world units wide) have breathing room.
+      const WORLD = 4200;
+      const TILE = 78;
+
+      let points = [];            // {id,x,y,cluster,title,artist,...,img,ready}
+      let clusters = [];
+      let view = { x: WORLD / 2, y: WORLD / 2, scale: 0.28 }; // world point at canvas centre + zoom
+      let hovered = null;
+      let dirty = true;
+
+      const clusterColor = (c) => `hsl(${(c * 137.5) % 360} 70% 55%)`;
+      const thumbURL = (p) => `assets/library/${p.id}.jpg`;
+      const proxyURL = (p) => `${API_BASE}/api/library/img/${p.id}?size=thumb`;
+
+      // ---------- canvas sizing ----------
+      function resize() {
+         const dpr = window.devicePixelRatio || 1;
+         const r = canvas.getBoundingClientRect();
+         canvas.width = r.width * dpr;
+         canvas.height = r.height * dpr;
+         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+         dirty = true;
+      }
+      window.addEventListener('resize', resize);
+
+      const toScreen = (wx, wy) => {
+         const r = canvas.getBoundingClientRect();
+         return [(wx - view.x) * view.scale + r.width / 2, (wy - view.y) * view.scale + r.height / 2];
+      };
+      const toWorld = (sx, sy) => {
+         const r = canvas.getBoundingClientRect();
+         return [(sx - r.width / 2) / view.scale + view.x, (sy - r.height / 2) / view.scale + view.y];
+      };
+
+      // ---------- progressive thumbnail loading ----------
+      let loadQueue = [], loading = 0, loaded = 0;
+      function pumpLoads() {
+         while (loading < 12 && loadQueue.length) {
+            const p = loadQueue.shift();
+            loading++;
+            const img = new Image();
+            img.onload = () => { p.img = img; p.ready = true; loading--; loaded++; noteProgress(); dirty = true; pumpLoads(); };
+            img.onerror = () => {
+               if (!p.triedProxy) { p.triedProxy = true; img.src = proxyURL(p); }
+               else { loading--; loaded++; noteProgress(); pumpLoads(); }
+            };
+            img.src = thumbURL(p);
+         }
+      }
+      function noteProgress() {
+         $('loadNote').textContent =
+            loaded < points.length ? `Loading thumbnails ${loaded}/${points.length}…` : '';
+      }
+
+      // ---------- drawing ----------
+      function draw() {
+         requestAnimationFrame(draw);
+         if (!dirty) return;
+         dirty = false;
+         const r = canvas.getBoundingClientRect();
+         ctx.clearRect(0, 0, r.width, r.height);
+
+         const size = TILE * view.scale;
+         for (const p of points) {
+            const [sx, sy] = toScreen(p.wx, p.wy);
+            if (sx < -size || sy < -size || sx > r.width + size || sy > r.height + size) continue;
+            let w = size, h = size;
+            if (p.ready) {
+               const a = p.img.naturalWidth / p.img.naturalHeight;
+               if (a > 1) h = size / a; else w = size * a;
+            }
+            const x = sx - w / 2, y = sy - h / 2;
+            if (p.ready) {
+               ctx.drawImage(p.img, x, y, w, h);
+            } else {
+               ctx.fillStyle = 'rgba(64,64,64,.35)';
+               ctx.fillRect(x, y, w, h);
+            }
+            if (view.scale < 0.16 || p === hovered) {
+               ctx.strokeStyle = clusterColor(p.cluster);
+               ctx.lineWidth = p === hovered ? 2.5 : 1;
+               ctx.strokeRect(x, y, w, h);
+            }
+         }
+      }
+
+      // ---------- interaction ----------
+      let drag = null;
+      canvas.addEventListener('pointerdown', (e) => {
+         canvas.setPointerCapture(e.pointerId);
+         drag = { sx: e.clientX, sy: e.clientY, vx: view.x, vy: view.y, moved: false };
+         canvas.classList.add('dragging');
+      });
+      canvas.addEventListener('pointermove', (e) => {
+         const rect = canvas.getBoundingClientRect();
+         const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+         if (drag) {
+            const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
+            if (Math.abs(dx) + Math.abs(dy) > 4) drag.moved = true;
+            view.x = drag.vx - dx / view.scale;
+            view.y = drag.vy - dy / view.scale;
+            dirty = true;
+            return;
+         }
+         hover(mx, my, e.clientX, e.clientY);
+      });
+      canvas.addEventListener('pointerup', (e) => {
+         canvas.classList.remove('dragging');
+         const wasClick = drag && !drag.moved;
+         drag = null;
+         if (wasClick && hovered) openLightbox(hovered);
+      });
+      canvas.addEventListener('pointerleave', () => { setHover(null); });
+      canvas.addEventListener('wheel', (e) => {
+         e.preventDefault();
+         const rect = canvas.getBoundingClientRect();
+         const [wx, wy] = toWorld(e.clientX - rect.left, e.clientY - rect.top);
+         const factor = Math.exp(-e.deltaY * 0.0012);
+         view.scale = Math.min(6, Math.max(0.05, view.scale * factor));
+         // keep the world point under the cursor fixed
+         const [nsx, nsy] = toScreen(wx, wy);
+         view.x += (nsx - (e.clientX - rect.left)) / view.scale;
+         view.y += (nsy - (e.clientY - rect.top)) / view.scale;
+         dirty = true;
+      }, { passive: false });
+
+      function hover(mx, my, clientX, clientY) {
+         const size = TILE * view.scale;
+         let hit = null;
+         for (let i = points.length - 1; i >= 0; i--) {   // topmost drawn wins
+            const p = points[i];
+            const [sx, sy] = toScreen(p.wx, p.wy);
+            if (Math.abs(mx - sx) <= size / 2 && Math.abs(my - sy) <= size / 2) { hit = p; break; }
+         }
+         setHover(hit, clientX, clientY);
+      }
+      function setHover(p, clientX, clientY) {
+         if (hovered !== p) { hovered = p; dirty = true; }
+         const tt = $('tooltip');
+         if (!p) { tt.classList.add('hidden'); tt.style.opacity = 0; return; }
+         $('ttTitle').textContent = p.title || 'Untitled';
+         $('ttMeta').textContent = [p.artist, p.date_text || p.era].filter(Boolean).join(' · ');
+         tt.classList.remove('hidden');
+         tt.style.opacity = 1;
+         const host = canvas.getBoundingClientRect();
+         tt.style.left = Math.min(clientX - host.left + 14, host.width - 270) + 'px';
+         tt.style.top = (clientY - host.top + 14) + 'px';
+      }
+
+      // ---------- fit / fly-to ----------
+      function fitAll(animate) {
+         if (!points.length) return;
+         flyTo(WORLD / 2, WORLD / 2, fitScale(), animate);
+      }
+      function fitScale() {
+         const r = canvas.getBoundingClientRect();
+         return Math.min(r.width, r.height) / (WORLD * 1.12);
+      }
+      let flight = null;
+      function flyTo(x, y, scale, animate = true) {
+         if (!animate) { view = { x, y, scale }; dirty = true; return; }
+         const from = { ...view }, t0 = performance.now(), dur = 550;
+         cancelAnimationFrame(flight);
+         const step = (t) => {
+            const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+            view.x = from.x + (x - from.x) * e;
+            view.y = from.y + (y - from.y) * e;
+            view.scale = from.scale + (scale - from.scale) * e;
+            dirty = true;
+            if (k < 1) flight = requestAnimationFrame(step);
+         };
+         flight = requestAnimationFrame(step);
+      }
+      $('resetView').onclick = () => fitAll(true);
+
+      // ---------- hotspots (cluster chips) ----------
+      function buildHotspots() {
+         const byCluster = new Map();
+         for (const p of points) {
+            if (!byCluster.has(p.cluster)) byCluster.set(p.cluster, []);
+            byCluster.get(p.cluster).push(p);
+         }
+         const chips = [...byCluster.entries()].sort((a, b) => b[1].length - a[1].length)
+            .map(([c, pts]) => {
+               const cx = pts.reduce((s, p) => s + p.wx, 0) / pts.length;
+               const cy = pts.reduce((s, p) => s + p.wy, 0) / pts.length;
+               return { c, n: pts.length, cx, cy };
+            });
+         $('hotspots').innerHTML = chips.map((h, i) => `
+            <button data-i="${i}" title="${h.n} artworks"
+               class="text-[11px] px-2.5 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 flex items-center gap-1.5">
+               <span class="w-2 h-2 rounded-full" style="background:${clusterColor(h.c)}"></span>${h.n}
+            </button>`).join('');
+         [...$('hotspots').querySelectorAll('button')].forEach((b) => {
+            b.onclick = () => { const h = chips[+b.dataset.i]; flyTo(h.cx, h.cy, Math.max(view.scale, 0.9)); };
+         });
+      }
+
+      // ---------- lightbox ----------
+      let currentArt = null;
+      function openLightbox(a) {
+         currentArt = a;
+         $('lbImg').src = `${API_BASE}/api/library/img/${a.id}?size=full`;
+         $('lbTitle').textContent = a.title || 'Untitled';
+         $('lbMeta').textContent =
+            [a.artist, a.nationality, a.date_text || a.era, a.genre, a.medium].filter(Boolean).join(' · ');
+         const src = $('lbSource');
+         if (a.source_url) { src.href = a.source_url; src.style.display = ''; }
+         else { src.style.display = 'none'; }
+         $('lightbox').classList.remove('hidden');
+         $('lightbox').classList.add('flex');
+      }
+      function closeLightbox() {
+         $('lightbox').classList.add('hidden');
+         $('lightbox').classList.remove('flex');
+         $('lbImg').src = '';
+      }
+      $('lbClose').onclick = closeLightbox;
+      $('lightbox').onclick = (e) => { if (e.target === $('lightbox')) closeLightbox(); };
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLightbox(); });
+      $('lbUse').onclick = () => {
+         if (!currentArt) return;
+         localStorage.setItem('gm_pending_library_image', JSON.stringify({
+            id: currentArt.id,
+            title: currentArt.title,
+            url: `${API_BASE}/api/library/img/${currentArt.id}?size=full`,
+         }));
+         location.href = 'dashboard.html' + (location.search || '');
+      };
+
+      // ---------- boot ----------
+      async function boot() {
+         resize();
+         let data;
+         try {
+            const res = await fetch(API_BASE + '/api/library/map');
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            data = await res.json();
+         } catch (e) {
+            $('empty').classList.remove('hidden');
+            $('empty').classList.add('flex');
+            $('empty').querySelector('p').textContent = `Couldn't reach the library API (${e.message}).`;
+            return;
+         }
+         if (!data.count) {
+            $('empty').classList.remove('hidden');
+            $('empty').classList.add('flex');
+            return;
+         }
+         points = data.points.map((p) => ({
+            ...p,
+            wx: p.map_x * WORLD,
+            wy: p.map_y * WORLD,
+            cluster: p.map_cluster ?? 0,
+            ready: false,
+         }));
+         clusters = data.clusters || [];
+         $('subtitle').textContent =
+            `${data.count} artworks · visually similar works sit close together — drag to pan, scroll to zoom.`;
+         buildHotspots();
+         fitAll(false);
+         loadQueue = [...points];
+         pumpLoads();
+         noteProgress();
+         draw();
+      }
+      boot();
+   </script>
+</body>
+
+</html>
