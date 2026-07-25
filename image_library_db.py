@@ -328,8 +328,9 @@ def map_points() -> List[Dict[str, Any]]:
         cur = conn.cursor(cursor_factory=RealDictCursor)
         cur.execute(
             """
-            SELECT id, source, title, artist, date_text, era, genre, nationality,
-                   medium, source_url, width, height, map_x, map_y, map_cluster
+            SELECT id, source, title, artist, date_text, year_start, era, genre,
+                   nationality, medium, source_url, width, height,
+                   map_x, map_y, map_cluster
             FROM image_library
             WHERE map_x IS NOT NULL AND map_y IS NOT NULL
             ORDER BY id

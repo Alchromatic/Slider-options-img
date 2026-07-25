@@ -40,6 +40,12 @@
          </p>
       </div>
       <div class="flex items-center gap-2">
+         <div id="modes" class="flex items-center bg-neutral-900 border border-neutral-800 rounded-lg p-0.5">
+            <button data-mode="sim" class="text-[11px] px-2.5 py-1.5 rounded-md bg-neutral-700 text-white">Similarity</button>
+            <button data-mode="time" class="text-[11px] px-2.5 py-1.5 rounded-md text-neutral-400 hover:text-white">Timeline</button>
+            <button data-mode="origin" class="text-[11px] px-2.5 py-1.5 rounded-md text-neutral-400 hover:text-white">Origin</button>
+            <button data-mode="theme" class="text-[11px] px-2.5 py-1.5 rounded-md text-neutral-400 hover:text-white">Theme</button>
+         </div>
          <div id="hotspots" class="flex items-center gap-1.5 flex-wrap"></div>
          <button id="resetView" title="Reset view"
             class="text-xs bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 rounded-lg px-3 py-1.5">
@@ -108,6 +114,10 @@
       let view = { x: WORLD / 2, y: WORLD / 2, scale: 0.28 }; // world point at canvas centre + zoom
       let hovered = null;
       let dirty = true;
+      let mode = 'sim';           // sim | time | origin | theme
+      let labels = [];            // world-space captions: {x,y,text,size,lineY0?,lineY1?}
+      let tileScale = 1;          // shrinks tiles when a grouped layout overflows the world
+      let defaultSubtitle = '';
 
       const clusterColor = (c) => `hsl(${(c * 137.5) % 360} 70% 55%)`;
       const thumbURL = (p) => `assets/library/${p.id}.jpg`;
@@ -153,6 +163,164 @@
             loaded < points.length ? `Loading thumbnails ${loaded}/${points.length}…` : '';
       }
 
+      // ---------- alternate layouts (Timeline / Origin / Theme) ----------
+      // Rough west-to-east ordering so the Origin view reads like a map strip.
+      const ORIGIN_ORDER = ['American', 'British', 'Irish', 'French', 'Belgian',
+         'Dutch', 'Netherlandish', 'Flemish', 'German', 'Swiss', 'Austrian',
+         'Italian', 'Spanish', 'Czech', 'Polish', 'Hungarian', 'Swedish',
+         'Russian', 'Chinese', 'Japanese'];
+
+      // Lay one group's tiles out as a compact grid (offsets stored on _gx/_gy),
+      // ordered by similarity cluster so lookalikes stay adjacent inside it.
+      function gridPlace(pts, cell) {
+         const cols = Math.max(1, Math.ceil(Math.sqrt(pts.length * 1.6)));
+         const sorted = [...pts].sort((a, b) =>
+            (a.cluster - b.cluster) || (a.map_x - b.map_x) || (a.map_y - b.map_y));
+         sorted.forEach((p, i) => {
+            p._gx = (i % cols + 0.5) * cell;
+            p._gy = (Math.floor(i / cols) + 0.5) * cell;
+         });
+         return { w: cols * cell, h: Math.ceil(pts.length / cols) * cell };
+      }
+
+      // Pack labelled group grids into centred rows across the world square.
+      function groupedLayout(groups, cell) {
+         const GAP = cell * 1.4, LABEL_H = 150;
+         const rows = [[]];
+         let curW = 0;
+         for (const g of groups) {
+            const dim = gridPlace(g.pts, cell);
+            g.w = dim.w; g.h = dim.h + LABEL_H;
+            if (curW + g.w > WORLD && rows[rows.length - 1].length) { rows.push([]); curW = 0; }
+            rows[rows.length - 1].push(g); curW += g.w + GAP;
+         }
+         let y = 0;
+         for (const row of rows) {
+            const rowW = row.reduce((s, g) => s + g.w, 0) + GAP * (row.length - 1);
+            let x = (WORLD - rowW) / 2;
+            for (const g of row) {
+               labels.push({ x: x + g.w / 2, y: y + 70, text: `${g.label} (${g.pts.length})`, size: 60 });
+               for (const p of g.pts) { p.tx = x + p._gx; p.ty = y + LABEL_H + p._gy; }
+               x += g.w + GAP;
+            }
+            y += Math.max(...row.map((g) => g.h)) + GAP * 1.6;
+         }
+      }
+
+      // Compute target positions (tx/ty), visibility, and captions for a mode.
+      // Returns a subtitle note ('' → keep the default).
+      function computeLayout(m) {
+         labels = []; tileScale = 1;
+         const cell = TILE * 1.18;
+         points.forEach((p) => { p.vis = true; p.tx = p.wx; p.ty = p.wy; });
+         let note = '';
+
+         if (m === 'sim') {
+            points.forEach((p) => { p.tx = p.map_x * WORLD; p.ty = p.map_y * WORLD; });
+         } else if (m === 'time') {
+            const dated = points.filter((p) => p.year_start);
+            points.forEach((p) => { p.vis = !!p.year_start; });
+            const ys = dated.map((p) => p.year_start);
+            const y0 = Math.min(...ys), y1 = Math.max(...ys);
+            dated.forEach((p) => {
+               p.tx = ((p.year_start - y0) / Math.max(1, y1 - y0)) * WORLD;
+               p.ty = p.map_y * WORLD;   // similar works stay vertically grouped
+            });
+            for (let c = Math.ceil(y0 / 100) * 100; c <= y1; c += 100) {
+               const x = ((c - y0) / Math.max(1, y1 - y0)) * WORLD;
+               labels.push({ x, y: -130, text: String(c), size: 64, lineY0: -70, lineY1: WORLD });
+            }
+            note = `Timeline: ${dated.length} dated works (${y0}–${y1}) · ${points.length - dated.length} undated hidden.`;
+         } else if (m === 'origin') {
+            const known = points.filter((p) => (p.nationality || '').trim());
+            points.forEach((p) => { p.vis = !!(p.nationality || '').trim(); });
+            const byNat = new Map();
+            known.forEach((p) => {
+               const k = p.nationality.trim();
+               if (!byNat.has(k)) byNat.set(k, []);
+               byNat.get(k).push(p);
+            });
+            const groups = [...byNat.entries()]
+               .sort((a, b) => {
+                  const ia = ORIGIN_ORDER.indexOf(a[0]), ib = ORIGIN_ORDER.indexOf(b[0]);
+                  return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+               })
+               .map(([label, pts]) => ({ label, pts }));
+            groupedLayout(groups, cell);
+            note = `Origin: ${known.length} works with a known nationality · ${points.length - known.length} unknown hidden.`;
+         } else {  // theme
+            const byG = new Map();
+            points.forEach((p) => {
+               const k = (p.genre || 'Other').trim() || 'Other';
+               if (!byG.has(k)) byG.set(k, []);
+               byG.get(k).push(p);
+            });
+            const groups = [...byG.entries()]
+               .sort((a, b) => b[1].length - a[1].length)
+               .map(([label, pts]) => ({ label, pts }));
+            const oi = groups.findIndex((g) => g.label === 'Other');
+            if (oi >= 0) groups.push(groups.splice(oi, 1)[0]);   // Other last
+            groupedLayout(groups, cell);
+            note = `Theme: ${points.length} works in ${groups.length} groups.`;
+         }
+
+         // Uniform-scale + centre the layout (and captions) into the world square.
+         const vis = points.filter((p) => p.vis);
+         const xs = vis.map((p) => p.tx).concat(labels.map((L) => L.x));
+         const ys2 = vis.map((p) => p.ty).concat(labels.map((L) => L.y));
+         const minX = Math.min(...xs), maxX = Math.max(...xs);
+         const minY = Math.min(...ys2), maxY = Math.max(...ys2);
+         const f = Math.min(1,
+            (WORLD * 0.96) / Math.max(1, maxX - minX),
+            (WORLD * 0.96) / Math.max(1, maxY - minY));
+         tileScale = f;
+         const ox = (WORLD - (maxX - minX) * f) / 2, oy = (WORLD - (maxY - minY) * f) / 2;
+         const fx = (v) => (v - minX) * f + ox, fy = (v) => (v - minY) * f + oy;
+         vis.forEach((p) => { p.tx = fx(p.tx); p.ty = fy(p.ty); });
+         labels.forEach((L) => {
+            L.x = fx(L.x); L.y = fy(L.y); L.size *= f;
+            if (L.lineY0 !== undefined) { L.lineY0 = fy(L.lineY0); L.lineY1 = fy(L.lineY1); }
+         });
+         return note;
+      }
+
+      // Animate every tile from its current position to its target (PixPlot-style morph).
+      let morph = null;
+      function animateToTargets() {
+         const from = points.map((p) => [p.wx, p.wy]);
+         const t0 = performance.now(), dur = 700;
+         cancelAnimationFrame(morph);
+         const step = (t) => {
+            const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+            points.forEach((p, i) => {
+               p.wx = from[i][0] + (p.tx - from[i][0]) * e;
+               p.wy = from[i][1] + (p.ty - from[i][1]) * e;
+            });
+            dirty = true;
+            if (k < 1) morph = requestAnimationFrame(step);
+         };
+         morph = requestAnimationFrame(step);
+      }
+
+      function setMode(m) {
+         mode = m;
+         const note = computeLayout(m);
+         [...$('modes').querySelectorAll('button')].forEach((b) => {
+            const on = b.dataset.mode === m;
+            b.classList.toggle('bg-neutral-700', on);
+            b.classList.toggle('text-white', on);
+            b.classList.toggle('text-neutral-400', !on);
+         });
+         $('hotspots').style.display = m === 'sim' ? '' : 'none';
+         $('subtitle').textContent = note || defaultSubtitle;
+         setHover(null);
+         animateToTargets();
+         fitAll(true);
+      }
+      [...$('modes').querySelectorAll('button')].forEach((b) => {
+         b.onclick = () => { if (b.dataset.mode !== mode) setMode(b.dataset.mode); };
+      });
+
       // ---------- drawing ----------
       function draw() {
          requestAnimationFrame(draw);
@@ -161,8 +329,9 @@
          const r = canvas.getBoundingClientRect();
          ctx.clearRect(0, 0, r.width, r.height);
 
-         const size = TILE * view.scale;
+         const size = TILE * tileScale * view.scale;
          for (const p of points) {
+            if (!p.vis) continue;
             const [sx, sy] = toScreen(p.wx, p.wy);
             if (sx < -size || sy < -size || sx > r.width + size || sy > r.height + size) continue;
             let w = size, h = size;
@@ -182,6 +351,23 @@
                ctx.lineWidth = p === hovered ? 2.5 : 1;
                ctx.strokeRect(x, y, w, h);
             }
+         }
+
+         // Mode captions: group names (Origin/Theme) and century ticks (Timeline).
+         ctx.textAlign = 'center';
+         for (const L of labels) {
+            const [lx, ly] = toScreen(L.x, L.y);
+            if (L.lineY0 !== undefined) {
+               const ly0 = toScreen(L.x, L.lineY0)[1], ly1 = toScreen(L.x, L.lineY1)[1];
+               ctx.strokeStyle = 'rgba(115,115,115,.18)';
+               ctx.lineWidth = 1;
+               ctx.beginPath(); ctx.moveTo(lx, ly0); ctx.lineTo(lx, ly1); ctx.stroke();
+            }
+            const px = Math.min(30, L.size * view.scale);
+            if (px < 7) continue;
+            ctx.fillStyle = 'rgba(212,212,212,.85)';
+            ctx.font = `600 ${px}px Inter, sans-serif`;
+            ctx.fillText(L.text, lx, ly);
          }
       }
 
@@ -226,10 +412,11 @@
       }, { passive: false });
 
       function hover(mx, my, clientX, clientY) {
-         const size = TILE * view.scale;
+         const size = TILE * tileScale * view.scale;
          let hit = null;
          for (let i = points.length - 1; i >= 0; i--) {   // topmost drawn wins
             const p = points[i];
+            if (!p.vis) continue;
             const [sx, sy] = toScreen(p.wx, p.wy);
             if (Math.abs(mx - sx) <= size / 2 && Math.abs(my - sy) <= size / 2) { hit = p; break; }
          }
@@ -352,12 +539,16 @@
             ...p,
             wx: p.map_x * WORLD,
             wy: p.map_y * WORLD,
+            tx: p.map_x * WORLD,
+            ty: p.map_y * WORLD,
             cluster: p.map_cluster ?? 0,
+            vis: true,
             ready: false,
          }));
          clusters = data.clusters || [];
-         $('subtitle').textContent =
+         defaultSubtitle =
             `${data.count} artworks · visually similar works sit close together — drag to pan, scroll to zoom.`;
+         $('subtitle').textContent = defaultSubtitle;
          buildHotspots();
          fitAll(false);
          loadQueue = [...points];

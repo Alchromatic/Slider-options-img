@@ -4,3 +4,10 @@ git commit -m "Initial commit"
 git remote add origin https://github.com/Alchromatic/Slider-options-img.git
 git branch -M main
 git push -u origin main
+
+git init
+git add .
+git commit -m "Art map toggle"
+git remote add origin https://github.com/Alchromatic/Slider-options-img.git
+git branch -M main
+git push -u origin main
