@@ -6,7 +6,7 @@
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
       <!-- Title -->
-      <title>Templates | GeoMagic</title>
+      <title>Templates · Colors | GeoMagic</title>
 
       <!-- favicon -->
       <link rel="apple-touch-icon" sizes="180x180" href="assets/img/favicon/apple-touch-icon.png">
@@ -29,6 +29,7 @@
       <link rel="stylesheet" href="assets/css/output.css">
     <link rel="stylesheet" href="assets/css/palette-mixing.css">
     <link rel="stylesheet" href="assets/css/canvas-preview.css">
+    <link rel="stylesheet" href="assets/css/app-shell.css">
    </head>
 
    <body class="bg-[#F4F4F4] dark:bg-neutral-8">
@@ -167,20 +168,26 @@
             </header>
             <!-- dashboard header end -->
 
-            <!-- TOP ICON TOOLBAR (matches palette-selection reference) -->
+            <!-- TOP ICON TOOLBAR (one row of identically sized icons, mockup icon set) -->
             <section class="tpl-toolbar-section">
                <div class="tpl-toolbar-row flex items-center gap-3 flex-nowrap">
                   <div class="tpl-toolbar-pill">
+                     <!-- Generate: greyed out until an image is uploaded -->
                      <div class="shrink-0 relative group">
-                        <button type="button" data-panel="sliders" class="tpl-icon-btn flex items-center justify-center"><img src="assets/img/icon/range-sliders.svg" alt="Unique Colors" class="tpl-icon-img"></button>
-                        <div class="tpl-tooltip w-38.5"><div class="bg-white dark:bg-neutral-8 p-2.5 rounded-lg text-center"><h6 class="text-neutral-7 dark:text-white text-sm leading-[17px] -tracking-[0.02em] mb-1">Unique Colors</h6><p class="text-[#5D6C76] text-xs leading-[15px] -tracking-[0.02em]">Palette mixing settings &amp; sliders</p></div></div>
+                        <button type="button" id="tplGenerateBtn" class="tpl-icon-btn tpl-generate flex items-center justify-center" aria-disabled="true"><i class="fa-solid fa-play"></i></button>
+                        <div class="tpl-tooltip w-50"><div class="bg-white dark:bg-neutral-8 p-2.5 rounded-lg text-center"><h6 class="text-neutral-7 dark:text-white text-sm leading-[17px] -tracking-[0.02em] mb-1">Generate</h6><p id="tplGenerateTip" class="text-[#5D6C76] text-xs leading-[15px] -tracking-[0.02em]">Upload an image first, then generate shapes</p></div></div>
+                     </div>
+                     <span class="tpl-toolbar-divider"></span>
+                     <div class="shrink-0 relative group">
+                        <button type="button" data-panel="sliders" data-title="Unique Colors" data-subtitle="Pick a color, pick a palette and generate its paint recipe." class="tpl-icon-btn flex items-center justify-center"><img src="assets/img/icon/range-sliders.svg" alt="Unique Colors" class="tpl-icon-img"></button>
+                        <div class="tpl-tooltip w-38.5"><div class="bg-white dark:bg-neutral-8 p-2.5 rounded-lg text-center"><h6 class="text-neutral-7 dark:text-white text-sm leading-[17px] -tracking-[0.02em] mb-1">Unique Colors</h6><p class="text-[#5D6C76] text-xs leading-[15px] -tracking-[0.02em]">Palette mixing &amp; recipe</p></div></div>
                      </div>
                      <div class="shrink-0 relative group">
-                        <button type="button" data-panel="drag" class="tpl-icon-btn flex items-center justify-center"><img src="assets/img/icon/crop.svg" alt="Drag Colors" class="tpl-icon-img"></button>
-                        <div class="tpl-tooltip w-38.5"><div class="bg-white dark:bg-neutral-8 p-2.5 rounded-lg text-center"><h6 class="text-neutral-7 dark:text-white text-sm leading-[17px] -tracking-[0.02em] mb-1">Drag Colors</h6><p class="text-[#5D6C76] text-xs leading-[15px] -tracking-[0.02em]">Custom Sequence (Drag Colors)</p></div></div>
+                        <button type="button" data-panel="drag" data-title="Drag Colors" data-subtitle="Reorder the palette, or merge similar colors with the counter." class="tpl-icon-btn flex items-center justify-center"><img src="assets/img/icon/crop.svg" alt="Drag Colors" class="tpl-icon-img"></button>
+                        <div class="tpl-tooltip w-38.5"><div class="bg-white dark:bg-neutral-8 p-2.5 rounded-lg text-center"><h6 class="text-neutral-7 dark:text-white text-sm leading-[17px] -tracking-[0.02em] mb-1">Drag Colors</h6><p class="text-[#5D6C76] text-xs leading-[15px] -tracking-[0.02em]">Custom sequence &amp; color count</p></div></div>
                      </div>
                      <div class="shrink-0 relative group">
-                        <button type="button" data-panel="filters" class="tpl-icon-btn flex items-center justify-center"><img src="assets/img/icon/filter-2.svg" alt="Filters" class="tpl-icon-img"></button>
+                        <button type="button" data-panel="filters" data-title="Filters" data-subtitle="Image adjustments applied to the rendered composition." class="tpl-icon-btn flex items-center justify-center"><img src="assets/img/icon/filter-2.svg" alt="Filters" class="tpl-icon-img"></button>
                         <div class="tpl-tooltip w-38.5"><div class="bg-white dark:bg-neutral-8 p-2.5 rounded-lg text-center"><h6 class="text-neutral-7 dark:text-white text-sm leading-[17px] -tracking-[0.02em] mb-1">Filters</h6><p class="text-[#5D6C76] text-xs leading-[15px] -tracking-[0.02em]">Image adjustments &amp; filters</p></div></div>
                      </div>
 
@@ -188,40 +195,43 @@
                   <section id="rendering-logic-section" class="rl-section rl-inline tpl-rl-open">
                      <div class="rl-card rl-card-row">
                         <div class="rl-toolbar">
-                     <button type="button" class="rendering-icon-btn active" data-logic="original" title="Original Order">
-                        <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="15" x2="16" y2="15"/></svg>
+                     <button type="button" class="rendering-icon-btn active" data-logic="original" title="Original Order" data-desc="Shapes in the order they were generated">
+                        <img src="assets/img/icon/task-list.svg" alt="">
                      </button>
-                     <button type="button" class="rendering-icon-btn" data-logic="exterior_to_center" title="Exterior → Center">
-                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>
+                     <button type="button" class="rendering-icon-btn" data-logic="exterior_to_center" title="Exterior → Center" data-desc="Paint the edges first, finish in the middle">
+                        <img src="assets/img/icon/resize-fit.svg" alt="">
                      </button>
-                     <button type="button" class="rendering-icon-btn" data-logic="center_to_exterior" title="Center → Exterior">
-                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2" fill="currentColor"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="9"/></svg>
+                     <button type="button" class="rendering-icon-btn" data-logic="center_to_exterior" title="Center → Exterior" data-desc="Start in the middle, work outwards">
+                        <img src="assets/img/icon/resize.svg" alt="">
                      </button>
-                     <button type="button" class="rendering-icon-btn" data-logic="top_to_bottom" title="Top → Bottom">
-                        <svg viewBox="0 0 24 24"><line x1="12" y1="3" x2="12" y2="21"/><polyline points="6,15 12,21 18,15"/></svg>
+                     <button type="button" class="rendering-icon-btn" data-logic="top_to_bottom" title="Top → Bottom" data-desc="Paint from the top edge down">
+                        <img src="assets/img/icon/collapse-down.svg" alt="">
                      </button>
-                     <button type="button" class="rendering-icon-btn" data-logic="bottom_to_top" title="Bottom → Top">
-                        <svg viewBox="0 0 24 24"><line x1="12" y1="21" x2="12" y2="3"/><polyline points="6,9 12,3 18,9"/></svg>
+                     <button type="button" class="rendering-icon-btn" data-logic="bottom_to_top" title="Bottom → Top" data-desc="Paint from the bottom edge up">
+                        <img src="assets/img/icon/expand-up.svg" alt="">
                      </button>
-                     <button type="button" class="rendering-icon-btn" data-logic="color_sequence" title="Color Sequence">
-                        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="6" height="6" fill="#ff6b6b" stroke="none"/><rect x="9" y="3" width="6" height="6" fill="#4ecdc4" stroke="none"/><rect x="15" y="3" width="6" height="6" fill="#45b7d1" stroke="none"/><rect x="3" y="9" width="18" height="12" rx="1"/></svg>
+                     <button type="button" class="rendering-icon-btn" data-logic="color_sequence" title="Color Sequence" data-desc="Group shapes by color, most used first">
+                        <img src="assets/img/icon/color-wheel.svg" alt="">
                      </button>
-                     <button type="button" class="rendering-icon-btn" data-logic="light_to_dark" title="Light → Dark">
-                        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 3 L21 21" stroke-width="2"/><rect x="3" y="3" width="9" height="18" fill="white" stroke="none"/></svg>
+                     <!-- Light/Dark is ONE icon: click again (or use the ‹ › triangles) to flip direction -->
+                     <span class="ld-pair" id="ldPair">
+                     <button type="button" class="rendering-icon-btn ld-visible" data-logic="light_to_dark" title="Light → Dark" data-desc="Lightest shapes first — click again to flip">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><rect x="3" y="5" width="9" height="14" rx="2" fill="currentColor" opacity=".25" stroke="none"/><path class="ld-arrow" d="M9 12l6-4v8z" fill="currentColor" stroke="none"/></svg>
                      </button>
-                     <button type="button" class="rendering-icon-btn" data-logic="dark_to_light" title="Dark → Light">
-                        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" fill="#333"/><path d="M3 3 L21 21" stroke="#fff" stroke-width="2"/><rect x="12" y="3" width="9" height="18" fill="white" stroke="none"/></svg>
+                     <button type="button" class="rendering-icon-btn" data-logic="dark_to_light" title="Dark → Light" data-desc="Darkest shapes first — click again to flip">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><rect x="12" y="5" width="9" height="14" rx="2" fill="currentColor" opacity=".25" stroke="none"/><path class="ld-arrow" d="M15 12l-6-4v8z" fill="currentColor" stroke="none"/></svg>
                      </button>
-                     <button type="button" class="rendering-icon-btn" data-logic="frequency_by_color" title="Most → Least Count">
+                     </span>
+                     <button type="button" class="rendering-icon-btn" data-logic="frequency_by_color" title="Most → Least Count" data-desc="Most frequent colors first">
                         <svg viewBox="0 0 24 24"><rect x="3" y="14" width="4" height="7"/><rect x="8" y="10" width="4" height="11"/><rect x="13" y="6" width="4" height="15"/><rect x="18" y="3" width="4" height="18"/></svg>
                      </button>
-                     <button type="button" class="rendering-icon-btn" data-logic="frequency_by_color_reverse" title="Least → Most Count">
+                     <button type="button" class="rendering-icon-btn" data-logic="frequency_by_color_reverse" title="Least → Most Count" data-desc="Rarest colors first">
                         <svg viewBox="0 0 24 24"><rect x="3" y="3" width="4" height="18"/><rect x="8" y="6" width="4" height="15"/><rect x="13" y="10" width="4" height="11"/><rect x="18" y="14" width="4" height="7"/></svg>
                      </button>
-                     <button type="button" class="rendering-icon-btn" data-logic="custom_sequence" title="Custom Sequence (Drag Colors)">
+                     <button type="button" class="rendering-icon-btn" data-logic="custom_sequence" title="Custom Sequence" data-desc="Your own color order from the strip below">
                         <svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="7" rx="1"/><rect x="14" y="4" width="7" height="7" rx="1"/><rect x="3" y="13" width="7" height="7" rx="1"/><rect x="14" y="13" width="7" height="7" rx="1"/><path d="M10 7.5 L14 7.5" stroke-dasharray="2,1"/><path d="M10 16.5 L14 16.5" stroke-dasharray="2,1"/></svg>
                      </button>
-                     <button type="button" class="rendering-icon-btn" id="selectiveResolutionIcon" title="Selective Resolution (Draw region to add detail)">
+                     <button type="button" class="rendering-icon-btn" id="selectiveResolutionIcon" title="Selective Resolution" data-desc="Draw a region on the canvas to add detail there">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="6" y="6" width="8" height="8" rx="1" stroke-dasharray="2,1"/><circle cx="10" cy="10" r="2" fill="currentColor" stroke="none"/></svg>
                      </button>
                         </div>  <!-- /rl-toolbar -->
@@ -241,14 +251,14 @@
                <!-- geometrize canvas + panels -->
                <div class="flex flex-col gap-2">
                   <div class="pm-grid-2">
-                  <!-- ===== LEFT COLUMN: canvas (top) + diagrams (bottom) ===== -->
+                  <!-- ===== LEFT COLUMN: canvas (top) + recipe diagrams (bottom) ===== -->
                   <div class="pm-main-col">
                   <!-- canvas -->
                   <div class="bg-white dark:bg-neutral-7 p-6 rounded-2xl border-2 border-[#F4F4F4] dark:border-0 shadow-[0px_4px_14px_-6px_#F4F4F4] dark:shadow-none">
                      <div class="tpl-card-header max-md:hidden">
                         <div>
-                           <h2 class="tpl-card-title">Colors</h2>
-                           <p class="tpl-card-subtitle">Extract, reorder and render the palette for your composition.</p>
+                           <h2 class="tpl-card-title" id="tplTitle">Colors</h2>
+                           <p class="tpl-card-subtitle" id="tplSubtitle">Extract, reorder and render the palette for your composition.</p>
                         </div>
                         <div class="tpl-card-meta">
                            <span class="tpl-card-pill"><span class="dot"></span> Live preview</span>
@@ -269,43 +279,63 @@
                            <div class="canvas-resize-handle se" data-corner="se" title="Drag to resize"></div>
                         </div>
                      </div>
+                     <!-- hidden generate trigger so the engine can be driven from the toolbar icon -->
+                     <button id="btn-generate" type="button" class="hidden" tabindex="-1" aria-hidden="true"></button>
+
+                     <!-- Picked color — standard UI (same fields as Palette mixing target) -->
+                     <div id="dash-selection" class="gm-picked hidden">
+                        <div class="gm-picked-field">
+                           <div class="min-w-0 flex-1">
+                              <span class="gm-picked-label">Picked color (hex)</span>
+                              <div class="flex items-center gap-2.5">
+                                 <input id="dash-sel-hex" type="text" class="gm-picked-hex" value="#000000" readonly spellcheck="false" aria-label="Picked color hex">
+                                 <span id="dash-sel-color" class="gm-picked-swatch"></span>
+                              </div>
+                           </div>
+                        </div>
+                        <div class="min-w-0">
+                           <span class="gm-picked-label">Shape</span>
+                           <div class="gm-picked-meta"><span id="dash-sel-type"></span> · <span id="dash-sel-rgba"></span></div>
+                        </div>
+                        <div class="gm-picked-actions">
+                           <button id="dash-sel-copy" type="button" class="gm-icon-btn" title="Copy hex"><i class="fa-regular fa-copy"></i></button>
+                           <button id="dash-sel-recipe" type="button" class="gm-icon-btn primary" title="Generate paint recipe for this color"><i class="fa-regular fa-flask"></i></button>
+                           <button id="dash-sel-delete" type="button" class="gm-icon-btn danger" title="Delete shape"><i class="fa-regular fa-trash-can"></i></button>
+                           <button id="dash-sel-clear" type="button" class="gm-icon-btn" title="Clear selection"><i class="fa-regular fa-xmark"></i></button>
+                        </div>
+                     </div>
+
                      <!-- Optimizing: flatten transparency so re-ordering can't change the look -->
                      <div class="mt-4 flex items-center justify-between gap-3 flex-wrap rounded-xl bg-[#F4F4F4] dark:bg-neutral-8 px-4 py-3">
                         <div class="min-w-0">
                            <h6 class="text-neutral-6 dark:text-neutral-1 text-sm font-bold -tracking-[0.14px]">Optimizing</h6>
                            <p class="text-neutral-4 text-xs font-semibold">Bakes opacity into each shape to fix order issues.</p>
                         </div>
-                        <button type="button" id="bakeOpaqueBtn" title="Makes shapes order-independent by baking opacity into each shape" class="inline-flex items-center justify-center gap-2 h-12 px-7 shrink-0 rounded-xl bg-theme-primary text-white text-[15px] font-bold -tracking-[0.01em] shadow-[0px_4px_14px_-4px_rgba(43,133,255,0.6)] hover:opacity-90 transition-all duration-200">
+                        <button type="button" id="bakeOpaqueBtn" class="inline-flex items-center justify-center gap-2 h-12 px-7 shrink-0 rounded-xl bg-theme-primary text-white text-[15px] font-bold -tracking-[0.01em] shadow-[0px_4px_14px_-4px_rgba(43,133,255,0.6)] hover:opacity-90 transition-all duration-200">
                            <i class="fa-regular fa-wand-magic-sparkles"></i> Bake Opaque
                         </button>
                      </div>
 
-                     <div id="dash-selection" class="hidden mt-4 flex items-center gap-3 flex-wrap text-sm">
-                        <span class="text-neutral-4 font-semibold">Selected:</span>
-                        <span id="dash-sel-type" class="text-neutral-6 dark:text-neutral-1 font-semibold"></span>
-                        <span id="dash-sel-color" class="inline-block w-6 h-6 rounded border border-neutral-4"></span>
-                        <span id="dash-sel-rgba" class="text-neutral-4 font-mono text-xs"></span>
-                        <button id="dash-sel-delete" type="button" class="theme-btn-regular style-2">Delete shape</button>
-                        <button id="dash-sel-clear" type="button" class="theme-btn-regular style-2">Clear selection</button>
-                     </div>
-                     <!-- color dragger bar + slider (matches reference screenshot, polished) — hidden until Drag Colors icon clicked -->
-                     <div class="tpl-drag-section" id="dragSection" style="display:none;">
+                     <!-- Color order strip: click to select, ‹ › to move, +/- merges SIMILAR colors (never drops the last one) -->
+                     <div class="tpl-drag-section" id="dragSection">
                         <div class="tpl-drag-label-row">
                            <span class="tpl-drag-label">Color Order</span>
-                           <span class="tpl-drag-hint">Click to select • Drag to reorder</span>
+                           <span class="tpl-drag-hint" id="dragHint">Click to select • ‹ › to move • Drag to reorder • <b>−</b> merges similar colors</span>
                         </div>
                         <div class="tpl-drag-row">
+                           <button id="bandsPrevBtn" type="button" class="tpl-strip-arrow" title="Move selected color left"><i class="fa-solid fa-caret-left"></i></button>
                            <div class="tpl-drag-strip-wrap" id="bandsScrollWrap">
                               <div id="colorBandsStrip">
                                  <div id="bandsEmpty" class="tpl-bands-empty">Load an image to extract its palette</div>
                               </div>
                            </div>
+                           <button id="bandsNextBtn" type="button" class="tpl-strip-arrow" title="Move selected color right"><i class="fa-solid fa-caret-right"></i></button>
                            <div class="tpl-count-pill">
-                              <button id="bandsMinusBtn" type="button" title="Remove color" class="flex items-center justify-center text-neutral-7 dark:text-white">
+                              <button id="bandsMinusBtn" type="button" title="Merge the two most similar colors" class="flex items-center justify-center text-neutral-7 dark:text-white">
                                  <i class="fa-regular fa-minus"></i>
                               </button>
                               <div id="bandsCountLabel" class="text-neutral-7 dark:text-white">00</div>
-                              <button id="bandsPlusBtn" type="button" title="Add color" class="flex items-center justify-center text-neutral-7 dark:text-white">
+                              <button id="bandsPlusBtn" type="button" title="Split the last merged color" class="flex items-center justify-center text-neutral-7 dark:text-white">
                                  <i class="fa-regular fa-plus"></i>
                               </button>
                            </div>
@@ -378,18 +408,19 @@
                            <input type="range" id="vignette-slider" min="-100" max="100" value="0">
                         </div>
                      </div>
-                     <!-- color order trigger (kept hidden; opened via crop icon in top toolbar) -->
+
+                     <!-- color order trigger (kept hidden; the strip above is the visible control) -->
                      <div class="hidden">
                         <button id="dragColorBtn" type="button" class="theme-btn-regular style-2 inline-flex! items-center justify-center gap-2"><span class="text-neutral-4"><i class="fa-regular fa-arrow-down-arrow-up"></i></span> Drag &amp; Drop Color Order</button>
                      </div>
                   </div>
 
-                  <!-- ===== DIAGRAMS (bottom of left column) ===== -->
+                  <!-- ===== COLOR THEORY / RECIPE (bottom of left column) ===== -->
                   <div class="pm-panel pm-diagrams tpl-panel" data-panel-name="distribution" style="display:none;">
                      <div class="section">
                         <div class="cd-section-header">
-                           <h4>Color Distribution</h4>
-                           <p class="cd-subtitle">Visual breakdown of the paint mixing recipe.</p>
+                           <h4>Color Theory</h4>
+                           <p class="cd-subtitle">Paint mixing recipe for the selected color — the highlighted candidate is what you see below.</p>
                         </div>
 
                         <div class="cd-view-controls">
@@ -420,78 +451,49 @@
 
                         <div id="trycolorsResults" class="trycolors-results">
                            <div class="cd-placeholder">
-                              Enter a hex color code to see the paint mixing recipe
+                              Pick a color on the canvas (or type a hex) and press Generate Recipe
                            </div>
                         </div>
                      </div>
                   </div>
                   </div>
-                  <!-- ===== RIGHT COLUMN: palette mixing ===== -->
-                  <div class="pm-right-col tpl-panel" data-panel-name="sliders" style="display:none;">
-                  <div class="pm-panel pm-settings">
+                  <!-- ===== RIGHT COLUMN: palette mixing — pick color → pick palette → match → recipe ===== -->
+                  <div class="pm-right-col tpl-panel" data-panel-name="sliders" data-mobile-hidden="1">
+                  <div class="pm-panel pm-settings" id="pmPanel">
 <!-- ====================== 7. PALETTE MIXING (Trycolors Style) ======================== -->
 <div class="section trycolors-section">
     <h4>Palette mixing</h4>
     <p style="font-size: 12px; color: #888; margin: -10px 0 15px 0;">
-        Enter any hex color to find the paint recipe.
+        Pick a color, pick a palette, then generate the recipe.
     </p>
 
+    <div class="pm-step"><i>1</i> Pick color</div>
     <div class="trycolors-input-row">
         <div class="trycolors-color-input">
             <label>Target Color (Hex)</label>
             <input type="text" id="trycolorsInput" placeholder="1E2448" maxlength="7">
         </div>
         <div id="trycolorsPreview" class="trycolors-preview"></div>
-        <button id="trycolorsBtn" class="trycolors-btn">Get Recipe</button>
     </div>
+    <p class="pm-pick-hint">Tip: click any shape on the canvas — the picked color is outlined in <b>yellow</b> and filled in here.</p>
 
-    <!-- Model / version selector (added) -->
-    <div id="trycolorsModelWrap" style="margin: 6px 0 2px 0;">
-        <label style="font-size: 11px; color: #888; display: block; margin-bottom: 3px;">Unmix Model / Version</label>
-        <select id="trycolorsModelSelect" style="width: 100%; padding: 6px 10px; border: 1px solid #ced4da; border-radius: 4px; font-size: 12px;">
-            <option value="m7_1">M7.1 measured pairwise (current)</option>
-            <option value="m7">M7 measured pairwise</option>
-            <option value="km_baseline">KM search (your palette)</option>
-            <option value="custom">Custom (My Colors)</option>
-            <option value="m6_1" disabled>M6.1 tiered-confidence (unavailable)</option>
-            <option value="m6" disabled>M6 guarded (unavailable)</option>
-        </select>
-        <div id="trycolorsModelNote" style="font-size: 10px; color: #999; margin-top: 4px;"></div>
-    </div>
-
-    <div class="pm-sliders">
-        <div class="pm-slider">
-            <div class="pm-slider-head"><span class="pm-slider-label"><i class="fa-regular fa-layer-group"></i> Max Colors</span><span class="pm-slider-val" data-for="trycolorsMaxColors"></span></div>
-            <input type="range" class="pm-range" id="trycolorsMaxColors" value="3" min="1" max="5">
+    <div class="pm-step"><i>2</i> Pick palette</div>
+    <div class="trycolors-palette-selector pm-brand-row" style="margin-top:0; padding-top:0; border-top:0;">
+        <div class="pm-select-wrap">
+            <i class="fa-regular fa-magnifying-glass"></i>
+            <select id="trycolorsPaletteSelect" aria-label="Brands">
+                <option value="default">Default Artist Palette (20 colors)</option>
+            </select>
+            <i class="fa-regular fa-chevron-down"></i>
         </div>
-        <div class="pm-slider">
-            <div class="pm-slider-head"><span class="pm-slider-label"><i class="fa-regular fa-bullseye"></i> Parts (Precision)</span><span class="pm-slider-val" data-for="trycolorsMaxParts"></span></div>
-            <input type="range" class="pm-range" id="trycolorsMaxParts" value="10" min="2" max="30">
-        </div>
-        <div class="pm-slider">
-            <div class="pm-slider-head"><span class="pm-slider-label"><i class="fa-regular fa-filter"></i> Prefilter</span><span class="pm-slider-val" data-for="prefilterTopNInput"></span></div>
-            <input type="range" class="pm-range" id="prefilterTopNInput" value="12" min="0" max="60">
-        </div>
-        <div class="pm-slider">
-            <div class="pm-slider-head"><span class="pm-slider-label"><i class="fa-regular fa-star"></i> Top-K Solutions</span><span class="pm-slider-val" data-for="topKInput"></span></div>
-            <input type="range" class="pm-range" id="topKInput" value="5" min="1" max="20">
-        </div>
-    </div>
-
-    <!-- Palette Selector for Trycolors -->
-    <div class="trycolors-palette-selector">
-        <label>Palette:</label>
-        <select id="trycolorsPaletteSelect">
-            <option value="default">Default Artist Palette (20 colors)</option>
-        </select>
-        <button id="trycolorsLoadPaletteBtn">Load</button>
-        <button id="colorLibraryBtn" type="button" title="Add & edit your own named colors">Edit Library</button>
+        <button id="trycolorsLoadPaletteBtn" type="button" class="hidden" aria-hidden="true">Load</button>
+        <button id="colorLibraryBtn" type="button" title="Add & edit your own named colors"><i class="fa-regular fa-pen-to-square"></i> Edit</button>
     </div>
 
     <details class="trycolors-palette-toggle" open>
-        <summary>Palette (<span id="trycolorsPaletteCount">20</span> colors)</summary>
+        <summary><span>Colors (<span id="trycolorsPaletteCount">20</span>)</span></summary>
         <div class="trycolors-palette-hint">Click to use as target • Right-click to exclude from mixing</div>
-        <div id="trycolorsPaletteGrid" class="trycolors-palette-grid">
+        <div id="trycolorsPaletteGrid" class="pm-color-list">
             <!-- Filled by JS -->
         </div>
         <div class="trycolors-silenced-controls" id="trycolorsSilencedControls" style="display: none;">
@@ -499,6 +501,52 @@
                 <strong id="trycolorsSilencedCount">0</strong> colors excluded from mixing
             </span>
             <button class="trycolors-restore-btn" onclick="restoreAllSilencedColors()">Restore All</button>
+        </div>
+    </details>
+
+    <div class="pm-step"><i>3</i> Match &amp; recipe</div>
+    <div class="pm-run-row">
+        <button id="trycolorsBtn" class="trycolors-btn"><i class="fa-regular fa-flask"></i>&nbsp; Generate Recipe</button>
+        <button id="pmRerunBtn" type="button" class="pm-rerun" title="Re-run with the current options"><i class="fa-regular fa-rotate-right"></i></button>
+    </div>
+    <!-- best match / most reliable + ranked candidates (filled by palette-mixing.js) -->
+    <div id="pmCandidates"></div>
+    <!-- match % lives here, next to the controls — click to copy the recipe -->
+    <div id="pmMatchBadge" title="Click to copy the recipe"></div>
+
+    <details class="pm-options" id="pmOptions">
+        <summary><span><i class="fa-regular fa-sliders" style="margin-right:8px"></i>Options — model &amp; precision</span><i class="fa-regular fa-chevron-down"></i></summary>
+        <!-- Model / version selector -->
+        <div id="trycolorsModelWrap" style="margin: 10px 0 2px 0;">
+            <label style="font-size: 11px; color: #888; display: block; margin-bottom: 3px;">Unmix Model / Version</label>
+            <select id="trycolorsModelSelect" style="width: 100%; padding: 6px 10px; border: 1px solid #ced4da; border-radius: 4px; font-size: 12px;">
+                <option value="m7_1">M7.1 measured pairwise (current)</option>
+                <option value="m7">M7 measured pairwise</option>
+                <option value="km_baseline">KM search (your palette)</option>
+                <option value="custom">Custom (My Colors)</option>
+                <option value="m6_1" disabled>M6.1 tiered-confidence (unavailable)</option>
+                <option value="m6" disabled>M6 guarded (unavailable)</option>
+            </select>
+            <div id="trycolorsModelNote" style="font-size: 10px; color: #999; margin-top: 4px;"></div>
+        </div>
+
+        <div class="pm-sliders">
+            <div class="pm-slider">
+                <div class="pm-slider-head"><span class="pm-slider-label"><i class="fa-regular fa-layer-group"></i> Max Colors</span><span class="pm-slider-val" data-for="trycolorsMaxColors"></span></div>
+                <input type="range" class="pm-range" id="trycolorsMaxColors" value="3" min="1" max="5">
+            </div>
+            <div class="pm-slider">
+                <div class="pm-slider-head"><span class="pm-slider-label"><i class="fa-regular fa-bullseye"></i> Parts (Precision)</span><span class="pm-slider-val" data-for="trycolorsMaxParts"></span></div>
+                <input type="range" class="pm-range" id="trycolorsMaxParts" value="10" min="2" max="30">
+            </div>
+            <div class="pm-slider">
+                <div class="pm-slider-head"><span class="pm-slider-label"><i class="fa-regular fa-filter"></i> Prefilter</span><span class="pm-slider-val" data-for="prefilterTopNInput"></span></div>
+                <input type="range" class="pm-range" id="prefilterTopNInput" value="12" min="0" max="60">
+            </div>
+            <div class="pm-slider">
+                <div class="pm-slider-head"><span class="pm-slider-label"><i class="fa-regular fa-star"></i> Top-K Solutions</span><span class="pm-slider-val" data-for="topKInput"></span></div>
+                <input type="range" class="pm-range" id="topKInput" value="5" min="1" max="20">
+            </div>
         </div>
     </details>
 </div>
@@ -510,8 +558,6 @@
             </div>
          </main>
       </div>
-
-      
 
       <!-- Drag & Drop Color Order modal -->
       <div id="dragModal" class="rl-modal">
@@ -526,8 +572,11 @@
          </div>
       </div>
 
+
       <!-- main js -->
       <script src="assets/js/main.js"></script>
+      <!-- shared shell: sidebar, search, toasts, tooltips, portfolio store -->
+      <script src="assets/js/app-shell.js"></script>
 
       <!-- geometrize engine (runs in-browser, no backend) -->
       <script src="assets/js/geometrize.js"></script>
@@ -545,7 +594,7 @@
       </script>
       <!-- embedded palette presets (so they work under file:// where fetch() is blocked) -->
       <script src="assets/js/colors-data.js"></script>
-      <script src="assets/js/palette-mixing.js?v=3"></script>
+      <script src="assets/js/palette-mixing.js?v=4"></script>
       <!-- editable named-color library that feeds the unmixer palette -->
       <script src="assets/js/color-library.js?v=3"></script>
       <script>
@@ -601,349 +650,399 @@
             });
          })();
 
-         // ===== Top icon toolbar: panel toggling =====
+
+         // ===== Top icon toolbar: ONE active tool icon, title follows the icon =====
          (function() {
-            var btns = document.querySelectorAll('.tpl-icon-btn[data-panel]');
-            var panels = document.querySelectorAll('.tpl-panel[data-panel-name]');
-            var rlSection = document.getElementById('rendering-logic-section');
-            var dragBtn = document.getElementById('dragColorBtn');
-            var dragIconBtn = document.querySelector('.tpl-icon-btn[data-panel="drag"]');
+            var btns = Array.prototype.slice.call(document.querySelectorAll('.tpl-icon-btn[data-panel]'));
+            var titleEl = document.getElementById('tplTitle');
+            var subEl = document.getElementById('tplSubtitle');
+            var rightCol = document.querySelector('.pm-right-col[data-panel-name="sliders"]');
+            var dragSection = document.getElementById('dragSection');
+            var filtersSection = document.getElementById('filtersSection');
+            var DEFAULT_TITLE = 'Colors';
+            var DEFAULT_SUB = 'Extract, reorder and render the palette for your composition.';
+            var isDesktop = function () { return window.innerWidth >= 1024; };
 
-            function setActive(btn, on) {
-               if (!btn) return;
-               if (on) btn.classList.add('active'); else btn.classList.remove('active');
+            function setTitle(t, s) {
+               if (!titleEl) return;
+               titleEl.classList.add('swap');
+               setTimeout(function () {
+                  titleEl.textContent = t || DEFAULT_TITLE;
+                  if (subEl) subEl.textContent = s || DEFAULT_SUB;
+                  titleEl.classList.remove('swap');
+               }, 120);
+               document.title = (t || DEFAULT_TITLE) + ' · Templates | GeoMagic';
             }
+            window.__tplSetTitle = setTitle;
 
-            function showPanel(name) {
-               panels.forEach(function(p) {
-                  if (p.getAttribute('data-panel-name') === name) p.style.display = '';
-               });
-            }
-            function hidePanel(name) {
-               panels.forEach(function(p) {
-                  if (p.getAttribute('data-panel-name') === name) p.style.display = 'none';
-               });
-            }
-            function isPanelVisible(name) {
-               for (var i = 0; i < panels.length; i++) {
-                  if (panels[i].getAttribute('data-panel-name') === name) {
-                     return panels[i].style.display !== 'none';
-                  }
+            function activate(name) {
+               // exclusive: only the chosen icon is highlighted
+               btns.forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-panel') === name); });
+               var btn = btns.filter(function (b) { return b.getAttribute('data-panel') === name; })[0];
+               setTitle(btn && btn.getAttribute('data-title'), btn && btn.getAttribute('data-subtitle'));
+
+               // panels: filters is the only one that swaps content under the canvas; the
+               // colour strip stays put so the canvas never shifts between tools.
+               if (filtersSection) filtersSection.style.display = (name === 'filters') ? '' : 'none';
+               if (name === 'filters' && typeof window.__tplHideDiagrams === 'function') window.__tplHideDiagrams();
+               if (rightCol) {
+                  if (isDesktop()) rightCol.removeAttribute('data-mobile-hidden');
+                  else rightCol.setAttribute('data-mobile-hidden', name === 'sliders' ? '0' : '1');
                }
-               return false;
+               if (name === 'sliders') {
+                  var inp = document.getElementById('trycolorsInput');
+                  if (inp && isDesktop()) { try { inp.focus({ preventScroll: true }); } catch (e) {} }
+                  if (rightCol && !isDesktop()) rightCol.scrollIntoView({ behavior: 'smooth', block: 'start' });
+               }
+               if (name === 'drag' && dragSection) {
+                  dragSection.style.display = '';
+                  dragSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+               }
+               window.__tplActivePanel = name;
             }
+            window.__tplActivate = activate;
 
-            btns.forEach(function(btn) {
-               btn.addEventListener('click', function() {
+            btns.forEach(function (btn) {
+               btn.addEventListener('click', function () {
                   var name = btn.getAttribute('data-panel');
-                  if (name === 'rendering') {
-                     var isOpen = rlSection.classList.contains('tpl-rl-open');
-                     if (!isOpen) {
-                        rlSection.classList.add('tpl-rl-open');
-                        rlSection.classList.remove('hidden');
-                        setActive(btn, true);
-                     } else {
-                        rlSection.classList.remove('tpl-rl-open');
-                        setActive(btn, false);
-                     }
-                     return;
-                  }
-                  if (name === 'drag') {
-                     // Toggle the inline Color Order section
-                     var section = document.getElementById('dragSection');
-                     if (!section) return;
-                     var hidden = section.style.display === 'none' || getComputedStyle(section).display === 'none';
-                     if (hidden) {
-                        section.style.display = '';
-                        setActive(btn, true);
-                        // Make sure bands are populated (auto-poll runs every 600ms but trigger now for instant feel)
-                        var palette = document.getElementById('colorPalette');
-                        if (palette && !palette.children.length && dragBtn) {
-                           var origAlert = window.alert; window.alert = function(){};
-                           var modalEl = document.getElementById('dragModal');
-                           if (modalEl) modalEl.classList.add('tpl-modal-suppress');
-                           try { dragBtn.click(); } catch (e) {}
-                           window.alert = origAlert;
-                           if (modalEl) { modalEl.classList.remove('tpl-modal-suppress'); modalEl.style.display = 'none'; }
-                           if (palette.children.length) {
-                              var colors = Array.from(palette.children).map(function(chip) {
-                                 try {
-                                    var rgba = JSON.parse(chip.dataset.color);
-                                    return '#' + [rgba[0], rgba[1], rgba[2]].map(function(v){ return ('0'+Number(v).toString(16)).slice(-2); }).join('').toUpperCase();
-                                 } catch (e) { return '#888888'; }
-                              });
-                              window.__tplApplyBands && window.__tplApplyBands(colors);
-                           }
-                        }
-                     } else {
-                        section.style.display = 'none';
-                        setActive(btn, false);
-                     }
-                     return;
-                  }
-                  if (name === 'sliders') {
-                     if (isPanelVisible('sliders')) { hidePanel('sliders'); setActive(btn, false); }
-                     else { showPanel('sliders'); setActive(btn, true); }
-                     return;
-                  }
-                  if (name === 'filters') {
-                     var fs = document.getElementById('filtersSection');
-                     if (!fs) return;
-                     var hidden = fs.style.display === 'none' || getComputedStyle(fs).display === 'none';
-                     fs.style.display = hidden ? '' : 'none';
-                     setActive(btn, hidden);
-                     // Filters and the recipe-diagrams panel share the area below the canvas
-                     // → keep them mutually exclusive.
-                     if (hidden && typeof window.__tplHideDiagrams === 'function') {
-                        window.__tplHideDiagrams();
-                     }
-                     return;
-                  }
+                  activate(btn.classList.contains('active') ? null : name);
                });
+            });
+
+            // Rendering-logic icons also drive the title ("word Colors changes by icon selection")
+            document.querySelectorAll('.rendering-icon-btn').forEach(function (b) {
+               b.addEventListener('click', function () {
+                  if (b.dataset.locked === '1') return;
+                  var t = b.getAttribute('data-tip') || b.getAttribute('title') || '';
+                  var d = b.getAttribute('data-desc') || 'Rendering order';
+                  if (t) setTitle(t, d);
+               });
+            });
+
+            // Desktop: side panel always visible; mobile: hidden until the icon is used
+            function syncCols() {
+               if (!rightCol) return;
+               if (isDesktop()) rightCol.removeAttribute('data-mobile-hidden');
+               else if (window.__tplActivePanel !== 'sliders') rightCol.setAttribute('data-mobile-hidden', '1');
+            }
+            window.addEventListener('resize', syncCols);
+            syncCols();
+
+            // Card-style tooltips for every rendering icon (no double native tooltips)
+            document.querySelectorAll('.rendering-icon-btn[title]').forEach(function (b) {
+               if (window.GM && GM.tooltip) GM.tooltip(b, b.getAttribute('title'), b.getAttribute('data-desc') || '', 'w-50');
+            });
+
+            // Deep links: ?target=#HEX (from the Dashboard's picked colour) / ?open=library
+            var q = new URLSearchParams(location.search);
+            if (q.get('target')) {
+               var hex = String(q.get('target')).replace('#', '').toUpperCase();
+               var inp = document.getElementById('trycolorsInput'), pv = document.getElementById('trycolorsPreview');
+               if (inp && /^[0-9A-F]{6}$/.test(hex)) {
+                  inp.value = hex; if (pv) pv.style.background = '#' + hex;
+                  activate('sliders');
+               }
+            }
+            if (q.get('open') === 'library') {
+               setTimeout(function () { var b = document.getElementById('colorLibraryBtn'); if (b) b.click(); }, 400);
+            }
+         })();
+
+         // ===== Generate icon: greyed out until an image is uploaded =====
+         (function() {
+            var btn = document.getElementById('tplGenerateBtn');
+            var tip = document.getElementById('tplGenerateTip');
+            var hidden = document.getElementById('btn-generate');
+            if (!btn) return;
+            function sync() {
+               var file = window.DashGeo && DashGeo.getUploadedFile && DashGeo.getUploadedFile();
+               var has = !!file;
+               btn.setAttribute('aria-disabled', has ? 'false' : 'true');
+               if (tip) tip.textContent = has
+                  ? 'Turn the uploaded image into shapes'
+                  : (window.DashGeo && DashGeo.hasShapes && DashGeo.hasShapes()
+                        ? 'Shapes already generated — upload a new image to generate again'
+                        : 'Upload an image first, then generate shapes');
+            }
+            btn.addEventListener('click', function () {
+               if (btn.getAttribute('aria-disabled') === 'true') return;
+               if (window.DashGeo && DashGeo.isBusy && DashGeo.isBusy()) return;
+               if (hidden) hidden.click();
+               if (window.__tplSetTitle) window.__tplSetTitle('Generating…', 'Building shapes from your image.');
+            });
+            ['geomagic:image', 'geomagic:generated', 'geomagic:cleared'].forEach(function (ev) {
+               window.addEventListener(ev, function () { setTimeout(sync, 0); });
+            });
+            window.addEventListener('geomagic:generated', function () {
+               if (window.__tplSetTitle && window.__tplActivePanel == null) window.__tplSetTitle('Colors', null);
+            });
+            setTimeout(sync, 300);
+         })();
+
+         // ===== Light/Dark: one icon that flips direction on a second click =====
+         (function() {
+            var pair = document.getElementById('ldPair');
+            if (!pair) return;
+            var ltd = pair.querySelector('[data-logic="light_to_dark"]');
+            var dtl = pair.querySelector('[data-logic="dark_to_light"]');
+            function show(b) { [ltd, dtl].forEach(function (x) { x.classList.toggle('ld-visible', x === b); }); }
+            function flipTo(target) {
+               show(target);
+               if (window.DashGeo && DashGeo.setLogic) DashGeo.setLogic(target.dataset.logic);
+               else target.click();
+               if (window.__tplSetTitle) window.__tplSetTitle(target.getAttribute('data-tip') || target.getAttribute('title'), target.getAttribute('data-desc'));
+            }
+            // capture-phase: if the visible one is already active, flip instead of re-applying
+            [ltd, dtl].forEach(function (b) {
+               b.addEventListener('click', function (e) {
+                  if (b.dataset.locked === '1') return;
+                  if (b.classList.contains('active')) {
+                     e.preventDefault(); e.stopImmediatePropagation();
+                     flipTo(b === ltd ? dtl : ltd);
+                  }
+               }, true);
+            });
+            // Exposed for the ‹ › triangles on the colour strip
+            window.__tplFlipLightDark = function () {
+               var cur = (window.DashGeo && DashGeo.getLogic) ? DashGeo.getLogic() : null;
+               if (cur === 'light_to_dark') { flipTo(dtl); return true; }
+               if (cur === 'dark_to_light') { flipTo(ltd); return true; }
+               return false;
+            };
+            // keep the visible button in sync with whatever logic the engine restored
+            var obs = new MutationObserver(function () {
+               if (dtl.classList.contains('active')) show(dtl);
+               else if (ltd.classList.contains('active')) show(ltd);
+            });
+            obs.observe(ltd, { attributes: true, attributeFilter: ['class'] });
+            obs.observe(dtl, { attributes: true, attributeFilter: ['class'] });
+         })();
+
+         // ===== Picked colour card: "recipe" button runs the unmixer for that colour =====
+         (function() {
+            var b = document.getElementById('dash-sel-recipe');
+            if (!b) return;
+            b.addEventListener('click', function () {
+               var hex = document.getElementById('dash-sel-hex');
+               var inp = document.getElementById('trycolorsInput');
+               var pv = document.getElementById('trycolorsPreview');
+               if (!hex || !inp) return;
+               inp.value = hex.value.replace('#', '');
+               if (pv) pv.style.background = hex.value;
+               if (window.__tplActivate) window.__tplActivate('sliders');
+               var run = document.getElementById('trycolorsBtn');
+               if (run) { run.disabled = false; run.click(); }
             });
          })();
 
-         // ===== Color dragger: +/- counter, click-select, inline drag-reorder =====
+
+         // ===== Colour strip: select, ‹ › move, drag-reorder, and a counter that MERGES
+         //       similar colours (compress by similarity) instead of dropping the last one =====
          (function() {
             var minus = document.getElementById('bandsMinusBtn');
             var plus = document.getElementById('bandsPlusBtn');
+            var prev = document.getElementById('bandsPrevBtn');
+            var next = document.getElementById('bandsNextBtn');
             var label = document.getElementById('bandsCountLabel');
             var strip = document.getElementById('colorBandsStrip');
-            var slider = document.getElementById('shapeSlider');
-            var sliderLabel = document.getElementById('shapeSliderLabel');
             if (!minus || !plus || !label || !strip) return;
 
-            var MAX_BANDS = 24;     // upper cap; actual max is fullPalette.length
-            var bandColors = [];    // currently visible bands (subset of fullPalette in current order)
-            var fullPalette = [];   // FULL extracted palette in dominance order — source of truth
+            var MAX_BANDS = 24;         // most groups shown at once
+            var DEFAULT_BANDS = 8;
+            var palette = [];           // [{hex, count}] most-used first (source of truth)
+            var groups = [];            // [{rep, members:[hex], count}] in display order
+            var history = [];           // merge history (for +): [{a:{...}, b:{...}, index}]
             var selectedIndex = 0;
+            var paletteSig = '';
 
             function pad2(n) { return n < 10 ? '0' + n : String(n); }
-            function getCount() { return parseInt(label.textContent, 10) || 8; }
+            function rgb(hex) { var h = hex.replace('#', ''); return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)]; }
+            // perceptual-ish distance (weighted RGB, cheap and good enough for grouping)
+            function dist(a, b) {
+               var A = rgb(a), B = rgb(b);
+               var rm = (A[0] + B[0]) / 2;
+               var dr = A[0]-B[0], dg = A[1]-B[1], db = A[2]-B[2];
+               return Math.sqrt((2 + rm/256)*dr*dr + 4*dg*dg + (2 + (255-rm)/256)*db*db);
+            }
+            function isLight(hex) { var c = rgb(hex); return (0.2126*c[0] + 0.7152*c[1] + 0.0722*c[2]) > 150; }
 
-            function applyBandOrderToModel() {
-               // Reorder the modal's #colorPalette to match the inline bands, then click #saveDragBtn
-               // so the existing custom_sequence renderer picks up the new order. This reuses the
-               // already-working pipeline from dashboard-geometrize.js (no need to expose baseShapes).
-               try {
-                  var palette = document.getElementById('colorPalette');
-                  var saveBtn = document.getElementById('saveDragBtn');
-                  if (!palette || !palette.children.length) return;
-                  var chipsByHex = {};
-                  Array.from(palette.children).forEach(function(chip) {
-                     try {
-                        var c = JSON.parse(chip.dataset.color);
-                        var hx = '#' + [c[0],c[1],c[2]].map(function(v){return ('0'+Number(v).toString(16)).slice(-2);}).join('').toUpperCase();
-                        chipsByHex[hx] = chip;
-                     } catch (e) {}
+            function readPalette() {
+               if (!window.DashGeo || !DashGeo.getPalette) return [];
+               var p = DashGeo.getPalette();
+               if (p.length > 96) {
+                  // fold the rare tail into the nearest of the 96 most-used colours
+                  var keep = p.slice(0, 96), tail = p.slice(96);
+                  tail.forEach(function (t) {
+                     var best = 0, bd = Infinity;
+                     for (var i = 0; i < keep.length; i++) { var d = dist(keep[i].hex, t.hex); if (d < bd) { bd = d; best = i; } }
+                     keep[best].count += t.count;
+                     keep[best].folded = (keep[best].folded || []).concat([t.hex]);
                   });
-                  // Reorder the palette children to match bandColors order
-                  bandColors.forEach(function(hex) {
-                     var chip = chipsByHex[hex.toUpperCase()];
-                     if (chip) palette.appendChild(chip);
-                  });
-                  // Renumber & trigger save
-                  Array.from(palette.children).forEach(function(c, i) {
-                     var n = c.querySelector('.chip-number');
-                     if (n) n.textContent = '#' + (i+1);
-                  });
-                  if (saveBtn) saveBtn.click();
-               } catch (e) {}
+                  p = keep;
+               }
+               return p;
+            }
+
+            function resetGroups(n) {
+               groups = palette.map(function (c) { return { rep: c.hex, members: [c.hex].concat(c.folded || []), count: c.count, shown: 1 }; });
+               history = [];
+               var target = Math.min(n || DEFAULT_BANDS, groups.length, MAX_BANDS);
+               while (groups.length > target) mergeClosest();
+            }
+
+            // merge the two most similar groups; the more-used colour is the representative
+            function mergeClosest() {
+               if (groups.length < 2) return false;
+               var bi = -1, bj = -1, bd = Infinity;
+               for (var i = 0; i < groups.length; i++) for (var j = i + 1; j < groups.length; j++) {
+                  var d = dist(groups[i].rep, groups[j].rep);
+                  if (d < bd) { bd = d; bi = i; bj = j; }
+               }
+               var a = groups[bi], b = groups[bj];
+               var keep = a.count >= b.count ? a : b, drop = keep === a ? b : a;
+               var merged = { rep: keep.rep, members: keep.members.concat(drop.members), count: keep.count + drop.count, shown: (keep.shown||1) + (drop.shown||1) };
+               history.push({ a: a, b: b, ia: bi, ib: bj });
+               groups.splice(bj, 1); groups.splice(bi, 1, merged);
+               if (selectedIndex >= groups.length) selectedIndex = groups.length - 1;
+               return true;
+            }
+            function splitLast() {
+               var h = history.pop();
+               if (!h) return false;
+               // find the merged group (it holds a's rep) and put a and b back in place
+               var idx = -1;
+               for (var i = 0; i < groups.length; i++) { if (groups[i].members.indexOf(h.a.rep) > -1 && groups[i].members.indexOf(h.b.rep) > -1) { idx = i; break; } }
+               if (idx < 0) return false;
+               groups.splice(idx, 1, h.a);
+               groups.splice(Math.min(groups.length, Math.max(idx + 1, h.ib)), 0, h.b);
+               return true;
+            }
+
+            function applyRemap() {
+               if (!window.DashGeo || !DashGeo.setColorRemap) return;
+               var map = {};
+               groups.forEach(function (g) { g.members.forEach(function (m) { if (m !== g.rep) map[m.replace('#','')] = g.rep; }); });
+               DashGeo.setColorRemap(map);
+            }
+            function applyOrder() {
+               if (!window.DashGeo || !DashGeo.applyColorOrder) return;
+               var order = [];
+               groups.forEach(function (g) { order.push(g.rep); g.members.forEach(function (m) { if (m !== g.rep) order.push(m); }); });
+               DashGeo.applyColorOrder(order);
             }
 
             function paint() {
                strip.innerHTML = '';
-               if (!bandColors.length) {
+               label.textContent = pad2(groups.length);
+               if (!groups.length) {
                   var empty = document.createElement('div');
-                  empty.id = 'bandsEmpty';
-                  empty.className = 'tpl-bands-empty';
+                  empty.id = 'bandsEmpty'; empty.className = 'tpl-bands-empty';
                   empty.textContent = 'Load an image to extract its palette';
                   strip.appendChild(empty);
+                  [minus, plus, prev, next].forEach(function (b) { b.disabled = true; });
                   return;
                }
-               bandColors.forEach(function(hex, i) {
+               minus.disabled = groups.length <= 1;
+               plus.disabled = !history.length;
+               prev.disabled = selectedIndex <= 0;
+               next.disabled = selectedIndex >= groups.length - 1;
+               groups.forEach(function (g, i) {
                   var d = document.createElement('div');
                   d.className = 'tpl-band' + (i === selectedIndex ? ' selected' : '');
-                  d.style.background = hex;
+                  d.style.background = g.rep;
                   d.setAttribute('data-band', String(i));
-                  d.setAttribute('data-hex', String(hex).toUpperCase());
+                  d.setAttribute('data-hex', g.rep.toUpperCase());
+                  if (isLight(g.rep)) d.setAttribute('data-light', '1');
+                  d.title = g.members.length > 1 ? (g.members.length + ' similar colors merged into ' + g.rep) : g.rep;
+                  d.innerHTML = '<span class="tpl-band-mult">' + (g.shown || 1) + 'x</span>';
                   d.draggable = true;
-                  d.addEventListener('click', function() {
-                     selectedIndex = i;
-                     paint();
+                  d.addEventListener('click', function () {
+                     selectedIndex = i; paint();
+                     // picking a band also fills the recipe target
+                     var inp = document.getElementById('trycolorsInput'), pv = document.getElementById('trycolorsPreview');
+                     if (inp) { inp.value = g.rep.replace('#',''); if (pv) pv.style.background = g.rep; var tb = document.getElementById('trycolorsBtn'); if (tb) tb.disabled = false; }
                   });
-                  d.addEventListener('dragstart', function(e) {
-                     e.dataTransfer.effectAllowed = 'move';
-                     e.dataTransfer.setData('text/plain', String(i));
-                     d.classList.add('dragging');
-                  });
-                  d.addEventListener('dragend', function() { d.classList.remove('dragging'); });
-                  d.addEventListener('dragover', function(e) {
-                     e.preventDefault();
-                     d.classList.add('drop-target');
-                  });
-                  d.addEventListener('dragleave', function() { d.classList.remove('drop-target'); });
-                  d.addEventListener('drop', function(e) {
-                     e.preventDefault();
-                     d.classList.remove('drop-target');
-                     var from = parseInt(e.dataTransfer.getData('text/plain'), 10);
-                     var to = i;
+                  d.addEventListener('dragstart', function (e) { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(i)); d.classList.add('dragging'); });
+                  d.addEventListener('dragend', function () { d.classList.remove('dragging'); });
+                  d.addEventListener('dragover', function (e) { e.preventDefault(); d.classList.add('drop-target'); });
+                  d.addEventListener('dragleave', function () { d.classList.remove('drop-target'); });
+                  d.addEventListener('drop', function (e) {
+                     e.preventDefault(); d.classList.remove('drop-target');
+                     var from = parseInt(e.dataTransfer.getData('text/plain'), 10), to = i;
                      if (isNaN(from) || from === to) return;
-                     var moved = bandColors.splice(from, 1)[0];
-                     bandColors.splice(to, 0, moved);
-                     selectedIndex = to;
-                     paint();
-                     applyBandOrderToModel();
+                     var moved = groups.splice(from, 1)[0]; groups.splice(to, 0, moved);
+                     selectedIndex = to; paint(); applyOrder();
                   });
                   strip.appendChild(d);
                });
+               setTimeout(updateScrollHints, 0);
+               var sel = strip.children[selectedIndex];
+               if (sel && sel.scrollIntoView) { try { sel.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (e) {} }
             }
 
-            function setCount(n) {
-               // Cap at fullPalette length — never pad with hardcoded colors
-               var hardMax = Math.min(MAX_BANDS, fullPalette.length || MAX_BANDS);
-               n = Math.max(1, Math.min(hardMax, n));
-               if (!fullPalette.length) return; // nothing to show yet
-               // Preserve any user-applied reorder by intersecting with current bandColors order
-               // when shrinking, and appending the NEXT unused colors from fullPalette when growing.
-               if (n <= bandColors.length) {
-                  bandColors = bandColors.slice(0, n);
-               } else {
-                  var seen = new Set(bandColors.map(function(h){ return h.toUpperCase(); }));
-                  var i = 0;
-                  while (bandColors.length < n && i < fullPalette.length) {
-                     var hex = fullPalette[i++].toUpperCase();
-                     if (!seen.has(hex)) { bandColors.push(hex); seen.add(hex); }
-                  }
-               }
-               label.textContent = pad2(bandColors.length);
-               if (selectedIndex >= bandColors.length) selectedIndex = Math.max(0, bandColors.length - 1);
-               paint();
-               // Mirror to shape slider so rendering scales with visible band count
-               if (slider && parseInt(slider.max, 10) > 0) {
-                  var ratio = bandColors.length / hardMax;
-                  slider.value = String(Math.max(1, Math.round(parseInt(slider.max, 10) * ratio)));
-                  slider.dispatchEvent(new Event('input', { bubbles: true }));
-               }
+            function move(dir) {
+               // While a light/dark order is active, the triangles flip its direction.
+               if (window.__tplFlipLightDark && window.__tplFlipLightDark()) return;
+               var to = selectedIndex + dir;
+               if (to < 0 || to >= groups.length) return;
+               var g = groups.splice(selectedIndex, 1)[0];
+               groups.splice(to, 0, g);
+               selectedIndex = to;
+               paint(); applyOrder();
             }
 
-            // Expose a setter so the Drag Colors icon can push the modal's extracted palette in here
-            window.__tplApplyBands = function(hexList) {
-               if (!Array.isArray(hexList) || !hexList.length) return;
-               fullPalette = hexList.map(function(h) { return String(h).toUpperCase(); });
-               var initialN = Math.min(fullPalette.length, 8);
-               bandColors = fullPalette.slice(0, initialN);
+            minus.addEventListener('click', function () { if (mergeClosest()) { paint(); applyRemap(); } });
+            plus.addEventListener('click', function () { if (splitLast()) { paint(); applyRemap(); } });
+            prev.addEventListener('click', function () { move(-1); });
+            next.addEventListener('click', function () { move(1); });
+
+            // Re-read the palette whenever the engine produces/restores/clears shapes
+            function refresh() {
+               var p = readPalette();
+               var sig = p.map(function (c) { return c.hex + ':' + c.count; }).join('|');
+               if (sig === paletteSig) return;
+               paletteSig = sig; palette = p;
                selectedIndex = 0;
-               label.textContent = pad2(bandColors.length);
+               if (!palette.length) { groups = []; history = []; paint(); return; }
+               resetGroups(DEFAULT_BANDS);
                paint();
-            };
-
-            // No hardcoded placeholder bands — start empty. The strip will be populated automatically
-            // from the extracted palette as soon as an image is processed (or restored from session).
-            bandColors = [];
-            selectedIndex = 0;
-            label.textContent = pad2(0);
-
-            // ----- Auto-pull palette from the existing modal (frequency-counted via populateColorPalette) -----
-            // The modal logic in dashboard-geometrize.js builds #colorPalette chips from baseShapes.
-            // We trigger that pipeline invisibly, read the chips, and mirror them to the inline bands.
-            var dragBtn = document.getElementById('dragColorBtn');
-            var dragModalEl = document.getElementById('dragModal');
-            var paletteEl = document.getElementById('colorPalette');
-
-            function pullPaletteFromModal() {
-               if (!dragBtn || !dragModalEl || !paletteEl) return false;
-               // Suppress the "Generate an image first" alert when no shapes exist yet
-               var origAlert = window.alert;
-               window.alert = function() {};
-               dragModalEl.classList.add('tpl-modal-suppress'); // hide flash
-               try { dragBtn.click(); } catch (e) {}
-               window.alert = origAlert;
-               var chips = Array.from(paletteEl.children || []);
-               dragModalEl.classList.remove('tpl-modal-suppress');
-               dragModalEl.style.display = 'none';
-               if (!chips.length) return false;
-               var hexList = chips.map(function(chip) {
-                  try {
-                     var c = JSON.parse(chip.dataset.color);
-                     return '#' + [c[0],c[1],c[2]].map(function(v){ return ('0'+Number(v).toString(16)).slice(-2); }).join('').toUpperCase();
-                  } catch (e) { return '#888888'; }
-               });
-               fullPalette = hexList;
-               // Default to showing first 8 (or full palette if smaller)
-               var initialN = Math.min(hexList.length, 8);
-               bandColors = hexList.slice(0, initialN);
-               selectedIndex = 0;
-               label.textContent = pad2(bandColors.length);
-               paint();
-               return true;
+               applyRemap();
             }
+            ['geomagic:generated', 'geomagic:cleared'].forEach(function (ev) { window.addEventListener(ev, function () { setTimeout(refresh, 0); }); });
+            setTimeout(refresh, 250);
+            setInterval(refresh, 1500); // safety net for paths that don't emit (e.g. bake opaque)
 
-            // Try once on init (in case state was restored from sessionStorage before this script ran),
-            // then poll for changes via the slider's max value (proxy for "image processed").
-            setTimeout(pullPaletteFromModal, 200);
-            if (slider) {
-               var lastMax = parseInt(slider.max, 10) || 0;
-               setInterval(function() {
-                  var mx = parseInt(slider.max, 10) || 0;
-                  if (mx !== lastMax) {
-                     lastMax = mx;
-                     pullPaletteFromModal();
-                  }
-               }, 600);
-            }
-
-            minus.addEventListener('click', function() {
-               if (!bandColors.length) return; // no-op when empty
-               setCount(getCount() - 1);
-            });
-            plus.addEventListener('click', function() {
-               if (!bandColors.length) return; // require image first
-               setCount(getCount() + 1);
-            });
+            // legacy hook used by older code paths
+            window.__tplApplyBands = function () { paletteSig = ''; refresh(); };
 
             // ----- Edge fade hints when strip is horizontally scrollable -----
             var scrollWrap = document.getElementById('bandsScrollWrap');
             function updateScrollHints() {
                if (!scrollWrap) return;
-               var canL = strip.scrollLeft > 4;
-               var canR = strip.scrollLeft + strip.clientWidth < strip.scrollWidth - 4;
-               scrollWrap.classList.toggle('scroll-left', canL);
-               scrollWrap.classList.toggle('scroll-right', canR);
+               scrollWrap.classList.toggle('scroll-left', strip.scrollLeft > 4);
+               scrollWrap.classList.toggle('scroll-right', strip.scrollLeft + strip.clientWidth < strip.scrollWidth - 4);
             }
             strip.addEventListener('scroll', updateScrollHints);
             window.addEventListener('resize', updateScrollHints);
-            // Re-check after each paint
-            var _origPaint = paint;
-            paint = function() { _origPaint(); setTimeout(updateScrollHints, 0); };
 
             // ----- Auto-scroll during drag near edges -----
             var autoScrollRAF = null;
             function startAutoScroll(dir) {
                if (autoScrollRAF) return;
-               function tick() {
-                  strip.scrollLeft += dir * 14;
-                  autoScrollRAF = requestAnimationFrame(tick);
-               }
-               autoScrollRAF = requestAnimationFrame(tick);
+               (function tick() { strip.scrollLeft += dir * 14; autoScrollRAF = requestAnimationFrame(tick); })();
             }
-            function stopAutoScroll() {
-               if (autoScrollRAF) { cancelAnimationFrame(autoScrollRAF); autoScrollRAF = null; }
-            }
-            strip.addEventListener('dragover', function(e) {
-               var r = strip.getBoundingClientRect();
-               var edge = 60;
-               if (e.clientX < r.left + edge) { startAutoScroll(-1); }
-               else if (e.clientX > r.right - edge) { startAutoScroll(1); }
-               else { stopAutoScroll(); }
+            function stopAutoScroll() { if (autoScrollRAF) { cancelAnimationFrame(autoScrollRAF); autoScrollRAF = null; } }
+            strip.addEventListener('dragover', function (e) {
+               var r = strip.getBoundingClientRect(), edge = 60;
+               if (e.clientX < r.left + edge) startAutoScroll(-1);
+               else if (e.clientX > r.right - edge) startAutoScroll(1);
+               else stopAutoScroll();
             });
             strip.addEventListener('dragleave', stopAutoScroll);
             strip.addEventListener('drop', stopAutoScroll);
             document.addEventListener('dragend', stopAutoScroll);
+            paint();
          })();
-
-         // (Rendering Logic visibility is now controlled entirely by CSS + the .tpl-rl-open class
-         //  set by the toolbar icon — no interval needed.)
 
          // ===== Slider filled-track sync (sets --pct) =====
          (function() {
@@ -1097,7 +1196,8 @@
             updateThumb(0);
          })();
 
-         // ===== Get Recipe → reveal diagrams panel, hide filter section =====
+
+         // ===== Generate Recipe → reveal the Color Theory panel, hide the filter bar =====
          (function() {
             function getDiagramsPanel() { return document.querySelector('.pm-panel.pm-diagrams[data-panel-name="distribution"]'); }
             function getFiltersSection() { return document.getElementById('filtersSection'); }
@@ -1108,15 +1208,10 @@
                var fs = getFiltersSection(); if (fs) fs.style.display = 'none';
                var fb = getFiltersIconBtn(); if (fb) fb.classList.remove('active');
             }
-            function hideDiagrams() {
-               var d = getDiagramsPanel(); if (d) d.style.display = 'none';
-            }
-
-            // Expose for other handlers (e.g. the toolbar code can call it)
+            function hideDiagrams() { var d = getDiagramsPanel(); if (d) d.style.display = 'none'; }
             window.__tplShowDiagrams = showDiagrams;
             window.__tplHideDiagrams = hideDiagrams;
 
-            // Wire up Get Recipe button — capture so we run before async work returns
             function wire() {
                var btn = document.getElementById('trycolorsBtn');
                if (!btn) return false;
@@ -1127,7 +1222,6 @@
                   if (!hex || !String(hex).trim()) return;
                   showDiagrams();
                });
-               // Also handle Enter in the input (palette-mixing.js triggers .click() so the above fires)
                return true;
             }
             if (!wire()) {
@@ -1135,10 +1229,23 @@
                setTimeout(function() { clearInterval(iv); }, 8000);
             }
 
-            // Clicking a palette swatch fills the target — treat it as “selecting palette”
-            // and ALSO hide the filter bar so the diagrams area is unobstructed.
+            // Re-run icon next to Generate Recipe
+            var rerun = document.getElementById('pmRerunBtn');
+            if (rerun) rerun.addEventListener('click', function () {
+               var btn = document.getElementById('trycolorsBtn');
+               rerun.classList.remove('spin'); void rerun.offsetWidth; rerun.classList.add('spin');
+               if (btn && !btn.disabled) btn.click();
+            });
+
+            // Brand dropdown loads the palette immediately (no separate Load click)
+            var sel = document.getElementById('trycolorsPaletteSelect');
+            var load = document.getElementById('trycolorsLoadPaletteBtn');
+            if (sel && load) sel.addEventListener('change', function () { load.click(); });
+
+            // Clicking a colour in the list fills the target — hide the filter bar so the
+            // recipe area is unobstructed.
             document.addEventListener('click', function(e) {
-               var sw = e.target.closest && e.target.closest('#trycolorsPaletteGrid .trycolors-palette-swatch, #trycolorsPaletteGrid [data-hex]');
+               var sw = e.target.closest && e.target.closest('#trycolorsPaletteGrid [data-hex]');
                if (sw) {
                   var fs = getFiltersSection(); if (fs) fs.style.display = 'none';
                   var fb = getFiltersIconBtn(); if (fb) fb.classList.remove('active');
@@ -1163,6 +1270,7 @@
             new MutationObserver(fmt).observe(lbl, { childList: true, characterData: true, subtree: true });
             fmt();
          })();
+
       </script>
          <!-- rendering logic styles (self-contained so no Tailwind rebuild is needed) -->
       <style>
@@ -1185,14 +1293,6 @@
          .tpl-icon-btn.active { background: #eaf2ff !important; border-color: #2a85ff !important; box-shadow: 0 0 0 3px rgba(42,133,255,0.18), 0 6px 14px rgba(42,133,255,0.18) !important; }
          .dark .tpl-icon-btn.active { background: #11243f !important; border-color: #2a85ff !important; }
          .tpl-icon-btn.active .tpl-icon-img { filter: brightness(1.05); }
-         /* Tooltips */
-         .tpl-tooltip { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); padding-top: 12px; z-index: 30; opacity: 0; visibility: hidden; transition: opacity 0.18s ease, transform 0.18s ease; pointer-events: none; }
-         .group:hover .tpl-tooltip { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(2px); }
-         .tpl-tooltip > div { box-shadow: 0 12px 28px rgba(16,24,40,0.16), 0 2px 4px rgba(16,24,40,0.06); border: 1px solid rgba(0,0,0,0.04); }
-         .dark .tpl-tooltip > div { box-shadow: 0 12px 28px rgba(0,0,0,0.55); border-color: #2c2f34; }
-         @media (max-width: 768px) { .tpl-tooltip { display: none; } }
-         .w-38\.5 { width: 9.625rem; }
-         .w-50 { width: 12.5rem; }
          /* Toolbar scroll on mobile */
          .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
          .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -1376,8 +1476,6 @@
          .rendering-icon-btn.active { border-color: #2a85ff; color: #2a85ff; box-shadow: 0 0 0 2px rgba(42, 133, 255, 0.25); }
          .dark .rendering-icon-btn.active { background: #1b2a44; }
          .rendering-icon-btn svg { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.5; fill: none; }
-         .rendering-icon-btn[title]::after { content: attr(title); position: absolute; bottom: -27px; left: 50%; transform: translateX(-50%); background: #000; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 100; }
-         .rendering-icon-btn:hover[title]::after { opacity: 1; }
 
          /* Inline rendering icons match the .tpl-icon-btn dimensions exactly so the
             whole toolbar reads as ONE row of identically-sized icons. */
@@ -1433,6 +1531,7 @@
 
             /* Palette mixing right column collapses naturally with pm-grid-2 1fr */
             .pm-panel.pm-settings { padding: 16px !important; }
+            .pm-right-col { position: static; }
          }
 
          @media (max-width: 640px) {
@@ -1469,11 +1568,171 @@
          .color-chip .chip-number, .color-chip .rgb-value, .color-chip .count { background: rgba(0,0,0,0.72); color: #fff; font-size: 11px; font-weight: 600; line-height: 1.4; padding: 1px 6px; border-radius: 4px; }
          @media (max-width: 640px) { .color-palette { grid-template-columns: repeat(3, 1fr); } }
       </style>
+
+      <style>
+         /* ==================== CLIENT CHANGE-SET (Sep 2026) ==================== */
+         /* toolbar: generate icon, divider, light/dark toggle pair, mockup icon set */
+         .tpl-toolbar-divider { width: 1px; height: 36px; background: #d9dadd; margin: 0 2px; }
+         .dark .tpl-toolbar-divider { background: #2c2f34; }
+         .tpl-generate { color: #fff; background: #2a85ff !important; border-color: #2a85ff !important; font-size: 18px; }
+         .tpl-generate:hover { background: #1f78f0 !important; }
+         .tpl-generate[aria-disabled="true"] { background: #e9e9ea !important; border-color: #e3e3e6 !important; color: #a4a8ad; cursor: not-allowed; box-shadow: none !important; transform: none !important; }
+         .dark .tpl-generate[aria-disabled="true"] { background: #1f2226 !important; border-color: #2c2f34 !important; color: #4c5259; }
+         html:not(.dark) .tpl-icon-img, html:not(.dark) .rendering-icon-btn img { filter: invert(.82); }
+         .rendering-icon-btn img { width: 26px; height: 26px; }
+         .ld-pair { display: inline-flex; }
+         .ld-pair .rendering-icon-btn { display: none; }
+         .ld-pair .rendering-icon-btn.ld-visible { display: flex; }
+         .ld-pair .rendering-icon-btn.active .ld-arrow { fill: #2a85ff; }
+         @media (max-width: 1023px) { .rendering-icon-btn img { width: 22px; height: 22px; } .tpl-toolbar-divider { height: 28px; } }
+
+         /* toolbar fits laptops: smaller icons + horizontal scroll inside the pill, Change Image stays put */
+         @media (min-width: 1024px) and (max-width: 1799px) {
+            .tpl-toolbar-section { padding: 14px 20px; }
+            .tpl-toolbar-pill { flex: 1 1 auto; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; gap: 10px; }
+            .tpl-toolbar-pill::-webkit-scrollbar { display: none; }
+            .tpl-icon-btn, .rl-inline .rendering-icon-btn { width: 48px; height: 48px; border-radius: 11px; }
+            .tpl-icon-img, .rl-inline .rendering-icon-btn svg, .rendering-icon-btn img { width: 22px; height: 22px; }
+            .rl-inline .rl-toolbar { gap: 10px; padding-left: 10px; overflow: visible; flex: 0 0 auto; }
+            .tpl-change-btn { height: 48px; padding: 0 14px; }
+         }
+         /* Rendering ORDER is state, not a page: show it as a small marker so only the
+            active tool icon reads as "highlighted" (client: one icon, follows the page). */
+         .rl-inline .rendering-icon-btn.active { background: #ffffff; border-color: #cfd4da; color: #1a1d1f; box-shadow: none; }
+         .dark .rl-inline .rendering-icon-btn.active { background: #1f2226; border-color: #3a3f45; color: #fff; box-shadow: none; }
+         .rl-inline .rendering-icon-btn.active::before { content: ""; position: absolute; left: 50%; bottom: 4px; width: 14px; height: 3px; border-radius: 3px; background: #2a85ff; transform: translateX(-50%); }
+         /* panel exclusivity: only the active tool icon is highlighted (see JS) */
+         .tpl-card-title { transition: opacity .15s; }
+         .tpl-card-title.swap { opacity: .35; }
+
+         /* sticky side panel so recipe controls stay next to the canvas (no scrolling) */
+         @media (min-width: 1024px) and (max-width: 1439px) {
+            .pm-grid-2 { grid-template-columns: minmax(0, 1fr) 330px; }
+            .pm-panel.pm-settings { padding: 16px !important; }
+            #dashScroller { padding-left: 16px; padding-right: 16px; }
+         }
+         @media (min-width: 1440px) {
+            .pm-grid-2 { grid-template-columns: minmax(0, 1fr) 400px; }
+         }
+         @media (min-width: 1024px) {
+            .pm-right-col { position: sticky; top: 110px; max-height: calc(100vh - 130px); overflow: auto; scrollbar-width: thin; }
+            .pm-right-col.tpl-panel { display: flex !important; }
+         }
+         @media (max-width: 1023px) { .pm-right-col.tpl-panel[data-mobile-hidden="1"] { display: none !important; } }
+         .pm-right-col::-webkit-scrollbar { width: 6px; }
+         .pm-right-col::-webkit-scrollbar-thumb { background: rgba(255,255,255,.14); border-radius: 999px; }
+
+         /* colour-order strip: triangles + Nx labels (compress-by-similarity) */
+         .tpl-strip-arrow { width: 40px; height: 72px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; background: #fff; border: 1px solid #ececec; color: #6f767e; cursor: pointer; flex: 0 0 40px; transition: color .15s, background .15s; }
+         .tpl-strip-arrow:hover { color: #2a85ff; background: #f2f2f3; }
+         .dark .tpl-strip-arrow { background: #1f2226; border-color: #2c2f34; color: #9aa0a6; }
+         .dark .tpl-strip-arrow:hover { background: #25292e; color: #2a85ff; }
+         .tpl-strip-arrow:disabled { opacity: .35; cursor: not-allowed; }
+         /* bands share the row (mockup): equal widths, no horizontal scroll for ~8 colors */
+         .tpl-band { flex: 1 1 0 !important; min-width: 40px; max-width: 170px !important; height: 56px !important; }
+         @media (max-width: 1439px) { .tpl-strip-arrow { width: 32px; flex-basis: 32px; } #bandsMinusBtn, #bandsPlusBtn { width: 30px; } #bandsCountLabel { min-width: 30px; } }
+         .tpl-band .tpl-band-mult { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 800; letter-spacing: -.04em; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.6); pointer-events: none; }
+         .tpl-band[data-light="1"] .tpl-band-mult { color: #1a1d1f; text-shadow: 0 1px 2px rgba(255,255,255,.5); }
+         .tpl-band.selected { outline-color: #FFC324; }
+         .tpl-band.selected::after { color: #FFC324; }
+         .tpl-drag-hint b { color: #ffc324; font-weight: 700; }
+
+         /* picked colour card inside the templates canvas card */
+         .gm-picked { margin-top: 18px; }
+         .gm-picked .gm-picked-hex { cursor: text; }
+
+         /* ==================== PALETTE MIXING — new order (pick colour → palette → match → recipe) */
+         .pm-step { display: flex; align-items: center; gap: 10px; margin: 18px 0 10px; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #8c9097; }
+         .pm-step:first-of-type { margin-top: 6px; }
+         .pm-step i { width: 22px; height: 22px; border-radius: 7px; display: inline-flex; align-items: center; justify-content: center; font-style: normal; font-size: 11px; background: #2a85ff; color: #fff; }
+         .pm-pick-hint { font-size: 11px; color: #6f767e !important; margin: 6px 0 0 !important; }
+         .pm-pick-hint b { color: #ffc324; }
+         .pm-brand-row { display: flex; align-items: center; gap: 8px; }
+         .pm-brand-row .pm-select-wrap { position: relative; flex: 1; min-width: 0; }
+         .pm-brand-row .pm-select-wrap > i.fa-magnifying-glass { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #6f767e; font-size: 13px; pointer-events: none; }
+         .pm-brand-row select { width: 100%; appearance: none; -webkit-appearance: none; background: #1f2226 !important; border: 1px solid #2c2f34 !important; border-radius: 10px !important; color: #fff !important; padding: 11px 34px 11px 36px !important; font-size: 13px !important; font-weight: 600; }
+         .pm-brand-row .pm-select-wrap > i.fa-chevron-down { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #9aa0a6; font-size: 12px; pointer-events: none; }
+         .pm-brand-row button { height: 42px; padding: 0 12px !important; border-radius: 10px !important; background: #1f2226 !important; border: 1px solid #2c2f34 !important; color: #c9ced3 !important; font-size: 12px !important; font-weight: 600; cursor: pointer; white-space: nowrap; }
+         .pm-brand-row button:hover { border-color: #3a3f45 !important; color: #fff !important; }
+         .pm-color-list { margin-top: 10px; max-height: 232px; overflow: auto; border-radius: 12px; background: #14171a; border: 1px solid #262b31; padding: 6px; scrollbar-width: thin; scrollbar-color: #3a3f45 transparent; }
+         .pm-color-list::-webkit-scrollbar { width: 8px; }
+         .pm-color-list::-webkit-scrollbar-thumb { background: #3a3f45; border-radius: 999px; }
+         .pm-color-row { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 9px; cursor: pointer; transition: background .12s; }
+         .pm-color-row:hover { background: #1f2329; }
+         .pm-color-row.selected { background: rgba(255,195,36,.10); box-shadow: inset 0 0 0 1px rgba(255,195,36,.55); }
+         .pm-color-row .sw { width: 34px; height: 34px; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); flex: 0 0 34px; box-shadow: inset 0 -2px 4px rgba(0,0,0,.3); }
+         .pm-color-row .nm { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+         .pm-color-row .nm b { font-size: 13px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+         .pm-color-row .nm small { font-size: 11px; color: #8c9097; font-family: 'Source Code Pro', monospace; letter-spacing: .02em; }
+         .pm-color-row .nm small span { margin-left: 10px; font-family: Inter, sans-serif; letter-spacing: 0; }
+         .pm-color-row.silenced { opacity: .38; }
+         .pm-color-row.silenced .sw { background-image: linear-gradient(135deg, transparent 46%, #ff5252 46%, #ff5252 54%, transparent 54%); }
+         .pm-color-empty { padding: 18px 12px; font-size: 12px; color: #6f767e; text-align: center; }
+         .pm-panel.pm-settings .trycolors-palette-toggle summary { display: flex; align-items: center; justify-content: space-between; }
+         .pm-panel.pm-settings .trycolors-palette-toggle summary::after { content: "\\f078"; font-family: "Font Awesome 6 Pro", "Font Awesome 6 Free"; font-weight: 400; font-size: 11px; color: #6f767e; transition: transform .15s; }
+         .pm-panel.pm-settings .trycolors-palette-toggle[open] summary::after { transform: rotate(180deg); }
+
+         /* match-mode toggle + ranked candidates in the side panel */
+         #pmCandidates { display: none; margin-top: 12px; }
+         #pmCandidates.show { display: block; }
+         #pmCandidates .versioned-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+         #pmCandidates .versioned-model-label { font-size: 11px; color: #8c9097; }
+         #pmCandidates .versioned-model-label strong { color: #fff; font-family: 'Source Code Pro', monospace; }
+         #pmCandidates .versioned-sort-group { display: inline-flex; background: #14171a; border: 1px solid #262b31; border-radius: 9px; padding: 2px; gap: 2px; }
+         #pmCandidates .versioned-sort-btn { background: transparent; color: #9aa0a6; border: 0; border-radius: 7px; padding: 5px 10px; font-size: 11px; font-weight: 700; cursor: pointer; }
+         #pmCandidates .versioned-sort-btn.active { background: #2a85ff; color: #fff; }
+         #pmCandidates .versioned-chips-row { display: flex; flex-wrap: wrap; gap: 6px; }
+         #pmCandidates .versioned-rank-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 9px; border-radius: 9px; background: #1f2226; border: 1px solid #2c2f34; color: #c9ced3; font-size: 11px; font-weight: 700; cursor: pointer; transition: border-color .12s, background .12s; }
+         #pmCandidates .versioned-rank-chip:hover { border-color: #3a3f45; }
+         #pmCandidates .versioned-rank-chip.active { border-color: #FFC324; background: rgba(255,195,36,.10); color: #fff; box-shadow: 0 0 0 2px rgba(255,195,36,.18); }
+         #pmCandidates .chip-rank { background: #14171a; border-radius: 5px; padding: 1px 5px; color: #8c9097; }
+         #pmCandidates .versioned-rank-chip.active .chip-rank { background: #FFC324; color: #1a1d1f; }
+         #pmCandidates .chip-swatch { width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(255,255,255,.2); display: inline-block; }
+         #pmCandidates .chip-delta { color: #6f767e; font-weight: 600; }
+         #pmCandidates .versioned-confidence { margin-top: 8px; font-size: 10px; color: #6f767e; }
+         .pm-run-row { display: flex; gap: 8px; margin-top: 12px; align-items: stretch; }
+         .pm-run-row .trycolors-btn { margin-top: 0 !important; flex: 1; }
+         .pm-rerun { width: 46px; border-radius: 10px; background: #1f2226; border: 1px solid #2c2f34; color: #c9ced3; cursor: pointer; font-size: 15px; transition: color .15s, border-color .15s, transform .25s; }
+         .pm-rerun:hover { color: #fff; border-color: #3a3f45; }
+         .pm-rerun.spin i { animation: pmspin .8s linear; }
+         @keyframes pmspin { to { transform: rotate(360deg); } }
+         #pmMatchBadge { display: none; margin-top: 12px; padding: 12px 14px; border-radius: 12px; background: #14171a; border: 1px solid #262b31; border-left: 3px solid #2a85ff; cursor: pointer; user-select: none; transition: border-color .12s, background .12s; }
+         #pmMatchBadge.show { display: flex; align-items: center; gap: 12px; }
+         #pmMatchBadge:hover { background: #181c21; border-color: #33383f; }
+         #pmMatchBadge .mb-pct { font-size: 20px; font-weight: 800; color: #fff; letter-spacing: -.02em; font-feature-settings: 'tnum'; }
+         #pmMatchBadge .mb-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+         #pmMatchBadge .mb-meta b { font-size: 12px; color: #c9ced3; font-weight: 600; }
+         #pmMatchBadge .mb-meta small { font-size: 10px; color: #6f767e; }
+         #pmMatchBadge .mb-sw { display: inline-flex; gap: 4px; }
+         #pmMatchBadge .mb-sw i { width: 18px; height: 18px; border-radius: 5px; border: 1px solid rgba(255,255,255,.2); display: inline-block; }
+         #pmMatchBadge .mb-copy { color: #6f767e; font-size: 13px; }
+         #pmMatchBadge:hover .mb-copy { color: #2a85ff; }
+         #pmMatchBadge.good { border-left-color: #34c759; }
+         #pmMatchBadge.warn { border-left-color: #ffc324; }
+         #pmMatchBadge.bad { border-left-color: #ff5252; }
+         .pm-panel.pm-settings details.pm-options { margin-top: 16px; border-top: 1px solid #25282b; padding-top: 6px; }
+         .pm-panel.pm-settings details.pm-options summary { list-style: none; display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 8px 0; font-size: 13px; font-weight: 600; color: #c9ced3; }
+         .pm-panel.pm-settings details.pm-options summary::-webkit-details-marker { display: none; }
+         .pm-panel.pm-settings details.pm-options summary i { color: #6f767e; transition: transform .15s; }
+         .pm-panel.pm-settings details.pm-options[open] summary i { transform: rotate(180deg); }
+         .pm-panel.pm-settings details.pm-options .pm-sliders { margin-top: 12px; padding-top: 12px; }
+         /* the bottom "details" area (match row / target→result / copyable text) is hidden by default */
+         .tc-details { margin-top: 14px; border: 1px solid #262b31; border-radius: 12px; background: #14171a; }
+         .tc-details > summary { list-style: none; cursor: pointer; padding: 10px 14px; font-size: 12px; font-weight: 700; color: #9aa0a6; display: flex; align-items: center; justify-content: space-between; }
+         .tc-details > summary::-webkit-details-marker { display: none; }
+         .tc-details > summary i { transition: transform .15s; }
+         .tc-details[open] > summary i { transform: rotate(180deg); }
+         .tc-details > div { padding: 0 14px 14px; }
+         .pm-diagrams .trycolors-recipe-item.selected-target { border-color: #FFC324; box-shadow: 0 0 0 1px rgba(255,195,36,.35); }
+         .pm-diagrams .mix-treemap-container { outline: 2px solid #FFC324; outline-offset: 3px; border-radius: 10px; }
+         .pm-diagrams .cd-selected-note { font-size: 11px; color: #ffc324; font-weight: 700; margin: 6px 0 10px; }
+      </style>
+
       <!-- auth guard -->
       <script src="assets/js/auth.js"></script>
       <script>(function(){ if (window.Auth) Auth.requireAuth('signin.html'); })();</script>
       <!-- billing: gate rendering-logic icons + paint-palette dropdown by plan -->
-      <script src="assets/js/entitlements.js?v=3"></script>
+      <script src="assets/js/entitlements.js?v=4"></script>
    </body>
 
 </html>

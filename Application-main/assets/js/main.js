@@ -25,6 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
    const sliders = document.querySelectorAll(".range-slider");
    sliders.forEach((slider) => {
       const tooltip = slider.nextElementSibling;
+      if (!tooltip || !tooltip.classList || !tooltip.classList.contains("slider-value")) return;
       function updateSlider() {
          const value = +slider.value;
          const max = +slider.max;

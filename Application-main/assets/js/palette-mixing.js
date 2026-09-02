@@ -218,7 +218,9 @@ function buildMixTreemap(recipe) {
 
     svg += `</svg>`;
 
-    return `<div class="mix-treemap-wrap"><div class="mix-treemap-label">Mix Proportions — Treemap</div><div class="mix-treemap-container">${svg}</div></div>`;
+    const selIdx = (_lastVersionedUnmix && typeof _lastVersionedUnmix._selIdx === 'number') ? (_lastVersionedUnmix._selIdx + 1) : null;
+    const lbl = selIdx ? `Mix Proportions — Treemap · selected candidate #${selIdx}` : 'Mix Proportions — Treemap';
+    return `<div class="mix-treemap-wrap"><div class="mix-treemap-label">${lbl}</div><div class="mix-treemap-container">${svg}</div></div>`;
 }
 
 // Build concentric circles visualization — single diagram. Each color is drawn
@@ -508,13 +510,21 @@ trycolorsInput.addEventListener('input', () => {
 // Copy formatted output to clipboard
 function copyTrycolorsOutput() {
     const output = document.getElementById('trycolorsOutput');
-    if (output) {
-        navigator.clipboard.writeText(output.textContent).then(() => {
-            const btn = document.querySelector('.trycolors-copy-btn');
-            const original = btn.textContent;
-            btn.textContent = '✓ Copied!';
-            setTimeout(() => btn.textContent = original, 1500);
-        });
+    if (!output) return;
+    const text = output.textContent;
+    const done = () => {
+        const btn = document.querySelector('.trycolors-copy-btn');
+        if (!btn) return;
+        const original = btn.textContent;
+        btn.textContent = '✓ Copied!';
+        setTimeout(() => btn.textContent = original, 1500);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, done);
+    } else {
+        const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        ta.remove(); done();
     }
 }
 
@@ -642,15 +652,24 @@ document.getElementById('trycolorsLoadPaletteBtn')?.addEventListener('click', ()
 // Render palette grid with silenced state
 function renderPaletteGrid() {
     let html = '';
+    const cur = ('#' + (trycolorsInput.value || '').replace('#', '')).toUpperCase();
+    if (!defaultPaletteData.length) {
+        html = '<div class="pm-color-empty">No colors in this palette yet.</div>';
+    }
     defaultPaletteData.forEach((color, idx) => {
         const isSilenced = silencedColors.has(color.hex);
-        html += `<div class="trycolors-palette-chip ${isSilenced ? 'silenced' : ''}" 
-            style="background: ${color.hex}" 
-            title="${color.name} - ${color.hex}"
-            data-hex="${color.hex}"
-            data-index="${idx}"
-            onclick="setTrycolorsInput('${color.hex}')"
-            oncontextmenu="toggleSilencedColor(event, '${color.hex}')"></div>`;
+        const h = String(color.hex || '').toUpperCase();
+        const c = h.replace('#', '');
+        const r = parseInt(c.slice(0, 2), 16), g = parseInt(c.slice(2, 4), 16), b = parseInt(c.slice(4, 6), 16);
+        const name = color.name || h;
+        html += `<div class="pm-color-row ${isSilenced ? 'silenced' : ''} ${h === cur ? 'selected' : ''}"
+            data-hex="${h}" data-index="${idx}"
+            title="${name} — click to use as target, right-click to exclude"
+            onclick="setTrycolorsInput('${h}')"
+            oncontextmenu="toggleSilencedColor(event, '${h}')">
+            <span class="sw" style="background:${h}"></span>
+            <span class="nm"><b>${name}</b><small>${h}<span>RGB (${r}, ${g}, ${b})</span></small></span>
+        </div>`;
     });
     trycolorsPaletteGrid.innerHTML = html;
     updateSilencedUI();
@@ -666,8 +685,8 @@ function toggleSilencedColor(event, hex) {
         silencedColors.add(hex);
     }
     
-    // Update the chip visually
-    const chip = event.target.closest('.trycolors-palette-chip');
+    // Update the row visually
+    const chip = event.target.closest('.trycolors-palette-chip, .pm-color-row');
     if (chip) {
         chip.classList.toggle('silenced', silencedColors.has(hex));
     }
@@ -700,7 +719,11 @@ function setTrycolorsInput(hex) {
     trycolorsInput.value = hex.replace('#', '');
     trycolorsPreview.style.background = hex;
     trycolorsBtn.disabled = false;
-    trycolorsInput.focus();
+    // highlight the chosen row in the Colors list
+    document.querySelectorAll('#trycolorsPaletteGrid .pm-color-row').forEach(r => {
+        r.classList.toggle('selected', (r.getAttribute('data-hex') || '').toUpperCase() === String(hex).toUpperCase());
+    });
+    try { trycolorsInput.focus({ preventScroll: true }); } catch (e) { trycolorsInput.focus(); }
 }
 
 // Get recipe button handler - uses same endpoint as main "Get Mix Recipe"
@@ -716,6 +739,7 @@ trycolorsBtn.addEventListener('click', async () => {
     // Show loading
     trycolorsResults.innerHTML = '<div class="trycolors-loading">Finding best recipe</div>';
     trycolorsBtn.disabled = true;
+    clearMatchBadge();
 
     // Custom model: run the M7.1-style ranked unmixer over the user's OWN loaded
     // palette (Color Library) via /unmix/custom. Must be checked before the
@@ -797,9 +821,42 @@ trycolorsBtn.addEventListener('click', async () => {
     }
 });
 
+// ---- Match badge (side panel, next to the controls). Click = copy recipe. ----
+function _matchClass(pct) {
+    pct = Number(pct) || 0;
+    return pct >= 95 ? 'good' : (pct >= 88 ? 'warn' : 'bad');
+}
+function renderMatchBadge(data, extra) {
+    const el = document.getElementById('pmMatchBadge');
+    if (!el) return;
+    if (!data || data.error || !data.recipe || !data.recipe.length) { el.className = ''; el.innerHTML = ''; return; }
+    const pct = Number(data.match_percentage).toFixed(1);
+    const err = (100 - Number(data.match_percentage)).toFixed(1);
+    el.className = 'show ' + _matchClass(data.match_percentage);
+    el.innerHTML = `
+        <span class="mb-pct">${pct}%</span>
+        <span class="mb-meta">
+            <b>match · ΔE ${Number(data.delta_e).toFixed(2)} · ${err}% error</b>
+            <small>${extra ? extra + ' · ' : ''}${data.recipe.length} colors · ${data.total_parts} parts · click to copy recipe</small>
+        </span>
+        <span class="mb-sw"><i style="background:${data.target_color}" title="Target"></i><i style="background:${data.result_color}" title="Result"></i></span>
+        <i class="fa-regular fa-copy mb-copy"></i>`;
+}
+function clearMatchBadge() { const el = document.getElementById('pmMatchBadge'); if (el) { el.className = ''; el.innerHTML = ''; } }
+document.addEventListener('click', (e) => {
+    const b = e.target.closest && e.target.closest('#pmMatchBadge');
+    if (!b) return;
+    copyTrycolorsOutput();
+    const ic = b.querySelector('.mb-copy');
+    if (ic) { ic.className = 'fa-regular fa-check mb-copy'; setTimeout(() => { ic.className = 'fa-regular fa-copy mb-copy'; }, 1500); }
+    if (window.GM && GM.toast) GM.toast('Recipe copied to clipboard', { kind: 'ok', icon: 'fa-regular fa-check' });
+});
+
 // Build the shared recipe body (recipe list + dot-matrix/concentric/treemap viz
 // + match row + target/result comparison + copyable output). Used by both the
 // KM unmix and the versioned (M7/M7.1) renderers so they share one UI.
+// The match row / comparison / text output are evident from the diagrams, so
+// they sit in a collapsed "Details" block (hidden by default, expand to see).
 function buildTrycolorsRecipeHtml(data) {
     let html = '';
 
@@ -826,6 +883,7 @@ function buildTrycolorsRecipeHtml(data) {
     // Match / error row
     const matchPct = Number(data.match_percentage).toFixed(1);
     const errorPct = (100 - Number(data.match_percentage)).toFixed(1);
+    html += `<details class="tc-details"><summary><span>Recipe details — match, target vs result, copyable text</span><i class="fa-regular fa-chevron-down"></i></summary><div>`;
     html += `
         <div class="trycolors-error-row">
             <div class="trycolors-error-label">Match: ${matchPct}% (ΔE: ${Number(data.delta_e).toFixed(2)})</div>
@@ -860,6 +918,7 @@ function buildTrycolorsRecipeHtml(data) {
         <div class="trycolors-formatted-output" id="trycolorsOutput">${formattedOutput}</div>
         <button class="trycolors-copy-btn" onclick="copyTrycolorsOutput()">Copy Recipe</button>
     `;
+    html += `</div></details>`;
 
     // Excluded-colors notice (KM path only)
     if (silencedColors.size > 0 && !data._hidesilenced) {
@@ -877,12 +936,17 @@ function renderTrycolorsResultsFromUnmix(data, maxParts) {
     _lastTrycolorsData = data;
     _lastTrycolorsMaxParts = maxParts;
     _lastVersionedUnmix = null; // KM result supersedes any versioned result
+    const cand = document.getElementById('pmCandidates');
+    if (cand) { cand.innerHTML = ''; cand.classList.remove('show'); }
     if (data.error) {
         trycolorsResults.innerHTML = `<div style="color: #f44336; text-align: center; padding: 20px;">${data.error}</div>`;
+        clearMatchBadge();
         return;
     }
     trycolorsResults.innerHTML = buildTrycolorsRecipeHtml(data);
+    renderMatchBadge(data, data.mix_method ? formatMixMethodSafe(data.mix_method) : '');
 }
+function formatMixMethodSafe(m) { try { return typeof formatMixMethod === 'function' ? formatMixMethod(m) : String(m); } catch (e) { return String(m); } }
 
 // Allow Enter key to submit
 trycolorsInput.addEventListener('keypress', (e) => {
@@ -1017,6 +1081,11 @@ function _proposalToRecipeData(data, p) {
 // (dot matrix / concentric / treemap), ranked by highest match on top, with a
 // clickable list to inspect each ranked recipe.
 function renderVersionedUnmix(data) {
+    if (data.error || data.available === false || !(data.proposals || []).length) {
+        const cand = document.getElementById('pmCandidates');
+        if (cand) { cand.innerHTML = ''; cand.classList.remove('show'); }
+        clearMatchBadge();
+    }
     if (data.error) {
         trycolorsResults.innerHTML = `<div style="color:#f44336; text-align:center; padding:20px;">${data.error}</div>`;
         return;
@@ -1073,14 +1142,26 @@ function renderVersionedUnmix(data) {
     chips += '</div>';
 
     // Selected recipe rendered through the shared UI (gets dot-matrix/concentric/treemap).
-    const body = buildTrycolorsRecipeHtml(_proposalToRecipeData(data, proposals[sel]));
+    const recipeData = _proposalToRecipeData(data, proposals[sel]);
+    const body = buildTrycolorsRecipeHtml(recipeData);
 
     // Small confidence line for the selected recipe.
     const selP = proposals[sel];
     const conf = `<div class="versioned-confidence">
         Selected #${sel + 1} · confidence: ${selP.confidence_tier || 'n/a'}${selP.anchor_trycolors_name ? ' · anchor "' + selP.anchor_trycolors_name + '"' : ''} · model risk +${selP.risk_penalty}</div>`;
 
-    trycolorsResults.innerHTML = chips + conf + body;
+    // Side panel (next to the Generate button): sort toggle + ranked candidates.
+    // Falls back to the results area when the panel isn't on the page.
+    const cand = document.getElementById('pmCandidates');
+    const selNote = `<div class="cd-selected-note">Showing candidate #${sel + 1} · ${Number(selP.match_percentage).toFixed(1)}% match — highlighted in the diagram below</div>`;
+    if (cand) {
+        cand.innerHTML = chips + conf;
+        cand.classList.add('show');
+        trycolorsResults.innerHTML = selNote + body;
+    } else {
+        trycolorsResults.innerHTML = chips + conf + selNote + body;
+    }
+    renderMatchBadge(recipeData, `#${sel + 1} of ${proposals.length}`);
 }
 
 // Chip clicks (event delegation) switch the selected ranked recipe.

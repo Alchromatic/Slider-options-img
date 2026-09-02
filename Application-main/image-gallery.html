@@ -288,6 +288,18 @@
          page = 1; load();
       };
 
+      // Deep links from the header search (app-shell.js): ?search=…&genre=…
+      (function () {
+         const q = new URLSearchParams(location.search);
+         if (q.get('search')) $('search').value = q.get('search');
+         if (q.get('genre')) {
+            const g = q.get('genre');
+            const sel = $('genre');
+            if (![...sel.options].some((o) => o.value === g)) sel.add(new Option(g, g));
+            sel.value = g;
+         }
+      })();
+
       // Boot
       loadSources();
       loadFacets();

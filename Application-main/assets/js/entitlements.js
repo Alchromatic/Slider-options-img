@@ -139,8 +139,13 @@
             btn.classList.add('locked');
             btn.style.opacity = '0.4';
             btn.style.cursor = 'not-allowed';
-            const base = btn.getAttribute('title') || '';
-            btn.setAttribute('title', base + ' - Upgrade to unlock');
+            const base = btn.getAttribute('data-tip') || btn.getAttribute('title') || '';
+            if (window.GM && typeof GM.tooltip === 'function') {
+               // Card-style tooltip (same as every other toolbar icon) — no native title
+               GM.tooltip(btn, base, 'Upgrade to unlock this rendering style');
+            } else {
+               btn.setAttribute('title', base + ' - Upgrade to unlock');
+            }
             // Block activation (capture phase, before the page's own handler).
             btn.addEventListener('click', function (e) {
                e.preventDefault();

@@ -28,6 +28,11 @@
       <!-- main css -->
       <link rel="stylesheet" href="assets/css/output.css">
       <link rel="stylesheet" href="assets/css/canvas-preview.css">
+      <link rel="stylesheet" href="assets/css/app-shell.css">
+      <style>
+         .gm-generate[aria-disabled="true"] { opacity: .45; cursor: not-allowed; filter: grayscale(.4); }
+         #dash-actions .theme-btn-regular, #dash-actions .theme-btn-primary { min-height: 48px; }
+      </style>
    </head>
 
    <body class="bg-[#F4F4F4] dark:bg-neutral-8">
@@ -207,15 +212,37 @@
                                  <div class="canvas-resize-handle sw" data-corner="sw" title="Drag to resize"></div>
                                  <div class="canvas-resize-handle se" data-corner="se" title="Drag to resize"></div>
                                  </div>
-                                 <div id="dash-selection" class="hidden mt-4 flex items-center gap-3 flex-wrap text-sm">
-                                    <span class="text-neutral-4 font-semibold">Selected:</span>
-                                    <span id="dash-sel-type" class="text-neutral-6 dark:text-neutral-1 font-semibold"></span>
-                                    <span id="dash-sel-color" class="inline-block w-6 h-6 rounded border border-neutral-4"></span>
-                                    <span id="dash-sel-rgba" class="text-neutral-4 font-mono text-xs"></span>
-                                    <button id="dash-sel-delete" type="button" class="theme-btn-regular style-2">Delete shape</button>
-                                    <button id="dash-sel-clear" type="button" class="theme-btn-regular style-2">Clear selection</button>
-                                 </div>
                               </div>
+                                 <!-- Picked color — same UI as the Palette-mixing target field (one standard, not two variants) -->
+                                 <div id="dash-selection" class="gm-picked hidden">
+                                    <div class="gm-picked-field">
+                                       <div class="min-w-0 flex-1">
+                                          <span class="gm-picked-label">Picked color (hex)</span>
+                                          <div class="flex items-center gap-2.5">
+                                             <input id="dash-sel-hex" type="text" class="gm-picked-hex" value="#000000" readonly spellcheck="false" aria-label="Picked color hex">
+                                             <span id="dash-sel-color" class="gm-picked-swatch"></span>
+                                          </div>
+                                       </div>
+                                    </div>
+                                    <div class="min-w-0">
+                                       <span class="gm-picked-label">Shape</span>
+                                       <div class="gm-picked-meta"><span id="dash-sel-type"></span> · <span id="dash-sel-rgba"></span></div>
+                                    </div>
+                                    <div class="gm-picked-actions">
+                                       <button id="dash-sel-copy" type="button" class="gm-icon-btn" title="Copy hex"><i class="fa-regular fa-copy"></i></button>
+                                       <a id="dash-sel-recipe" href="templates.html" class="gm-icon-btn primary" title="Get paint recipe for this color"><i class="fa-regular fa-flask"></i></a>
+                                       <button id="dash-sel-delete" type="button" class="gm-icon-btn danger" title="Delete shape"><i class="fa-regular fa-trash-can"></i></button>
+                                       <button id="dash-sel-clear" type="button" class="gm-icon-btn" title="Clear selection"><i class="fa-regular fa-xmark"></i></button>
+                                    </div>
+                                 </div>
+                                 <!-- generate actions sit right under the preview (per the client's wireframe) -->
+                                 <div id="dash-actions" class="grid grid-cols-2 lg:grid-cols-5 gap-3 mt-5 pt-5 border-t border-[#F4F4F4] dark:border-neutral-6">
+                                    <button id="btn-reset" type="button" class="theme-btn-regular style-2 inline-flex! items-center justify-center gap-2"><span class="text-neutral-4"><i class="fa-regular fa-arrows-rotate-reverse"></i></span> Reset</button>
+                                    <button id="btn-random" type="button" class="theme-btn-regular style-2 inline-flex! items-center justify-center gap-2"><span class="text-neutral-4"><i class="fa-regular fa-layer-group"></i></span> Random</button>
+                                    <button id="btn-step" type="button" class="theme-btn-regular style-2 inline-flex! items-center justify-center gap-2"><span class="text-neutral-4"><i class="fa-regular fa-paper-plane-top"></i></span> Step</button>
+                                    <button id="btn-generate" type="button" class="theme-btn-primary inline-flex! items-center justify-center gap-2 group gm-generate" title="Upload an image first" aria-disabled="true"><span class="text-white dark:group-hover:text-neutral-6 transition-all duration-300"><i class="fa-regular fa-play"></i></span> Generate</button>
+                                    <a id="btn-continue" href="templates.html" class="theme-btn-regular style-2 inline-flex! items-center justify-center gap-2 gm-continue" hidden><span class="text-neutral-4"><i class="fa-regular fa-palette"></i></span> Colors <i class="fa-regular fa-arrow-right text-neutral-4"></i></a>
+                                 </div>
                            </div>
                         </div>
                         <!-- ============================ Configuration (tabbed) ============================ -->
@@ -288,13 +315,6 @@
                                     </div>
                                  </div>
 
-                                 <!-- generate actions live with the size controls -->
-                                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-6 pt-6 border-t border-[#F4F4F4] dark:border-neutral-6">
-                                    <button id="btn-reset" type="button" class="theme-btn-regular style-2 inline-flex! items-center justify-center gap-2"><span class="text-neutral-4"><i class="fa-regular fa-arrows-rotate-reverse"></i></span> Reset</button>
-                                    <button id="btn-random" type="button" class="theme-btn-regular style-2 inline-flex! items-center justify-center gap-2"><span class="text-neutral-4"><i class="fa-regular fa-layer-group"></i></span> Random</button>
-                                    <button id="btn-step" type="button" class="theme-btn-regular style-2 inline-flex! items-center justify-center gap-2"><span class="text-neutral-4"><i class="fa-regular fa-paper-plane-top"></i></span> Step</button>
-                                    <button id="btn-generate" type="button" class="theme-btn-primary inline-flex! items-center justify-center gap-2 group"><span class="text-white dark:group-hover:text-neutral-6 transition-all duration-300"><i class="fa-regular fa-play"></i></span> Generate</button>
-                                 </div>
                               </div>
 
                               <!-- ===== TAB: Import & Refine ===== -->
@@ -442,6 +462,8 @@
                               </div>
                            </div>
                            <button id="btn-save" type="button" class="theme-btn-primary block w-full">Save</button>
+                           <p class="text-neutral-4 text-[11px] font-semibold mt-2 text-center">Saves to your Portfolio</p>
+                           <button id="btn-download" type="button" class="theme-btn-regular style-2 inline-flex! items-center justify-center gap-2 w-full mt-3"><span class="text-neutral-4"><i class="fa-regular fa-download"></i></span> Download PNG</button>
                         </div>
                      </div>
                   </div>
@@ -533,6 +555,8 @@
 
       <!-- main js -->
       <script src="assets/js/main.js"></script>
+      <!-- shared shell: sidebar, search, toasts, portfolio store -->
+      <script src="assets/js/app-shell.js"></script>
       <!-- geometrize engine (runs in-browser, no backend) -->
       <script src="assets/js/geometrize.js"></script>
       <!-- dashboard geometrize wiring -->
@@ -564,6 +588,39 @@
                   if (confirm('Log out of GeoMagic?')) Auth.logout('signin.html');
                });
             }
+         })();
+      </script>
+
+      <!-- ===== Generate is greyed out until an image is uploaded; Colors shortcut after generating ===== -->
+      <script>
+         (function () {
+            var gen = document.getElementById('btn-generate');
+            var step = document.getElementById('btn-step');
+            var cont = document.getElementById('btn-continue');
+            var recipe = document.getElementById('dash-sel-recipe');
+            function sync() {
+               var hasImage = document.documentElement.classList.contains('gm-has-image');
+               var hasShapes = document.documentElement.classList.contains('gm-has-shapes');
+               [gen, step].forEach(function (b) {
+                  if (!b) return;
+                  b.setAttribute('aria-disabled', hasImage ? 'false' : 'true');
+                  b.title = hasImage ? '' : 'Upload an image first';
+               });
+               if (cont) cont.hidden = !hasShapes;
+            }
+            ['geomagic:image', 'geomagic:generated', 'geomagic:cleared'].forEach(function (ev) { window.addEventListener(ev, sync); });
+            // Block clicks while disabled (the engine also alerts, but the button should read as inert)
+            [gen, step].forEach(function (b) {
+               if (!b) return;
+               b.addEventListener('click', function (e) {
+                  if (b.getAttribute('aria-disabled') === 'true') { e.preventDefault(); e.stopImmediatePropagation(); }
+               }, true);
+            });
+            // "Get recipe" for the picked color → Templates with the color preselected
+            window.addEventListener('geomagic:selected', function (e) {
+               if (recipe && e.detail && e.detail.hex) recipe.href = 'templates.html?target=' + encodeURIComponent(e.detail.hex);
+            });
+            sync();
          })();
       </script>
 

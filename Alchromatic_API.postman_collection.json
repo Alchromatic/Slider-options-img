@@ -1,0 +1,2134 @@
+{
+  "info": {
+    "_postman_id": "2bed7633-2f79-4df9-ae24-fda80f6bc0e8",
+    "name": "Art-AI Renderer API",
+    "description": "Generated from https://alchromaticdemo.up.railway.app/openapi.json\n\nAuth notes:\n- Color/mixing/geometry endpoints (/unmix/simple, /unmix, /forward-mix, /m4/*, /geometrize*, etc.) need NO key or token.\n- /api/auth/me, /api/billing/*(user), /api/palettes need `Authorization: Bearer <JWT>` from /api/auth/login.\n- /api/admin/*, /api/library ingest/jobs/map-build/delete, /unmix/custom/profile/* need `X-Admin-Token`.\n",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://alchromaticdemo.up.railway.app"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Drawing",
+      "item": [
+        {
+          "name": "Create Line Drawing",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/line-drawing",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "line-drawing"
+              ]
+            },
+            "description": "Convert an image to a black & white line drawing suitable for tracing.\n\n**Parameters:**\n- `image`: Image file (PNG, JPG, etc.)\n- `style`: 'sketch' or 'detailed' (crosshatch/architectural are client-side only)\n- `detail`: Detail level 20-100 (default: 80)\n- `line_weight`: Line thickness 1-4 (default: 2)\n- `show_grid`: Add grid overlay for tracing reference (default: false)\n\n**Returns:** Base64 encoded PNG image",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": "",
+                  "value": ""
+                },
+                {
+                  "key": "style",
+                  "type": "text",
+                  "value": "detailed"
+                },
+                {
+                  "key": "detail",
+                  "type": "text",
+                  "value": "80"
+                },
+                {
+                  "key": "line_weight",
+                  "type": "text",
+                  "value": "2"
+                },
+                {
+                  "key": "show_grid",
+                  "type": "text",
+                  "value": "False"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Strokes",
+      "item": [
+        {
+          "name": "Geometrize Render",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/geometrize_render",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "geometrize_render"
+              ]
+            },
+            "description": "**Image in -> rendered image out**, using the real browser geometrize engine\n(`frontend/geometrize.js`) executed in-process via embedded V8. Generation\nspeed matches the website because it is the same code on the same engine.\n\nAll parameters are variables:\n- `shape_count`: number of shapes.\n- `shape_types`: one or more of rectangle, rotated_rectangle, triangle, ellipse,\n  rotated_ellipse, circle, line, quadratic_bezier \u00e2\u0080\u0094 or numeric codes 0-7,\n  comma-separated (e.g. `triangle,circle` or `2,5`).\n- `opacity`: shape alpha 0-255.\n- `candidates_per_step` / `mutations_per_step`: engine quality vs. speed.\n- `max_resolution`: working resolution the engine fits against (browser uses 256).\n- `output_width` / `output_height`: output image size (defaults to source size).\n- `supersample`: render antialiasing factor 1-4.\n- `fmt`: `png` or `jpeg`; `return_base64`: JSON data-URI instead of raw bytes.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": "",
+                  "value": ""
+                },
+                {
+                  "key": "shape_count",
+                  "type": "text",
+                  "value": "200"
+                },
+                {
+                  "key": "shape_types",
+                  "type": "text",
+                  "value": "triangle"
+                },
+                {
+                  "key": "opacity",
+                  "type": "text",
+                  "value": "128"
+                },
+                {
+                  "key": "candidates_per_step",
+                  "type": "text",
+                  "value": "50"
+                },
+                {
+                  "key": "mutations_per_step",
+                  "type": "text",
+                  "value": "100"
+                },
+                {
+                  "key": "max_resolution",
+                  "type": "text",
+                  "value": "256"
+                },
+                {
+                  "key": "output_width",
+                  "type": "text",
+                  "value": "0"
+                },
+                {
+                  "key": "output_height",
+                  "type": "text",
+                  "value": "0"
+                },
+                {
+                  "key": "supersample",
+                  "type": "text",
+                  "value": "2"
+                },
+                {
+                  "key": "fmt",
+                  "type": "text",
+                  "value": "png"
+                },
+                {
+                  "key": "return_base64",
+                  "type": "text",
+                  "value": "False"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Geometrize Js",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/geometrize_js",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "geometrize_js"
+              ]
+            },
+            "description": "Generate shapes from an image using the **real browser geometrize engine**\n(`frontend/geometrize.js` via embedded V8) and return them as JSON \u00e2\u0080\u0094 the same\nshape format and coordinate space (scaled to the source image size) as the\nin-browser engine. This lets the website fetch shapes from the backend and\nkeep using all existing selection/editing/ordering features unchanged.\n\nReturns: `{shapes, total_shapes, canvas_width, canvas_height, background}`.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": "",
+                  "value": ""
+                },
+                {
+                  "key": "shape_count",
+                  "type": "text",
+                  "value": "200"
+                },
+                {
+                  "key": "shape_types",
+                  "type": "text",
+                  "value": "triangle"
+                },
+                {
+                  "key": "opacity",
+                  "type": "text",
+                  "value": "128"
+                },
+                {
+                  "key": "candidates_per_step",
+                  "type": "text",
+                  "value": "50"
+                },
+                {
+                  "key": "mutations_per_step",
+                  "type": "text",
+                  "value": "100"
+                },
+                {
+                  "key": "max_resolution",
+                  "type": "text",
+                  "value": "256"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Geometrize Image",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/geometrize",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "geometrize"
+              ]
+            },
+            "description": "Convert an uploaded image into geometric shapes.\n\n**Parameters:**\n- `image`: Image file to process (PNG, JPG, etc.)\n- `shape_count`: Number of shapes to generate (default: 200)\n- `shape_type`: Type of shapes - triangle, circle, ellipse, rectangle, rotated_ellipse (default: triangle)\n- `opacity`: Shape opacity 0-255 (default: 128)\n- `mode`: Processing mode - 'fast' (resizes image, fewer iterations) or 'quality' (default: fast)\n\n**Returns:** JSON with shapes in the same format used by other endpoints.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": "",
+                  "value": ""
+                },
+                {
+                  "key": "shape_count",
+                  "type": "text",
+                  "value": "200"
+                },
+                {
+                  "key": "shape_type",
+                  "type": "text",
+                  "value": "triangle"
+                },
+                {
+                  "key": "opacity",
+                  "type": "text",
+                  "value": "128"
+                },
+                {
+                  "key": "mode",
+                  "type": "text",
+                  "value": "fast"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Order Shapes From Json",
+      "item": [
+        {
+          "name": "Order Shapes From Json",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/order_shapes_from_json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "order_shapes_from_json"
+              ]
+            },
+            "description": "Apply various ordering strategies to a list of shapes.\n\n**Available ordering strategies:**\n\n---\n\n### `exterior_to_center` \u00e2\u0080\u0094 Order from edges toward center\n![exterior_to_center](/GIFs/02.gif)\n\n---\n\n### `center_to_exterior` \u00e2\u0080\u0094 Order from center toward edges\n![center_to_exterior](/GIFs/03.gif)\n\n---\n\n### `top_to_bottom` \u00e2\u0080\u0094 Order by vertical position (top first)\n![top_to_bottom](/GIFs/04.gif)\n\n---\n\n### `bottom_to_top` \u00e2\u0080\u0094 Order by vertical position (bottom first)\n![bottom_to_top](/GIFs/05.gif)\n\n---\n\n### `light_to_dark` \u00e2\u0080\u0094 Order by luminance (bright to dark)\n![light_to_dark](/GIFs/07.gif)\n\n---\n\n### `dark_to_light` \u00e2\u0080\u0094 Order by luminance (dark to bright)\n![dark_to_light](/GIFs/08.gif)\n\n---\n\n### `frequency_by_color` \u00e2\u0080\u0094 Order by color frequency (most common first)\n![frequency_by_color](/GIFs/01.gif)\n\n---\n\n### `frequency_by_color_reverse` \u00e2\u0080\u0094 Order by color frequency (least common first)\n![frequency_by_color_reverse](/GIFs/09.gif)\n\n---\n\n### `color_sequence` \u00e2\u0080\u0094 Order by custom color sequence (requires color_order)\n![color_sequence](/GIFs/10.gif)\n\n---\n\n### `custom_sequence` \u00e2\u0080\u0094 Same as color_sequence\n![custom_sequence](/GIFs/11.gif)\n\n---\n\nBackground shapes (type=0) are always placed first.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shapes\": [\n    {\n      \"type\": 0,\n      \"data\": [\n        0.0\n      ],\n      \"color\": [\n        0\n      ],\n      \"score\": 0.0\n    }\n  ],\n  \"logic\": \"exterior_to_center\",\n  \"limit\": 0,\n  \"color_order\": [\n    [\n      0\n    ]\n  ],\n  \"canvas_width\": 0,\n  \"canvas_height\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Resize Canvas",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/resize_canvas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "resize_canvas"
+              ]
+            },
+            "description": "Rescale all shapes to fit a target canvas size.\n\nReads the current canvas dimensions from the background shape (type=0),\nthen scales all shape coordinates proportionally to fill the new\n`canvas_width` x `canvas_height`.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shapes\": [\n    {\n      \"type\": 0,\n      \"data\": [\n        0.0\n      ],\n      \"color\": [\n        0\n      ],\n      \"score\": 0.0\n    }\n  ],\n  \"canvas_width\": 0,\n  \"canvas_height\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Optimizing",
+      "item": [
+        {
+          "name": "Bake Opaque",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bake_opaque",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bake_opaque"
+              ]
+            },
+            "description": "Converts all shapes to fully opaque by sampling colors from the final rendered PNG image.\n\nThis is useful when you want to:\n- Remove transparency from shapes\n- Capture the actual rendered color (accounting for blending)\n- Simplify shape data for further processing\n\n**Requires:**\n- `req`: JSON string containing shapes array\n- `file`: PNG image file of the rendered shapes\n\n![bake_opaque](/GIFs/12.gif)",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "req",
+                  "type": "text",
+                  "value": "string"
+                },
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. Refining",
+      "item": [
+        {
+          "name": "Apply Selective Resolution",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/selective_resolution",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "selective_resolution"
+              ]
+            },
+            "description": "Enhance specific regions with higher resolution shapes.\n\nThis endpoint allows you to:\n1. Start with low-resolution base shapes\n2. Define regions of interest\n3. Replace shapes in those regions with high-resolution detail shapes\n\nUseful for optimizing performance while maintaining quality in important areas.\n\n![selective_resolution](/GIFs/06.gif)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"base_shapes\": [\n    {\n      \"type\": 0,\n      \"data\": [\n        0.0\n      ],\n      \"color\": [\n        0\n      ],\n      \"score\": 0.0\n    }\n  ],\n  \"detail_shapes\": [\n    {\n      \"type\": 0,\n      \"data\": [\n        0.0\n      ],\n      \"color\": [\n        0\n      ],\n      \"score\": 0.0\n    }\n  ],\n  \"regions\": [\n    {\n      \"x\": 0.0,\n      \"y\": 0.0,\n      \"width\": 0.0,\n      \"height\": 0.0\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "6. Paints",
+      "item": [
+        {
+          "name": "Get Default Palette",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/unmix/palette",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "unmix",
+                "palette"
+              ]
+            },
+            "description": "Get the default paint palette used for unmixing.\nUseful for displaying available colors in the UI."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "7. Palette mixing",
+      "item": [
+        {
+          "name": "Unmix Color Simple",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/unmix/simple",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "unmix",
+                "simple"
+              ]
+            },
+            "description": "Trycolors-style unmix endpoint.\n\n**Simple Input:** Just provide the hex color you want to achieve.\n\n**Request example:**\n```json\n{\n    \"target_color\": \"1E2448\"\n}\n```\n\n**Response format:**\nReturns color names with hex codes and percentages, plus an error percentage.\n\nExample output:\n```\nCadmium Yellow Light #FEE100 0.5%\nCadmium Red Light #DE290C 3.1%\nUltramarine Blue #19123F 94.6%\nTitanium White #F7F5F1 1.7%\nError 2.3%\n```",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"target_color\": \"1E2448\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "8. Palette mixing - Premium",
+      "item": [
+        {
+          "name": "Unmix Color",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/unmix",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "unmix"
+              ]
+            },
+            "description": "Find a mixing recipe to achieve a target color from your palette.\n\nThis is like trycolors.com's \"Get Mix\" feature - given a target color and\navailable paints, it calculates the optimal mix proportions.\n\n**Request:**\n- `target_color`: The hex color you want to achieve (e.g., \"#8B4513\")\n- `palette`: List of available paints with hex and optional name\n- `max_colors`: Maximum colors to use in recipe (1-5, default 3)\n- `max_parts`: Maximum parts per color for ratio precision (1-20, default 10)\n- `prefilter_top_n`: Pre-filter palette to top-N closest colors, 0=off (default 12)\n- `top_k`: Keep top-K best solutions (default 5)\n- `grid_rows`: Dot grid rows for visual display (1-20, default 10)\n- `grid_cols`: Dot grid columns for visual display (1-20, default 10)\n- `grid_max_dots`: Max dots to fill in grid, 0=fill all (default 0). E.g., 10x10 grid with max 50 dots: only 50 cells colored proportionally, rest empty.\n\n**Response:**\n- `recipe`: List of colors with parts and percentage\n- `result_color`: The actual color from mixing the recipe\n- `match_percentage`: How close the result matches target (0-100%)\n- `delta_e`: CIE Delta E value for technical reference\n- `grid_rows`, `grid_cols`, `grid_max_dots`: Echo back grid config for display\n\n**Example usage:**\n```json\n{\n    \"target_color\": \"#8B4513\",\n    \"palette\": [\n        {\"hex\": \"#FF0000\", \"name\": \"Cadmium Red\"},\n        {\"hex\": \"#FFFF00\", \"name\": \"Cadmium Yellow\"},\n        {\"hex\": \"#0000FF\", \"name\": \"Ultramarine Blue\"},\n        {\"hex\": \"#FFFFFF\", \"name\": \"Titanium White\"},\n        {\"hex\": \"#000000\", \"name\": \"Ivory Black\"}\n    ],\n    \"max_colors\": 3,\n    \"max_parts\": 10,\n    \"grid_rows\": 10,\n    \"grid_cols\": 10,\n    \"grid_max_dots\": 50\n}\n```",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"target_color\": \"string\",\n  \"palette\": [\n    {\n      \"hex\": \"string\",\n      \"name\": \"string\"\n    }\n  ],\n  \"max_colors\": 3,\n  \"max_parts\": 10,\n  \"prefilter_top_n\": 12,\n  \"top_k\": 5,\n  \"grid_rows\": 10,\n  \"grid_cols\": 10,\n  \"grid_max_dots\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "9. Match difference",
+      "item": [
+        {
+          "name": "Color Match",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/color_match",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "color_match"
+              ]
+            },
+            "description": "Compare a selected color against a palette of colors using CIE LAB color space.\n\nReturns perceptually accurate color matching with Delta E values and match percentages.\nResults are sorted by match percentage (highest first).\n\n**Delta E interpretation:**\n- 0-1: Not perceptible by human eyes\n- 1-2: Perceptible through close observation\n- 2-10: Perceptible at a glance\n- 11-49: Colors are more similar than opposite\n- 100+: Colors are exact opposites",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"selected_color\": \"string\",\n  \"palette_colors\": [\n    \"string\"\n  ],\n  \"threshold\": 0.0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "10. Forward Mix",
+      "item": [
+        {
+          "name": "Forward Mix",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/forward-mix",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "forward-mix"
+              ]
+            },
+            "description": "Mix N colors with given weights and return the resulting color.\n\n**Methods:** `kubelka_munk`, `yn_km`, `linear`, `hybrid`\n- `hybrid` blends KM and Linear in linear RGB: result = (1-t)*KM + t*Linear",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"colors\": [\n    {\n      \"hex\": \"string\",\n      \"weight\": 0.0\n    }\n  ],\n  \"method\": \"kubelka_munk\",\n  \"hybrid_t\": 0.28,\n  \"yn_n\": 1.5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "11. Balanced Color Router",
+      "item": [
+        {
+          "name": "Balanced Match",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/m4/match",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "m4",
+                "match"
+              ]
+            },
+            "description": "Art-slider colour match.\n\nRank every palette colour against the target using three weighted criteria\ncontrolled by the **sliders** object:\n\n| slider       | what it favours |\n|--------------|-----------------|\n| `perceptual` | CIE-LAB Delta-E closeness (visual accuracy) |\n| `pigment`    | Linear-RGB reflectance alignment (paint mixing potential) |\n| `harmony`    | Hue-wheel proximity (analogous / complementary feel) |\n\nEach slider runs 0-100; only the *ratios* matter.\nDefault: perceptual 50 / pigment 30 / harmony 20.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"target_color\": \"string\",\n  \"palette\": [\n    {\n      \"hex\": \"string\",\n      \"name\": \"string\"\n    }\n  ],\n  \"sliders\": {\n    \"perceptual\": 50,\n    \"pigment\": 30,\n    \"harmony\": 20\n  },\n  \"max_results\": 10,\n  \"threshold\": 0.0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Balanced Mix",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/m4/mix",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "m4",
+                "mix"
+              ]
+            },
+            "description": "Art-slider colour unmix / recipe finder.\n\nWorks like `/unmix` but the *best recipe* is chosen by the combined\nslider score rather than raw Delta-E alone.  This lets the artist\nbias toward pigment-realistic or harmonious recipes.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"target_color\": \"string\",\n  \"palette\": [\n    {\n      \"hex\": \"string\",\n      \"name\": \"string\"\n    }\n  ],\n  \"sliders\": {\n    \"perceptual\": 50,\n    \"pigment\": 30,\n    \"harmony\": 20\n  },\n  \"max_colors\": 3,\n  \"max_parts\": 10,\n  \"top_k\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Slider Presets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/m4/sliders/presets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "m4",
+                "sliders",
+                "presets"
+              ]
+            },
+            "description": "Return suggested slider presets for common art workflows."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "12. Rendering",
+      "item": [
+        {
+          "name": "Render Shapes",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/render_shapes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "render_shapes"
+              ]
+            },
+            "description": "Render a shape list (the JSON output of the geometrize step) into a raster\nimage **on the backend**, matching the frontend canvas renderer.\n\n**Body (JSON):**\n- `shapes`: list of `{type, data, color, score?}` objects (Geometrize format).\n- `canvas_width` / `canvas_height`: output size in px. If omitted, inferred\n  from the shapes (background rectangle, else bounding box).\n- `background`: RGB or RGBA background color (default white `[255,255,255]`).\n- `supersample`: 1 (no AA) to 4 (high-quality AA). Default 2.\n- `fmt`: `\"png\"` (default) or `\"jpeg\"`.\n- `return_base64`: if true, returns JSON `{\"image\": \"data:image/...;base64,...\"}`\n  instead of the raw image bytes.\n\n**Returns:** the rendered image (`image/png` or `image/jpeg`), or a JSON\nobject with a base64 data URI when `return_base64` is true.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shapes\": [\n    {\n      \"type\": 0,\n      \"data\": [\n        0.0\n      ],\n      \"color\": [\n        0\n      ],\n      \"score\": 0.0\n    }\n  ],\n  \"canvas_width\": 0,\n  \"canvas_height\": 0,\n  \"background\": [\n    0\n  ],\n  \"supersample\": 2,\n  \"fmt\": \"png\",\n  \"return_base64\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "12. Versioned models",
+      "item": [
+        {
+          "name": "Get Versions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/versions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "versions"
+              ]
+            },
+            "description": "List every forward and unmix version, with availability and notes."
+          },
+          "response": []
+        },
+        {
+          "name": "Version Forward Mix",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/version/forward-mix",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "version",
+                "forward-mix"
+              ]
+            },
+            "description": "Predict the mixed color for a recipe using the selected forward version.\n\nForward versions:\n- **baseline** - Kubelka-Munk subtractive mix of the measured palette\n- **dualgate** - linear-light mix of the measured palette\n- **m4** - routes baseline vs dual-gate, then mixes with the chosen mixer (current)\n- **m5** - experimental router (adds a P3 branch)\n- **m7_1** - measured-pairwise forward prediction",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pigments\": [\n    \"string\"\n  ],\n  \"parts\": [\n    0.0\n  ],\n  \"version\": \"m4\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Version Unmix",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/version/unmix",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "version",
+                "unmix"
+              ]
+            },
+            "description": "Propose recipes for a target color using the selected unmix version.\n\nUnmix versions:\n- **m7_1** - measured-pairwise unmix (current), includes observed n-ary anchors\n- **m7** - measured-pairwise unmix research candidate (no H24 n-ary rescue)\n- **km_baseline** - the existing /unmix Kubelka-Munk search (uses your palette)\n- **m6 / m6.1** - historical branches; reported as unavailable in this package\n\nMeasured models use the fixed measured 8-pigment palette (returned in\n`palette`), so the loaded UI palette does not apply to them.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"target_color\": \"string\",\n  \"version\": \"m7_1\",\n  \"max_colors\": 4,\n  \"total_parts\": 6,\n  \"top_n\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "13. Custom palette unmix",
+      "item": [
+        {
+          "name": "Unmix Custom",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/unmix/custom",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "unmix",
+                "custom"
+              ]
+            },
+            "description": "Propose mixing recipes for a target color using **only the user's own colors**\n(the Color Library / \"Edit Library\" palette).\n\nThis runs the same unmixer algorithm and CIEDE2000 calcs as the M7.1 model,\nbut over your supplied palette, predicting each candidate mix with a physical\nmixing model (Kubelka-Munk by default).  Unlike the measured M7/M7.1 models,\nit works with any colors you add -- new names and RGBs included.\n\n**Request example:**\n```json\n{\n    \"target_color\": \"#884513\",\n    \"palette\": [\n        {\"hex\": \"#FEE100\", \"name\": \"Cadmium Yellow Light\"},\n        {\"hex\": \"#DE290C\", \"name\": \"Cadmium Red Light\"},\n        {\"hex\": \"#19123F\", \"name\": \"Ultramarine Blue\"},\n        {\"hex\": \"#F7F5F1\", \"name\": \"Titanium White\"}\n    ],\n    \"max_colors\": 3,\n    \"total_parts\": 6,\n    \"top_n\": 5,\n    \"mix_method\": \"kubelka_munk\"\n}\n```\n\n**Response:** ranked `proposals`, each with the recipe (`pigment_names`,\n`pigment_hexes`, `parts`, `percentages`), the `predicted_hex`, `delta_e`,\n`match_percentage`, a `confidence_tier` and a risk-adjusted\n`score_with_risk_penalty`.  The shape matches `/version/unmix` so the existing\nranked-proposals UI can render it directly.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"target_color\": \"string\",\n  \"palette\": [\n    {\n      \"hex\": \"string\",\n      \"name\": \"string\"\n    }\n  ],\n  \"max_colors\": 4,\n  \"total_parts\": 6,\n  \"prefilter_top_n\": 12,\n  \"top_n\": 5,\n  \"mix_method\": \"kubelka_munk\",\n  \"palette_id\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Generate Profile",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Admin-Token",
+                "value": "{{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/unmix/custom/profile/generate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "unmix",
+                "custom",
+                "profile",
+                "generate"
+              ]
+            },
+            "description": "Build or incrementally update a measured palette profile (admin only).\n\nHybrid strategy: measures each missing comparison via TryColors pro/2025, and\nfalls back to the local KM engine when the daily API budget is exhausted.\nAdding a color to an existing ``palette_id`` only generates the new pair\ncomparisons (incremental). Returns a summary (not the full comparison list).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"palette_id\": \"string\",\n  \"name\": \"\",\n  \"colors\": [\n    {\n      \"hex\": \"string\",\n      \"name\": \"string\"\n    }\n  ],\n  \"ratios\": [\n    \"string\"\n  ],\n  \"max\": 0,\n  \"local_only\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Admin-Token",
+                "value": "{{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/unmix/custom/profile/:palette_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "unmix",
+                "custom",
+                "profile",
+                ":palette_id"
+              ],
+              "query": [
+                {
+                  "key": "full",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                }
+              ],
+              "variable": [
+                {
+                  "key": "palette_id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Inspect a saved measured palette profile (admin only).\n\nBy default returns a summary; pass ``?full=true`` for the full profile\nincluding every measured comparison."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "14. Super Admin",
+      "item": [
+        {
+          "name": "Admin Verify",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Admin-Token",
+                "value": "{{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "verify"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Admin Overview",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Admin-Token",
+                "value": "{{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/overview",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "overview"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Admin Customers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Admin-Token",
+                "value": "{{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/customers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "customers"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true,
+                  "description": "Match email / name / user id"
+                },
+                {
+                  "key": "plan",
+                  "value": "all",
+                  "disabled": true,
+                  "description": "Effective plan filter or 'all'"
+                },
+                {
+                  "key": "status",
+                  "value": "all",
+                  "disabled": true,
+                  "description": "Subscription status filter or 'all'"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "page_size",
+                  "value": "50",
+                  "disabled": true,
+                  "description": ""
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Admin Transactions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Admin-Token",
+                "value": "{{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/transactions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "transactions"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true,
+                  "description": "Match user email / session id"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "page_size",
+                  "value": "50",
+                  "disabled": true,
+                  "description": ""
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Admin Customer Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Admin-Token",
+                "value": "{{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/customer/:user_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "customer",
+                ":user_id"
+              ],
+              "variable": [
+                {
+                  "key": "user_id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Admin Analytics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Admin-Token",
+                "value": "{{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/analytics",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "analytics"
+              ]
+            },
+            "description": "Aggregations for every chart the live schema can back.\n\nCharts that need data the schema does not collect yet (churn surveys, health\nrollups, cohort tracking, generation latency, fraud signals) are NOT faked\nhere \u00e2\u0080\u0094 the UI renders an explicit empty state for those instead."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "14. User palettes",
+      "item": [
+        {
+          "name": "List Palettes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/palettes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "palettes"
+              ]
+            },
+            "description": "List the current user's saved palettes (most recently updated first)."
+          },
+          "response": []
+        },
+        {
+          "name": "Save Palette",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/palettes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "palettes"
+              ]
+            },
+            "description": "Create or update (by name) one of the current user's palettes.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"string\",\n  \"colors\": [\n    {\n      \"hex\": \"string\",\n      \"name\": \"string\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Palette",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/palettes/:palette_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "palettes",
+                ":palette_id"
+              ],
+              "variable": [
+                {
+                  "key": "palette_id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Delete one of the current user's palettes by id."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "15. Reference image library",
+      "item": [
+        {
+          "name": "List Sources",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/library/sources",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "library",
+                "sources"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/library/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "library",
+                "stats"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Facets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/library/facets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "library",
+                "facets"
+              ]
+            },
+            "description": "Distinct values (with counts) for the normalized filter dropdowns\n(era / genre / nationality). Public \u00e2\u0080\u0094 used by the gallery filter UI."
+          },
+          "response": []
+        },
+        {
+          "name": "Start Ingest",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Admin-Token",
+                "value": "{{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/library/ingest",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "library",
+                "ingest"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"source\": \"string\",\n  \"search\": \"\",\n  \"classification\": \"painting\",\n  \"year_from\": 0,\n  \"year_to\": 0,\n  \"limit\": 50\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Sync Bucket Endpoint",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Admin-Token",
+                "value": "{{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/library/sync-bucket",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "library",
+                "sync-bucket"
+              ]
+            },
+            "description": "Admin: import every image in the object-storage bucket (generate\nthumbnails + rows). Idempotent \u00e2\u0080\u0094 run again after uploading more files."
+          },
+          "response": []
+        },
+        {
+          "name": "Jobs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Admin-Token",
+                "value": "{{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/library/jobs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "library",
+                "jobs"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "25",
+                  "disabled": true,
+                  "description": ""
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Job",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Admin-Token",
+                "value": "{{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/library/jobs/:job_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "library",
+                "jobs",
+                ":job_id"
+              ],
+              "variable": [
+                {
+                  "key": "job_id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Job",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Admin-Token",
+                "value": "{{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/library/jobs/:job_id/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "library",
+                "jobs",
+                ":job_id",
+                "cancel"
+              ],
+              "variable": [
+                {
+                  "key": "job_id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Image Proxy",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/library/img/:artwork_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "library",
+                "img",
+                ":artwork_id"
+              ],
+              "query": [
+                {
+                  "key": "size",
+                  "value": "thumb",
+                  "disabled": true,
+                  "description": ""
+                }
+              ],
+              "variable": [
+                {
+                  "key": "artwork_id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Public, cached image proxy. Fetches the artwork's remote image server-side\n(where hotlinks succeed), downscales it, caches to disk, and serves it from\nthis origin \u00e2\u0080\u0094 so the gallery loads fast and never shows broken hotlinks.\n\n``size`` = 'thumb' (grid, ~420px) or 'full' (lightbox, ~1600px)."
+          },
+          "response": []
+        },
+        {
+          "name": "Artworks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/library/artworks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "library",
+                "artworks"
+              ],
+              "query": [
+                {
+                  "key": "source",
+                  "value": "string",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "search",
+                  "value": "string",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "classification",
+                  "value": "string",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "year_from",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "year_to",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "era",
+                  "value": "string",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "genre",
+                  "value": "string",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "artist",
+                  "value": "string",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "nationality",
+                  "value": "string",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "page_size",
+                  "value": "40",
+                  "disabled": true,
+                  "description": ""
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Similarity Map",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/library/map",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "library",
+                "map"
+              ]
+            },
+            "description": "Public: every artwork's 2-D similarity-map position (+ metadata for the\nhover card). Empty until an admin runs POST /map/build."
+          },
+          "response": []
+        },
+        {
+          "name": "Build Similarity Map",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Admin-Token",
+                "value": "{{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/library/map/build",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "library",
+                "map",
+                "build"
+              ],
+              "query": [
+                {
+                  "key": "force",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Admin: (re)build the similarity map in the background \u00e2\u0080\u0094 embed any artwork\nwithout a feature vector (all of them with ``force=true``), then recompute\nthe 2-D layout. Poll GET /jobs/{id} for progress."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Artwork",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-Admin-Token",
+                "value": "{{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/library/artworks/:artwork_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "library",
+                "artworks",
+                ":artwork_id"
+              ],
+              "variable": [
+                {
+                  "key": "artwork_id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Auth Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Register a new user.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"string\",\n  \"password\": \"string\",\n  \"name\": \"string\",\n  \"organization_name\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Auth Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login with email/password.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"string\",\n  \"password\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Auth Me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Get the current user from a Bearer JWT."
+          },
+          "response": []
+        },
+        {
+          "name": "Oauth Google Redirect",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/oauth/google",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "oauth",
+                "google"
+              ]
+            },
+            "description": "Redirect user to Google's OAuth consent screen."
+          },
+          "response": []
+        },
+        {
+          "name": "Oauth Google Callback",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/oauth/google/callback",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "oauth",
+                "google",
+                "callback"
+              ],
+              "query": [
+                {
+                  "key": "code",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "error",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Handle the callback from Google after user consent."
+          },
+          "response": []
+        },
+        {
+          "name": "Oauth Debug",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/oauth/debug",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "oauth",
+                "debug"
+              ]
+            },
+            "description": "Debug: check which OAuth env vars are loaded."
+          },
+          "response": []
+        },
+        {
+          "name": "Oauth Facebook Redirect",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/oauth/facebook",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "oauth",
+                "facebook"
+              ]
+            },
+            "description": "Redirect user to Facebook's OAuth consent screen."
+          },
+          "response": []
+        },
+        {
+          "name": "Oauth Facebook Callback",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/oauth/facebook/callback",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "oauth",
+                "facebook",
+                "callback"
+              ],
+              "query": [
+                {
+                  "key": "code",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "error",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Handle the callback from Facebook after user consent."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Billing",
+      "item": [
+        {
+          "name": "Billing Config",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/billing/config",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "billing",
+                "config"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "List Plans",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/billing/plans",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "billing",
+                "plans"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Billing Me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/billing/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "billing",
+                "me"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Entitlements",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/billing/entitlements",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "billing",
+                "entitlements"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Consume Image",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/billing/consume-image",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "billing",
+                "consume-image"
+              ]
+            },
+            "description": "Atomically check the user's image quota and consume one unit.\n\nOrder: monthly allowance first, then pay-as-you-go credits. Unlimited plans\nalways pass. Returns {allowed, remaining, reason}."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Checkout Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/billing/create-checkout-session",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "billing",
+                "create-checkout-session"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plan_id\": \"string\",\n  \"quantity\": 1,\n  \"success_url\": \"string\",\n  \"cancel_url\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/billing/verify-session",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "billing",
+                "verify-session"
+              ]
+            },
+            "description": "Fallback activation when webhooks aren't configured (test mode)."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Portal Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/billing/create-portal-session",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "billing",
+                "create-portal-session"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Stripe Webhook",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/billing/webhook",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "billing",
+                "webhook"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

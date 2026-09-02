@@ -6,7 +6,7 @@
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
       <!-- Title -->
-      <title>Portfolio | GeoMagic</title>
+      <title>Videos | GeoMagic</title>
 
       <!-- favicon -->
       <link rel="apple-touch-icon" sizes="180x180" href="assets/img/favicon/apple-touch-icon.png">
@@ -30,39 +30,23 @@
       <link rel="stylesheet" href="assets/css/canvas-preview.css">
       <link rel="stylesheet" href="assets/css/app-shell.css">
       <style>
-         .pf-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 26px; }
-         .pf-tools { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-         .pf-tabs { display: inline-flex; gap: 4px; padding: 4px; border-radius: 12px; background: #f4f4f4; }
-         .dark .pf-tabs { background: #1a1d1f; }
-         .pf-tabs button { padding: 8px 14px; border-radius: 9px; font-size: 14px; font-weight: 600; color: #6f767e; background: transparent; border: 0; cursor: pointer; }
-         .pf-tabs button.active { background: #fff; color: #1a1d1f; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
-         .dark .pf-tabs button.active { background: #272b30; color: #fcfcfc; }
-         .pf-select { appearance: none; -webkit-appearance: none; height: 44px; padding: 0 40px 0 16px; border-radius: 12px; font-size: 14px; font-weight: 600; background: #f4f4f4; color: #1a1d1f; border: 1px solid transparent; }
-         .dark .pf-select { background: #1a1d1f; color: #fcfcfc; border-color: #272b30; }
-         .pf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 28px 24px; }
-         .pf-card { display: flex; flex-direction: column; }
-         .pf-thumb { position: relative; display: block; border-radius: 14px; overflow: hidden; aspect-ratio: 1.54 / 1; background: #272b30; }
-         .pf-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform 1s ease; }
-         .pf-card:hover .pf-thumb img { transform: scale(1.06); }
-         .pf-thumb .pf-badge { position: absolute; left: 10px; top: 10px; padding: 4px 8px; border-radius: 8px; background: rgba(0,0,0,.55); color: #fff; font-size: 11px; font-weight: 700; backdrop-filter: blur(4px); }
-         .pf-thumb .pf-open { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; background: rgba(0,0,0,.35); color: #fff; font-weight: 700; font-size: 14px; gap: 8px; transition: opacity .15s; }
-         .pf-card:hover .pf-open { opacity: 1; }
-         .pf-meta { padding-top: 14px; display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
-         .pf-meta h6 { font-size: 15px; font-weight: 600; color: #1a1d1f; letter-spacing: -.01em; margin-bottom: 4px; word-break: break-word; }
-         .dark .pf-meta h6 { color: #fcfcfc; }
-         .pf-meta p { font-size: 13px; font-weight: 600; color: #6f767e; }
-         .pf-actions { display: flex; gap: 6px; flex: 0 0 auto; }
-         .pf-actions button { width: 36px; height: 36px; border-radius: 9px; background: #f4f4f4; border: 1px solid transparent; color: #6f767e; cursor: pointer; }
-         .pf-actions button:hover { color: #1a1d1f; background: #e9e9ea; }
-         .dark .pf-actions button { background: #1f2226; border-color: #2c2f34; color: #9aa0a6; }
-         .dark .pf-actions button:hover { color: #fff; background: #25292e; }
-         .pf-actions button.del:hover { color: #ff6b6b; }
-         .pf-empty { text-align: center; padding: 56px 20px; max-width: 520px; margin: 0 auto; }
-         .pf-empty-ico { width: 84px; height: 84px; border-radius: 50%; margin: 0 auto 18px; display: flex; align-items: center; justify-content: center; font-size: 30px; background: #f4f4f4; color: #6f767e; }
-         .dark .pf-empty-ico { background: #1a1d1f; }
-         .pf-empty h6 { font-size: 18px; font-weight: 700; color: #1a1d1f; margin-bottom: 8px; }
-         .dark .pf-empty h6 { color: #fcfcfc; }
-         .pf-empty p { font-size: 14px; color: #6f767e; line-height: 1.6; margin-bottom: 20px; }
+         .vd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; }
+         .vd-card { border-radius: 14px; overflow: hidden; background: #f4f4f4; border: 1px solid #ececec; display: flex; flex-direction: column; }
+         .dark .vd-card { background: #1a1d1f; border-color: #272b30; }
+         .vd-frame { aspect-ratio: 16 / 9; background: #111315; position: relative; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 40px; }
+         .vd-frame iframe, .vd-frame video { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+         .vd-frame a { color: #fff; }
+         .vd-meta { padding: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+         .vd-meta h6 { font-size: 14px; font-weight: 700; color: #1a1d1f; } .dark .vd-meta h6 { color: #fcfcfc; }
+         .vd-meta p { font-size: 12px; color: #6f767e; margin-top: 2px; }
+         .vd-meta button { width: 34px; height: 34px; border-radius: 9px; border: 0; background: transparent; color: #8c9097; cursor: pointer; }
+         .vd-meta button:hover { color: #ff6b6b; }
+         .vd-empty { grid-column: 1 / -1; padding: 40px; text-align: center; color: #6f767e; font-size: 14px; border: 1px dashed #d9dadd; border-radius: 14px; }
+         .dark .vd-empty { border-color: #33383f; }
+         .vd-add { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 24px; padding-top: 24px; border-top: 1px solid #f4f4f4; }
+         .dark .vd-add { border-top-color: #272b30; }
+         .vd-add input { flex: 1 1 220px; height: 46px; padding: 0 14px; border-radius: 12px; background: #f4f4f4; border: 1px solid transparent; font-size: 14px; font-weight: 600; color: #1a1d1f; }
+         .dark .vd-add input { background: #1a1d1f; color: #fff; border-color: #272b30; }
       </style>
 
    </head>
@@ -206,37 +190,13 @@
             <!-- dashboard main wrapper -->
             <div class="min-h-[calc(100vh-96px)] overflow-auto md:p-6 2xl:p-10 pt-2 md:pt-6">
                <section class="bg-white dark:bg-neutral-7 p-6 rounded-lg border-2 border-[#F4F4F4] dark:border-0 shadow-[0px_4px_14px_-6px_#F4F4F4] dark:shadow-none">
-                  <div class="pf-head">
-                     <div>
-                        <h5 class="text-neutral-6 dark:text-neutral-1 text-xl leading-[1.6] font-semibold -tracking-[0.4px] relative pl-5 before:w-[5px] before:h-full before:bg-secondary-3 before:rounded before:absolute before:left-0 before:top-0">Portfolio</h5>
-                        <p class="text-neutral-4 text-sm font-semibold mt-1">Your saved photos and generations. Press <b>Save</b> on the Dashboard to add one here.</p>
-                     </div>
-                     <div class="pf-tools">
-                        <div class="pf-tabs" id="pfTabs">
-                           <button type="button" data-range="today">Today</button>
-                           <button type="button" data-range="month">This month</button>
-                           <button type="button" data-range="year" class="active">This year</button>
-                           <button type="button" data-range="all">All</button>
-                        </div>
-                        <div class="relative">
-                           <select id="pfSort" class="pf-select">
-                              <option value="new">Newest</option>
-                              <option value="old">Oldest</option>
-                              <option value="name">Name</option>
-                           </select>
-                           <span class="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-4 pointer-events-none"><i class="fa-regular fa-chevron-down"></i></span>
-                        </div>
-                        <a href="dashboard.html" class="theme-btn-primary inline-flex! items-center gap-2"><i class="fa-regular fa-plus"></i> New</a>
-                     </div>
-                  </div>
-
-                  <div id="pfGrid" class="pf-grid"></div>
-
-                  <div id="pfEmpty" class="pf-empty" hidden>
-                     <div class="pf-empty-ico"><i class="fa-regular fa-images"></i></div>
-                     <h6>Nothing saved yet</h6>
-                     <p>Upload a photo on the Dashboard (the Mona Lisa, your own picture…), generate it, then press <b>Save</b>. It will show up here with its shapes, so you can reopen it in Colors any time.</p>
-                     <a href="dashboard.html" class="theme-btn-primary inline-flex! items-center gap-2"><i class="fa-regular fa-wand-magic-sparkles"></i> Go to Dashboard</a>
+                  <h5 class="text-neutral-6 dark:text-neutral-1 text-xl leading-[1.6] font-semibold -tracking-[0.4px] relative pl-5 before:w-[5px] before:h-full before:bg-secondary-3 before:rounded before:absolute before:left-0 before:top-0">Videos</h5>
+                  <p class="text-neutral-4 text-sm font-semibold mt-1 mb-8">Short walkthroughs of each tool. Add your own links below — they are kept in this browser.</p>
+                  <div class="vd-grid" id="vdGrid"></div>
+                  <div class="vd-add">
+                     <input id="vdTitle" type="text" placeholder="Video title">
+                     <input id="vdUrl" type="url" placeholder="YouTube / Vimeo / MP4 link">
+                     <button type="button" id="vdAdd" class="theme-btn-primary inline-flex! items-center gap-2"><i class="fa-regular fa-plus"></i> Add video</button>
                   </div>
                </section>
             </div>
@@ -253,99 +213,40 @@
 
       <script>
          (function () {
-            var grid = document.getElementById('pfGrid');
-            var empty = document.getElementById('pfEmpty');
-            var tabs = document.getElementById('pfTabs');
-            var sortSel = document.getElementById('pfSort');
-            var range = 'year';
-
+            var KEY = 'gm_videos';
+            var grid = document.getElementById('vdGrid');
+            var DEFAULTS = [
+               { title: 'Upload & generate', desc: 'Dashboard: shapes, settings, save to Portfolio', url: '' },
+               { title: 'Pick a color → recipe', desc: 'Colors page: pick, palette, best match, recipe', url: '' },
+               { title: 'Drawing mode (VR/AR)', desc: 'Devices: headset & camera picker', url: '' }
+            ];
+            function list() { try { var l = JSON.parse(localStorage.getItem(KEY) || 'null'); return Array.isArray(l) ? l : DEFAULTS.slice(); } catch (e) { return DEFAULTS.slice(); } }
+            function save(l) { try { localStorage.setItem(KEY, JSON.stringify(l)); } catch (e) {} }
             function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-            function fmtDate(ts) {
-               var d = new Date(ts);
-               return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) + ' · ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-            }
-            function inRange(ts) {
-               var d = new Date(ts), now = new Date();
-               if (range === 'today') return d.toDateString() === now.toDateString();
-               if (range === 'month') return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
-               if (range === 'year') return d.getFullYear() === now.getFullYear();
-               return true;
-            }
-            function items() {
-               var all = (window.GM && GM.portfolio) ? GM.portfolio.list() : [];
-               var list = all.filter(function (p) { return inRange(p.createdAt); });
-               var s = sortSel.value;
-               list.sort(function (a, b) {
-                  if (s === 'name') return String(a.title).localeCompare(String(b.title));
-                  return s === 'old' ? a.createdAt - b.createdAt : b.createdAt - a.createdAt;
-               });
-               return list;
+            function embed(url) {
+               if (!url) return '<span style="font-size:13px;color:#6f767e"><i class="fa-regular fa-circle-play" style="font-size:36px;display:block;margin-bottom:8px"></i>No video linked yet</span>';
+               var m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{6,})/);
+               if (m) return '<iframe src="https://www.youtube.com/embed/' + m[1] + '" allowfullscreen loading="lazy"></iframe>';
+               var v = url.match(/vimeo\.com\/(\d+)/);
+               if (v) return '<iframe src="https://player.vimeo.com/video/' + v[1] + '" allowfullscreen loading="lazy"></iframe>';
+               if (/\.(mp4|webm|mov)(\?|$)/i.test(url)) return '<video src="' + esc(url) + '" controls preload="metadata"></video>';
+               return '<a href="' + esc(url) + '" target="_blank" rel="noopener"><i class="fa-regular fa-arrow-up-right-from-square"></i></a>';
             }
             function render() {
-               var list = items();
-               grid.innerHTML = list.map(function (p) {
-                  return '<div class="pf-card" data-id="' + esc(p.id) + '">'
-                     + '<a href="#" class="pf-thumb" data-open="' + esc(p.id) + '">'
-                     + '<img src="' + esc(p.thumb || '') + '" alt="' + esc(p.title) + '">'
-                     + '<span class="pf-badge">' + (p.shapeCount ? p.shapeCount + ' shapes' : 'Image') + '</span>'
-                     + '<span class="pf-open"><i class="fa-regular fa-palette"></i> Open in Colors</span></a>'
-                     + '<div class="pf-meta"><div><h6>' + esc(p.title) + '</h6><p>' + fmtDate(p.createdAt) + (p.w ? ' · ' + p.w + '×' + p.h : '') + '</p></div>'
-                     + '<div class="pf-actions">'
-                     + '<button type="button" title="Rename" data-rename="' + esc(p.id) + '"><i class="fa-regular fa-pen"></i></button>'
-                     + '<button type="button" title="Download PNG" data-dl="' + esc(p.id) + '"><i class="fa-regular fa-download"></i></button>'
-                     + '<button type="button" class="del" title="Delete" data-del="' + esc(p.id) + '"><i class="fa-regular fa-trash-can"></i></button>'
-                     + '</div></div></div>';
-               }).join('');
-               empty.hidden = list.length > 0;
-               if (!list.length && (window.GM && GM.portfolio && GM.portfolio.list().length)) {
-                  empty.querySelector('p').textContent = 'Nothing saved in this period. Try "All".';
-               }
+               var l = list();
+               grid.innerHTML = l.length ? l.map(function (v, i) {
+                  return '<div class="vd-card"><div class="vd-frame">' + embed(v.url) + '</div><div class="vd-meta"><div><h6>' + esc(v.title) + '</h6><p>' + esc(v.desc || v.url || '') + '</p></div><button type="button" data-i="' + i + '" title="Remove"><i class="fa-regular fa-trash-can"></i></button></div></div>';
+               }).join('') : '<div class="vd-empty">No videos yet — add a link below.</div>';
             }
-            tabs.addEventListener('click', function (e) {
-               var b = e.target.closest('button[data-range]'); if (!b) return;
-               tabs.querySelectorAll('button').forEach(function (x) { x.classList.toggle('active', x === b); });
-               range = b.getAttribute('data-range'); render();
-            });
-            sortSel.addEventListener('change', render);
-
             grid.addEventListener('click', function (e) {
-               var open = e.target.closest('[data-open]');
-               if (open) {
-                  e.preventDefault();
-                  var p = GM.portfolio.get(open.getAttribute('data-open'));
-                  if (!p) return;
-                  if (p.shapes && p.shapes.length) {
-                     // hand the saved shapes to the Colors page (same carry-forward as the Dashboard)
-                     try { sessionStorage.setItem('geomagic:state', JSON.stringify({ baseShapes: p.shapes, logic: p.logic || 'original', colorOrder: p.colorOrder || null, limit: p.limit == null ? null : p.limit, w: p.w, h: p.h })); } catch (err) {}
-                     location.href = 'templates.html';
-                  } else {
-                     // only the picture survived (storage was full) — reopen it as an upload
-                     try { localStorage.setItem('gm_pending_library_image', JSON.stringify({ id: p.id, title: p.title, url: p.thumb })); } catch (err) {}
-                     location.href = 'dashboard.html';
-                  }
-                  return;
-               }
-               var dl = e.target.closest('[data-dl]');
-               if (dl) {
-                  var q = GM.portfolio.get(dl.getAttribute('data-dl')); if (!q) return;
-                  var a = document.createElement('a'); a.href = q.thumb; a.download = (q.title || 'geomagic') + '.jpg'; document.body.appendChild(a); a.click(); a.remove();
-                  return;
-               }
-               var rn = e.target.closest('[data-rename]');
-               if (rn) {
-                  var r = GM.portfolio.get(rn.getAttribute('data-rename')); if (!r) return;
-                  var name = prompt('Rename this item', r.title || '');
-                  if (name != null && name.trim()) {
-                     var all = GM.portfolio.list();
-                     all.forEach(function (x) { if (x.id === r.id) x.title = name.trim(); });
-                     GM.portfolio._write(all); render();
-                  }
-                  return;
-               }
-               var del = e.target.closest('[data-del]');
-               if (del) {
-                  if (confirm('Delete this saved image from your Portfolio?')) { GM.portfolio.remove(del.getAttribute('data-del')); render(); }
-               }
+               var b = e.target.closest('button[data-i]'); if (!b) return;
+               var l = list(); l.splice(parseInt(b.getAttribute('data-i'), 10), 1); save(l); render();
+            });
+            document.getElementById('vdAdd').addEventListener('click', function () {
+               var t = document.getElementById('vdTitle').value.trim(), u = document.getElementById('vdUrl').value.trim();
+               if (!t || !u) { if (window.GM) GM.toast('Add a title and a link.', { kind: 'warn', icon: 'fa-regular fa-triangle-exclamation' }); return; }
+               var l = list(); l.unshift({ title: t, url: u }); save(l); render();
+               document.getElementById('vdTitle').value = ''; document.getElementById('vdUrl').value = '';
             });
             render();
          })();

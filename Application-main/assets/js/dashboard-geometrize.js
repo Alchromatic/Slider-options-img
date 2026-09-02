@@ -36,6 +36,8 @@
    const selRgba    = $("#dash-sel-rgba");
    const selDelete  = $("#dash-sel-delete");
    const selClear   = $("#dash-sel-clear");
+   const selHex     = $("#dash-sel-hex");
+   const selCopy    = $("#dash-sel-copy");
 
    const btnReset    = $("#btn-reset");
    const btnRandom   = $("#btn-random");
@@ -96,6 +98,17 @@
    let shapeLimit = null;      // how many shapes to draw (null = all)
    let selectedIndex = null;
    let currentCount = 0;       // how many shapes were last requested
+   // Color grouping ("compress similar colors"): maps a shape's own hex to the
+   // representative hex of the group it was merged into. null = no merging.
+   let colorRemap = null;
+   function shapeHex(s) {
+      const [r, g, b] = s.color;
+      return ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+   }
+   function hexToRgb(hex) {
+      const h = String(hex).replace("#", "");
+      return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+   }
    let selectiveMode = false;  // Selective Resolution: draw a region to add detail
    let srDrawing = false;      // true while dragging out the region
    let srPath = [];            // freehand region path (canvas px)
@@ -132,13 +145,20 @@
       if (msg) { statusEl.textContent = msg; statusEl.classList.remove("hidden"); }
       else statusEl.classList.add("hidden");
    }
+   function emit(name, detail) {
+      try { window.dispatchEvent(new CustomEvent(name, { detail: detail || {} })); } catch (_) {}
+   }
    function showCanvas() {
       canvas.classList.remove("hidden");
       if (dropZone) dropZone.style.display = "none";
+      document.documentElement.classList.add("gm-has-image");
+      emit("geomagic:image", { hasShapes: shapes.length > 0 });
    }
    function showDropZone() {
       canvas.classList.add("hidden");
       if (dropZone) dropZone.style.display = "";
+      document.documentElement.classList.remove("gm-has-image", "gm-has-shapes");
+      emit("geomagic:cleared");
    }
 
    // ---- per-shape path tracing (mirrors the original drawPreview) ----
@@ -209,7 +229,11 @@
 
       for (let i = 0; i < n; i++) {
          const s = shapes[i];
-         const [r, g, b, a] = s.color;
+         let [r, g, b, a] = s.color;
+         if (colorRemap) {
+            const to = colorRemap[shapeHex(s)];
+            if (to) [r, g, b] = hexToRgb(to);
+         }
          const col = `rgba(${r},${g},${b},${(a == null ? 255 : a) / 255})`;
          const mode = tracePath(s);
          if (mode === "fill") { ctx.fillStyle = col; ctx.fill(); }
@@ -219,10 +243,15 @@
       // selection highlight (only when the full image is shown)
       if (n === total && selectedIndex != null && shapes[selectedIndex]) {
          tracePath(shapes[selectedIndex]);
+         // Selection = yellow outline (client: "yellow on selection", no red dot)
          ctx.save();
-         ctx.lineWidth = Math.max(2, canvas.width / 200);
-         ctx.setLineDash([8, 5]);
-         ctx.strokeStyle = "#00e5ff";
+         ctx.lineWidth = Math.max(4, canvas.width / 120);
+         ctx.strokeStyle = "rgba(0,0,0,0.45)";
+         ctx.stroke();
+         ctx.lineWidth = Math.max(2, canvas.width / 220);
+         ctx.strokeStyle = "#FFC324";
+         ctx.shadowColor = "rgba(255,195,36,0.9)";
+         ctx.shadowBlur = Math.max(6, canvas.width / 90);
          ctx.stroke();
          ctx.restore();
       }
@@ -347,7 +376,7 @@
 
    function updateSelectionInfo() {
       if (selectedIndex == null || !shapes[selectedIndex]) {
-         if (selBar) selBar.classList.add("hidden");
+         if (selBar) { selBar.classList.add("hidden"); selBar.classList.remove("show"); }
          return;
       }
       const s = shapes[selectedIndex];
@@ -357,9 +386,12 @@
          if (pickList.length > 1) label += ` · ${pickPos + 1}/${pickList.length} here — click to cycle`;
          selType.textContent = label;
       }
+      const hex6 = ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
       if (selColor) selColor.style.background = `rgba(${r},${g},${b},${a / 255})`;
-      if (selRgba) selRgba.textContent = `rgba(${r}, ${g}, ${b}, ${a})`;
-      if (selBar) selBar.classList.remove("hidden");
+      if (selRgba) selRgba.textContent = `rgb(${r}, ${g}, ${b})`;
+      if (selHex) selHex.value = "#" + hex6;
+      if (selBar) { selBar.classList.remove("hidden"); selBar.classList.add("show"); }
+      emit("geomagic:selected", { hex: "#" + hex6, index: selectedIndex });
 
       const tcInput = document.getElementById("trycolorsInput");
       if (tcInput) {
@@ -413,6 +445,12 @@
       }
    });
    if (selDelete) selDelete.addEventListener("click", deleteSelected);
+   if (selCopy) selCopy.addEventListener("click", () => {
+      const v = selHex && selHex.value;
+      if (!v) return;
+      const done = () => { if (window.GM && GM.toast) GM.toast(v + " copied", { kind: "ok", icon: "fa-regular fa-check" }); };
+      if (navigator.clipboard) navigator.clipboard.writeText(v).then(done, done); else done();
+   });
    if (selClear) selClear.addEventListener("click", () => {
       selectedIndex = null; render(); updateSelectionInfo();
    });
@@ -991,6 +1029,8 @@
          renderingButtons.find((b) => b.dataset.logic === "original")
       );
       setStatus(`${shapes.length} shapes — click one to select`);
+      document.documentElement.classList.add("gm-has-shapes");
+      emit("geomagic:generated", { count: shapes.length, restored: true });
       return true;
    }
 
@@ -1106,6 +1146,8 @@
       if (renderingSection) renderingSection.classList.remove("hidden");
       setActiveLogic(renderingButtons.find((b) => b.dataset.logic === "original"));
       persistState();   // carry the result forward to the Templates page
+      document.documentElement.classList.add("gm-has-shapes");
+      emit("geomagic:generated", { count: shapes.length });
    }
 
    if (btnGenerate) btnGenerate.addEventListener("click", () =>
@@ -1152,14 +1194,45 @@
       generate(clampInt(shapeAddedEl && shapeAddedEl.value, 1, 10000, 255));
    });
 
-   if (btnSave) btnSave.addEventListener("click", () => {
-      if (!shapes.length) { alert("Generate an image first."); return; }
+   function downloadPng() {
       const a = document.createElement("a");
       a.href = canvas.toDataURL("image/png");
       a.download = "geomagic.png";
       document.body.appendChild(a);
       a.click();
       a.remove();
+   }
+   function thumbnailDataUrl(maxW) {
+      const scale = Math.min(1, (maxW || 480) / (canvas.width || 1));
+      const c = document.createElement("canvas");
+      c.width = Math.max(1, Math.round(canvas.width * scale));
+      c.height = Math.max(1, Math.round(canvas.height * scale));
+      c.getContext("2d").drawImage(canvas, 0, 0, c.width, c.height);
+      return c.toDataURL("image/jpeg", 0.82);
+   }
+   // Save -> the user's Portfolio (my saved photos), instead of only downloading.
+   function saveToPortfolio() {
+      if (!shapes.length) { alert("Generate an image first."); return null; }
+      const title = (uploadedFile && uploadedFile.name ? uploadedFile.name.replace(/\.[a-z0-9]+$/i, "") : "Untitled") || "Untitled";
+      const item = {
+         title, w: canvas.width, h: canvas.height,
+         shapeCount: shapes.length, logic: currentLogic,
+         thumb: thumbnailDataUrl(560),
+         shapes: baseShapes, colorOrder: customColorOrder, limit: shapeLimit,
+      };
+      if (window.GM && GM.portfolio) {
+         const saved = GM.portfolio.add(item);
+         if (GM.toast) GM.toast("Saved to your Portfolio", { kind: "ok", icon: "fa-regular fa-check", href: "portfolio.html", linkText: "View" });
+         return saved;
+      }
+      downloadPng();
+      return null;
+   }
+   if (btnSave) btnSave.addEventListener("click", saveToPortfolio);
+   const btnDownload = $("#btn-download");
+   if (btnDownload) btnDownload.addEventListener("click", () => {
+      if (!shapes.length) { alert("Generate an image first."); return; }
+      downloadPng();
    });
 
    // Pages that opt in (e.g. Templates) carry forward the result generated
@@ -1207,6 +1280,52 @@
       },
       getBaseShapes() { return baseShapes.slice(); },
       hasShapes() { return shapes.length > 0; },
+      hasImage() { return !canvas.classList.contains("hidden"); },
+      getSelectedHex() {
+         const s = selectedIndex != null ? shapes[selectedIndex] : null;
+         return s ? "#" + shapeHex(s) : null;
+      },
+      // Color grouping: {HEX -> HEX} map applied at draw time (null clears).
+      setColorRemap(map) { colorRemap = map && Object.keys(map).length ? map : null; render(); },
+      getColorRemap() { return colorRemap; },
+      // Frequency-ordered palette of the base shapes: [{hex, count}]
+      getPalette() {
+         const counts = {};
+         baseShapes.forEach((s) => { const h = "#" + shapeHex(s); counts[h] = (counts[h] || 0) + 1; });
+         return Object.keys(counts).map((h) => ({ hex: h, count: counts[h] })).sort((a, b) => b.count - a.count);
+      },
+      saveToPortfolio() { return saveToPortfolio(); },
+      // Apply a custom colour order given as a list of "#RRGGBB" (most-first).
+      // Every colour variant (alpha) of a hex keeps its place under that hex.
+      applyColorOrder(hexList) {
+         if (!Array.isArray(hexList) || !baseShapes.length) return;
+         const byHex = {};
+         baseShapes.forEach((s) => {
+            const h = "#" + shapeHex(s);
+            const k = rlColorKey(s.color);
+            if (!byHex[h]) byHex[h] = { keys: {}, colors: [] };
+            if (!byHex[h].keys[k]) { byHex[h].keys[k] = 1; byHex[h].colors.push(s.color.slice()); }
+         });
+         const order = [];
+         hexList.forEach((h) => { const g = byHex[String(h).toUpperCase()]; if (g) order.push(...g.colors); });
+         customColorOrder = order;
+         currentLogic = "custom_sequence";
+         setActiveLogic(renderingButtons.find((b) => b.dataset.logic === "custom_sequence"));
+         shapes = rlOrder(baseShapes, "custom_sequence", customColorOrder);
+         selectedIndex = null;
+         render();
+         updateSelectionInfo();
+         persistState();
+      },
+      getLogic() { return currentLogic; },
+      // Switch rendering order programmatically (same path as clicking an icon).
+      setLogic(logic) {
+         const btn = renderingButtons.find((b) => b.dataset.logic === logic);
+         applyLogic(logic, btn || null);
+      },
+      downloadPng() { downloadPng(); },
+      generate(n) { return generate(n || clampInt(shapeAddedEl && shapeAddedEl.value, 1, 10000, 255)); },
+      isBusy() { return animating; },
       // Repaint current shapes (used by the refine tool before drawing overlays).
       render() { render(); },
       // Lock/unlock geometrize's own canvas interactions.
