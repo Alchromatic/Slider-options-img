@@ -172,6 +172,14 @@
             fill('era', 'Any era', f.era);
             fill('genre', 'Any type', f.genre);
             fill('nationality', 'Any nationality', f.nationality);
+            // keep a filter that arrived in the URL (header search / Art Library links)
+            const q = new URLSearchParams(location.search);
+            ['era', 'genre', 'nationality'].forEach((id) => {
+               const v = q.get(id);
+               if (!v) return;
+               if (![...$(id).options].some((o) => o.value === v)) $(id).add(new Option(v, v));
+               $(id).value = v;
+            });
          } catch (e) { /* non-fatal */ }
       }
 

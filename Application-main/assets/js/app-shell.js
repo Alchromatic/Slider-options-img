@@ -3,7 +3,7 @@
 
    - Rebuilds the left sidebar from ONE menu definition (so pages never drift:
      no missing "Dashboard" entry, no misspelled "Templates" label), marks the
-     current page active, and adds the Devices / Color Library / Videos /
+     current page active, and adds the Art Library / Devices / Videos /
      Lessons / Community / Privacy entries the client asked for.
    - Desktop collapse toggle for the left panel (client asked whether the
      left panel should go — it can now be tucked away to an icon rail).
@@ -34,6 +34,7 @@
       pricing: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M9.49962 7.91418L7.49962 9.91418L9.49962 11.9142M13.4138 19.5L21.5277 11.3861C22.3309 10.5829 22.3047 9.27275 21.4701 8.50228L17.0742 4.44458C16.7048 4.10355 16.2204 3.91418 15.7177 3.91418H8.28159C7.77881 3.91418 7.29447 4.10355 6.92503 4.44458L2.52918 8.50228C1.6945 9.27275 1.66831 10.5829 2.47153 11.3861L10.5854 19.5C11.3665 20.281 12.6328 20.281 13.4138 19.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
       settings: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M7.98941 5.39755L7.30515 5.23965C6.72652 5.10612 6.11991 5.28009 5.7 5.7C5.28009 6.11991 5.10612 6.72651 5.23965 7.30515L5.39755 7.9894C5.57956 8.7781 5.25434 9.59711 4.58086 10.0461L3.74885 10.6008C3.28101 10.9127 3 11.4377 3 12C3 12.5623 3.28101 13.0873 3.74885 13.3992L4.58086 13.9539C5.25434 14.4029 5.57956 15.2219 5.39756 16.0106L5.23965 16.6949C5.10612 17.2735 5.28009 17.8801 5.7 18.3C6.11991 18.7199 6.72651 18.8939 7.30515 18.7604L7.9894 18.6024C8.7781 18.4204 9.59711 18.7457 10.0461 19.4191L10.6008 20.2512C10.9127 20.719 11.4377 21 12 21C12.5623 21 13.0873 20.719 13.3992 20.2512L13.9539 19.4191C14.4029 18.7457 15.2219 18.4204 16.0106 18.6024L16.6949 18.7604C17.2735 18.8939 17.8801 18.7199 18.3 18.3C18.7199 17.8801 18.8939 17.2735 18.7604 16.6949L18.6024 16.0106C18.4204 15.2219 18.7457 14.4029 19.4191 13.9539L20.2512 13.3992C20.719 13.0873 21 12.5623 21 12C21 11.4377 20.719 10.9127 20.2512 10.6008L19.4191 10.0461C18.7457 9.59711 18.4204 8.7781 18.6024 7.98941L18.7604 7.30515C18.8939 6.72652 18.7199 6.11991 18.3 5.7C17.8801 5.28009 17.2735 5.10612 16.6949 5.23965L16.0106 5.39755C15.2219 5.57956 14.4029 5.25434 13.9539 4.58086L13.3992 3.74884C13.0873 3.28101 12.5623 3 12 3C11.4377 3 10.9127 3.28101 10.6008 3.74885L10.0461 4.58086C9.59711 5.25434 8.7781 5.57956 7.98941 5.39755Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M15 12C15 13.6569 13.6569 15 12 15C10.3431 15 9 13.6569 9 12C9 10.3431 10.3431 9 12 9C13.6569 9 15 10.3431 15 12Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
       devices: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 9.5A2.5 2.5 0 0 1 5.5 7h13A2.5 2.5 0 0 1 21 9.5v4.2c0 1.6-1.2 2.8-2.8 2.8h-1.4c-.9 0-1.7-.5-2.2-1.2l-.9-1.3a2 2 0 0 0-3.4 0l-.9 1.3c-.5.7-1.3 1.2-2.2 1.2H5.8A2.8 2.8 0 0 1 3 13.7V9.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
+      artlib: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 16l5-5 4 4 3-3 6 6" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="15.5" cy="8.5" r="1.5" fill="currentColor"/></svg>',
       library: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 3a9 9 0 1 0 0 18c1.3 0 2-.9 2-2 0-.6-.3-1-.6-1.4-.3-.4-.5-.8-.5-1.3 0-1 .8-1.8 1.8-1.8H16a5 5 0 0 0 5-5c0-3.9-4-6.5-9-6.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="7.5" cy="12" r="1.3" fill="currentColor"/><circle cx="9.5" cy="7.8" r="1.3" fill="currentColor"/><circle cx="14.5" cy="7.8" r="1.3" fill="currentColor"/></svg>',
       videos: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="13" height="12" rx="2" stroke="currentColor" stroke-width="2"/><path d="m16 10 5-2.5v9L16 14" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
       lessons: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
@@ -46,6 +47,7 @@
          { label: 'Dashboard',        href: 'dashboard.html',        icon: 'dashboard' },
          { label: 'Portfolio',        href: 'portfolio.html',        icon: 'portfolio' },
          { label: 'Templates',        href: 'templates.html',        icon: 'templates', match: ['palette-selection.html'] },
+         { label: 'Art Library',      href: 'image-gallery.html',    icon: 'artlib', match: ['art-map.html'] },
          { label: 'Paint Collection', href: 'paint-collection.html', icon: 'paint' },
          { label: 'Proposals',        href: 'proposals.html',        icon: 'proposals' },
          { label: 'Pricing',          href: 'pricing.html',          icon: 'pricing' },
@@ -53,7 +55,6 @@
       ]},
       { group: 'more', items: [
          { label: 'Devices',          href: 'devices.html',          icon: 'devices', badge: 'VR/AR' },
-         { label: 'Color Library',    href: 'templates.html?open=library', icon: 'library' },
          { label: 'Videos',           href: 'videos.html',           icon: 'videos' },
          { label: 'Art Lessons',      href: 'art-lesson.html',       icon: 'lessons' },
          { label: 'Community',        href: 'invite-teams.html',     icon: 'community' },
@@ -65,11 +66,7 @@
 
    function isActive(item) {
       var base = item.href.split('?')[0].toLowerCase();
-      if (item.href.indexOf('?') > -1) {
-         // "Color Library" points at templates.html?open=library — only active when that flag is set
-         return page === base && location.search.indexOf('open=library') > -1;
-      }
-      if (page === base && location.search.indexOf('open=library') === -1) return true;
+      if (page === base) return true;
       return (item.match || []).indexOf(page) > -1;
    }
 

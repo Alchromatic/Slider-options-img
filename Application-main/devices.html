@@ -298,7 +298,7 @@
                </section>
 
                <section class="dv-links">
-                  <a href="templates.html?open=library" class="bg-white dark:bg-neutral-7 p-6 rounded-lg border-2 border-[#F4F4F4] dark:border-0 shadow-[0px_4px_14px_-6px_#F4F4F4] dark:shadow-none dv-link"><i class="fa-regular fa-palette"></i><div><h6>Color library</h6><p>Your named colors — feeds the paint recipes</p></div><i class="fa-regular fa-arrow-right"></i></a>
+                  <a href="paint-collection.html?open=library" class="bg-white dark:bg-neutral-7 p-6 rounded-lg border-2 border-[#F4F4F4] dark:border-0 shadow-[0px_4px_14px_-6px_#F4F4F4] dark:shadow-none dv-link"><i class="fa-regular fa-palette"></i><div><h6>Paint Collection</h6><p>Your paints and named colors — feed the recipes</p></div><i class="fa-regular fa-arrow-right"></i></a>
                   <a href="videos.html" class="bg-white dark:bg-neutral-7 p-6 rounded-lg border-2 border-[#F4F4F4] dark:border-0 shadow-[0px_4px_14px_-6px_#F4F4F4] dark:shadow-none dv-link"><i class="fa-regular fa-circle-play"></i><div><h6>Videos</h6><p>Walkthroughs for the device features</p></div><i class="fa-regular fa-arrow-right"></i></a>
                   <a href="art-lesson.html" class="bg-white dark:bg-neutral-7 p-6 rounded-lg border-2 border-[#F4F4F4] dark:border-0 shadow-[0px_4px_14px_-6px_#F4F4F4] dark:shadow-none dv-link"><i class="fa-regular fa-graduation-cap"></i><div><h6>Lessons</h6><p>Guided painting lessons</p></div><i class="fa-regular fa-arrow-right"></i></a>
                </section>
@@ -365,7 +365,7 @@
                try { localStorage.setItem(SAVED_KEY, JSON.stringify(list.slice(0, 200))); } catch (e) {}
                if (window.ColorLibrary && ColorLibrary.add) ColorLibrary.add(name, hex);
                renderSaved(); nameEl.value = '';
-               toast('“' + name + '” saved to your Color Library', { kind: 'ok', icon: 'fa-regular fa-check', href: 'templates.html?open=library', linkText: 'Open' });
+               toast('“' + name + '” saved to your Color Library', { kind: 'ok', icon: 'fa-regular fa-check', href: 'paint-collection.html?open=library', linkText: 'Open' });
             });
             renderSaved();
 

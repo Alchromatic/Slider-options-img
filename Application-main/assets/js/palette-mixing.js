@@ -860,12 +860,14 @@ document.addEventListener('click', (e) => {
 function buildTrycolorsRecipeHtml(data) {
     let html = '';
 
-    // Recipe items with percentages
+    // The diagram (dot matrix / treemap / concentric) IS the recipe — the card
+    // list below is redundant on screen, so it lives inside the collapsed details.
+    let cards = '';
     if (data.recipe && data.recipe.length > 0) {
-        html += '<div class="trycolors-recipe-list">';
+        cards += '<div class="trycolors-recipe-list">';
         data.recipe.forEach(item => {
             const percentage = Number(item.percentage).toFixed(1);
-            html += `
+            cards += `
                 <div class="trycolors-recipe-item" style="--clr:${item.hex}; --pct:${percentage}%; border-color: ${item.hex}">
                     <div class="trycolors-recipe-swatch" style="background: ${item.hex}"></div>
                     <div class="trycolors-recipe-info">
@@ -876,14 +878,15 @@ function buildTrycolorsRecipeHtml(data) {
                 </div>
             `;
         });
-        html += '</div>';
+        cards += '</div>';
         html += buildMixVisualization(data.recipe, parseInt(document.getElementById('gridRowsInput').value) || 10, parseInt(document.getElementById('gridColsInput').value) || 10, parseInt(document.getElementById('gridMaxDotsInput').value) || 0);
     }
 
     // Match / error row
     const matchPct = Number(data.match_percentage).toFixed(1);
     const errorPct = (100 - Number(data.match_percentage)).toFixed(1);
-    html += `<details class="tc-details"><summary><span>Recipe details — match, target vs result, copyable text</span><i class="fa-regular fa-chevron-down"></i></summary><div>`;
+    html += `<details class="tc-details"><summary><span>Recipe details — paints &amp; percentages, match, copyable text</span><i class="fa-regular fa-chevron-down"></i></summary><div>`;
+    html += cards;
     html += `
         <div class="trycolors-error-row">
             <div class="trycolors-error-label">Match: ${matchPct}% (ΔE: ${Number(data.delta_e).toFixed(2)})</div>
@@ -1153,7 +1156,7 @@ function renderVersionedUnmix(data) {
     // Side panel (next to the Generate button): sort toggle + ranked candidates.
     // Falls back to the results area when the panel isn't on the page.
     const cand = document.getElementById('pmCandidates');
-    const selNote = `<div class="cd-selected-note">Showing candidate #${sel + 1} · ${Number(selP.match_percentage).toFixed(1)}% match — highlighted in the diagram below</div>`;
+    const selNote = '';
     if (cand) {
         cand.innerHTML = chips + conf;
         cand.classList.add('show');

@@ -168,6 +168,21 @@
 
             <!-- dashboard main wrapper -->
             <div class="min-h-[calc(100vh-96px)] overflow-auto md:p-6 2xl:p-10 pt-2 md:pt-6">
+               <!-- My Color Library: the user's named colors (feeds the paint recipes) -->
+               <section class="p-6 mb-6 bg-white dark:bg-neutral-7 border-2 border-[#f4f4f4] dark:border-0 shadow-[0px_4px_14px_-6px_#F4F4F4] dark:shadow-none rounded-lg">
+                  <div class="flex max-md:flex-col items-start md:items-center justify-between gap-6 mb-6">
+                     <div>
+                        <h5 class="text-neutral-6 dark:text-neutral-1 text-xl leading-[1.6] font-semibold -tracking-[0.4px] relative pl-5 before:w-[5px] before:h-full before:bg-secondary-3 before:rounded before:absolute before:left-0 before:top-0">My Color Library</h5>
+                        <p class="text-neutral-4 text-sm font-semibold mt-1">Your own named paints. They appear as "★ My Colors" in the recipe palette on the Colors page.</p>
+                     </div>
+                     <div class="flex items-center gap-3">
+                        <a href="templates.html" class="theme-btn-regular style-2 inline-flex! items-center gap-2 px-4! py-2!"><i class="fa-regular fa-flask"></i> Use in recipes</a>
+                        <button id="colorLibraryBtn" type="button" class="theme-btn-primary inline-flex! items-center gap-2 px-4! py-2!"><i class="fa-regular fa-pen-to-square"></i> Edit library</button>
+                     </div>
+                  </div>
+                  <div id="myColorsGrid" class="pc-lib-grid"></div>
+               </section>
+
                <!-- proposals section start -->
                <section class="p-6 bg-white dark:bg-neutral-7 border-2 border-[#f4f4f4] dark:border-0 shadow-[0px_4px_14px_-6px_#F4F4F4] dark:shadow-none rounded-lg">
                   <div class="flex max-md:flex-col items-start md:items-center justify-between mb-8 gap-8 max-md:pb-6">
@@ -288,6 +303,37 @@
       <!-- main js -->
       <script src="assets/js/main.js"></script>
       <script src="assets/js/app-shell.js"></script>
+      <!-- editable named-color library (same module the Colors page uses) -->
+      <script src="assets/js/color-library.js?v=3"></script>
+      <style>
+         .pc-lib-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+         .pc-lib-chip { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 12px; background: #f4f4f4; }
+         .dark .pc-lib-chip { background: #1a1d1f; }
+         .pc-lib-chip i { width: 40px; height: 40px; border-radius: 10px; flex: 0 0 40px; border: 1px solid rgba(0,0,0,.12); box-shadow: inset 0 -2px 5px rgba(0,0,0,.2); }
+         .pc-lib-chip b { display: block; font-size: 13px; font-weight: 600; color: #1a1d1f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+         .dark .pc-lib-chip b { color: #fcfcfc; }
+         .pc-lib-chip small { font-size: 11px; color: #8c9097; font-family: 'Source Code Pro', monospace; }
+         .pc-lib-empty { grid-column: 1 / -1; padding: 22px; text-align: center; border: 1px dashed #d9dadd; border-radius: 12px; font-size: 13px; color: #6f767e; }
+         .dark .pc-lib-empty { border-color: #33383f; }
+         #colorLibraryBtn { margin-left: 0 !important; }
+      </style>
+      <script>
+         (function () {
+            var grid = document.getElementById('myColorsGrid');
+            function render() {
+               if (!grid || !window.ColorLibrary) return;
+               var list = ColorLibrary.asPalette();
+               grid.innerHTML = list.length ? list.map(function (c) {
+                  return '<div class="pc-lib-chip"><i style="background:' + c.hex + '"></i><div class="min-w-0"><b>' + c.name.replace(/[<>&]/g, '') + '</b><small>' + c.hex + '</small></div></div>';
+               }).join('') : '<div class="pc-lib-empty">No colors yet — press <b>Edit library</b> to add the paints you own (name + hex).</div>';
+            }
+            render();
+            setInterval(render, 800); // the editor modal writes to localStorage; keep the grid in sync
+            if (new URLSearchParams(location.search).get('open') === 'library') {
+               setTimeout(function () { var b = document.getElementById('colorLibraryBtn'); if (b) b.click(); }, 300);
+            }
+         })();
+      </script>
 
    </body>
 
