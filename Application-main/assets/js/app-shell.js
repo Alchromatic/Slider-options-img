@@ -39,7 +39,8 @@
       videos: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="13" height="12" rx="2" stroke="currentColor" stroke-width="2"/><path d="m16 10 5-2.5v9L16 14" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
       lessons: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
       community: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 19v-1a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="10" cy="7" r="3" stroke="currentColor" stroke-width="2"/><path d="M16 11a3 3 0 1 0 0-6M20 19v-1a4 4 0 0 0-3-3.9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
-      privacy: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 3 5 6v5c0 4.4 3 8.3 7 9.5 4-1.2 7-5.1 7-9.5V6l-7-3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="m9.5 12 1.8 1.8L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+      privacy: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 3 5 6v5c0 4.4 3 8.3 7 9.5 4-1.2 7-5.1 7-9.5V6l-7-3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="m9.5 12 1.8 1.8L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+      guide: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 6.5C9.5 4.7 6.3 4.6 3 5.8v12.7c3.3-1.2 6.5-1.1 9 .7 2.5-1.8 5.7-1.9 9-.7V5.8c-3.3-1.2-6.5-1.1-9 .7Zm0 0v12.7" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>'
    };
 
    var MENU = [
@@ -57,6 +58,7 @@
          { label: 'Devices',          href: 'devices.html',          icon: 'devices', badge: 'VR/AR' },
          { label: 'Videos',           href: 'videos.html',           icon: 'videos' },
          { label: 'Art Lessons',      href: 'art-lesson.html',       icon: 'lessons' },
+         { label: 'Color Guide',      href: 'color-guide.html',      icon: 'guide' },
          { label: 'Community',        href: 'invite-teams.html',     icon: 'community' },
          { label: 'Privacy Policy',   href: 'privacy-policy.html',   icon: 'privacy' }
       ]}
@@ -380,12 +382,77 @@
    }
 
    // ---------------------------------------------------------------------
+   // Color guide (educational guide modal) — available on every app page.
+   // The modal's CSS/JS/catalog are only fetched the first time it is opened
+   // (color-guide.html loads them directly). GM.openColorGuide(id) is the
+   // programmatic entry point; any element with data-open-color-guide works too.
+   // ---------------------------------------------------------------------
+   var guideLoading = null;
+   function loadColorGuide() {
+      if (window.GM && window.GM.colorGuide) return Promise.resolve(window.GM.colorGuide);
+      if (guideLoading) return guideLoading;
+      guideLoading = new Promise(function (resolve, reject) {
+         if (!document.querySelector('link[href^="assets/css/color-guide.css"]')) {
+            var l = document.createElement('link');
+            l.rel = 'stylesheet'; l.href = 'assets/css/color-guide.css';
+            document.head.appendChild(l);
+         }
+         var sc = document.createElement('script');
+         sc.src = 'assets/js/color-guide.js';
+         sc.onload = function () { window.GM.colorGuide ? resolve(window.GM.colorGuide) : reject(new Error('Color guide failed to initialise')); };
+         sc.onerror = function () { reject(new Error('Could not load the color guide')); };
+         document.head.appendChild(sc);
+      });
+      return guideLoading;
+   }
+   function openColorGuide(id) {
+      return loadColorGuide().then(function (cg) { return cg.open(id); }).catch(function (e) {
+         toast(e.message || 'Could not open the color guide.', { kind: 'warn', icon: 'fa-regular fa-triangle-exclamation' });
+      });
+   }
+   function buildGuideLauncher() {
+      // Header "Color guide" button, placed right after the "+ New" action
+      // (desktop header and the mobile copy inside the sidebar).
+      var anchors = document.querySelectorAll('a.theme-btn-primary');
+      anchors.forEach(function (a) {
+         if (!/\bNew\b/.test(a.textContent) || a.parentNode.querySelector('.gm-guide-btn')) return;
+         var b = document.createElement('button');
+         b.type = 'button';
+         b.className = 'gm-guide-btn';
+         b.setAttribute('data-open-color-guide', '');
+         b.title = 'Color guide — definitions and visual examples';
+         b.innerHTML = ICONS.guide.replace('width="24" height="24"', 'width="20" height="20"') + '<span>Color guide</span>';
+         a.parentNode.insertBefore(b, a.nextSibling);
+      });
+      // Inject the launcher styles without loading the whole guide stylesheet up front.
+      if (!document.getElementById('gmGuideBtnCss')) {
+         var st = document.createElement('style');
+         st.id = 'gmGuideBtnCss';
+         st.textContent = '.gm-guide-btn{display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 18px;border-radius:12px;font-size:15px;font-weight:700;letter-spacing:-.15px;color:#1a1d1f;background:#f4f4f4;border:2px solid #f4f4f4;cursor:pointer;white-space:nowrap;transition:background .15s,color .15s,border-color .15s}.gm-guide-btn:hover{background:#fff;border-color:#2a85ff;color:#2a85ff}.gm-guide-btn svg{flex:0 0 20px}.dark .gm-guide-btn{color:#fcfcfc;background:transparent;border-color:#272b30}.dark .gm-guide-btn:hover{border-color:#2a85ff;color:#2a85ff}@media (max-width:1279px){.gm-guide-btn span{display:none}.gm-guide-btn{padding:0 12px}}';
+         document.head.appendChild(st);
+      }
+      if (!document.body.hasAttribute('data-gm-guide-delegate')) {
+         document.body.setAttribute('data-gm-guide-delegate', '1');
+         document.addEventListener('click', function (e) {
+            var t = e.target.closest('[data-open-color-guide]');
+            if (!t || (window.GM && window.GM.colorGuide)) return;   // color-guide.js handles it once loaded
+            e.preventDefault();
+            openColorGuide(t.getAttribute('data-open-color-guide') || undefined);
+         });
+      }
+   }
+
+   // ---------------------------------------------------------------------
    // Boot
    // ---------------------------------------------------------------------
    function boot() {
       buildSidebar();
       buildCollapseToggle();
       buildSearch();
+      buildGuideLauncher();
+      // ?guide=<id> deep link works on every app page, not only color-guide.html
+      var wanted = new URLSearchParams(location.search).get('guide');
+      if (wanted && !(window.GM && window.GM.colorGuide)) openColorGuide(wanted);
    }
    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
    else boot();
@@ -396,4 +463,5 @@
    window.GM.portfolio = portfolio;
    window.GM.apiBase = API_BASE;
    window.GM.setSidebarCollapsed = applyCollapsed;
+   window.GM.openColorGuide = openColorGuide;
 })();

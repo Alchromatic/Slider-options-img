@@ -1,0 +1,4851 @@
+{
+  "schema_version": "1.0.0",
+  "title": "Color Study — guide catalog",
+  "description": "Editable text and extracted artwork for all 20 approved glossary and practical guide screens.",
+  "language": "en",
+  "asset_id_policy": "IDs are stable local catalog identifiers, not provider or Library IDs. Illustrations had no separate file IDs in the source PNGs; each is now an extracted PNG with source provenance.",
+  "text_policy": "Manually transcribed guide text; line wraps normalized. Supplementary full-screen OCR is unverified and is not the canonical guide copy.",
+  "coordinate_system": "crop_xyxy is [left, top, right, bottom], pixels from source top-left; right and bottom are exclusive.",
+  "ui": {
+    "app_title": "Color Study",
+    "guide_title": "Color guide",
+    "search_placeholder": "Search terms...",
+    "browse_topics": "Browse topics",
+    "back_to_exploring": "Back to exploring",
+    "previous": "Previous",
+    "next": "Next guide",
+    "close": "Close guide",
+    "all_guides": "All guides",
+    "all_categories": "All categories",
+    "no_results": "No matching guides. Try another term.",
+    "view_source": "View original PNG",
+    "download_json": "Download JSON",
+    "guide_collection": "Guide collection",
+    "practical_guides": "Practical guides",
+    "original_tabs": [
+      "Dimensions",
+      "Relationships",
+      "Perception",
+      "Paint"
+    ],
+    "entry_count": "entries",
+    "search_results": "Search results",
+    "asset_details": "Asset details",
+    "collection": "Collection",
+    "category": "Category",
+    "reset": "Reset",
+    "guide": "Guide",
+    "of": "of"
+  },
+  "collections": [
+    {
+      "id": "original",
+      "title": "Original modal guides",
+      "guide_ids": [
+        "understand-your-color",
+        "build-a-color-harmony",
+        "see-color-in-context",
+        "understand-paint-behavior"
+      ]
+    },
+    {
+      "id": "extended",
+      "title": "Extended color guides",
+      "guide_ids": [
+        "color-language",
+        "mixing-with-intention",
+        "design-your-palette",
+        "read-light-on-form",
+        "shadows-and-reflections",
+        "compose-with-color",
+        "perception-and-atmosphere",
+        "know-your-paint",
+        "layers-and-surface",
+        "decode-studio-feedback"
+      ]
+    },
+    {
+      "id": "practical",
+      "title": "Practical guides",
+      "guide_ids": [
+        "color-troubleshooting",
+        "choosing-axes-and-locks",
+        "harmony-recipes",
+        "edges-and-emphasis",
+        "screen-versus-paint",
+        "common-misconceptions"
+      ]
+    }
+  ],
+  "categories": [
+    {
+      "id": "dimensions",
+      "title": "Dimensions",
+      "guide_ids": [
+        "understand-your-color",
+        "color-language"
+      ]
+    },
+    {
+      "id": "relationships",
+      "title": "Relationships",
+      "guide_ids": [
+        "build-a-color-harmony",
+        "harmony-recipes"
+      ]
+    },
+    {
+      "id": "perception",
+      "title": "Perception",
+      "guide_ids": [
+        "see-color-in-context",
+        "perception-and-atmosphere"
+      ]
+    },
+    {
+      "id": "paint",
+      "title": "Paint",
+      "guide_ids": [
+        "understand-paint-behavior",
+        "layers-and-surface"
+      ]
+    },
+    {
+      "id": "mixing",
+      "title": "Mixing",
+      "guide_ids": [
+        "mixing-with-intention"
+      ]
+    },
+    {
+      "id": "palettes",
+      "title": "Palettes",
+      "guide_ids": [
+        "design-your-palette"
+      ]
+    },
+    {
+      "id": "light",
+      "title": "Light",
+      "guide_ids": [
+        "read-light-on-form",
+        "shadows-and-reflections"
+      ]
+    },
+    {
+      "id": "composition",
+      "title": "Composition",
+      "guide_ids": [
+        "compose-with-color",
+        "edges-and-emphasis"
+      ]
+    },
+    {
+      "id": "materials",
+      "title": "Materials",
+      "guide_ids": [
+        "know-your-paint"
+      ]
+    },
+    {
+      "id": "studio-terms",
+      "title": "Studio terms",
+      "guide_ids": [
+        "decode-studio-feedback"
+      ]
+    },
+    {
+      "id": "troubleshooting",
+      "title": "Troubleshooting",
+      "guide_ids": [
+        "color-troubleshooting"
+      ]
+    },
+    {
+      "id": "app-controls",
+      "title": "App controls",
+      "guide_ids": [
+        "choosing-axes-and-locks"
+      ]
+    },
+    {
+      "id": "digital-color",
+      "title": "Digital color",
+      "guide_ids": [
+        "screen-versus-paint"
+      ]
+    },
+    {
+      "id": "misconceptions",
+      "title": "Misconceptions",
+      "guide_ids": [
+        "common-misconceptions"
+      ]
+    }
+  ],
+  "guides": [
+    {
+      "id": "understand-your-color",
+      "title": "Understand your color",
+      "description": "Key concepts to help you explore, compare and communicate color with confidence.",
+      "category_id": "dimensions",
+      "collection_id": "original",
+      "theme": "light",
+      "source_file": "exec-985a5ecc-da46-4a0a-b1bf-430463edf610.png",
+      "entries": [
+        {
+          "id": "understand-your-color--hue",
+          "title": "Hue",
+          "description": "The color family, such as red, yellow or blue.",
+          "additional_description": null,
+          "order": 1,
+          "asset_id": "illustration--understand-your-color--hue",
+          "children": []
+        },
+        {
+          "id": "understand-your-color--value",
+          "title": "Value",
+          "description": "How light or dark a color is.",
+          "additional_description": null,
+          "order": 2,
+          "asset_id": "illustration--understand-your-color--value",
+          "children": []
+        },
+        {
+          "id": "understand-your-color--chroma",
+          "title": "Chroma",
+          "description": "Distance from neutral gray at the same value.",
+          "additional_description": null,
+          "order": 3,
+          "asset_id": "illustration--understand-your-color--chroma",
+          "children": []
+        },
+        {
+          "id": "understand-your-color--temperature",
+          "title": "Temperature",
+          "description": "How warm or cool a color feels relative to another.",
+          "additional_description": null,
+          "order": 4,
+          "asset_id": "illustration--understand-your-color--temperature",
+          "children": []
+        }
+      ],
+      "tip": "Try it: lock hue, then explore value and chroma.",
+      "source_asset_id": "screen--understand-your-color",
+      "order": 1,
+      "children": [],
+      "parent_id": "dimensions",
+      "footer": {
+        "previous_label": "Back to exploring",
+        "primary_label": "Explore dimensions",
+        "source_page_label": null
+      },
+      "previous_guide_id": null,
+      "next_guide_id": "build-a-color-harmony",
+      "entry_action_labels": [
+        "See hue on explorer",
+        "See value on explorer",
+        "See chroma on explorer",
+        "See temperature on explorer"
+      ]
+    },
+    {
+      "id": "build-a-color-harmony",
+      "title": "Build a color harmony",
+      "description": "",
+      "category_id": "relationships",
+      "collection_id": "original",
+      "theme": "dark",
+      "source_file": "exec-e58c149c-5882-422c-a318-1533f617e033.png",
+      "entries": [
+        {
+          "id": "build-a-color-harmony--analogous",
+          "title": "Analogous",
+          "description": "Neighboring hues on the color wheel.",
+          "additional_description": null,
+          "order": 1,
+          "asset_id": "illustration--build-a-color-harmony--analogous",
+          "children": []
+        },
+        {
+          "id": "build-a-color-harmony--complementary",
+          "title": "Complementary",
+          "description": "Opposing hues on a chosen color wheel.",
+          "additional_description": null,
+          "order": 2,
+          "asset_id": "illustration--build-a-color-harmony--complementary",
+          "children": []
+        },
+        {
+          "id": "build-a-color-harmony--split-complementary",
+          "title": "Split-complementary",
+          "description": "One hue plus the two hues beside its complement.",
+          "additional_description": null,
+          "order": 3,
+          "asset_id": "illustration--build-a-color-harmony--split-complementary",
+          "children": []
+        },
+        {
+          "id": "build-a-color-harmony--neutralize",
+          "title": "Neutralize",
+          "description": "Reduce chroma toward a neutral gray.",
+          "additional_description": null,
+          "order": 4,
+          "asset_id": "illustration--build-a-color-harmony--neutralize",
+          "children": []
+        }
+      ],
+      "tip": "Paint mixing complements can differ from visual complements.",
+      "source_asset_id": "screen--build-a-color-harmony",
+      "order": 2,
+      "children": [],
+      "parent_id": "relationships",
+      "footer": {
+        "previous_label": "Back to exploring",
+        "primary_label": "Try complementary",
+        "source_page_label": null
+      },
+      "previous_guide_id": "understand-your-color",
+      "next_guide_id": "see-color-in-context"
+    },
+    {
+      "id": "see-color-in-context",
+      "title": "See color in context",
+      "description": "Our eyes and brains don’t see colors in isolation. Learn how context, light, and display limits can change what you see.",
+      "category_id": "perception",
+      "collection_id": "original",
+      "theme": "blue",
+      "source_file": "exec-9dec6ec2-6123-41c5-b33e-80426bdaa668.png",
+      "entries": [
+        {
+          "id": "see-color-in-context--simultaneous-contrast",
+          "title": "Simultaneous contrast",
+          "description": "Surrounding colors change how a color appears.",
+          "additional_description": "The same color can look lighter or darker depending on what’s around it.",
+          "order": 1,
+          "asset_id": "illustration--see-color-in-context--simultaneous-contrast",
+          "children": [],
+          "image_labels": [
+            "On a light background",
+            "On a dark background"
+          ]
+        },
+        {
+          "id": "see-color-in-context--value-structure",
+          "title": "Value structure",
+          "description": "The arrangement of light and dark shapes.",
+          "additional_description": "Differences in value (lightness and darkness) create contrast, hierarchy, and clarity — even without color.",
+          "order": 2,
+          "asset_id": "illustration--see-color-in-context--value-structure",
+          "children": []
+        },
+        {
+          "id": "see-color-in-context--gamut",
+          "title": "Gamut",
+          "description": "The range of colors a palette or display can produce.",
+          "additional_description": "Different materials and devices can show different ranges of color. A wider gamut can display more vivid and saturated colors.",
+          "order": 3,
+          "asset_id": "illustration--see-color-in-context--gamut",
+          "children": []
+        }
+      ],
+      "tip": "Compare the same focal color on different backgrounds.",
+      "source_asset_id": "screen--see-color-in-context",
+      "order": 3,
+      "children": [],
+      "parent_id": "perception",
+      "footer": {
+        "previous_label": "Back to exploring",
+        "primary_label": "Open context view",
+        "source_page_label": null
+      },
+      "previous_guide_id": "build-a-color-harmony",
+      "next_guide_id": "understand-paint-behavior",
+      "header_description": "Short, practical explanations to help you understand color and make better decisions.",
+      "tip_description": "See how context changes what you perceive, and try it yourself in the Context view."
+    },
+    {
+      "id": "understand-paint-behavior",
+      "title": "Understand paint behavior",
+      "description": "Learn how paint changes a color, and what to expect in real materials.",
+      "category_id": "paint",
+      "collection_id": "original",
+      "theme": "warm",
+      "source_file": "exec-cc92c99e-8b5d-49c0-acf0-30786a375378.png",
+      "entries": [
+        {
+          "id": "understand-paint-behavior--tint",
+          "title": "Tint",
+          "description": "A color mixed with white.",
+          "additional_description": null,
+          "order": 1,
+          "asset_id": "illustration--understand-paint-behavior--tint",
+          "children": []
+        },
+        {
+          "id": "understand-paint-behavior--shade",
+          "title": "Shade",
+          "description": "A color mixed with black.",
+          "additional_description": null,
+          "order": 2,
+          "asset_id": "illustration--understand-paint-behavior--shade",
+          "children": []
+        },
+        {
+          "id": "understand-paint-behavior--glaze",
+          "title": "Glaze",
+          "description": "A thin transparent color layer over dry paint.",
+          "additional_description": null,
+          "order": 3,
+          "asset_id": "illustration--understand-paint-behavior--glaze",
+          "children": []
+        },
+        {
+          "id": "understand-paint-behavior--scumble",
+          "title": "Scumble",
+          "description": "A thin, broken layer of relatively opaque paint.",
+          "additional_description": null,
+          "order": 4,
+          "asset_id": "illustration--understand-paint-behavior--scumble",
+          "children": []
+        },
+        {
+          "id": "understand-paint-behavior--opacity",
+          "title": "Opacity",
+          "description": "How fully paint hides the layer beneath.",
+          "additional_description": null,
+          "order": 5,
+          "asset_id": "illustration--understand-paint-behavior--opacity",
+          "children": []
+        },
+        {
+          "id": "understand-paint-behavior--undertone",
+          "title": "Undertone",
+          "description": "The color revealed in a thin application.",
+          "additional_description": null,
+          "order": 6,
+          "asset_id": "illustration--understand-paint-behavior--undertone",
+          "children": []
+        }
+      ],
+      "tip": "Digital previews suggest effects; real pigments behave differently.",
+      "source_asset_id": "screen--understand-paint-behavior",
+      "order": 4,
+      "children": [],
+      "parent_id": "paint",
+      "footer": {
+        "previous_label": "Back to exploring",
+        "primary_label": "Explore paint settings",
+        "source_page_label": null
+      },
+      "previous_guide_id": "see-color-in-context",
+      "next_guide_id": "color-language"
+    },
+    {
+      "id": "color-language",
+      "title": "Color language",
+      "description": "",
+      "category_id": "dimensions",
+      "collection_id": "extended",
+      "theme": "light",
+      "source_file": "exec-55db128d-0a25-4363-bf20-c1de9fdd14c2.png",
+      "entries": [
+        {
+          "id": "color-language--saturation",
+          "title": "Saturation",
+          "description": "Often used like chroma in studios; technically a different measure.",
+          "additional_description": null,
+          "order": 1,
+          "asset_id": "illustration--color-language--saturation",
+          "children": []
+        },
+        {
+          "id": "color-language--intensity",
+          "title": "Intensity",
+          "description": "Studio shorthand for how strong or vivid a color appears.",
+          "additional_description": null,
+          "order": 2,
+          "asset_id": "illustration--color-language--intensity",
+          "children": []
+        },
+        {
+          "id": "color-language--brightness",
+          "title": "Brightness",
+          "description": "May mean lightness or vividness. Specify which you mean.",
+          "additional_description": null,
+          "order": 3,
+          "asset_id": "illustration--color-language--brightness",
+          "children": []
+        },
+        {
+          "id": "color-language--tone",
+          "title": "Tone",
+          "description": "Can mean value, overall color character, or a gray mixture.",
+          "additional_description": null,
+          "order": 4,
+          "asset_id": "illustration--color-language--tone",
+          "children": []
+        },
+        {
+          "id": "color-language--achromatic",
+          "title": "Achromatic",
+          "description": "Without hue: neutral black, white and gray.",
+          "additional_description": null,
+          "order": 5,
+          "asset_id": "illustration--color-language--achromatic",
+          "children": []
+        },
+        {
+          "id": "color-language--chromatic-gray",
+          "title": "Chromatic gray",
+          "description": "A low-chroma gray with a discernible hue.",
+          "additional_description": null,
+          "order": 6,
+          "asset_id": "illustration--color-language--chromatic-gray",
+          "children": []
+        }
+      ],
+      "tip": "Ask: should this be lighter, more vivid, or warmer?",
+      "source_asset_id": "screen--color-language",
+      "order": 5,
+      "children": [],
+      "parent_id": "dimensions",
+      "footer": {
+        "previous_label": "Previous",
+        "primary_label": "Next guide",
+        "source_page_label": "1 / 10"
+      },
+      "previous_guide_id": "understand-paint-behavior",
+      "next_guide_id": "mixing-with-intention"
+    },
+    {
+      "id": "mixing-with-intention",
+      "title": "Mixing with intention",
+      "description": "",
+      "category_id": "mixing",
+      "collection_id": "extended",
+      "theme": "light",
+      "source_file": "exec-34806d16-039d-4e34-8509-88077e27846a.png",
+      "entries": [
+        {
+          "id": "mixing-with-intention--tint",
+          "title": "Tint",
+          "description": "A color mixed with white; hue and chroma may also change.",
+          "additional_description": null,
+          "order": 1,
+          "asset_id": "illustration--mixing-with-intention--tint",
+          "children": []
+        },
+        {
+          "id": "mixing-with-intention--shade",
+          "title": "Shade",
+          "description": "A color mixed with black; the hue may also shift.",
+          "additional_description": null,
+          "order": 2,
+          "asset_id": "illustration--mixing-with-intention--shade",
+          "children": []
+        },
+        {
+          "id": "mixing-with-intention--neutralize",
+          "title": "Neutralize",
+          "description": "Reduce chroma using a suitable mixing color.",
+          "additional_description": null,
+          "order": 3,
+          "asset_id": "illustration--mixing-with-intention--neutralize",
+          "children": []
+        },
+        {
+          "id": "mixing-with-intention--mixing-complement",
+          "title": "Mixing complement",
+          "description": "A paint that mixes with another to produce a neutral.",
+          "additional_description": null,
+          "order": 4,
+          "asset_id": "illustration--mixing-with-intention--mixing-complement",
+          "children": []
+        },
+        {
+          "id": "mixing-with-intention--chromatic-black",
+          "title": "Chromatic black",
+          "description": "A very dark mixture made from colored pigments.",
+          "additional_description": null,
+          "order": 5,
+          "asset_id": "illustration--mixing-with-intention--chromatic-black",
+          "children": []
+        },
+        {
+          "id": "mixing-with-intention--subtractive-mixing",
+          "title": "Subtractive mixing",
+          "description": "Pigments absorb parts of the light; mixtures depend on the pigments.",
+          "additional_description": null,
+          "order": 6,
+          "asset_id": "illustration--mixing-with-intention--subtractive-mixing",
+          "children": []
+        }
+      ],
+      "tip": "Adjust value, hue and chroma, then recheck the mixture in context.",
+      "source_asset_id": "screen--mixing-with-intention",
+      "order": 6,
+      "children": [],
+      "parent_id": "mixing",
+      "footer": {
+        "previous_label": "Previous",
+        "primary_label": "Next guide",
+        "source_page_label": "2 / 10"
+      },
+      "previous_guide_id": "color-language",
+      "next_guide_id": "design-your-palette"
+    },
+    {
+      "id": "design-your-palette",
+      "title": "Design your palette",
+      "description": "Key concepts to help you plan and build a purposeful color palette.",
+      "category_id": "palettes",
+      "collection_id": "extended",
+      "theme": "light",
+      "source_file": "exec-adf0e85b-c80b-414c-9ee0-4c802864ae4c.png",
+      "entries": [
+        {
+          "id": "design-your-palette--limited-palette",
+          "title": "Limited palette",
+          "description": "A deliberately small selection of paints.",
+          "additional_description": null,
+          "order": 1,
+          "asset_id": "illustration--design-your-palette--limited-palette",
+          "children": []
+        },
+        {
+          "id": "design-your-palette--split-primary-palette",
+          "title": "Split-primary palette",
+          "description": "Two versions of each traditional primary for different mixing directions.",
+          "additional_description": null,
+          "order": 2,
+          "asset_id": "illustration--design-your-palette--split-primary-palette",
+          "children": []
+        },
+        {
+          "id": "design-your-palette--color-string",
+          "title": "Color string",
+          "description": "Premixed steps through value, hue or chroma.",
+          "additional_description": null,
+          "order": 3,
+          "asset_id": "illustration--design-your-palette--color-string",
+          "children": []
+        },
+        {
+          "id": "design-your-palette--mother-color",
+          "title": "Mother color",
+          "description": "A shared color added to mixtures to help unify them.",
+          "additional_description": null,
+          "order": 4,
+          "asset_id": "illustration--design-your-palette--mother-color",
+          "children": []
+        },
+        {
+          "id": "design-your-palette--gamut-mapping",
+          "title": "Gamut mapping",
+          "description": "Fit observed colors into your available range while preserving relationships.",
+          "additional_description": null,
+          "order": 5,
+          "asset_id": "illustration--design-your-palette--gamut-mapping",
+          "children": []
+        },
+        {
+          "id": "design-your-palette--earth-colors",
+          "title": "Earth colors",
+          "description": "Ochres, siennas, umbers and related natural or synthetic colors.",
+          "additional_description": null,
+          "order": 6,
+          "asset_id": "illustration--design-your-palette--earth-colors",
+          "children": []
+        }
+      ],
+      "tip": "No three actual paints can mix every visible color.",
+      "source_asset_id": "screen--design-your-palette",
+      "order": 7,
+      "children": [],
+      "parent_id": "palettes",
+      "footer": {
+        "previous_label": "Previous",
+        "primary_label": "Next guide",
+        "source_page_label": "3 / 10"
+      },
+      "previous_guide_id": "mixing-with-intention",
+      "next_guide_id": "read-light-on-form"
+    },
+    {
+      "id": "read-light-on-form",
+      "title": "Read light on form",
+      "description": "",
+      "category_id": "light",
+      "collection_id": "extended",
+      "theme": "light",
+      "source_file": "exec-e94b5309-4a7f-493b-88b9-45df66821679.png",
+      "entries": [
+        {
+          "id": "read-light-on-form--local-color",
+          "title": "Local color",
+          "description": "An object’s characteristic color, apart from lighting effects.",
+          "additional_description": null,
+          "order": 1,
+          "asset_id": "illustration--read-light-on-form--local-color",
+          "children": []
+        },
+        {
+          "id": "read-light-on-form--observed-color",
+          "title": "Observed color",
+          "description": "The color perceived under the current light and surroundings.",
+          "additional_description": null,
+          "order": 2,
+          "asset_id": "illustration--read-light-on-form--observed-color",
+          "children": []
+        },
+        {
+          "id": "read-light-on-form--light-family",
+          "title": "Light family",
+          "description": "Planes receiving direct illumination from the main light.",
+          "additional_description": null,
+          "order": 3,
+          "asset_id": "illustration--read-light-on-form--light-family",
+          "children": []
+        },
+        {
+          "id": "read-light-on-form--halftone",
+          "title": "Halftone",
+          "description": "A turning plane within the light family.",
+          "additional_description": null,
+          "order": 4,
+          "asset_id": "illustration--read-light-on-form--halftone",
+          "children": []
+        },
+        {
+          "id": "read-light-on-form--terminator",
+          "title": "Terminator",
+          "description": "The boundary where a surface turns away from direct light.",
+          "additional_description": null,
+          "order": 5,
+          "asset_id": "illustration--read-light-on-form--terminator",
+          "children": []
+        },
+        {
+          "id": "read-light-on-form--form-shadow",
+          "title": "Form shadow",
+          "description": "Shadow on a surface facing away from the light.",
+          "additional_description": null,
+          "order": 6,
+          "asset_id": "illustration--read-light-on-form--form-shadow",
+          "children": []
+        }
+      ],
+      "tip": "First separate the light family from the shadow family.",
+      "source_asset_id": "screen--read-light-on-form",
+      "order": 8,
+      "children": [],
+      "parent_id": "light",
+      "footer": {
+        "previous_label": "Previous",
+        "primary_label": "Next guide",
+        "source_page_label": "4 / 10"
+      },
+      "previous_guide_id": "design-your-palette",
+      "next_guide_id": "shadows-and-reflections"
+    },
+    {
+      "id": "shadows-and-reflections",
+      "title": "Understand shadows and reflections",
+      "description": "Key concepts to help you explore, compare and communicate color with confidence.",
+      "category_id": "light",
+      "collection_id": "extended",
+      "theme": "light",
+      "source_file": "exec-d91915af-5277-41ea-81ea-5ea555e90e86.png",
+      "entries": [
+        {
+          "id": "shadows-and-reflections--core-shadow",
+          "title": "Core shadow",
+          "description": "A darker region within a form shadow, when present.",
+          "additional_description": null,
+          "order": 1,
+          "asset_id": "illustration--shadows-and-reflections--core-shadow",
+          "children": []
+        },
+        {
+          "id": "shadows-and-reflections--cast-shadow",
+          "title": "Cast shadow",
+          "description": "A shadow projected onto another surface by an obstruction.",
+          "additional_description": null,
+          "order": 2,
+          "asset_id": "illustration--shadows-and-reflections--cast-shadow",
+          "children": []
+        },
+        {
+          "id": "shadows-and-reflections--contact-shadow",
+          "title": "Contact shadow",
+          "description": "A dark region where little surrounding light reaches a contact.",
+          "additional_description": null,
+          "order": 3,
+          "asset_id": "illustration--shadows-and-reflections--contact-shadow",
+          "children": []
+        },
+        {
+          "id": "shadows-and-reflections--reflected-light",
+          "title": "Reflected light",
+          "description": "Light bounced onto a surface from nearby objects.",
+          "additional_description": null,
+          "order": 4,
+          "asset_id": "illustration--shadows-and-reflections--reflected-light",
+          "children": []
+        },
+        {
+          "id": "shadows-and-reflections--highlight",
+          "title": "Highlight",
+          "description": "A reflection of the light source, shaped by material and viewpoint.",
+          "additional_description": null,
+          "order": 5,
+          "asset_id": "illustration--shadows-and-reflections--highlight",
+          "children": []
+        },
+        {
+          "id": "shadows-and-reflections--temperature-shift",
+          "title": "Temperature shift",
+          "description": "A change toward a warmer or cooler color relative to another.",
+          "additional_description": null,
+          "order": 6,
+          "asset_id": "illustration--shadows-and-reflections--temperature-shift",
+          "children": []
+        }
+      ],
+      "tip": "Warm light and cool shadows are a possibility, not a universal rule.",
+      "source_asset_id": "screen--shadows-and-reflections",
+      "order": 9,
+      "children": [],
+      "parent_id": "light",
+      "footer": {
+        "previous_label": "Previous",
+        "primary_label": "Next guide",
+        "source_page_label": "5 / 10"
+      },
+      "previous_guide_id": "read-light-on-form",
+      "next_guide_id": "compose-with-color"
+    },
+    {
+      "id": "compose-with-color",
+      "title": "Compose with color",
+      "description": "",
+      "category_id": "composition",
+      "collection_id": "extended",
+      "theme": "light",
+      "source_file": "exec-23fab1f0-0f01-495d-a517-87b6def18026.png",
+      "entries": [
+        {
+          "id": "compose-with-color--dominant-color",
+          "title": "Dominant color",
+          "description": "The color family that sets the prevailing impression.",
+          "additional_description": null,
+          "order": 1,
+          "asset_id": "illustration--compose-with-color--dominant-color",
+          "children": []
+        },
+        {
+          "id": "compose-with-color--accent-color",
+          "title": "Accent color",
+          "description": "A limited color used to attract attention or create contrast.",
+          "additional_description": null,
+          "order": 2,
+          "asset_id": "illustration--compose-with-color--accent-color",
+          "children": []
+        },
+        {
+          "id": "compose-with-color--high-key-low-key",
+          "title": "High-key / low-key",
+          "description": "A mainly light or mainly dark value arrangement.",
+          "additional_description": null,
+          "order": 3,
+          "asset_id": "illustration--compose-with-color--high-key-low-key",
+          "children": []
+        },
+        {
+          "id": "compose-with-color--notan",
+          "title": "Notan",
+          "description": "A design of light and dark masses, often reduced to two values.",
+          "additional_description": null,
+          "order": 4,
+          "asset_id": "illustration--compose-with-color--notan",
+          "children": []
+        },
+        {
+          "id": "compose-with-color--value-compression",
+          "title": "Value compression",
+          "description": "Reduce the observed light-dark range to fit the painting.",
+          "additional_description": null,
+          "order": 5,
+          "asset_id": "illustration--compose-with-color--value-compression",
+          "children": []
+        },
+        {
+          "id": "compose-with-color--chroma-hierarchy",
+          "title": "Chroma hierarchy",
+          "description": "Distribute stronger and weaker chroma to establish emphasis.",
+          "additional_description": null,
+          "order": 6,
+          "asset_id": "illustration--compose-with-color--chroma-hierarchy",
+          "children": []
+        }
+      ],
+      "tip": "A focal point can rely on value contrast, edges or placement as well as chroma.",
+      "source_asset_id": "screen--compose-with-color",
+      "order": 10,
+      "children": [],
+      "parent_id": "composition",
+      "footer": {
+        "previous_label": "Previous",
+        "primary_label": "Next guide",
+        "source_page_label": "6 / 10"
+      },
+      "previous_guide_id": "shadows-and-reflections",
+      "next_guide_id": "perception-and-atmosphere"
+    },
+    {
+      "id": "perception-and-atmosphere",
+      "title": "Perception and atmosphere",
+      "description": "",
+      "category_id": "perception",
+      "collection_id": "extended",
+      "theme": "light",
+      "source_file": "exec-d3d6b0b2-4c12-46e2-a550-9789ed5e47b3.png",
+      "entries": [
+        {
+          "id": "perception-and-atmosphere--chromatic-adaptation",
+          "title": "Chromatic adaptation",
+          "description": "Vision adjusts to the prevailing illumination.",
+          "additional_description": null,
+          "order": 1,
+          "asset_id": "illustration--perception-and-atmosphere--chromatic-adaptation",
+          "children": []
+        },
+        {
+          "id": "perception-and-atmosphere--color-constancy",
+          "title": "Color constancy",
+          "description": "Objects can seem similar in color even as lighting changes.",
+          "additional_description": null,
+          "order": 2,
+          "asset_id": "illustration--perception-and-atmosphere--color-constancy",
+          "children": []
+        },
+        {
+          "id": "perception-and-atmosphere--afterimage",
+          "title": "Afterimage",
+          "description": "A residual visual response after looking away from a color.",
+          "additional_description": null,
+          "order": 3,
+          "asset_id": "illustration--perception-and-atmosphere--afterimage",
+          "children": []
+        },
+        {
+          "id": "perception-and-atmosphere--optical-mixing",
+          "title": "Optical mixing",
+          "description": "Separate small marks visually combine at a viewing distance.",
+          "additional_description": null,
+          "order": 4,
+          "asset_id": "illustration--perception-and-atmosphere--optical-mixing",
+          "children": []
+        },
+        {
+          "id": "perception-and-atmosphere--broken-color",
+          "title": "Broken color",
+          "description": "Distinct touches remain partly separate to retain color variation.",
+          "additional_description": null,
+          "order": 5,
+          "asset_id": "illustration--perception-and-atmosphere--broken-color",
+          "children": []
+        },
+        {
+          "id": "perception-and-atmosphere--aerial-perspective",
+          "title": "Aerial perspective",
+          "description": "Distance through atmosphere changes contrast and color.",
+          "additional_description": null,
+          "order": 6,
+          "asset_id": "illustration--perception-and-atmosphere--aerial-perspective",
+          "children": []
+        }
+      ],
+      "tip": "Try it: judge a passage beside its neighbors and at the intended viewing distance.",
+      "source_asset_id": "screen--perception-and-atmosphere",
+      "order": 11,
+      "children": [],
+      "parent_id": "perception",
+      "footer": {
+        "previous_label": "Previous",
+        "primary_label": "Next guide",
+        "source_page_label": "7 / 10"
+      },
+      "previous_guide_id": "compose-with-color",
+      "next_guide_id": "know-your-paint"
+    },
+    {
+      "id": "know-your-paint",
+      "title": "Know your paint",
+      "description": "",
+      "category_id": "materials",
+      "collection_id": "extended",
+      "theme": "light",
+      "source_file": "exec-52163186-06ac-4805-9983-7c125242ce8a.png",
+      "entries": [
+        {
+          "id": "know-your-paint--pigment",
+          "title": "Pigment",
+          "description": "The coloring particles in paint.",
+          "additional_description": null,
+          "order": 1,
+          "asset_id": "illustration--know-your-paint--pigment",
+          "children": []
+        },
+        {
+          "id": "know-your-paint--binder",
+          "title": "Binder",
+          "description": "The material holding pigment; oil paint uses a drying oil.",
+          "additional_description": null,
+          "order": 2,
+          "asset_id": "illustration--know-your-paint--binder",
+          "children": []
+        },
+        {
+          "id": "know-your-paint--medium",
+          "title": "Medium",
+          "description": "An addition that changes handling and may affect gloss or transparency.",
+          "additional_description": null,
+          "order": 3,
+          "asset_id": "illustration--know-your-paint--medium",
+          "children": []
+        },
+        {
+          "id": "know-your-paint--masstone",
+          "title": "Masstone",
+          "description": "A paint’s appearance in a substantial, concentrated application.",
+          "additional_description": null,
+          "order": 4,
+          "asset_id": "illustration--know-your-paint--masstone",
+          "children": []
+        },
+        {
+          "id": "know-your-paint--tinting-strength",
+          "title": "Tinting strength",
+          "description": "How strongly a pigment influences a mixture.",
+          "additional_description": null,
+          "order": 5,
+          "asset_id": "illustration--know-your-paint--tinting-strength",
+          "children": []
+        },
+        {
+          "id": "know-your-paint--color-index",
+          "title": "Color Index",
+          "description": "A pigment identifier, such as PB29, more specific than a marketing name.",
+          "additional_description": null,
+          "order": 6,
+          "asset_id": "illustration--know-your-paint--color-index",
+          "children": []
+        }
+      ],
+      "tip": "Transparency and tinting strength are different properties.",
+      "source_asset_id": "screen--know-your-paint",
+      "order": 12,
+      "children": [],
+      "parent_id": "materials",
+      "footer": {
+        "previous_label": "Previous",
+        "primary_label": "Next guide",
+        "source_page_label": "8 / 10"
+      },
+      "previous_guide_id": "perception-and-atmosphere",
+      "next_guide_id": "layers-and-surface"
+    },
+    {
+      "id": "layers-and-surface",
+      "title": "Layers and surface",
+      "description": "Key concepts to help you explore, compare and communicate color with confidence.",
+      "category_id": "paint",
+      "collection_id": "extended",
+      "theme": "light",
+      "source_file": "exec-5b6680cf-cab4-4ed4-be87-85e605192c32.png",
+      "entries": [
+        {
+          "id": "layers-and-surface--imprimatura",
+          "title": "Imprimatura",
+          "description": "An initial thin tone applied to the ground.",
+          "additional_description": null,
+          "order": 1,
+          "asset_id": "illustration--layers-and-surface--imprimatura",
+          "children": []
+        },
+        {
+          "id": "layers-and-surface--underpainting",
+          "title": "Underpainting",
+          "description": "An initial painted structure beneath later layers.",
+          "additional_description": null,
+          "order": 2,
+          "asset_id": "illustration--layers-and-surface--underpainting",
+          "children": []
+        },
+        {
+          "id": "layers-and-surface--grisaille",
+          "title": "Grisaille",
+          "description": "Monochromatic painting, usually gray, often used beneath color.",
+          "additional_description": null,
+          "order": 3,
+          "asset_id": "illustration--layers-and-surface--grisaille",
+          "children": []
+        },
+        {
+          "id": "layers-and-surface--alla-prima",
+          "title": "Alla prima",
+          "description": "Direct painting completed while the paint remains wet.",
+          "additional_description": null,
+          "order": 4,
+          "asset_id": "illustration--layers-and-surface--alla-prima",
+          "children": []
+        },
+        {
+          "id": "layers-and-surface--impasto",
+          "title": "Impasto",
+          "description": "Thick paint whose texture catches light and casts small shadows.",
+          "additional_description": null,
+          "order": 5,
+          "asset_id": "illustration--layers-and-surface--impasto",
+          "children": []
+        },
+        {
+          "id": "layers-and-surface--sinking-in",
+          "title": "Sinking in",
+          "description": "Paint dries matte or dull, changing its apparent richness.",
+          "additional_description": null,
+          "order": 6,
+          "asset_id": "illustration--layers-and-surface--sinking-in",
+          "children": []
+        }
+      ],
+      "tip": "Layer thickness, the ground and surface gloss all affect perceived color.",
+      "source_asset_id": "screen--layers-and-surface",
+      "order": 13,
+      "children": [],
+      "parent_id": "paint",
+      "footer": {
+        "previous_label": "Previous",
+        "primary_label": "Next guide",
+        "source_page_label": "9 / 10"
+      },
+      "previous_guide_id": "know-your-paint",
+      "next_guide_id": "decode-studio-feedback"
+    },
+    {
+      "id": "decode-studio-feedback",
+      "title": "Decode studio feedback",
+      "description": "",
+      "category_id": "studio-terms",
+      "collection_id": "extended",
+      "theme": "light",
+      "source_file": "exec-81b5857e-6e4a-474d-9ada-24dff9358b79.png",
+      "entries": [
+        {
+          "id": "decode-studio-feedback--muddy",
+          "title": "Muddy",
+          "description": "Color or value relationships are less clear than intended.",
+          "additional_description": null,
+          "order": 1,
+          "asset_id": "illustration--decode-studio-feedback--muddy",
+          "children": []
+        },
+        {
+          "id": "decode-studio-feedback--chalky",
+          "title": "Chalky",
+          "description": "Light passages feel pale, opaque or disconnected from the lighting.",
+          "additional_description": null,
+          "order": 2,
+          "asset_id": "illustration--decode-studio-feedback--chalky",
+          "children": []
+        },
+        {
+          "id": "decode-studio-feedback--too-hot",
+          "title": "Too hot",
+          "description": "May mean too warm, too vivid or too visually dominant.",
+          "additional_description": null,
+          "order": 3,
+          "asset_id": "illustration--decode-studio-feedback--too-hot",
+          "children": []
+        },
+        {
+          "id": "decode-studio-feedback--luminous",
+          "title": "Luminous",
+          "description": "Color relationships create an impression of light or glow.",
+          "additional_description": null,
+          "order": 4,
+          "asset_id": "illustration--decode-studio-feedback--luminous",
+          "children": []
+        },
+        {
+          "id": "decode-studio-feedback--lightfast",
+          "title": "Lightfast",
+          "description": "Resistant to light-induced color change.",
+          "additional_description": null,
+          "order": 5,
+          "asset_id": "illustration--decode-studio-feedback--lightfast",
+          "children": []
+        },
+        {
+          "id": "decode-studio-feedback--fugitive",
+          "title": "Fugitive",
+          "description": "Prone to fading or other color change under light.",
+          "additional_description": null,
+          "order": 6,
+          "asset_id": "illustration--decode-studio-feedback--fugitive",
+          "children": []
+        }
+      ],
+      "tip": "Try it: translate vague critique into a specific value, hue, chroma or surface adjustment.",
+      "source_asset_id": "screen--decode-studio-feedback",
+      "order": 14,
+      "children": [],
+      "parent_id": "studio-terms",
+      "footer": {
+        "previous_label": "Previous",
+        "primary_label": "Next guide",
+        "source_page_label": "10 / 10"
+      },
+      "previous_guide_id": "layers-and-surface",
+      "next_guide_id": "color-troubleshooting"
+    },
+    {
+      "id": "color-troubleshooting",
+      "title": "Color troubleshooting",
+      "description": "",
+      "category_id": "troubleshooting",
+      "collection_id": "practical",
+      "theme": "light",
+      "source_file": "exec-6ae0ea0d-b6e2-4373-a519-878c784dad3a.png",
+      "entries": [
+        {
+          "id": "color-troubleshooting--too-pale",
+          "title": "Too pale",
+          "description": "Check value first. Lower it if needed, then reassess chroma.",
+          "additional_description": null,
+          "order": 1,
+          "asset_id": "illustration--color-troubleshooting--too-pale",
+          "children": []
+        },
+        {
+          "id": "color-troubleshooting--too-vivid",
+          "title": "Too vivid",
+          "description": "Reduce chroma while keeping the intended value.",
+          "additional_description": null,
+          "order": 2,
+          "asset_id": "illustration--color-troubleshooting--too-vivid",
+          "children": []
+        },
+        {
+          "id": "color-troubleshooting--too-dark",
+          "title": "Too dark",
+          "description": "Raise value, then recheck hue and chroma.",
+          "additional_description": null,
+          "order": 3,
+          "asset_id": "illustration--color-troubleshooting--too-dark",
+          "children": []
+        },
+        {
+          "id": "color-troubleshooting--too-warm",
+          "title": "Too warm",
+          "description": "Shift hue toward a cooler comparison color.",
+          "additional_description": null,
+          "order": 4,
+          "asset_id": "illustration--color-troubleshooting--too-warm",
+          "children": []
+        },
+        {
+          "id": "color-troubleshooting--muddy",
+          "title": "Muddy",
+          "description": "Check value separation and hue relationships before adding chroma.",
+          "additional_description": null,
+          "order": 5,
+          "asset_id": "illustration--color-troubleshooting--muddy",
+          "children": []
+        },
+        {
+          "id": "color-troubleshooting--wrong-on-canvas",
+          "title": "Wrong on canvas",
+          "description": "Judge the color beside its neighbors and on the intended background.",
+          "additional_description": null,
+          "order": 6,
+          "asset_id": "illustration--color-troubleshooting--wrong-on-canvas",
+          "children": []
+        }
+      ],
+      "tip": "Change one control at a time, then compare with the original.",
+      "source_asset_id": "screen--color-troubleshooting",
+      "order": 15,
+      "children": [],
+      "parent_id": "troubleshooting",
+      "footer": {
+        "previous_label": "Previous",
+        "primary_label": "Open comparison",
+        "source_page_label": "1 / 6"
+      },
+      "previous_guide_id": "decode-studio-feedback",
+      "next_guide_id": "choosing-axes-and-locks"
+    },
+    {
+      "id": "choosing-axes-and-locks",
+      "title": "Choosing axes and locks",
+      "description": "",
+      "category_id": "app-controls",
+      "collection_id": "practical",
+      "theme": "light",
+      "source_file": "exec-6940dd7d-b565-4e35-bfac-cd2e40fb174f.png",
+      "entries": [
+        {
+          "id": "choosing-axes-and-locks--choose-two-axes",
+          "title": "Choose two axes",
+          "description": "Map two dimensions to the field, such as value and chroma.",
+          "additional_description": null,
+          "order": 1,
+          "asset_id": "illustration--choosing-axes-and-locks--choose-two-axes",
+          "children": []
+        },
+        {
+          "id": "choosing-axes-and-locks--hold-a-dimension",
+          "title": "Hold a dimension",
+          "description": "Lock a control to keep it fixed while exploring others.",
+          "additional_description": null,
+          "order": 2,
+          "asset_id": "illustration--choosing-axes-and-locks--hold-a-dimension",
+          "children": []
+        },
+        {
+          "id": "choosing-axes-and-locks--hue-value",
+          "title": "Hue × Value",
+          "description": "Explore color families and lightness at a selected chroma.",
+          "additional_description": null,
+          "order": 3,
+          "asset_id": "illustration--choosing-axes-and-locks--hue-value",
+          "children": []
+        },
+        {
+          "id": "choosing-axes-and-locks--value-chroma",
+          "title": "Value × Chroma",
+          "description": "Explore lightness and intensity while holding hue.",
+          "additional_description": null,
+          "order": 4,
+          "asset_id": "illustration--choosing-axes-and-locks--value-chroma",
+          "children": []
+        },
+        {
+          "id": "choosing-axes-and-locks--relative-warmth",
+          "title": "Relative warmth",
+          "description": "Warmth often changes hue; a hue lock can conflict with this adjustment.",
+          "additional_description": null,
+          "order": 5,
+          "asset_id": "illustration--choosing-axes-and-locks--relative-warmth",
+          "children": []
+        },
+        {
+          "id": "choosing-axes-and-locks--gamut-boundary",
+          "title": "Gamut boundary",
+          "description": "Some combinations cannot be displayed. Keep unavailable regions marked.",
+          "additional_description": null,
+          "order": 6,
+          "asset_id": "illustration--choosing-axes-and-locks--gamut-boundary",
+          "children": []
+        }
+      ],
+      "tip": "Use value and chroma as your first axes; select a hue to hold fixed.",
+      "source_asset_id": "screen--choosing-axes-and-locks",
+      "order": 16,
+      "children": [],
+      "parent_id": "app-controls",
+      "footer": {
+        "previous_label": "Previous",
+        "primary_label": "Configure axes",
+        "source_page_label": "2 / 6"
+      },
+      "previous_guide_id": "color-troubleshooting",
+      "next_guide_id": "harmony-recipes"
+    },
+    {
+      "id": "harmony-recipes",
+      "title": "Harmony recipes",
+      "description": "",
+      "category_id": "relationships",
+      "collection_id": "practical",
+      "theme": "light",
+      "source_file": "exec-6256772c-69f2-4dbf-b9cd-e752151129f6.png",
+      "entries": [
+        {
+          "id": "harmony-recipes--monochromatic",
+          "title": "Monochromatic",
+          "description": "One hue varied through value and chroma.",
+          "additional_description": null,
+          "order": 1,
+          "asset_id": "illustration--harmony-recipes--monochromatic",
+          "children": []
+        },
+        {
+          "id": "harmony-recipes--analogous",
+          "title": "Analogous",
+          "description": "Neighboring hues for continuity and gentle variation.",
+          "additional_description": null,
+          "order": 2,
+          "asset_id": "illustration--harmony-recipes--analogous",
+          "children": []
+        },
+        {
+          "id": "harmony-recipes--complementary",
+          "title": "Complementary",
+          "description": "Opposing hues on a chosen wheel for strong contrast.",
+          "additional_description": null,
+          "order": 3,
+          "asset_id": "illustration--harmony-recipes--complementary",
+          "children": []
+        },
+        {
+          "id": "harmony-recipes--split-complementary",
+          "title": "Split-complementary",
+          "description": "One hue plus the two hues beside its complement.",
+          "additional_description": null,
+          "order": 4,
+          "asset_id": "illustration--harmony-recipes--split-complementary",
+          "children": []
+        },
+        {
+          "id": "harmony-recipes--triadic",
+          "title": "Triadic",
+          "description": "Three hues spaced approximately evenly around the wheel.",
+          "additional_description": null,
+          "order": 5,
+          "asset_id": "illustration--harmony-recipes--triadic",
+          "children": []
+        },
+        {
+          "id": "harmony-recipes--tetradic",
+          "title": "Tetradic",
+          "description": "Two complementary pairs; choose a dominant hue to organize them.",
+          "additional_description": null,
+          "order": 6,
+          "asset_id": "illustration--harmony-recipes--tetradic",
+          "children": []
+        }
+      ],
+      "tip": "Vary area, value and chroma. A harmony does not require equal amounts.",
+      "source_asset_id": "screen--harmony-recipes",
+      "order": 17,
+      "children": [],
+      "parent_id": "relationships",
+      "footer": {
+        "previous_label": "Previous",
+        "primary_label": "Try a harmony",
+        "source_page_label": "3 / 6"
+      },
+      "previous_guide_id": "choosing-axes-and-locks",
+      "next_guide_id": "edges-and-emphasis"
+    },
+    {
+      "id": "edges-and-emphasis",
+      "title": "Edges and emphasis",
+      "description": "",
+      "category_id": "composition",
+      "collection_id": "practical",
+      "theme": "light",
+      "source_file": "exec-03ecec02-6aea-4d87-987a-4946bb97040c.png",
+      "entries": [
+        {
+          "id": "edges-and-emphasis--hard-edge",
+          "title": "Hard edge",
+          "description": "An abrupt transition that can sharpen a boundary.",
+          "additional_description": null,
+          "order": 1,
+          "asset_id": "illustration--edges-and-emphasis--hard-edge",
+          "children": []
+        },
+        {
+          "id": "edges-and-emphasis--soft-edge",
+          "title": "Soft edge",
+          "description": "A gradual transition that can suggest turning form or atmosphere.",
+          "additional_description": null,
+          "order": 2,
+          "asset_id": "illustration--edges-and-emphasis--soft-edge",
+          "children": []
+        },
+        {
+          "id": "edges-and-emphasis--lost-edge",
+          "title": "Lost edge",
+          "description": "A boundary that merges with its surroundings.",
+          "additional_description": null,
+          "order": 3,
+          "asset_id": "illustration--edges-and-emphasis--lost-edge",
+          "children": []
+        },
+        {
+          "id": "edges-and-emphasis--found-edge",
+          "title": "Found edge",
+          "description": "A boundary that becomes distinct again after a lost passage.",
+          "additional_description": null,
+          "order": 4,
+          "asset_id": "illustration--edges-and-emphasis--found-edge",
+          "children": []
+        },
+        {
+          "id": "edges-and-emphasis--focal-contrast",
+          "title": "Focal contrast",
+          "description": "Local differences in value or color can attract attention.",
+          "additional_description": null,
+          "order": 5,
+          "asset_id": "illustration--edges-and-emphasis--focal-contrast",
+          "children": []
+        },
+        {
+          "id": "edges-and-emphasis--edge-hierarchy",
+          "title": "Edge hierarchy",
+          "description": "Vary edge sharpness to organize attention across the painting.",
+          "additional_description": null,
+          "order": 6,
+          "asset_id": "illustration--edges-and-emphasis--edge-hierarchy",
+          "children": []
+        }
+      ],
+      "tip": "Reserve strong contrasts and sharp edges where they serve your focus.",
+      "source_asset_id": "screen--edges-and-emphasis",
+      "order": 18,
+      "children": [],
+      "parent_id": "composition",
+      "footer": {
+        "previous_label": "Previous",
+        "primary_label": "Compare edges",
+        "source_page_label": "4 / 6"
+      },
+      "previous_guide_id": "harmony-recipes",
+      "next_guide_id": "screen-versus-paint"
+    },
+    {
+      "id": "screen-versus-paint",
+      "title": "Screen versus paint",
+      "description": "",
+      "category_id": "digital-color",
+      "collection_id": "practical",
+      "theme": "light",
+      "source_file": "exec-c4087273-2141-4a16-b217-0c74b3f4369f.png",
+      "entries": [
+        {
+          "id": "screen-versus-paint--additive-color",
+          "title": "Additive color",
+          "description": "Screens combine emitted red, green and blue light.",
+          "additional_description": null,
+          "order": 1,
+          "asset_id": "illustration--screen-versus-paint--additive-color",
+          "children": []
+        },
+        {
+          "id": "screen-versus-paint--subtractive-color",
+          "title": "Subtractive color",
+          "description": "Pigments absorb and scatter light; physical mixtures depend on the paints.",
+          "additional_description": null,
+          "order": 2,
+          "asset_id": "illustration--screen-versus-paint--subtractive-color",
+          "children": []
+        },
+        {
+          "id": "screen-versus-paint--hex-value",
+          "title": "Hex value",
+          "description": "A digital RGB specification, not a pigment mixing recipe.",
+          "additional_description": null,
+          "order": 3,
+          "asset_id": "illustration--screen-versus-paint--hex-value",
+          "children": []
+        },
+        {
+          "id": "screen-versus-paint--display-gamut",
+          "title": "Display gamut",
+          "description": "The range of colors a screen can reproduce.",
+          "additional_description": null,
+          "order": 4,
+          "asset_id": "illustration--screen-versus-paint--display-gamut",
+          "children": []
+        },
+        {
+          "id": "screen-versus-paint--viewing-light",
+          "title": "Viewing light",
+          "description": "Illumination changes how physical paint appears.",
+          "additional_description": null,
+          "order": 5,
+          "asset_id": "illustration--screen-versus-paint--viewing-light",
+          "children": []
+        },
+        {
+          "id": "screen-versus-paint--surface-effects",
+          "title": "Surface effects",
+          "description": "Gloss, texture and layer thickness affect painted color.",
+          "additional_description": null,
+          "order": 6,
+          "asset_id": "illustration--screen-versus-paint--surface-effects",
+          "children": []
+        }
+      ],
+      "tip": "Use screen previews to explore relationships; verify mixtures with real paint.",
+      "source_asset_id": "screen--screen-versus-paint",
+      "order": 19,
+      "children": [],
+      "parent_id": "digital-color",
+      "footer": {
+        "previous_label": "Previous",
+        "primary_label": "Compare previews",
+        "source_page_label": "5 / 6"
+      },
+      "previous_guide_id": "edges-and-emphasis",
+      "next_guide_id": "common-misconceptions"
+    },
+    {
+      "id": "common-misconceptions",
+      "title": "Common misconceptions",
+      "description": "",
+      "category_id": "misconceptions",
+      "collection_id": "practical",
+      "theme": "light",
+      "source_file": "exec-617cac49-c97a-418a-8040-0785e31859d7.png",
+      "entries": [
+        {
+          "id": "common-misconceptions--warm-light-cool-shadows",
+          "title": "Warm light, cool shadows?",
+          "description": "Sometimes. Shadow color depends on ambient and reflected light.",
+          "additional_description": null,
+          "order": 1,
+          "asset_id": "illustration--common-misconceptions--warm-light-cool-shadows",
+          "children": []
+        },
+        {
+          "id": "common-misconceptions--never-use-black",
+          "title": "Never use black?",
+          "description": "Black is a useful pigment. Judge its effect on your mixture.",
+          "additional_description": null,
+          "order": 2,
+          "asset_id": "illustration--common-misconceptions--never-use-black",
+          "children": []
+        },
+        {
+          "id": "common-misconceptions--gray-means-muddy",
+          "title": "Gray means muddy?",
+          "description": "Grays can be clear and expressive; context determines their role.",
+          "additional_description": null,
+          "order": 3,
+          "asset_id": "illustration--common-misconceptions--gray-means-muddy",
+          "children": []
+        },
+        {
+          "id": "common-misconceptions--white-only-lightens",
+          "title": "White only lightens?",
+          "description": "White can also change hue, chroma and opacity.",
+          "additional_description": null,
+          "order": 4,
+          "asset_id": "illustration--common-misconceptions--white-only-lightens",
+          "children": []
+        },
+        {
+          "id": "common-misconceptions--warm-colors-always-advance",
+          "title": "Warm colors always advance?",
+          "description": "Edges, value contrast and spatial cues can outweigh temperature.",
+          "additional_description": null,
+          "order": 5,
+          "asset_id": "illustration--common-misconceptions--warm-colors-always-advance",
+          "children": []
+        },
+        {
+          "id": "common-misconceptions--complements-always-make-gray",
+          "title": "Complements always make gray?",
+          "description": "Actual pigment pairs and proportions determine the mixture.",
+          "additional_description": null,
+          "order": 6,
+          "asset_id": "illustration--common-misconceptions--complements-always-make-gray",
+          "children": []
+        }
+      ],
+      "tip": "Treat painting rules as starting points. Observe the specific relationship.",
+      "source_asset_id": "screen--common-misconceptions",
+      "order": 20,
+      "children": [],
+      "parent_id": "misconceptions",
+      "footer": {
+        "previous_label": "Previous",
+        "primary_label": "Back to exploring",
+        "source_page_label": "6 / 6"
+      },
+      "previous_guide_id": "screen-versus-paint",
+      "next_guide_id": null
+    }
+  ],
+  "assets": {
+    "screen--understand-your-color": {
+      "id": "screen--understand-your-color",
+      "path": "assets/screens/exec-985a5ecc-da46-4a0a-b1bf-430463edf610.png",
+      "mime_type": "image/png",
+      "width": 1536,
+      "height": 1024,
+      "kind": "source_screenshot",
+      "sha256": "54c1ef79d5ab3492111091a982f33303b56bdff9534e950de1439c160d993a66",
+      "original_filename": "exec-985a5ecc-da46-4a0a-b1bf-430463edf610.png",
+      "alt": "Understand your color original modal screenshot"
+    },
+    "illustration--understand-your-color--hue": {
+      "id": "illustration--understand-your-color--hue",
+      "path": "assets/illustrations/understand-your-color--hue.png",
+      "mime_type": "image/png",
+      "width": 216,
+      "height": 54,
+      "kind": "illustration_crop",
+      "sha256": "c225ac8302067774637457f8975ce7482d7c995a7746c76320700e7271d45a65",
+      "source_asset_id": "screen--understand-your-color",
+      "crop_xyxy": [
+        394,
+        416,
+        610,
+        470
+      ],
+      "alt": "Hue illustration from Understand your color",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--understand-your-color--value": {
+      "id": "illustration--understand-your-color--value",
+      "path": "assets/illustrations/understand-your-color--value.png",
+      "mime_type": "image/png",
+      "width": 216,
+      "height": 57,
+      "kind": "illustration_crop",
+      "sha256": "659eb8b9192268458cf30c110655f2220145e9d24da7d6c4f741cd1ccd45a0f0",
+      "source_asset_id": "screen--understand-your-color",
+      "crop_xyxy": [
+        394,
+        502,
+        610,
+        559
+      ],
+      "alt": "Value illustration from Understand your color",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--understand-your-color--chroma": {
+      "id": "illustration--understand-your-color--chroma",
+      "path": "assets/illustrations/understand-your-color--chroma.png",
+      "mime_type": "image/png",
+      "width": 216,
+      "height": 57,
+      "kind": "illustration_crop",
+      "sha256": "b10c56fbd46fff96679ab43a516c6f8bb1677ab100148b54b8c8b8ce6685c1fd",
+      "source_asset_id": "screen--understand-your-color",
+      "crop_xyxy": [
+        394,
+        588,
+        610,
+        645
+      ],
+      "alt": "Chroma illustration from Understand your color",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--understand-your-color--temperature": {
+      "id": "illustration--understand-your-color--temperature",
+      "path": "assets/illustrations/understand-your-color--temperature.png",
+      "mime_type": "image/png",
+      "width": 216,
+      "height": 57,
+      "kind": "illustration_crop",
+      "sha256": "eea7570b3ed2b99d3b8e980b0da2ba32526903d4fbda4b02f2edec0ccb366233",
+      "source_asset_id": "screen--understand-your-color",
+      "crop_xyxy": [
+        394,
+        673,
+        610,
+        730
+      ],
+      "alt": "Temperature illustration from Understand your color",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "screen--build-a-color-harmony": {
+      "id": "screen--build-a-color-harmony",
+      "path": "assets/screens/exec-e58c149c-5882-422c-a318-1533f617e033.png",
+      "mime_type": "image/png",
+      "width": 1536,
+      "height": 1024,
+      "kind": "source_screenshot",
+      "sha256": "f3e14d206df07acd43dd43b42f9d38e2b8b8d0ecefb795ba160016bf3a53b28f",
+      "original_filename": "exec-e58c149c-5882-422c-a318-1533f617e033.png",
+      "alt": "Build a color harmony original modal screenshot"
+    },
+    "illustration--build-a-color-harmony--analogous": {
+      "id": "illustration--build-a-color-harmony--analogous",
+      "path": "assets/illustrations/build-a-color-harmony--analogous.png",
+      "mime_type": "image/png",
+      "width": 341,
+      "height": 62,
+      "kind": "illustration_crop",
+      "sha256": "f6fa71a571c529a3040856d8ac0c9ca67afbdb1c64445efce24d7614416122fb",
+      "source_asset_id": "screen--build-a-color-harmony",
+      "crop_xyxy": [
+        400,
+        480,
+        741,
+        542
+      ],
+      "alt": "Analogous illustration from Build a color harmony",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--build-a-color-harmony--complementary": {
+      "id": "illustration--build-a-color-harmony--complementary",
+      "path": "assets/illustrations/build-a-color-harmony--complementary.png",
+      "mime_type": "image/png",
+      "width": 344,
+      "height": 63,
+      "kind": "illustration_crop",
+      "sha256": "46559b046d81447575505758e0cf752998d9cee266adf2cc4c93ab30f3648f10",
+      "source_asset_id": "screen--build-a-color-harmony",
+      "crop_xyxy": [
+        797,
+        480,
+        1141,
+        543
+      ],
+      "alt": "Complementary illustration from Build a color harmony",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--build-a-color-harmony--split-complementary": {
+      "id": "illustration--build-a-color-harmony--split-complementary",
+      "path": "assets/illustrations/build-a-color-harmony--split-complementary.png",
+      "mime_type": "image/png",
+      "width": 342,
+      "height": 61,
+      "kind": "illustration_crop",
+      "sha256": "1637e6e5744ea64e10f5f60045e65d1089b63b623fac4618dabb121be4da6a3a",
+      "source_asset_id": "screen--build-a-color-harmony",
+      "crop_xyxy": [
+        399,
+        652,
+        741,
+        713
+      ],
+      "alt": "Split-complementary illustration from Build a color harmony",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--build-a-color-harmony--neutralize": {
+      "id": "illustration--build-a-color-harmony--neutralize",
+      "path": "assets/illustrations/build-a-color-harmony--neutralize.png",
+      "mime_type": "image/png",
+      "width": 344,
+      "height": 62,
+      "kind": "illustration_crop",
+      "sha256": "e5189345f70e25a5f4ab026a48ac8d046d0d06b63e914c29d95613ea480a0e6a",
+      "source_asset_id": "screen--build-a-color-harmony",
+      "crop_xyxy": [
+        796,
+        651,
+        1140,
+        713
+      ],
+      "alt": "Neutralize illustration from Build a color harmony",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "screen--see-color-in-context": {
+      "id": "screen--see-color-in-context",
+      "path": "assets/screens/exec-9dec6ec2-6123-41c5-b33e-80426bdaa668.png",
+      "mime_type": "image/png",
+      "width": 1536,
+      "height": 1024,
+      "kind": "source_screenshot",
+      "sha256": "92cf747b07b1deadd92d2510fc82e787bbd1248485299b05ebab743a6c022c84",
+      "original_filename": "exec-9dec6ec2-6123-41c5-b33e-80426bdaa668.png",
+      "alt": "See color in context original modal screenshot"
+    },
+    "illustration--see-color-in-context--simultaneous-contrast": {
+      "id": "illustration--see-color-in-context--simultaneous-contrast",
+      "path": "assets/illustrations/see-color-in-context--simultaneous-contrast.png",
+      "mime_type": "image/png",
+      "width": 406,
+      "height": 98,
+      "kind": "illustration_crop",
+      "sha256": "4d9008761dade50bac17a71aa2e63dd890b576635e8d186ac8de89b1337141e1",
+      "source_asset_id": "screen--see-color-in-context",
+      "crop_xyxy": [
+        757,
+        381,
+        1163,
+        479
+      ],
+      "alt": "Simultaneous contrast illustration from See color in context",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--see-color-in-context--value-structure": {
+      "id": "illustration--see-color-in-context--value-structure",
+      "path": "assets/illustrations/see-color-in-context--value-structure.png",
+      "mime_type": "image/png",
+      "width": 402,
+      "height": 76,
+      "kind": "illustration_crop",
+      "sha256": "70e5f30849b29ff824ba19b6f6ee5171fec0aaf06a937e987ffb64630aa07a9e",
+      "source_asset_id": "screen--see-color-in-context",
+      "crop_xyxy": [
+        757,
+        546,
+        1159,
+        622
+      ],
+      "alt": "Value structure illustration from See color in context",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--see-color-in-context--gamut": {
+      "id": "illustration--see-color-in-context--gamut",
+      "path": "assets/illustrations/see-color-in-context--gamut.png",
+      "mime_type": "image/png",
+      "width": 402,
+      "height": 66,
+      "kind": "illustration_crop",
+      "sha256": "9aa9ce4251d40b58d0c55ae6d46729f924a4dbad674d1b12498b5f6f89e01f24",
+      "source_asset_id": "screen--see-color-in-context",
+      "crop_xyxy": [
+        757,
+        689,
+        1159,
+        755
+      ],
+      "alt": "Gamut illustration from See color in context",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "screen--understand-paint-behavior": {
+      "id": "screen--understand-paint-behavior",
+      "path": "assets/screens/exec-cc92c99e-8b5d-49c0-acf0-30786a375378.png",
+      "mime_type": "image/png",
+      "width": 1536,
+      "height": 1024,
+      "kind": "source_screenshot",
+      "sha256": "e28a5ae0f2bc1c4dbdfc4f7df40391f99cdd9f01afde79bcf0ab9a8256c1c2e9",
+      "original_filename": "exec-cc92c99e-8b5d-49c0-acf0-30786a375378.png",
+      "alt": "Understand paint behavior original modal screenshot"
+    },
+    "illustration--understand-paint-behavior--tint": {
+      "id": "illustration--understand-paint-behavior--tint",
+      "path": "assets/illustrations/understand-paint-behavior--tint.png",
+      "mime_type": "image/png",
+      "width": 127,
+      "height": 95,
+      "kind": "illustration_crop",
+      "sha256": "8433b5d03c8f504c1368eb70906f3956e8797ba45cab88f46cd2cbcfe376c831",
+      "source_asset_id": "screen--understand-paint-behavior",
+      "crop_xyxy": [
+        394,
+        435,
+        521,
+        530
+      ],
+      "alt": "Tint illustration from Understand paint behavior",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--understand-paint-behavior--shade": {
+      "id": "illustration--understand-paint-behavior--shade",
+      "path": "assets/illustrations/understand-paint-behavior--shade.png",
+      "mime_type": "image/png",
+      "width": 127,
+      "height": 95,
+      "kind": "illustration_crop",
+      "sha256": "b712ede26718e9a2807e76fd5c4e4e4cc4b14cad735eadbaa69a6b459778b424",
+      "source_asset_id": "screen--understand-paint-behavior",
+      "crop_xyxy": [
+        789,
+        435,
+        916,
+        530
+      ],
+      "alt": "Shade illustration from Understand paint behavior",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--understand-paint-behavior--glaze": {
+      "id": "illustration--understand-paint-behavior--glaze",
+      "path": "assets/illustrations/understand-paint-behavior--glaze.png",
+      "mime_type": "image/png",
+      "width": 127,
+      "height": 93,
+      "kind": "illustration_crop",
+      "sha256": "ddb034d5804fce7aba780207ba21cdebe757097d0f58f74efd70bd53b2ba6069",
+      "source_asset_id": "screen--understand-paint-behavior",
+      "crop_xyxy": [
+        394,
+        572,
+        521,
+        665
+      ],
+      "alt": "Glaze illustration from Understand paint behavior",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--understand-paint-behavior--scumble": {
+      "id": "illustration--understand-paint-behavior--scumble",
+      "path": "assets/illustrations/understand-paint-behavior--scumble.png",
+      "mime_type": "image/png",
+      "width": 127,
+      "height": 93,
+      "kind": "illustration_crop",
+      "sha256": "c6c0ebbe8dd47401828c301a826ccecc42b2457970566375fc3da043a54463a6",
+      "source_asset_id": "screen--understand-paint-behavior",
+      "crop_xyxy": [
+        789,
+        572,
+        916,
+        665
+      ],
+      "alt": "Scumble illustration from Understand paint behavior",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--understand-paint-behavior--opacity": {
+      "id": "illustration--understand-paint-behavior--opacity",
+      "path": "assets/illustrations/understand-paint-behavior--opacity.png",
+      "mime_type": "image/png",
+      "width": 130,
+      "height": 89,
+      "kind": "illustration_crop",
+      "sha256": "b0361bd32415a04d8e95f686b7b8af608d49da1ba4ac2228e19c0f48716f98e8",
+      "source_asset_id": "screen--understand-paint-behavior",
+      "crop_xyxy": [
+        394,
+        703,
+        524,
+        792
+      ],
+      "alt": "Opacity illustration from Understand paint behavior",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--understand-paint-behavior--undertone": {
+      "id": "illustration--understand-paint-behavior--undertone",
+      "path": "assets/illustrations/understand-paint-behavior--undertone.png",
+      "mime_type": "image/png",
+      "width": 128,
+      "height": 85,
+      "kind": "illustration_crop",
+      "sha256": "d234d7ab8e8814c3653c99863f70959a7448020e7b54768c2fcc94ab84fe28c9",
+      "source_asset_id": "screen--understand-paint-behavior",
+      "crop_xyxy": [
+        789,
+        707,
+        917,
+        792
+      ],
+      "alt": "Undertone illustration from Understand paint behavior",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "screen--color-language": {
+      "id": "screen--color-language",
+      "path": "assets/screens/exec-55db128d-0a25-4363-bf20-c1de9fdd14c2.png",
+      "mime_type": "image/png",
+      "width": 1536,
+      "height": 1024,
+      "kind": "source_screenshot",
+      "sha256": "4dac8082e5e7153d2168bddb83f776c3acbf95fe013190506b07cd6667d24022",
+      "original_filename": "exec-55db128d-0a25-4363-bf20-c1de9fdd14c2.png",
+      "alt": "Color language original modal screenshot"
+    },
+    "illustration--color-language--saturation": {
+      "id": "illustration--color-language--saturation",
+      "path": "assets/illustrations/color-language--saturation.png",
+      "mime_type": "image/png",
+      "width": 130,
+      "height": 88,
+      "kind": "illustration_crop",
+      "sha256": "564a072d2b015f5038af8a505cc64ecd0fe4f0c820c0ae00f872d9f3d96ddfa9",
+      "source_asset_id": "screen--color-language",
+      "crop_xyxy": [
+        288,
+        393,
+        418,
+        481
+      ],
+      "alt": "Saturation illustration from Color language",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--color-language--intensity": {
+      "id": "illustration--color-language--intensity",
+      "path": "assets/illustrations/color-language--intensity.png",
+      "mime_type": "image/png",
+      "width": 130,
+      "height": 88,
+      "kind": "illustration_crop",
+      "sha256": "b075d3d1382380efdfebbaa73c4c9e8937bf93d06f2a3d551ee81951eb8a429e",
+      "source_asset_id": "screen--color-language",
+      "crop_xyxy": [
+        790,
+        393,
+        920,
+        481
+      ],
+      "alt": "Intensity illustration from Color language",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--color-language--brightness": {
+      "id": "illustration--color-language--brightness",
+      "path": "assets/illustrations/color-language--brightness.png",
+      "mime_type": "image/png",
+      "width": 130,
+      "height": 88,
+      "kind": "illustration_crop",
+      "sha256": "3580cabc0fde730274e58616c723d34f7a5233d1bec398dc051ecc3e09743ffd",
+      "source_asset_id": "screen--color-language",
+      "crop_xyxy": [
+        288,
+        536,
+        418,
+        624
+      ],
+      "alt": "Brightness illustration from Color language",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--color-language--tone": {
+      "id": "illustration--color-language--tone",
+      "path": "assets/illustrations/color-language--tone.png",
+      "mime_type": "image/png",
+      "width": 130,
+      "height": 88,
+      "kind": "illustration_crop",
+      "sha256": "52bde8a1ab3a9a642c62e5ea65b4c09b70bcfba8f73520f7e0298f8172a549d2",
+      "source_asset_id": "screen--color-language",
+      "crop_xyxy": [
+        790,
+        536,
+        920,
+        624
+      ],
+      "alt": "Tone illustration from Color language",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--color-language--achromatic": {
+      "id": "illustration--color-language--achromatic",
+      "path": "assets/illustrations/color-language--achromatic.png",
+      "mime_type": "image/png",
+      "width": 130,
+      "height": 88,
+      "kind": "illustration_crop",
+      "sha256": "3f8cb13b8231c802f97ccc2662a478a058445c94f3b85a4cafc7475f70e24ad6",
+      "source_asset_id": "screen--color-language",
+      "crop_xyxy": [
+        288,
+        670,
+        418,
+        758
+      ],
+      "alt": "Achromatic illustration from Color language",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--color-language--chromatic-gray": {
+      "id": "illustration--color-language--chromatic-gray",
+      "path": "assets/illustrations/color-language--chromatic-gray.png",
+      "mime_type": "image/png",
+      "width": 130,
+      "height": 88,
+      "kind": "illustration_crop",
+      "sha256": "679bfae770ed9a21ce8c26561b2a7f64019545c86a2827f27d9062a6c40ea479",
+      "source_asset_id": "screen--color-language",
+      "crop_xyxy": [
+        790,
+        670,
+        920,
+        758
+      ],
+      "alt": "Chromatic gray illustration from Color language",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "screen--mixing-with-intention": {
+      "id": "screen--mixing-with-intention",
+      "path": "assets/screens/exec-34806d16-039d-4e34-8509-88077e27846a.png",
+      "mime_type": "image/png",
+      "width": 1536,
+      "height": 1024,
+      "kind": "source_screenshot",
+      "sha256": "8dd316e4435adbf1a90cebadfcac1af779ee7fb14a27b5ecad8694f45b1d474f",
+      "original_filename": "exec-34806d16-039d-4e34-8509-88077e27846a.png",
+      "alt": "Mixing with intention original modal screenshot"
+    },
+    "illustration--mixing-with-intention--tint": {
+      "id": "illustration--mixing-with-intention--tint",
+      "path": "assets/illustrations/mixing-with-intention--tint.png",
+      "mime_type": "image/png",
+      "width": 124,
+      "height": 91,
+      "kind": "illustration_crop",
+      "sha256": "d416b593d6b9f378a4ed614e28a78dfb036d3a77e8838221b4342630afacd5ea",
+      "source_asset_id": "screen--mixing-with-intention",
+      "crop_xyxy": [
+        302,
+        390,
+        426,
+        481
+      ],
+      "alt": "Tint illustration from Mixing with intention",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--mixing-with-intention--shade": {
+      "id": "illustration--mixing-with-intention--shade",
+      "path": "assets/illustrations/mixing-with-intention--shade.png",
+      "mime_type": "image/png",
+      "width": 130,
+      "height": 91,
+      "kind": "illustration_crop",
+      "sha256": "88eb129f473c34513f2f99b992df876d3c55411a602793047aeef13740f66af0",
+      "source_asset_id": "screen--mixing-with-intention",
+      "crop_xyxy": [
+        793,
+        390,
+        923,
+        481
+      ],
+      "alt": "Shade illustration from Mixing with intention",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--mixing-with-intention--neutralize": {
+      "id": "illustration--mixing-with-intention--neutralize",
+      "path": "assets/illustrations/mixing-with-intention--neutralize.png",
+      "mime_type": "image/png",
+      "width": 124,
+      "height": 103,
+      "kind": "illustration_crop",
+      "sha256": "4b5d7434afce5c8548ab7cdf4a7338b5a9a1c0cbf67077cd146c5cfdcb96a0f8",
+      "source_asset_id": "screen--mixing-with-intention",
+      "crop_xyxy": [
+        302,
+        520,
+        426,
+        623
+      ],
+      "alt": "Neutralize illustration from Mixing with intention",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--mixing-with-intention--mixing-complement": {
+      "id": "illustration--mixing-with-intention--mixing-complement",
+      "path": "assets/illustrations/mixing-with-intention--mixing-complement.png",
+      "mime_type": "image/png",
+      "width": 130,
+      "height": 103,
+      "kind": "illustration_crop",
+      "sha256": "87304c19c1d0ad54906f54b25456a2d1bdffb267a7aea1c4133ba89f870ce9b6",
+      "source_asset_id": "screen--mixing-with-intention",
+      "crop_xyxy": [
+        793,
+        520,
+        923,
+        623
+      ],
+      "alt": "Mixing complement illustration from Mixing with intention",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--mixing-with-intention--chromatic-black": {
+      "id": "illustration--mixing-with-intention--chromatic-black",
+      "path": "assets/illustrations/mixing-with-intention--chromatic-black.png",
+      "mime_type": "image/png",
+      "width": 124,
+      "height": 110,
+      "kind": "illustration_crop",
+      "sha256": "84a4ed458115b7f1075b077ad5111576ade2cbb03503503fc202a2f2be177497",
+      "source_asset_id": "screen--mixing-with-intention",
+      "crop_xyxy": [
+        302,
+        655,
+        426,
+        765
+      ],
+      "alt": "Chromatic black illustration from Mixing with intention",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--mixing-with-intention--subtractive-mixing": {
+      "id": "illustration--mixing-with-intention--subtractive-mixing",
+      "path": "assets/illustrations/mixing-with-intention--subtractive-mixing.png",
+      "mime_type": "image/png",
+      "width": 130,
+      "height": 110,
+      "kind": "illustration_crop",
+      "sha256": "fa1de29e1dfa4b9c63b8a6a2630f40525cd5c9ba03cce52d9b3fa83cc43f1955",
+      "source_asset_id": "screen--mixing-with-intention",
+      "crop_xyxy": [
+        793,
+        655,
+        923,
+        765
+      ],
+      "alt": "Subtractive mixing illustration from Mixing with intention",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "screen--design-your-palette": {
+      "id": "screen--design-your-palette",
+      "path": "assets/screens/exec-adf0e85b-c80b-414c-9ee0-4c802864ae4c.png",
+      "mime_type": "image/png",
+      "width": 1536,
+      "height": 1024,
+      "kind": "source_screenshot",
+      "sha256": "1e2d8373e150b5012e36e7ce954c78ea72052a1abdfa01049b53709773497f56",
+      "original_filename": "exec-adf0e85b-c80b-414c-9ee0-4c802864ae4c.png",
+      "alt": "Design your palette original modal screenshot"
+    },
+    "illustration--design-your-palette--limited-palette": {
+      "id": "illustration--design-your-palette--limited-palette",
+      "path": "assets/illustrations/design-your-palette--limited-palette.png",
+      "mime_type": "image/png",
+      "width": 182,
+      "height": 105,
+      "kind": "illustration_crop",
+      "sha256": "6b2f7b348e1765bd94bb68e891c7146ff04a98360cf06180111ae0d20a14fa0c",
+      "source_asset_id": "screen--design-your-palette",
+      "crop_xyxy": [
+        286,
+        409,
+        468,
+        514
+      ],
+      "alt": "Limited palette illustration from Design your palette",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--design-your-palette--split-primary-palette": {
+      "id": "illustration--design-your-palette--split-primary-palette",
+      "path": "assets/illustrations/design-your-palette--split-primary-palette.png",
+      "mime_type": "image/png",
+      "width": 206,
+      "height": 67,
+      "kind": "illustration_crop",
+      "sha256": "d46c8561c4b51b3d544c46bdcefe5ecdae816d33bf09ff70ed03984d5e16cc2f",
+      "source_asset_id": "screen--design-your-palette",
+      "crop_xyxy": [
+        792,
+        418,
+        998,
+        485
+      ],
+      "alt": "Split-primary palette illustration from Design your palette",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--design-your-palette--color-string": {
+      "id": "illustration--design-your-palette--color-string",
+      "path": "assets/illustrations/design-your-palette--color-string.png",
+      "mime_type": "image/png",
+      "width": 182,
+      "height": 105,
+      "kind": "illustration_crop",
+      "sha256": "c982e9c279ab27aa1771721a2cc35d55668ab5ed9b2fe0c7b4a0300a1db79974",
+      "source_asset_id": "screen--design-your-palette",
+      "crop_xyxy": [
+        286,
+        546,
+        468,
+        651
+      ],
+      "alt": "Color string illustration from Design your palette",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--design-your-palette--mother-color": {
+      "id": "illustration--design-your-palette--mother-color",
+      "path": "assets/illustrations/design-your-palette--mother-color.png",
+      "mime_type": "image/png",
+      "width": 182,
+      "height": 105,
+      "kind": "illustration_crop",
+      "sha256": "8804da76f88515515e5ecde52d3f41defd15770a6144142b4af98a302bd01c3a",
+      "source_asset_id": "screen--design-your-palette",
+      "crop_xyxy": [
+        792,
+        546,
+        974,
+        651
+      ],
+      "alt": "Mother color illustration from Design your palette",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--design-your-palette--gamut-mapping": {
+      "id": "illustration--design-your-palette--gamut-mapping",
+      "path": "assets/illustrations/design-your-palette--gamut-mapping.png",
+      "mime_type": "image/png",
+      "width": 182,
+      "height": 105,
+      "kind": "illustration_crop",
+      "sha256": "5d47c1ac3eacd9c10dab2da6e752d04259e52b079f5b51b3dc8b5261c63f8581",
+      "source_asset_id": "screen--design-your-palette",
+      "crop_xyxy": [
+        286,
+        681,
+        468,
+        786
+      ],
+      "alt": "Gamut mapping illustration from Design your palette",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--design-your-palette--earth-colors": {
+      "id": "illustration--design-your-palette--earth-colors",
+      "path": "assets/illustrations/design-your-palette--earth-colors.png",
+      "mime_type": "image/png",
+      "width": 206,
+      "height": 105,
+      "kind": "illustration_crop",
+      "sha256": "c37ddb3a14bbfee967472065d5dcb119764be8268f0cc6b27dc39e6560da627d",
+      "source_asset_id": "screen--design-your-palette",
+      "crop_xyxy": [
+        792,
+        681,
+        998,
+        786
+      ],
+      "alt": "Earth colors illustration from Design your palette",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "screen--read-light-on-form": {
+      "id": "screen--read-light-on-form",
+      "path": "assets/screens/exec-e94b5309-4a7f-493b-88b9-45df66821679.png",
+      "mime_type": "image/png",
+      "width": 1536,
+      "height": 1024,
+      "kind": "source_screenshot",
+      "sha256": "672afb744372983201bcf8890b38f8e0d54a67c646a2977edf45c2b847f06319",
+      "original_filename": "exec-e94b5309-4a7f-493b-88b9-45df66821679.png",
+      "alt": "Read light on form original modal screenshot"
+    },
+    "illustration--read-light-on-form--local-color": {
+      "id": "illustration--read-light-on-form--local-color",
+      "path": "assets/illustrations/read-light-on-form--local-color.png",
+      "mime_type": "image/png",
+      "width": 114,
+      "height": 105,
+      "kind": "illustration_crop",
+      "sha256": "9e3eaee4c5f2eb0eeb3aa31005aa1a25250a35e0d4a5c3149009132e4c78d1fb",
+      "source_asset_id": "screen--read-light-on-form",
+      "crop_xyxy": [
+        292,
+        382,
+        406,
+        487
+      ],
+      "alt": "Local color illustration from Read light on form",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--read-light-on-form--observed-color": {
+      "id": "illustration--read-light-on-form--observed-color",
+      "path": "assets/illustrations/read-light-on-form--observed-color.png",
+      "mime_type": "image/png",
+      "width": 114,
+      "height": 105,
+      "kind": "illustration_crop",
+      "sha256": "279b66fdb4f615cfdb32739f68cc1e1313e58c1b785cdff8bafa1e9df4f30150",
+      "source_asset_id": "screen--read-light-on-form",
+      "crop_xyxy": [
+        796,
+        382,
+        910,
+        487
+      ],
+      "alt": "Observed color illustration from Read light on form",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--read-light-on-form--light-family": {
+      "id": "illustration--read-light-on-form--light-family",
+      "path": "assets/illustrations/read-light-on-form--light-family.png",
+      "mime_type": "image/png",
+      "width": 114,
+      "height": 105,
+      "kind": "illustration_crop",
+      "sha256": "69a12407109d37a3183784b728afc4af53a1ae6e7752ff88c3e817a6341f11cf",
+      "source_asset_id": "screen--read-light-on-form",
+      "crop_xyxy": [
+        292,
+        513,
+        406,
+        618
+      ],
+      "alt": "Light family illustration from Read light on form",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--read-light-on-form--halftone": {
+      "id": "illustration--read-light-on-form--halftone",
+      "path": "assets/illustrations/read-light-on-form--halftone.png",
+      "mime_type": "image/png",
+      "width": 114,
+      "height": 105,
+      "kind": "illustration_crop",
+      "sha256": "7d4d660dee88348757a28fdc705c7b07c902791f047b031c0f1584efe0d5e90e",
+      "source_asset_id": "screen--read-light-on-form",
+      "crop_xyxy": [
+        796,
+        513,
+        910,
+        618
+      ],
+      "alt": "Halftone illustration from Read light on form",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--read-light-on-form--terminator": {
+      "id": "illustration--read-light-on-form--terminator",
+      "path": "assets/illustrations/read-light-on-form--terminator.png",
+      "mime_type": "image/png",
+      "width": 114,
+      "height": 105,
+      "kind": "illustration_crop",
+      "sha256": "59051e832e3065f18375b0af838622fb884c7d02ab1136aee79e635b4d696010",
+      "source_asset_id": "screen--read-light-on-form",
+      "crop_xyxy": [
+        292,
+        643,
+        406,
+        748
+      ],
+      "alt": "Terminator illustration from Read light on form",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--read-light-on-form--form-shadow": {
+      "id": "illustration--read-light-on-form--form-shadow",
+      "path": "assets/illustrations/read-light-on-form--form-shadow.png",
+      "mime_type": "image/png",
+      "width": 114,
+      "height": 105,
+      "kind": "illustration_crop",
+      "sha256": "4b080f6b8795e28ca65125cc66888a3140c39cb5df8057d4c766abbf177f772d",
+      "source_asset_id": "screen--read-light-on-form",
+      "crop_xyxy": [
+        796,
+        643,
+        910,
+        748
+      ],
+      "alt": "Form shadow illustration from Read light on form",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "screen--shadows-and-reflections": {
+      "id": "screen--shadows-and-reflections",
+      "path": "assets/screens/exec-d91915af-5277-41ea-81ea-5ea555e90e86.png",
+      "mime_type": "image/png",
+      "width": 1536,
+      "height": 1024,
+      "kind": "source_screenshot",
+      "sha256": "3a76668c542c43ed4a39023166ad1a130287d2d5ce2e5be4370b6e0d438a4836",
+      "original_filename": "exec-d91915af-5277-41ea-81ea-5ea555e90e86.png",
+      "alt": "Understand shadows and reflections original modal screenshot"
+    },
+    "illustration--shadows-and-reflections--core-shadow": {
+      "id": "illustration--shadows-and-reflections--core-shadow",
+      "path": "assets/illustrations/shadows-and-reflections--core-shadow.png",
+      "mime_type": "image/png",
+      "width": 129,
+      "height": 103,
+      "kind": "illustration_crop",
+      "sha256": "52d51657a3ad1da1e85f957e5256b239fa64a0389c670391f286ffbe6882d419",
+      "source_asset_id": "screen--shadows-and-reflections",
+      "crop_xyxy": [
+        307,
+        413,
+        436,
+        516
+      ],
+      "alt": "Core shadow illustration from Understand shadows and reflections",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--shadows-and-reflections--cast-shadow": {
+      "id": "illustration--shadows-and-reflections--cast-shadow",
+      "path": "assets/illustrations/shadows-and-reflections--cast-shadow.png",
+      "mime_type": "image/png",
+      "width": 129,
+      "height": 103,
+      "kind": "illustration_crop",
+      "sha256": "0b8b5835e1bdeea4847eb9d41a6fc6861eb7ca15f1f4e1b90ccd71a1cc53c2b4",
+      "source_asset_id": "screen--shadows-and-reflections",
+      "crop_xyxy": [
+        803,
+        413,
+        932,
+        516
+      ],
+      "alt": "Cast shadow illustration from Understand shadows and reflections",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--shadows-and-reflections--contact-shadow": {
+      "id": "illustration--shadows-and-reflections--contact-shadow",
+      "path": "assets/illustrations/shadows-and-reflections--contact-shadow.png",
+      "mime_type": "image/png",
+      "width": 129,
+      "height": 103,
+      "kind": "illustration_crop",
+      "sha256": "911f233ac9a439d30e9fb71c0f0fd2ac77b8accf93686378e21216f0250c0000",
+      "source_asset_id": "screen--shadows-and-reflections",
+      "crop_xyxy": [
+        307,
+        538,
+        436,
+        641
+      ],
+      "alt": "Contact shadow illustration from Understand shadows and reflections",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--shadows-and-reflections--reflected-light": {
+      "id": "illustration--shadows-and-reflections--reflected-light",
+      "path": "assets/illustrations/shadows-and-reflections--reflected-light.png",
+      "mime_type": "image/png",
+      "width": 129,
+      "height": 103,
+      "kind": "illustration_crop",
+      "sha256": "8873bd85654c9331cec9b376914a6ae4ce044adda52082c31fc3f4ad6a952c22",
+      "source_asset_id": "screen--shadows-and-reflections",
+      "crop_xyxy": [
+        803,
+        538,
+        932,
+        641
+      ],
+      "alt": "Reflected light illustration from Understand shadows and reflections",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--shadows-and-reflections--highlight": {
+      "id": "illustration--shadows-and-reflections--highlight",
+      "path": "assets/illustrations/shadows-and-reflections--highlight.png",
+      "mime_type": "image/png",
+      "width": 129,
+      "height": 103,
+      "kind": "illustration_crop",
+      "sha256": "ad89a515b20673257eafb6d46b747806332d9ba130df66099a5400879c6793d5",
+      "source_asset_id": "screen--shadows-and-reflections",
+      "crop_xyxy": [
+        307,
+        667,
+        436,
+        770
+      ],
+      "alt": "Highlight illustration from Understand shadows and reflections",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--shadows-and-reflections--temperature-shift": {
+      "id": "illustration--shadows-and-reflections--temperature-shift",
+      "path": "assets/illustrations/shadows-and-reflections--temperature-shift.png",
+      "mime_type": "image/png",
+      "width": 129,
+      "height": 103,
+      "kind": "illustration_crop",
+      "sha256": "350a77c095993087865df3d50fd68ca9933c182c6bb12d2efd40f3174d524539",
+      "source_asset_id": "screen--shadows-and-reflections",
+      "crop_xyxy": [
+        803,
+        667,
+        932,
+        770
+      ],
+      "alt": "Temperature shift illustration from Understand shadows and reflections",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "screen--compose-with-color": {
+      "id": "screen--compose-with-color",
+      "path": "assets/screens/exec-23fab1f0-0f01-495d-a517-87b6def18026.png",
+      "mime_type": "image/png",
+      "width": 1536,
+      "height": 1024,
+      "kind": "source_screenshot",
+      "sha256": "61991ac76f4be48e61f18fd30fe995adeda6fdc9e84af6bfa12c9f0105b5561e",
+      "original_filename": "exec-23fab1f0-0f01-495d-a517-87b6def18026.png",
+      "alt": "Compose with color original modal screenshot"
+    },
+    "illustration--compose-with-color--dominant-color": {
+      "id": "illustration--compose-with-color--dominant-color",
+      "path": "assets/illustrations/compose-with-color--dominant-color.png",
+      "mime_type": "image/png",
+      "width": 139,
+      "height": 91,
+      "kind": "illustration_crop",
+      "sha256": "168cba2def86da8ecbad5d28b1cbf5710ba045d168bf04c3b032cec34f54620d",
+      "source_asset_id": "screen--compose-with-color",
+      "crop_xyxy": [
+        300,
+        379,
+        439,
+        470
+      ],
+      "alt": "Dominant color illustration from Compose with color",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--compose-with-color--accent-color": {
+      "id": "illustration--compose-with-color--accent-color",
+      "path": "assets/illustrations/compose-with-color--accent-color.png",
+      "mime_type": "image/png",
+      "width": 149,
+      "height": 91,
+      "kind": "illustration_crop",
+      "sha256": "1151ff1af954200149a173b2ca188ced76f1edeb8a7627ddf8148ae80e07370b",
+      "source_asset_id": "screen--compose-with-color",
+      "crop_xyxy": [
+        789,
+        379,
+        938,
+        470
+      ],
+      "alt": "Accent color illustration from Compose with color",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--compose-with-color--high-key-low-key": {
+      "id": "illustration--compose-with-color--high-key-low-key",
+      "path": "assets/illustrations/compose-with-color--high-key-low-key.png",
+      "mime_type": "image/png",
+      "width": 139,
+      "height": 91,
+      "kind": "illustration_crop",
+      "sha256": "b9c59fbbf19634d3587acd6d5fee42bbd8aa9163ca6c540ba9805ef46f3d355c",
+      "source_asset_id": "screen--compose-with-color",
+      "crop_xyxy": [
+        300,
+        518,
+        439,
+        609
+      ],
+      "alt": "High-key / low-key illustration from Compose with color",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--compose-with-color--notan": {
+      "id": "illustration--compose-with-color--notan",
+      "path": "assets/illustrations/compose-with-color--notan.png",
+      "mime_type": "image/png",
+      "width": 149,
+      "height": 91,
+      "kind": "illustration_crop",
+      "sha256": "4fb44593e6aba085f0fb53e267b1d37f2576596cff7bd0ee6d27f553e0fbf2cd",
+      "source_asset_id": "screen--compose-with-color",
+      "crop_xyxy": [
+        789,
+        518,
+        938,
+        609
+      ],
+      "alt": "Notan illustration from Compose with color",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--compose-with-color--value-compression": {
+      "id": "illustration--compose-with-color--value-compression",
+      "path": "assets/illustrations/compose-with-color--value-compression.png",
+      "mime_type": "image/png",
+      "width": 139,
+      "height": 91,
+      "kind": "illustration_crop",
+      "sha256": "ebed7a6f5b8cb7e80c00dd730d483c6bbabd8555b3633a94fced89822188c165",
+      "source_asset_id": "screen--compose-with-color",
+      "crop_xyxy": [
+        300,
+        649,
+        439,
+        740
+      ],
+      "alt": "Value compression illustration from Compose with color",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--compose-with-color--chroma-hierarchy": {
+      "id": "illustration--compose-with-color--chroma-hierarchy",
+      "path": "assets/illustrations/compose-with-color--chroma-hierarchy.png",
+      "mime_type": "image/png",
+      "width": 149,
+      "height": 91,
+      "kind": "illustration_crop",
+      "sha256": "9a6cdf49664686c008197d0b772a416ec63a8e150b636678eecc79da0a79c6fe",
+      "source_asset_id": "screen--compose-with-color",
+      "crop_xyxy": [
+        789,
+        649,
+        938,
+        740
+      ],
+      "alt": "Chroma hierarchy illustration from Compose with color",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "screen--perception-and-atmosphere": {
+      "id": "screen--perception-and-atmosphere",
+      "path": "assets/screens/exec-d3d6b0b2-4c12-46e2-a550-9789ed5e47b3.png",
+      "mime_type": "image/png",
+      "width": 1536,
+      "height": 1024,
+      "kind": "source_screenshot",
+      "sha256": "2a4bc4a902fb2cc7c467287610dce42ec12aeab6709a90f06e37bddf6433f048",
+      "original_filename": "exec-d3d6b0b2-4c12-46e2-a550-9789ed5e47b3.png",
+      "alt": "Perception and atmosphere original modal screenshot"
+    },
+    "illustration--perception-and-atmosphere--chromatic-adaptation": {
+      "id": "illustration--perception-and-atmosphere--chromatic-adaptation",
+      "path": "assets/illustrations/perception-and-atmosphere--chromatic-adaptation.png",
+      "mime_type": "image/png",
+      "width": 175,
+      "height": 96,
+      "kind": "illustration_crop",
+      "sha256": "dd78deedd21db22f98f0e64c9ed6eb2691341951245a938a2f4cfd89f0682e0b",
+      "source_asset_id": "screen--perception-and-atmosphere",
+      "crop_xyxy": [
+        288,
+        397,
+        463,
+        493
+      ],
+      "alt": "Chromatic adaptation illustration from Perception and atmosphere",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--perception-and-atmosphere--color-constancy": {
+      "id": "illustration--perception-and-atmosphere--color-constancy",
+      "path": "assets/illustrations/perception-and-atmosphere--color-constancy.png",
+      "mime_type": "image/png",
+      "width": 175,
+      "height": 96,
+      "kind": "illustration_crop",
+      "sha256": "1c4ebcc70bcf3bb574d367dcc03f87c04df2072691019bbc9caac0ec475add51",
+      "source_asset_id": "screen--perception-and-atmosphere",
+      "crop_xyxy": [
+        798,
+        397,
+        973,
+        493
+      ],
+      "alt": "Color constancy illustration from Perception and atmosphere",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--perception-and-atmosphere--afterimage": {
+      "id": "illustration--perception-and-atmosphere--afterimage",
+      "path": "assets/illustrations/perception-and-atmosphere--afterimage.png",
+      "mime_type": "image/png",
+      "width": 175,
+      "height": 96,
+      "kind": "illustration_crop",
+      "sha256": "63158cad6573091b1f911154089ce5082c86f7e5fe13c90cb4cbda2a5b7ae140",
+      "source_asset_id": "screen--perception-and-atmosphere",
+      "crop_xyxy": [
+        288,
+        528,
+        463,
+        624
+      ],
+      "alt": "Afterimage illustration from Perception and atmosphere",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--perception-and-atmosphere--optical-mixing": {
+      "id": "illustration--perception-and-atmosphere--optical-mixing",
+      "path": "assets/illustrations/perception-and-atmosphere--optical-mixing.png",
+      "mime_type": "image/png",
+      "width": 175,
+      "height": 96,
+      "kind": "illustration_crop",
+      "sha256": "71a163b0c9dd154abee2aff0665f131e06036c3082d7c7af25a6c5657fa8a3f3",
+      "source_asset_id": "screen--perception-and-atmosphere",
+      "crop_xyxy": [
+        798,
+        528,
+        973,
+        624
+      ],
+      "alt": "Optical mixing illustration from Perception and atmosphere",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--perception-and-atmosphere--broken-color": {
+      "id": "illustration--perception-and-atmosphere--broken-color",
+      "path": "assets/illustrations/perception-and-atmosphere--broken-color.png",
+      "mime_type": "image/png",
+      "width": 175,
+      "height": 96,
+      "kind": "illustration_crop",
+      "sha256": "5edd95bb765f5864b88b6ce835a00e1a1bc83b728e50507a5f199a250f1ecd46",
+      "source_asset_id": "screen--perception-and-atmosphere",
+      "crop_xyxy": [
+        288,
+        663,
+        463,
+        759
+      ],
+      "alt": "Broken color illustration from Perception and atmosphere",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--perception-and-atmosphere--aerial-perspective": {
+      "id": "illustration--perception-and-atmosphere--aerial-perspective",
+      "path": "assets/illustrations/perception-and-atmosphere--aerial-perspective.png",
+      "mime_type": "image/png",
+      "width": 175,
+      "height": 96,
+      "kind": "illustration_crop",
+      "sha256": "02debf5d1e409afc05840e03a25ecc23e4ece20da38b1b3955da939ef500a1c1",
+      "source_asset_id": "screen--perception-and-atmosphere",
+      "crop_xyxy": [
+        798,
+        663,
+        973,
+        759
+      ],
+      "alt": "Aerial perspective illustration from Perception and atmosphere",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "screen--know-your-paint": {
+      "id": "screen--know-your-paint",
+      "path": "assets/screens/exec-52163186-06ac-4805-9983-7c125242ce8a.png",
+      "mime_type": "image/png",
+      "width": 1536,
+      "height": 1024,
+      "kind": "source_screenshot",
+      "sha256": "404ba4bdc1d501b86d335649f6bce5bdc77cf35fc803e9d78594b2d5bc70bb74",
+      "original_filename": "exec-52163186-06ac-4805-9983-7c125242ce8a.png",
+      "alt": "Know your paint original modal screenshot"
+    },
+    "illustration--know-your-paint--pigment": {
+      "id": "illustration--know-your-paint--pigment",
+      "path": "assets/illustrations/know-your-paint--pigment.png",
+      "mime_type": "image/png",
+      "width": 126,
+      "height": 111,
+      "kind": "illustration_crop",
+      "sha256": "f857e4a83f1b592761e7ff0363c3d60032a28af351475d672efc0854c3abc8fd",
+      "source_asset_id": "screen--know-your-paint",
+      "crop_xyxy": [
+        348,
+        382,
+        474,
+        493
+      ],
+      "alt": "Pigment illustration from Know your paint",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--know-your-paint--binder": {
+      "id": "illustration--know-your-paint--binder",
+      "path": "assets/illustrations/know-your-paint--binder.png",
+      "mime_type": "image/png",
+      "width": 126,
+      "height": 111,
+      "kind": "illustration_crop",
+      "sha256": "6df6acda45c723233aa78523a6a3889d81b7b5fa2702a4e627e78c4e19a567bd",
+      "source_asset_id": "screen--know-your-paint",
+      "crop_xyxy": [
+        791,
+        382,
+        917,
+        493
+      ],
+      "alt": "Binder illustration from Know your paint",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--know-your-paint--medium": {
+      "id": "illustration--know-your-paint--medium",
+      "path": "assets/illustrations/know-your-paint--medium.png",
+      "mime_type": "image/png",
+      "width": 126,
+      "height": 111,
+      "kind": "illustration_crop",
+      "sha256": "a04e2d5e7b2ea9a73612316adf29e835b70c7ce2443f5fdcbf519a70e9e49770",
+      "source_asset_id": "screen--know-your-paint",
+      "crop_xyxy": [
+        348,
+        520,
+        474,
+        631
+      ],
+      "alt": "Medium illustration from Know your paint",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--know-your-paint--masstone": {
+      "id": "illustration--know-your-paint--masstone",
+      "path": "assets/illustrations/know-your-paint--masstone.png",
+      "mime_type": "image/png",
+      "width": 126,
+      "height": 111,
+      "kind": "illustration_crop",
+      "sha256": "7635785a1c38459321d7b973da0a193f4c6e1cdf9cc12bd83a4bb1bb2680fe74",
+      "source_asset_id": "screen--know-your-paint",
+      "crop_xyxy": [
+        791,
+        520,
+        917,
+        631
+      ],
+      "alt": "Masstone illustration from Know your paint",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--know-your-paint--tinting-strength": {
+      "id": "illustration--know-your-paint--tinting-strength",
+      "path": "assets/illustrations/know-your-paint--tinting-strength.png",
+      "mime_type": "image/png",
+      "width": 126,
+      "height": 111,
+      "kind": "illustration_crop",
+      "sha256": "bc5f767a3a516b2ca15d06106c8d0fd6dd13741a483afd64a88b0263f7c50306",
+      "source_asset_id": "screen--know-your-paint",
+      "crop_xyxy": [
+        348,
+        662,
+        474,
+        773
+      ],
+      "alt": "Tinting strength illustration from Know your paint",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--know-your-paint--color-index": {
+      "id": "illustration--know-your-paint--color-index",
+      "path": "assets/illustrations/know-your-paint--color-index.png",
+      "mime_type": "image/png",
+      "width": 126,
+      "height": 111,
+      "kind": "illustration_crop",
+      "sha256": "1234065e5e7ffa22a6dc4fb00cf6bf805fe5abca262f50b630e0389345fa9c17",
+      "source_asset_id": "screen--know-your-paint",
+      "crop_xyxy": [
+        791,
+        662,
+        917,
+        773
+      ],
+      "alt": "Color Index illustration from Know your paint",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "screen--layers-and-surface": {
+      "id": "screen--layers-and-surface",
+      "path": "assets/screens/exec-5b6680cf-cab4-4ed4-be87-85e605192c32.png",
+      "mime_type": "image/png",
+      "width": 1536,
+      "height": 1024,
+      "kind": "source_screenshot",
+      "sha256": "95d5b996d92beb8915077a753c006b40248347e33bbef64f1892f6ef0418dedb",
+      "original_filename": "exec-5b6680cf-cab4-4ed4-be87-85e605192c32.png",
+      "alt": "Layers and surface original modal screenshot"
+    },
+    "illustration--layers-and-surface--imprimatura": {
+      "id": "illustration--layers-and-surface--imprimatura",
+      "path": "assets/illustrations/layers-and-surface--imprimatura.png",
+      "mime_type": "image/png",
+      "width": 138,
+      "height": 91,
+      "kind": "illustration_crop",
+      "sha256": "1ec9cc5ebb1b4ea584801bd288b51e2347344717f6e36a8ee2fbd0632b527a5c",
+      "source_asset_id": "screen--layers-and-surface",
+      "crop_xyxy": [
+        287,
+        422,
+        425,
+        513
+      ],
+      "alt": "Imprimatura illustration from Layers and surface",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--layers-and-surface--underpainting": {
+      "id": "illustration--layers-and-surface--underpainting",
+      "path": "assets/illustrations/layers-and-surface--underpainting.png",
+      "mime_type": "image/png",
+      "width": 138,
+      "height": 91,
+      "kind": "illustration_crop",
+      "sha256": "ec1ecbe4f17da4b2da11e720fd4f81c8a1bf685878d5f47cd39541c18ce0573f",
+      "source_asset_id": "screen--layers-and-surface",
+      "crop_xyxy": [
+        792,
+        422,
+        930,
+        513
+      ],
+      "alt": "Underpainting illustration from Layers and surface",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--layers-and-surface--grisaille": {
+      "id": "illustration--layers-and-surface--grisaille",
+      "path": "assets/illustrations/layers-and-surface--grisaille.png",
+      "mime_type": "image/png",
+      "width": 138,
+      "height": 91,
+      "kind": "illustration_crop",
+      "sha256": "197185020e1c6675a07977a57198bf8a1a311ae4c1fc95fd4c0427bc1b11504c",
+      "source_asset_id": "screen--layers-and-surface",
+      "crop_xyxy": [
+        287,
+        553,
+        425,
+        644
+      ],
+      "alt": "Grisaille illustration from Layers and surface",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--layers-and-surface--alla-prima": {
+      "id": "illustration--layers-and-surface--alla-prima",
+      "path": "assets/illustrations/layers-and-surface--alla-prima.png",
+      "mime_type": "image/png",
+      "width": 138,
+      "height": 91,
+      "kind": "illustration_crop",
+      "sha256": "3004d089c777ef4ff220d4ee3efe4fc5d30bceb8913d1417f2fb93220aeffde7",
+      "source_asset_id": "screen--layers-and-surface",
+      "crop_xyxy": [
+        792,
+        553,
+        930,
+        644
+      ],
+      "alt": "Alla prima illustration from Layers and surface",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--layers-and-surface--impasto": {
+      "id": "illustration--layers-and-surface--impasto",
+      "path": "assets/illustrations/layers-and-surface--impasto.png",
+      "mime_type": "image/png",
+      "width": 138,
+      "height": 91,
+      "kind": "illustration_crop",
+      "sha256": "381d3777349648c0229e04efc501c462dfff45bf7c676198edb65d833af886f5",
+      "source_asset_id": "screen--layers-and-surface",
+      "crop_xyxy": [
+        287,
+        681,
+        425,
+        772
+      ],
+      "alt": "Impasto illustration from Layers and surface",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--layers-and-surface--sinking-in": {
+      "id": "illustration--layers-and-surface--sinking-in",
+      "path": "assets/illustrations/layers-and-surface--sinking-in.png",
+      "mime_type": "image/png",
+      "width": 138,
+      "height": 91,
+      "kind": "illustration_crop",
+      "sha256": "afe7bb7675ccd45432b2604a153efe3093e015bac978412d2a018e5740e2bd16",
+      "source_asset_id": "screen--layers-and-surface",
+      "crop_xyxy": [
+        792,
+        681,
+        930,
+        772
+      ],
+      "alt": "Sinking in illustration from Layers and surface",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "screen--decode-studio-feedback": {
+      "id": "screen--decode-studio-feedback",
+      "path": "assets/screens/exec-81b5857e-6e4a-474d-9ada-24dff9358b79.png",
+      "mime_type": "image/png",
+      "width": 1536,
+      "height": 1024,
+      "kind": "source_screenshot",
+      "sha256": "243af0d1408607a69cee2dd65d374e18de1e157da7ab0763aafa17d0e170140c",
+      "original_filename": "exec-81b5857e-6e4a-474d-9ada-24dff9358b79.png",
+      "alt": "Decode studio feedback original modal screenshot"
+    },
+    "illustration--decode-studio-feedback--muddy": {
+      "id": "illustration--decode-studio-feedback--muddy",
+      "path": "assets/illustrations/decode-studio-feedback--muddy.png",
+      "mime_type": "image/png",
+      "width": 132,
+      "height": 105,
+      "kind": "illustration_crop",
+      "sha256": "d9ee2433b804d6804bbb96c9cb94094221eefc6765d95cfd89856c01a2050759",
+      "source_asset_id": "screen--decode-studio-feedback",
+      "crop_xyxy": [
+        330,
+        383,
+        462,
+        488
+      ],
+      "alt": "Muddy illustration from Decode studio feedback",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--decode-studio-feedback--chalky": {
+      "id": "illustration--decode-studio-feedback--chalky",
+      "path": "assets/illustrations/decode-studio-feedback--chalky.png",
+      "mime_type": "image/png",
+      "width": 132,
+      "height": 105,
+      "kind": "illustration_crop",
+      "sha256": "608b9758db2f48b0fd873471b1503b0f0e4063693eeba48bb6150483eed7b62c",
+      "source_asset_id": "screen--decode-studio-feedback",
+      "crop_xyxy": [
+        797,
+        383,
+        929,
+        488
+      ],
+      "alt": "Chalky illustration from Decode studio feedback",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--decode-studio-feedback--too-hot": {
+      "id": "illustration--decode-studio-feedback--too-hot",
+      "path": "assets/illustrations/decode-studio-feedback--too-hot.png",
+      "mime_type": "image/png",
+      "width": 132,
+      "height": 105,
+      "kind": "illustration_crop",
+      "sha256": "8f76c436418ec73303eb8751bd187b1e234280156a85041d1bd508ab93208820",
+      "source_asset_id": "screen--decode-studio-feedback",
+      "crop_xyxy": [
+        330,
+        521,
+        462,
+        626
+      ],
+      "alt": "Too hot illustration from Decode studio feedback",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--decode-studio-feedback--luminous": {
+      "id": "illustration--decode-studio-feedback--luminous",
+      "path": "assets/illustrations/decode-studio-feedback--luminous.png",
+      "mime_type": "image/png",
+      "width": 132,
+      "height": 105,
+      "kind": "illustration_crop",
+      "sha256": "3c765ef9e820ed73abb6901a15aba6eacf2730b9d8f0daad3a3385b3bade76dc",
+      "source_asset_id": "screen--decode-studio-feedback",
+      "crop_xyxy": [
+        797,
+        521,
+        929,
+        626
+      ],
+      "alt": "Luminous illustration from Decode studio feedback",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--decode-studio-feedback--lightfast": {
+      "id": "illustration--decode-studio-feedback--lightfast",
+      "path": "assets/illustrations/decode-studio-feedback--lightfast.png",
+      "mime_type": "image/png",
+      "width": 132,
+      "height": 105,
+      "kind": "illustration_crop",
+      "sha256": "b2c9c582b7a2036955393542e0803cbae77d6e640ce5f298d43835b4b2e7c25f",
+      "source_asset_id": "screen--decode-studio-feedback",
+      "crop_xyxy": [
+        330,
+        652,
+        462,
+        757
+      ],
+      "alt": "Lightfast illustration from Decode studio feedback",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--decode-studio-feedback--fugitive": {
+      "id": "illustration--decode-studio-feedback--fugitive",
+      "path": "assets/illustrations/decode-studio-feedback--fugitive.png",
+      "mime_type": "image/png",
+      "width": 132,
+      "height": 105,
+      "kind": "illustration_crop",
+      "sha256": "1b4b6677ae7c6613b5d2287c054827a007de0c05fbd710eab02ed32faebe7b33",
+      "source_asset_id": "screen--decode-studio-feedback",
+      "crop_xyxy": [
+        797,
+        652,
+        929,
+        757
+      ],
+      "alt": "Fugitive illustration from Decode studio feedback",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "screen--color-troubleshooting": {
+      "id": "screen--color-troubleshooting",
+      "path": "assets/screens/exec-6ae0ea0d-b6e2-4373-a519-878c784dad3a.png",
+      "mime_type": "image/png",
+      "width": 1536,
+      "height": 1024,
+      "kind": "source_screenshot",
+      "sha256": "e5ca551ecbad10ba48af2694f00aa3c8d270686faaa6597752c49df656e10e2e",
+      "original_filename": "exec-6ae0ea0d-b6e2-4373-a519-878c784dad3a.png",
+      "alt": "Color troubleshooting original modal screenshot"
+    },
+    "illustration--color-troubleshooting--too-pale": {
+      "id": "illustration--color-troubleshooting--too-pale",
+      "path": "assets/illustrations/color-troubleshooting--too-pale.png",
+      "mime_type": "image/png",
+      "width": 170,
+      "height": 90,
+      "kind": "illustration_crop",
+      "sha256": "98d7d356c5709a0847d0e349e7663b2443ce25020420a054e29a318fe777954b",
+      "source_asset_id": "screen--color-troubleshooting",
+      "crop_xyxy": [
+        287,
+        394,
+        457,
+        484
+      ],
+      "alt": "Too pale illustration from Color troubleshooting",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--color-troubleshooting--too-vivid": {
+      "id": "illustration--color-troubleshooting--too-vivid",
+      "path": "assets/illustrations/color-troubleshooting--too-vivid.png",
+      "mime_type": "image/png",
+      "width": 146,
+      "height": 77,
+      "kind": "illustration_crop",
+      "sha256": "07b133fd249cca7cc82d384ee6b693fe9b3c0d6bfe60eef9317280790b516a9d",
+      "source_asset_id": "screen--color-troubleshooting",
+      "crop_xyxy": [
+        793,
+        402,
+        939,
+        479
+      ],
+      "alt": "Too vivid illustration from Color troubleshooting",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--color-troubleshooting--too-dark": {
+      "id": "illustration--color-troubleshooting--too-dark",
+      "path": "assets/illustrations/color-troubleshooting--too-dark.png",
+      "mime_type": "image/png",
+      "width": 170,
+      "height": 90,
+      "kind": "illustration_crop",
+      "sha256": "34a939f9132954165e3949dd737b561c770e29d992df9038d350fabb9f8c5705",
+      "source_asset_id": "screen--color-troubleshooting",
+      "crop_xyxy": [
+        287,
+        539,
+        457,
+        629
+      ],
+      "alt": "Too dark illustration from Color troubleshooting",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--color-troubleshooting--too-warm": {
+      "id": "illustration--color-troubleshooting--too-warm",
+      "path": "assets/illustrations/color-troubleshooting--too-warm.png",
+      "mime_type": "image/png",
+      "width": 146,
+      "height": 81,
+      "kind": "illustration_crop",
+      "sha256": "6919799ccb5d3ea0a85be4517dc0bed19d95cd250cf9eb0b5f29d417c1c15397",
+      "source_asset_id": "screen--color-troubleshooting",
+      "crop_xyxy": [
+        793,
+        543,
+        939,
+        624
+      ],
+      "alt": "Too warm illustration from Color troubleshooting",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--color-troubleshooting--muddy": {
+      "id": "illustration--color-troubleshooting--muddy",
+      "path": "assets/illustrations/color-troubleshooting--muddy.png",
+      "mime_type": "image/png",
+      "width": 170,
+      "height": 90,
+      "kind": "illustration_crop",
+      "sha256": "c75efee678e89c29c4f7b1afa084103ad5a70e24535f7c6b263819b9145c6a61",
+      "source_asset_id": "screen--color-troubleshooting",
+      "crop_xyxy": [
+        287,
+        675,
+        457,
+        765
+      ],
+      "alt": "Muddy illustration from Color troubleshooting",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--color-troubleshooting--wrong-on-canvas": {
+      "id": "illustration--color-troubleshooting--wrong-on-canvas",
+      "path": "assets/illustrations/color-troubleshooting--wrong-on-canvas.png",
+      "mime_type": "image/png",
+      "width": 146,
+      "height": 81,
+      "kind": "illustration_crop",
+      "sha256": "f9991a4ba3931c04b521cd351a4d3cc3da086ddc729b884a1ea2d5314ca62b90",
+      "source_asset_id": "screen--color-troubleshooting",
+      "crop_xyxy": [
+        793,
+        676,
+        939,
+        757
+      ],
+      "alt": "Wrong on canvas illustration from Color troubleshooting",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "screen--choosing-axes-and-locks": {
+      "id": "screen--choosing-axes-and-locks",
+      "path": "assets/screens/exec-6940dd7d-b565-4e35-bfac-cd2e40fb174f.png",
+      "mime_type": "image/png",
+      "width": 1536,
+      "height": 1024,
+      "kind": "source_screenshot",
+      "sha256": "677db4f7b82c622b036ad0055db98c331c109ee3cd2e9d5929db9df2dc616569",
+      "original_filename": "exec-6940dd7d-b565-4e35-bfac-cd2e40fb174f.png",
+      "alt": "Choosing axes and locks original modal screenshot"
+    },
+    "illustration--choosing-axes-and-locks--choose-two-axes": {
+      "id": "illustration--choosing-axes-and-locks--choose-two-axes",
+      "path": "assets/illustrations/choosing-axes-and-locks--choose-two-axes.png",
+      "mime_type": "image/png",
+      "width": 151,
+      "height": 120,
+      "kind": "illustration_crop",
+      "sha256": "3d3cfbd87b8c725c9dcd8256062866960b0eeb63472557522310247d7e2a9996",
+      "source_asset_id": "screen--choosing-axes-and-locks",
+      "crop_xyxy": [
+        286,
+        393,
+        437,
+        513
+      ],
+      "alt": "Choose two axes illustration from Choosing axes and locks",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--choosing-axes-and-locks--hold-a-dimension": {
+      "id": "illustration--choosing-axes-and-locks--hold-a-dimension",
+      "path": "assets/illustrations/choosing-axes-and-locks--hold-a-dimension.png",
+      "mime_type": "image/png",
+      "width": 140,
+      "height": 84,
+      "kind": "illustration_crop",
+      "sha256": "9bd15b1e4149102784e84006abf78101eb0652f98f8589106c8f0ddcc61f4834",
+      "source_asset_id": "screen--choosing-axes-and-locks",
+      "crop_xyxy": [
+        793,
+        406,
+        933,
+        490
+      ],
+      "alt": "Hold a dimension illustration from Choosing axes and locks",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--choosing-axes-and-locks--hue-value": {
+      "id": "illustration--choosing-axes-and-locks--hue-value",
+      "path": "assets/illustrations/choosing-axes-and-locks--hue-value.png",
+      "mime_type": "image/png",
+      "width": 151,
+      "height": 67,
+      "kind": "illustration_crop",
+      "sha256": "6ddcd5020c2898426a823b0b8fa216c76b62bec4527a997163e7bba2caca4304",
+      "source_asset_id": "screen--choosing-axes-and-locks",
+      "crop_xyxy": [
+        286,
+        547,
+        437,
+        614
+      ],
+      "alt": "Hue × Value illustration from Choosing axes and locks",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--choosing-axes-and-locks--value-chroma": {
+      "id": "illustration--choosing-axes-and-locks--value-chroma",
+      "path": "assets/illustrations/choosing-axes-and-locks--value-chroma.png",
+      "mime_type": "image/png",
+      "width": 140,
+      "height": 89,
+      "kind": "illustration_crop",
+      "sha256": "48d1840577680a2657cc0c8c97b8844b79e01f1fe0a9ab616f04e6d1304cfc75",
+      "source_asset_id": "screen--choosing-axes-and-locks",
+      "crop_xyxy": [
+        793,
+        532,
+        933,
+        621
+      ],
+      "alt": "Value × Chroma illustration from Choosing axes and locks",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--choosing-axes-and-locks--relative-warmth": {
+      "id": "illustration--choosing-axes-and-locks--relative-warmth",
+      "path": "assets/illustrations/choosing-axes-and-locks--relative-warmth.png",
+      "mime_type": "image/png",
+      "width": 151,
+      "height": 87,
+      "kind": "illustration_crop",
+      "sha256": "b5cd8284ff002e2007a61f9535458b71c194819a76f85c68ad88e1725303824b",
+      "source_asset_id": "screen--choosing-axes-and-locks",
+      "crop_xyxy": [
+        286,
+        682,
+        437,
+        769
+      ],
+      "alt": "Relative warmth illustration from Choosing axes and locks",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--choosing-axes-and-locks--gamut-boundary": {
+      "id": "illustration--choosing-axes-and-locks--gamut-boundary",
+      "path": "assets/illustrations/choosing-axes-and-locks--gamut-boundary.png",
+      "mime_type": "image/png",
+      "width": 140,
+      "height": 113,
+      "kind": "illustration_crop",
+      "sha256": "e19f2ddd8299c4e64a267a6a03ef6027a131552a4200903f75c5a85175f6154a",
+      "source_asset_id": "screen--choosing-axes-and-locks",
+      "crop_xyxy": [
+        793,
+        664,
+        933,
+        777
+      ],
+      "alt": "Gamut boundary illustration from Choosing axes and locks",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "screen--harmony-recipes": {
+      "id": "screen--harmony-recipes",
+      "path": "assets/screens/exec-6256772c-69f2-4dbf-b9cd-e752151129f6.png",
+      "mime_type": "image/png",
+      "width": 1536,
+      "height": 1024,
+      "kind": "source_screenshot",
+      "sha256": "60a7a8e993a38caadf7182597458b85eecda7e44c8e67e6c9900f8ecfecd2e0c",
+      "original_filename": "exec-6256772c-69f2-4dbf-b9cd-e752151129f6.png",
+      "alt": "Harmony recipes original modal screenshot"
+    },
+    "illustration--harmony-recipes--monochromatic": {
+      "id": "illustration--harmony-recipes--monochromatic",
+      "path": "assets/illustrations/harmony-recipes--monochromatic.png",
+      "mime_type": "image/png",
+      "width": 151,
+      "height": 75,
+      "kind": "illustration_crop",
+      "sha256": "ff2609eada8548cf27dd0ceb469afd9a79c0ac790e049453f4fe53baf065871c",
+      "source_asset_id": "screen--harmony-recipes",
+      "crop_xyxy": [
+        288,
+        406,
+        439,
+        481
+      ],
+      "alt": "Monochromatic illustration from Harmony recipes",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--harmony-recipes--analogous": {
+      "id": "illustration--harmony-recipes--analogous",
+      "path": "assets/illustrations/harmony-recipes--analogous.png",
+      "mime_type": "image/png",
+      "width": 175,
+      "height": 75,
+      "kind": "illustration_crop",
+      "sha256": "e86443e1ce82dfbba302367f1863919662f032549e1662f8ebef5424915e8232",
+      "source_asset_id": "screen--harmony-recipes",
+      "crop_xyxy": [
+        793,
+        406,
+        968,
+        481
+      ],
+      "alt": "Analogous illustration from Harmony recipes",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--harmony-recipes--complementary": {
+      "id": "illustration--harmony-recipes--complementary",
+      "path": "assets/illustrations/harmony-recipes--complementary.png",
+      "mime_type": "image/png",
+      "width": 151,
+      "height": 75,
+      "kind": "illustration_crop",
+      "sha256": "b5acf90e20dafef2d23b5148c83d3765494767b891be5d8de7a9e71f4986f3f9",
+      "source_asset_id": "screen--harmony-recipes",
+      "crop_xyxy": [
+        288,
+        539,
+        439,
+        614
+      ],
+      "alt": "Complementary illustration from Harmony recipes",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--harmony-recipes--split-complementary": {
+      "id": "illustration--harmony-recipes--split-complementary",
+      "path": "assets/illustrations/harmony-recipes--split-complementary.png",
+      "mime_type": "image/png",
+      "width": 175,
+      "height": 75,
+      "kind": "illustration_crop",
+      "sha256": "a6e8501ee1c507bbcd1094e11a10b53e4b71aaa0e4f87ca8ee789b72ae701bcc",
+      "source_asset_id": "screen--harmony-recipes",
+      "crop_xyxy": [
+        793,
+        539,
+        968,
+        614
+      ],
+      "alt": "Split-complementary illustration from Harmony recipes",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--harmony-recipes--triadic": {
+      "id": "illustration--harmony-recipes--triadic",
+      "path": "assets/illustrations/harmony-recipes--triadic.png",
+      "mime_type": "image/png",
+      "width": 151,
+      "height": 75,
+      "kind": "illustration_crop",
+      "sha256": "34a076091228aaccea7832f16b5203144f387dc1d71b30e42819459db93b301f",
+      "source_asset_id": "screen--harmony-recipes",
+      "crop_xyxy": [
+        288,
+        683,
+        439,
+        758
+      ],
+      "alt": "Triadic illustration from Harmony recipes",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--harmony-recipes--tetradic": {
+      "id": "illustration--harmony-recipes--tetradic",
+      "path": "assets/illustrations/harmony-recipes--tetradic.png",
+      "mime_type": "image/png",
+      "width": 175,
+      "height": 75,
+      "kind": "illustration_crop",
+      "sha256": "93d587576e75405dcb2bb5ada2cabfa2a6d565ec110efd6e94a784b89741be32",
+      "source_asset_id": "screen--harmony-recipes",
+      "crop_xyxy": [
+        793,
+        683,
+        968,
+        758
+      ],
+      "alt": "Tetradic illustration from Harmony recipes",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "screen--edges-and-emphasis": {
+      "id": "screen--edges-and-emphasis",
+      "path": "assets/screens/exec-03ecec02-6aea-4d87-987a-4946bb97040c.png",
+      "mime_type": "image/png",
+      "width": 1536,
+      "height": 1024,
+      "kind": "source_screenshot",
+      "sha256": "afe4519e7e8fa81e851192ea2ee169aee216e0e5388ba2b5f345983890eefa8e",
+      "original_filename": "exec-03ecec02-6aea-4d87-987a-4946bb97040c.png",
+      "alt": "Edges and emphasis original modal screenshot"
+    },
+    "illustration--edges-and-emphasis--hard-edge": {
+      "id": "illustration--edges-and-emphasis--hard-edge",
+      "path": "assets/illustrations/edges-and-emphasis--hard-edge.png",
+      "mime_type": "image/png",
+      "width": 144,
+      "height": 112,
+      "kind": "illustration_crop",
+      "sha256": "0c45ec82c31d900241fb01aa646eb364f63c1f6b42a91b9379c8a116d1cfe1de",
+      "source_asset_id": "screen--edges-and-emphasis",
+      "crop_xyxy": [
+        287,
+        390,
+        431,
+        502
+      ],
+      "alt": "Hard edge illustration from Edges and emphasis",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--edges-and-emphasis--soft-edge": {
+      "id": "illustration--edges-and-emphasis--soft-edge",
+      "path": "assets/illustrations/edges-and-emphasis--soft-edge.png",
+      "mime_type": "image/png",
+      "width": 144,
+      "height": 112,
+      "kind": "illustration_crop",
+      "sha256": "babbcb1dbfd5c220ccbc86396e91ee69ac859097a0c90cf50490712a7d411d30",
+      "source_asset_id": "screen--edges-and-emphasis",
+      "crop_xyxy": [
+        793,
+        390,
+        937,
+        502
+      ],
+      "alt": "Soft edge illustration from Edges and emphasis",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--edges-and-emphasis--lost-edge": {
+      "id": "illustration--edges-and-emphasis--lost-edge",
+      "path": "assets/illustrations/edges-and-emphasis--lost-edge.png",
+      "mime_type": "image/png",
+      "width": 144,
+      "height": 111,
+      "kind": "illustration_crop",
+      "sha256": "bf37a8fce3c57f9a5bb34596e860097114153d822715184021d11b9ab49af8c5",
+      "source_asset_id": "screen--edges-and-emphasis",
+      "crop_xyxy": [
+        287,
+        540,
+        431,
+        651
+      ],
+      "alt": "Lost edge illustration from Edges and emphasis",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--edges-and-emphasis--found-edge": {
+      "id": "illustration--edges-and-emphasis--found-edge",
+      "path": "assets/illustrations/edges-and-emphasis--found-edge.png",
+      "mime_type": "image/png",
+      "width": 144,
+      "height": 111,
+      "kind": "illustration_crop",
+      "sha256": "3bd041b918514983812399f6cb2b42474837868a80d020f9ad2cc795f3dd5dc6",
+      "source_asset_id": "screen--edges-and-emphasis",
+      "crop_xyxy": [
+        793,
+        540,
+        937,
+        651
+      ],
+      "alt": "Found edge illustration from Edges and emphasis",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--edges-and-emphasis--focal-contrast": {
+      "id": "illustration--edges-and-emphasis--focal-contrast",
+      "path": "assets/illustrations/edges-and-emphasis--focal-contrast.png",
+      "mime_type": "image/png",
+      "width": 144,
+      "height": 101,
+      "kind": "illustration_crop",
+      "sha256": "b28bedb17eb12878c12e6326e6aa09c269f6b952235613c787381d1779b92a95",
+      "source_asset_id": "screen--edges-and-emphasis",
+      "crop_xyxy": [
+        287,
+        690,
+        431,
+        791
+      ],
+      "alt": "Focal contrast illustration from Edges and emphasis",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--edges-and-emphasis--edge-hierarchy": {
+      "id": "illustration--edges-and-emphasis--edge-hierarchy",
+      "path": "assets/illustrations/edges-and-emphasis--edge-hierarchy.png",
+      "mime_type": "image/png",
+      "width": 148,
+      "height": 101,
+      "kind": "illustration_crop",
+      "sha256": "0d816324a3e12def704906f58bbc77be091d5cea495a227a0c5c419f3113b32f",
+      "source_asset_id": "screen--edges-and-emphasis",
+      "crop_xyxy": [
+        793,
+        690,
+        941,
+        791
+      ],
+      "alt": "Edge hierarchy illustration from Edges and emphasis",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "screen--screen-versus-paint": {
+      "id": "screen--screen-versus-paint",
+      "path": "assets/screens/exec-c4087273-2141-4a16-b217-0c74b3f4369f.png",
+      "mime_type": "image/png",
+      "width": 1536,
+      "height": 1024,
+      "kind": "source_screenshot",
+      "sha256": "f055b4fe33988c25ad3d9b7401c0a90da90b6041b4f57ebbd045df03e45a9561",
+      "original_filename": "exec-c4087273-2141-4a16-b217-0c74b3f4369f.png",
+      "alt": "Screen versus paint original modal screenshot"
+    },
+    "illustration--screen-versus-paint--additive-color": {
+      "id": "illustration--screen-versus-paint--additive-color",
+      "path": "assets/illustrations/screen-versus-paint--additive-color.png",
+      "mime_type": "image/png",
+      "width": 124,
+      "height": 104,
+      "kind": "illustration_crop",
+      "sha256": "5bde22d3daf7f3daf97dda03aa8f5bba656e8dd01982539a5ef6c290c3cf496b",
+      "source_asset_id": "screen--screen-versus-paint",
+      "crop_xyxy": [
+        296,
+        394,
+        420,
+        498
+      ],
+      "alt": "Additive color illustration from Screen versus paint",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--screen-versus-paint--subtractive-color": {
+      "id": "illustration--screen-versus-paint--subtractive-color",
+      "path": "assets/illustrations/screen-versus-paint--subtractive-color.png",
+      "mime_type": "image/png",
+      "width": 151,
+      "height": 93,
+      "kind": "illustration_crop",
+      "sha256": "df5238e7885467a01f1ff1024e1fade01d71f135dd078143651ee3dff9575d54",
+      "source_asset_id": "screen--screen-versus-paint",
+      "crop_xyxy": [
+        788,
+        402,
+        939,
+        495
+      ],
+      "alt": "Subtractive color illustration from Screen versus paint",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--screen-versus-paint--hex-value": {
+      "id": "illustration--screen-versus-paint--hex-value",
+      "path": "assets/illustrations/screen-versus-paint--hex-value.png",
+      "mime_type": "image/png",
+      "width": 165,
+      "height": 70,
+      "kind": "illustration_crop",
+      "sha256": "6baf1395517ba7300d4102c5eb36ba7d61018e391c6f4bf655894457120a6ce2",
+      "source_asset_id": "screen--screen-versus-paint",
+      "crop_xyxy": [
+        285,
+        559,
+        450,
+        629
+      ],
+      "alt": "Hex value illustration from Screen versus paint",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--screen-versus-paint--display-gamut": {
+      "id": "illustration--screen-versus-paint--display-gamut",
+      "path": "assets/illustrations/screen-versus-paint--display-gamut.png",
+      "mime_type": "image/png",
+      "width": 159,
+      "height": 75,
+      "kind": "illustration_crop",
+      "sha256": "01f5f4e41716c7ca7bbe80918bc76de1edc0aff6bc1769a111eecbd4c8795913",
+      "source_asset_id": "screen--screen-versus-paint",
+      "crop_xyxy": [
+        791,
+        555,
+        950,
+        630
+      ],
+      "alt": "Display gamut illustration from Screen versus paint",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--screen-versus-paint--viewing-light": {
+      "id": "illustration--screen-versus-paint--viewing-light",
+      "path": "assets/illustrations/screen-versus-paint--viewing-light.png",
+      "mime_type": "image/png",
+      "width": 165,
+      "height": 93,
+      "kind": "illustration_crop",
+      "sha256": "ace7497d9a91948cbe17e696a92febbcc8ae2592c140c157d0bf27162d556dda",
+      "source_asset_id": "screen--screen-versus-paint",
+      "crop_xyxy": [
+        285,
+        680,
+        450,
+        773
+      ],
+      "alt": "Viewing light illustration from Screen versus paint",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--screen-versus-paint--surface-effects": {
+      "id": "illustration--screen-versus-paint--surface-effects",
+      "path": "assets/illustrations/screen-versus-paint--surface-effects.png",
+      "mime_type": "image/png",
+      "width": 165,
+      "height": 92,
+      "kind": "illustration_crop",
+      "sha256": "6fe96983905b29cb9c4b0c240cc56a2202d5c34ac05dbcdbfbca6e43d0ba5c07",
+      "source_asset_id": "screen--screen-versus-paint",
+      "crop_xyxy": [
+        790,
+        681,
+        955,
+        773
+      ],
+      "alt": "Surface effects illustration from Screen versus paint",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "screen--common-misconceptions": {
+      "id": "screen--common-misconceptions",
+      "path": "assets/screens/exec-617cac49-c97a-418a-8040-0785e31859d7.png",
+      "mime_type": "image/png",
+      "width": 1536,
+      "height": 1024,
+      "kind": "source_screenshot",
+      "sha256": "bde87dc4d15012775dd4b905598b27153ee0c0334c564abdf4065b43599653f9",
+      "original_filename": "exec-617cac49-c97a-418a-8040-0785e31859d7.png",
+      "alt": "Common misconceptions original modal screenshot"
+    },
+    "illustration--common-misconceptions--warm-light-cool-shadows": {
+      "id": "illustration--common-misconceptions--warm-light-cool-shadows",
+      "path": "assets/illustrations/common-misconceptions--warm-light-cool-shadows.png",
+      "mime_type": "image/png",
+      "width": 144,
+      "height": 105,
+      "kind": "illustration_crop",
+      "sha256": "4bf41c03eb0938bf0bcea709e8e8ebcedafd7ff0324f8556b9c4d3f192f51e09",
+      "source_asset_id": "screen--common-misconceptions",
+      "crop_xyxy": [
+        287,
+        390,
+        431,
+        495
+      ],
+      "alt": "Warm light, cool shadows? illustration from Common misconceptions",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--common-misconceptions--never-use-black": {
+      "id": "illustration--common-misconceptions--never-use-black",
+      "path": "assets/illustrations/common-misconceptions--never-use-black.png",
+      "mime_type": "image/png",
+      "width": 144,
+      "height": 105,
+      "kind": "illustration_crop",
+      "sha256": "09c97bab5ff832b2da99ba7b67f3a62950dc34c4648d5f0d541267195914e40b",
+      "source_asset_id": "screen--common-misconceptions",
+      "crop_xyxy": [
+        793,
+        390,
+        937,
+        495
+      ],
+      "alt": "Never use black? illustration from Common misconceptions",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--common-misconceptions--gray-means-muddy": {
+      "id": "illustration--common-misconceptions--gray-means-muddy",
+      "path": "assets/illustrations/common-misconceptions--gray-means-muddy.png",
+      "mime_type": "image/png",
+      "width": 144,
+      "height": 82,
+      "kind": "illustration_crop",
+      "sha256": "c45c299a6b53cd4afb36ddc605f5d75005b145c46ec20695e0c7f99f6e4adfe3",
+      "source_asset_id": "screen--common-misconceptions",
+      "crop_xyxy": [
+        287,
+        539,
+        431,
+        621
+      ],
+      "alt": "Gray means muddy? illustration from Common misconceptions",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--common-misconceptions--white-only-lightens": {
+      "id": "illustration--common-misconceptions--white-only-lightens",
+      "path": "assets/illustrations/common-misconceptions--white-only-lightens.png",
+      "mime_type": "image/png",
+      "width": 144,
+      "height": 77,
+      "kind": "illustration_crop",
+      "sha256": "c8d51ad139fd92f7787b069964b4bce6980a26e5c3c82f082de9923bb8ead5f6",
+      "source_asset_id": "screen--common-misconceptions",
+      "crop_xyxy": [
+        793,
+        549,
+        937,
+        626
+      ],
+      "alt": "White only lightens? illustration from Common misconceptions",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--common-misconceptions--warm-colors-always-advance": {
+      "id": "illustration--common-misconceptions--warm-colors-always-advance",
+      "path": "assets/illustrations/common-misconceptions--warm-colors-always-advance.png",
+      "mime_type": "image/png",
+      "width": 144,
+      "height": 83,
+      "kind": "illustration_crop",
+      "sha256": "62a20042fbb9ac5542d9a20ba414fb813cee485637bed6d0bdbabd9213ad71e3",
+      "source_asset_id": "screen--common-misconceptions",
+      "crop_xyxy": [
+        287,
+        686,
+        431,
+        769
+      ],
+      "alt": "Warm colors always advance? illustration from Common misconceptions",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "illustration--common-misconceptions--complements-always-make-gray": {
+      "id": "illustration--common-misconceptions--complements-always-make-gray",
+      "path": "assets/illustrations/common-misconceptions--complements-always-make-gray.png",
+      "mime_type": "image/png",
+      "width": 144,
+      "height": 87,
+      "kind": "illustration_crop",
+      "sha256": "75c67539fb385c4ced7a594cfb48d9aa4a17d6d83d135ce8f9ef33beedc677ae",
+      "source_asset_id": "screen--common-misconceptions",
+      "crop_xyxy": [
+        793,
+        682,
+        937,
+        769
+      ],
+      "alt": "Complements always make gray? illustration from Common misconceptions",
+      "extraction": "Unretouched rectangular crop; original background retained."
+    },
+    "workspace--light-inspector": {
+      "id": "workspace--light-inspector",
+      "path": "assets/screens/exec-11d545ac-dcd5-4af2-91cd-4a882a860a7a.png",
+      "mime_type": "image/png",
+      "width": 1536,
+      "height": 1024,
+      "kind": "workspace_screenshot",
+      "sha256": "08226f9edf1064d2e71e1389a4201f35d88b979e3e78a20cf9bdaeda64df6717",
+      "original_filename": "exec-11d545ac-dcd5-4af2-91cd-4a882a860a7a.png",
+      "alt": "Light Inspector original workspace"
+    },
+    "workspace--dark-lab": {
+      "id": "workspace--dark-lab",
+      "path": "assets/screens/exec-d740a69c-13aa-4896-8548-7d671d1150c6.png",
+      "mime_type": "image/png",
+      "width": 1536,
+      "height": 1024,
+      "kind": "workspace_screenshot",
+      "sha256": "dfd96f8ae3871dfdcd88b8158a6cb14e00f53be6c20a894bc6701c825ee1a171",
+      "original_filename": "exec-d740a69c-13aa-4896-8548-7d671d1150c6.png",
+      "alt": "Dark Color Lab original workspace"
+    },
+    "workspace--tabbed-comparison": {
+      "id": "workspace--tabbed-comparison",
+      "path": "assets/screens/exec-6edd4c86-6685-44de-aedf-00f9f8f3d459.png",
+      "mime_type": "image/png",
+      "width": 1536,
+      "height": 1024,
+      "kind": "workspace_screenshot",
+      "sha256": "9317411f8befecc6a3d6e7812d8846095be8fb7e5bacbb4139e98074203b58d0",
+      "original_filename": "exec-6edd4c86-6685-44de-aedf-00f9f8f3d459.png",
+      "alt": "Tabbed Comparison original workspace"
+    },
+    "workspace--drawer-studio": {
+      "id": "workspace--drawer-studio",
+      "path": "assets/screens/exec-3291e01f-2a77-4daf-ae42-03909e1a67e4.png",
+      "mime_type": "image/png",
+      "width": 1536,
+      "height": 1024,
+      "kind": "workspace_screenshot",
+      "sha256": "375f47d44299cb3723a99e4fb451ca78580868ea63f13f9f3d199740fdb558e6",
+      "original_filename": "exec-3291e01f-2a77-4daf-ae42-03909e1a67e4.png",
+      "alt": "Drawer Studio original workspace"
+    }
+  },
+  "hierarchy": [
+    {
+      "id": "original",
+      "title": "Original modal guides",
+      "children": [
+        {
+          "id": "dimensions",
+          "title": "Dimensions",
+          "children": [
+            {
+              "guide_id": "understand-your-color",
+              "title": "Understand your color",
+              "children": [
+                {
+                  "entry_id": "understand-your-color--hue",
+                  "title": "Hue",
+                  "asset_id": "illustration--understand-your-color--hue"
+                },
+                {
+                  "entry_id": "understand-your-color--value",
+                  "title": "Value",
+                  "asset_id": "illustration--understand-your-color--value"
+                },
+                {
+                  "entry_id": "understand-your-color--chroma",
+                  "title": "Chroma",
+                  "asset_id": "illustration--understand-your-color--chroma"
+                },
+                {
+                  "entry_id": "understand-your-color--temperature",
+                  "title": "Temperature",
+                  "asset_id": "illustration--understand-your-color--temperature"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "relationships",
+          "title": "Relationships",
+          "children": [
+            {
+              "guide_id": "build-a-color-harmony",
+              "title": "Build a color harmony",
+              "children": [
+                {
+                  "entry_id": "build-a-color-harmony--analogous",
+                  "title": "Analogous",
+                  "asset_id": "illustration--build-a-color-harmony--analogous"
+                },
+                {
+                  "entry_id": "build-a-color-harmony--complementary",
+                  "title": "Complementary",
+                  "asset_id": "illustration--build-a-color-harmony--complementary"
+                },
+                {
+                  "entry_id": "build-a-color-harmony--split-complementary",
+                  "title": "Split-complementary",
+                  "asset_id": "illustration--build-a-color-harmony--split-complementary"
+                },
+                {
+                  "entry_id": "build-a-color-harmony--neutralize",
+                  "title": "Neutralize",
+                  "asset_id": "illustration--build-a-color-harmony--neutralize"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "perception",
+          "title": "Perception",
+          "children": [
+            {
+              "guide_id": "see-color-in-context",
+              "title": "See color in context",
+              "children": [
+                {
+                  "entry_id": "see-color-in-context--simultaneous-contrast",
+                  "title": "Simultaneous contrast",
+                  "asset_id": "illustration--see-color-in-context--simultaneous-contrast"
+                },
+                {
+                  "entry_id": "see-color-in-context--value-structure",
+                  "title": "Value structure",
+                  "asset_id": "illustration--see-color-in-context--value-structure"
+                },
+                {
+                  "entry_id": "see-color-in-context--gamut",
+                  "title": "Gamut",
+                  "asset_id": "illustration--see-color-in-context--gamut"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "paint",
+          "title": "Paint",
+          "children": [
+            {
+              "guide_id": "understand-paint-behavior",
+              "title": "Understand paint behavior",
+              "children": [
+                {
+                  "entry_id": "understand-paint-behavior--tint",
+                  "title": "Tint",
+                  "asset_id": "illustration--understand-paint-behavior--tint"
+                },
+                {
+                  "entry_id": "understand-paint-behavior--shade",
+                  "title": "Shade",
+                  "asset_id": "illustration--understand-paint-behavior--shade"
+                },
+                {
+                  "entry_id": "understand-paint-behavior--glaze",
+                  "title": "Glaze",
+                  "asset_id": "illustration--understand-paint-behavior--glaze"
+                },
+                {
+                  "entry_id": "understand-paint-behavior--scumble",
+                  "title": "Scumble",
+                  "asset_id": "illustration--understand-paint-behavior--scumble"
+                },
+                {
+                  "entry_id": "understand-paint-behavior--opacity",
+                  "title": "Opacity",
+                  "asset_id": "illustration--understand-paint-behavior--opacity"
+                },
+                {
+                  "entry_id": "understand-paint-behavior--undertone",
+                  "title": "Undertone",
+                  "asset_id": "illustration--understand-paint-behavior--undertone"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "extended",
+      "title": "Extended color guides",
+      "children": [
+        {
+          "id": "dimensions",
+          "title": "Dimensions",
+          "children": [
+            {
+              "guide_id": "color-language",
+              "title": "Color language",
+              "children": [
+                {
+                  "entry_id": "color-language--saturation",
+                  "title": "Saturation",
+                  "asset_id": "illustration--color-language--saturation"
+                },
+                {
+                  "entry_id": "color-language--intensity",
+                  "title": "Intensity",
+                  "asset_id": "illustration--color-language--intensity"
+                },
+                {
+                  "entry_id": "color-language--brightness",
+                  "title": "Brightness",
+                  "asset_id": "illustration--color-language--brightness"
+                },
+                {
+                  "entry_id": "color-language--tone",
+                  "title": "Tone",
+                  "asset_id": "illustration--color-language--tone"
+                },
+                {
+                  "entry_id": "color-language--achromatic",
+                  "title": "Achromatic",
+                  "asset_id": "illustration--color-language--achromatic"
+                },
+                {
+                  "entry_id": "color-language--chromatic-gray",
+                  "title": "Chromatic gray",
+                  "asset_id": "illustration--color-language--chromatic-gray"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "perception",
+          "title": "Perception",
+          "children": [
+            {
+              "guide_id": "perception-and-atmosphere",
+              "title": "Perception and atmosphere",
+              "children": [
+                {
+                  "entry_id": "perception-and-atmosphere--chromatic-adaptation",
+                  "title": "Chromatic adaptation",
+                  "asset_id": "illustration--perception-and-atmosphere--chromatic-adaptation"
+                },
+                {
+                  "entry_id": "perception-and-atmosphere--color-constancy",
+                  "title": "Color constancy",
+                  "asset_id": "illustration--perception-and-atmosphere--color-constancy"
+                },
+                {
+                  "entry_id": "perception-and-atmosphere--afterimage",
+                  "title": "Afterimage",
+                  "asset_id": "illustration--perception-and-atmosphere--afterimage"
+                },
+                {
+                  "entry_id": "perception-and-atmosphere--optical-mixing",
+                  "title": "Optical mixing",
+                  "asset_id": "illustration--perception-and-atmosphere--optical-mixing"
+                },
+                {
+                  "entry_id": "perception-and-atmosphere--broken-color",
+                  "title": "Broken color",
+                  "asset_id": "illustration--perception-and-atmosphere--broken-color"
+                },
+                {
+                  "entry_id": "perception-and-atmosphere--aerial-perspective",
+                  "title": "Aerial perspective",
+                  "asset_id": "illustration--perception-and-atmosphere--aerial-perspective"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "paint",
+          "title": "Paint",
+          "children": [
+            {
+              "guide_id": "layers-and-surface",
+              "title": "Layers and surface",
+              "children": [
+                {
+                  "entry_id": "layers-and-surface--imprimatura",
+                  "title": "Imprimatura",
+                  "asset_id": "illustration--layers-and-surface--imprimatura"
+                },
+                {
+                  "entry_id": "layers-and-surface--underpainting",
+                  "title": "Underpainting",
+                  "asset_id": "illustration--layers-and-surface--underpainting"
+                },
+                {
+                  "entry_id": "layers-and-surface--grisaille",
+                  "title": "Grisaille",
+                  "asset_id": "illustration--layers-and-surface--grisaille"
+                },
+                {
+                  "entry_id": "layers-and-surface--alla-prima",
+                  "title": "Alla prima",
+                  "asset_id": "illustration--layers-and-surface--alla-prima"
+                },
+                {
+                  "entry_id": "layers-and-surface--impasto",
+                  "title": "Impasto",
+                  "asset_id": "illustration--layers-and-surface--impasto"
+                },
+                {
+                  "entry_id": "layers-and-surface--sinking-in",
+                  "title": "Sinking in",
+                  "asset_id": "illustration--layers-and-surface--sinking-in"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "mixing",
+          "title": "Mixing",
+          "children": [
+            {
+              "guide_id": "mixing-with-intention",
+              "title": "Mixing with intention",
+              "children": [
+                {
+                  "entry_id": "mixing-with-intention--tint",
+                  "title": "Tint",
+                  "asset_id": "illustration--mixing-with-intention--tint"
+                },
+                {
+                  "entry_id": "mixing-with-intention--shade",
+                  "title": "Shade",
+                  "asset_id": "illustration--mixing-with-intention--shade"
+                },
+                {
+                  "entry_id": "mixing-with-intention--neutralize",
+                  "title": "Neutralize",
+                  "asset_id": "illustration--mixing-with-intention--neutralize"
+                },
+                {
+                  "entry_id": "mixing-with-intention--mixing-complement",
+                  "title": "Mixing complement",
+                  "asset_id": "illustration--mixing-with-intention--mixing-complement"
+                },
+                {
+                  "entry_id": "mixing-with-intention--chromatic-black",
+                  "title": "Chromatic black",
+                  "asset_id": "illustration--mixing-with-intention--chromatic-black"
+                },
+                {
+                  "entry_id": "mixing-with-intention--subtractive-mixing",
+                  "title": "Subtractive mixing",
+                  "asset_id": "illustration--mixing-with-intention--subtractive-mixing"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "palettes",
+          "title": "Palettes",
+          "children": [
+            {
+              "guide_id": "design-your-palette",
+              "title": "Design your palette",
+              "children": [
+                {
+                  "entry_id": "design-your-palette--limited-palette",
+                  "title": "Limited palette",
+                  "asset_id": "illustration--design-your-palette--limited-palette"
+                },
+                {
+                  "entry_id": "design-your-palette--split-primary-palette",
+                  "title": "Split-primary palette",
+                  "asset_id": "illustration--design-your-palette--split-primary-palette"
+                },
+                {
+                  "entry_id": "design-your-palette--color-string",
+                  "title": "Color string",
+                  "asset_id": "illustration--design-your-palette--color-string"
+                },
+                {
+                  "entry_id": "design-your-palette--mother-color",
+                  "title": "Mother color",
+                  "asset_id": "illustration--design-your-palette--mother-color"
+                },
+                {
+                  "entry_id": "design-your-palette--gamut-mapping",
+                  "title": "Gamut mapping",
+                  "asset_id": "illustration--design-your-palette--gamut-mapping"
+                },
+                {
+                  "entry_id": "design-your-palette--earth-colors",
+                  "title": "Earth colors",
+                  "asset_id": "illustration--design-your-palette--earth-colors"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "light",
+          "title": "Light",
+          "children": [
+            {
+              "guide_id": "read-light-on-form",
+              "title": "Read light on form",
+              "children": [
+                {
+                  "entry_id": "read-light-on-form--local-color",
+                  "title": "Local color",
+                  "asset_id": "illustration--read-light-on-form--local-color"
+                },
+                {
+                  "entry_id": "read-light-on-form--observed-color",
+                  "title": "Observed color",
+                  "asset_id": "illustration--read-light-on-form--observed-color"
+                },
+                {
+                  "entry_id": "read-light-on-form--light-family",
+                  "title": "Light family",
+                  "asset_id": "illustration--read-light-on-form--light-family"
+                },
+                {
+                  "entry_id": "read-light-on-form--halftone",
+                  "title": "Halftone",
+                  "asset_id": "illustration--read-light-on-form--halftone"
+                },
+                {
+                  "entry_id": "read-light-on-form--terminator",
+                  "title": "Terminator",
+                  "asset_id": "illustration--read-light-on-form--terminator"
+                },
+                {
+                  "entry_id": "read-light-on-form--form-shadow",
+                  "title": "Form shadow",
+                  "asset_id": "illustration--read-light-on-form--form-shadow"
+                }
+              ]
+            },
+            {
+              "guide_id": "shadows-and-reflections",
+              "title": "Understand shadows and reflections",
+              "children": [
+                {
+                  "entry_id": "shadows-and-reflections--core-shadow",
+                  "title": "Core shadow",
+                  "asset_id": "illustration--shadows-and-reflections--core-shadow"
+                },
+                {
+                  "entry_id": "shadows-and-reflections--cast-shadow",
+                  "title": "Cast shadow",
+                  "asset_id": "illustration--shadows-and-reflections--cast-shadow"
+                },
+                {
+                  "entry_id": "shadows-and-reflections--contact-shadow",
+                  "title": "Contact shadow",
+                  "asset_id": "illustration--shadows-and-reflections--contact-shadow"
+                },
+                {
+                  "entry_id": "shadows-and-reflections--reflected-light",
+                  "title": "Reflected light",
+                  "asset_id": "illustration--shadows-and-reflections--reflected-light"
+                },
+                {
+                  "entry_id": "shadows-and-reflections--highlight",
+                  "title": "Highlight",
+                  "asset_id": "illustration--shadows-and-reflections--highlight"
+                },
+                {
+                  "entry_id": "shadows-and-reflections--temperature-shift",
+                  "title": "Temperature shift",
+                  "asset_id": "illustration--shadows-and-reflections--temperature-shift"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "composition",
+          "title": "Composition",
+          "children": [
+            {
+              "guide_id": "compose-with-color",
+              "title": "Compose with color",
+              "children": [
+                {
+                  "entry_id": "compose-with-color--dominant-color",
+                  "title": "Dominant color",
+                  "asset_id": "illustration--compose-with-color--dominant-color"
+                },
+                {
+                  "entry_id": "compose-with-color--accent-color",
+                  "title": "Accent color",
+                  "asset_id": "illustration--compose-with-color--accent-color"
+                },
+                {
+                  "entry_id": "compose-with-color--high-key-low-key",
+                  "title": "High-key / low-key",
+                  "asset_id": "illustration--compose-with-color--high-key-low-key"
+                },
+                {
+                  "entry_id": "compose-with-color--notan",
+                  "title": "Notan",
+                  "asset_id": "illustration--compose-with-color--notan"
+                },
+                {
+                  "entry_id": "compose-with-color--value-compression",
+                  "title": "Value compression",
+                  "asset_id": "illustration--compose-with-color--value-compression"
+                },
+                {
+                  "entry_id": "compose-with-color--chroma-hierarchy",
+                  "title": "Chroma hierarchy",
+                  "asset_id": "illustration--compose-with-color--chroma-hierarchy"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "materials",
+          "title": "Materials",
+          "children": [
+            {
+              "guide_id": "know-your-paint",
+              "title": "Know your paint",
+              "children": [
+                {
+                  "entry_id": "know-your-paint--pigment",
+                  "title": "Pigment",
+                  "asset_id": "illustration--know-your-paint--pigment"
+                },
+                {
+                  "entry_id": "know-your-paint--binder",
+                  "title": "Binder",
+                  "asset_id": "illustration--know-your-paint--binder"
+                },
+                {
+                  "entry_id": "know-your-paint--medium",
+                  "title": "Medium",
+                  "asset_id": "illustration--know-your-paint--medium"
+                },
+                {
+                  "entry_id": "know-your-paint--masstone",
+                  "title": "Masstone",
+                  "asset_id": "illustration--know-your-paint--masstone"
+                },
+                {
+                  "entry_id": "know-your-paint--tinting-strength",
+                  "title": "Tinting strength",
+                  "asset_id": "illustration--know-your-paint--tinting-strength"
+                },
+                {
+                  "entry_id": "know-your-paint--color-index",
+                  "title": "Color Index",
+                  "asset_id": "illustration--know-your-paint--color-index"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "studio-terms",
+          "title": "Studio terms",
+          "children": [
+            {
+              "guide_id": "decode-studio-feedback",
+              "title": "Decode studio feedback",
+              "children": [
+                {
+                  "entry_id": "decode-studio-feedback--muddy",
+                  "title": "Muddy",
+                  "asset_id": "illustration--decode-studio-feedback--muddy"
+                },
+                {
+                  "entry_id": "decode-studio-feedback--chalky",
+                  "title": "Chalky",
+                  "asset_id": "illustration--decode-studio-feedback--chalky"
+                },
+                {
+                  "entry_id": "decode-studio-feedback--too-hot",
+                  "title": "Too hot",
+                  "asset_id": "illustration--decode-studio-feedback--too-hot"
+                },
+                {
+                  "entry_id": "decode-studio-feedback--luminous",
+                  "title": "Luminous",
+                  "asset_id": "illustration--decode-studio-feedback--luminous"
+                },
+                {
+                  "entry_id": "decode-studio-feedback--lightfast",
+                  "title": "Lightfast",
+                  "asset_id": "illustration--decode-studio-feedback--lightfast"
+                },
+                {
+                  "entry_id": "decode-studio-feedback--fugitive",
+                  "title": "Fugitive",
+                  "asset_id": "illustration--decode-studio-feedback--fugitive"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "practical",
+      "title": "Practical guides",
+      "children": [
+        {
+          "id": "relationships",
+          "title": "Relationships",
+          "children": [
+            {
+              "guide_id": "harmony-recipes",
+              "title": "Harmony recipes",
+              "children": [
+                {
+                  "entry_id": "harmony-recipes--monochromatic",
+                  "title": "Monochromatic",
+                  "asset_id": "illustration--harmony-recipes--monochromatic"
+                },
+                {
+                  "entry_id": "harmony-recipes--analogous",
+                  "title": "Analogous",
+                  "asset_id": "illustration--harmony-recipes--analogous"
+                },
+                {
+                  "entry_id": "harmony-recipes--complementary",
+                  "title": "Complementary",
+                  "asset_id": "illustration--harmony-recipes--complementary"
+                },
+                {
+                  "entry_id": "harmony-recipes--split-complementary",
+                  "title": "Split-complementary",
+                  "asset_id": "illustration--harmony-recipes--split-complementary"
+                },
+                {
+                  "entry_id": "harmony-recipes--triadic",
+                  "title": "Triadic",
+                  "asset_id": "illustration--harmony-recipes--triadic"
+                },
+                {
+                  "entry_id": "harmony-recipes--tetradic",
+                  "title": "Tetradic",
+                  "asset_id": "illustration--harmony-recipes--tetradic"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "composition",
+          "title": "Composition",
+          "children": [
+            {
+              "guide_id": "edges-and-emphasis",
+              "title": "Edges and emphasis",
+              "children": [
+                {
+                  "entry_id": "edges-and-emphasis--hard-edge",
+                  "title": "Hard edge",
+                  "asset_id": "illustration--edges-and-emphasis--hard-edge"
+                },
+                {
+                  "entry_id": "edges-and-emphasis--soft-edge",
+                  "title": "Soft edge",
+                  "asset_id": "illustration--edges-and-emphasis--soft-edge"
+                },
+                {
+                  "entry_id": "edges-and-emphasis--lost-edge",
+                  "title": "Lost edge",
+                  "asset_id": "illustration--edges-and-emphasis--lost-edge"
+                },
+                {
+                  "entry_id": "edges-and-emphasis--found-edge",
+                  "title": "Found edge",
+                  "asset_id": "illustration--edges-and-emphasis--found-edge"
+                },
+                {
+                  "entry_id": "edges-and-emphasis--focal-contrast",
+                  "title": "Focal contrast",
+                  "asset_id": "illustration--edges-and-emphasis--focal-contrast"
+                },
+                {
+                  "entry_id": "edges-and-emphasis--edge-hierarchy",
+                  "title": "Edge hierarchy",
+                  "asset_id": "illustration--edges-and-emphasis--edge-hierarchy"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "troubleshooting",
+          "title": "Troubleshooting",
+          "children": [
+            {
+              "guide_id": "color-troubleshooting",
+              "title": "Color troubleshooting",
+              "children": [
+                {
+                  "entry_id": "color-troubleshooting--too-pale",
+                  "title": "Too pale",
+                  "asset_id": "illustration--color-troubleshooting--too-pale"
+                },
+                {
+                  "entry_id": "color-troubleshooting--too-vivid",
+                  "title": "Too vivid",
+                  "asset_id": "illustration--color-troubleshooting--too-vivid"
+                },
+                {
+                  "entry_id": "color-troubleshooting--too-dark",
+                  "title": "Too dark",
+                  "asset_id": "illustration--color-troubleshooting--too-dark"
+                },
+                {
+                  "entry_id": "color-troubleshooting--too-warm",
+                  "title": "Too warm",
+                  "asset_id": "illustration--color-troubleshooting--too-warm"
+                },
+                {
+                  "entry_id": "color-troubleshooting--muddy",
+                  "title": "Muddy",
+                  "asset_id": "illustration--color-troubleshooting--muddy"
+                },
+                {
+                  "entry_id": "color-troubleshooting--wrong-on-canvas",
+                  "title": "Wrong on canvas",
+                  "asset_id": "illustration--color-troubleshooting--wrong-on-canvas"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "app-controls",
+          "title": "App controls",
+          "children": [
+            {
+              "guide_id": "choosing-axes-and-locks",
+              "title": "Choosing axes and locks",
+              "children": [
+                {
+                  "entry_id": "choosing-axes-and-locks--choose-two-axes",
+                  "title": "Choose two axes",
+                  "asset_id": "illustration--choosing-axes-and-locks--choose-two-axes"
+                },
+                {
+                  "entry_id": "choosing-axes-and-locks--hold-a-dimension",
+                  "title": "Hold a dimension",
+                  "asset_id": "illustration--choosing-axes-and-locks--hold-a-dimension"
+                },
+                {
+                  "entry_id": "choosing-axes-and-locks--hue-value",
+                  "title": "Hue × Value",
+                  "asset_id": "illustration--choosing-axes-and-locks--hue-value"
+                },
+                {
+                  "entry_id": "choosing-axes-and-locks--value-chroma",
+                  "title": "Value × Chroma",
+                  "asset_id": "illustration--choosing-axes-and-locks--value-chroma"
+                },
+                {
+                  "entry_id": "choosing-axes-and-locks--relative-warmth",
+                  "title": "Relative warmth",
+                  "asset_id": "illustration--choosing-axes-and-locks--relative-warmth"
+                },
+                {
+                  "entry_id": "choosing-axes-and-locks--gamut-boundary",
+                  "title": "Gamut boundary",
+                  "asset_id": "illustration--choosing-axes-and-locks--gamut-boundary"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "digital-color",
+          "title": "Digital color",
+          "children": [
+            {
+              "guide_id": "screen-versus-paint",
+              "title": "Screen versus paint",
+              "children": [
+                {
+                  "entry_id": "screen-versus-paint--additive-color",
+                  "title": "Additive color",
+                  "asset_id": "illustration--screen-versus-paint--additive-color"
+                },
+                {
+                  "entry_id": "screen-versus-paint--subtractive-color",
+                  "title": "Subtractive color",
+                  "asset_id": "illustration--screen-versus-paint--subtractive-color"
+                },
+                {
+                  "entry_id": "screen-versus-paint--hex-value",
+                  "title": "Hex value",
+                  "asset_id": "illustration--screen-versus-paint--hex-value"
+                },
+                {
+                  "entry_id": "screen-versus-paint--display-gamut",
+                  "title": "Display gamut",
+                  "asset_id": "illustration--screen-versus-paint--display-gamut"
+                },
+                {
+                  "entry_id": "screen-versus-paint--viewing-light",
+                  "title": "Viewing light",
+                  "asset_id": "illustration--screen-versus-paint--viewing-light"
+                },
+                {
+                  "entry_id": "screen-versus-paint--surface-effects",
+                  "title": "Surface effects",
+                  "asset_id": "illustration--screen-versus-paint--surface-effects"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "misconceptions",
+          "title": "Misconceptions",
+          "children": [
+            {
+              "guide_id": "common-misconceptions",
+              "title": "Common misconceptions",
+              "children": [
+                {
+                  "entry_id": "common-misconceptions--warm-light-cool-shadows",
+                  "title": "Warm light, cool shadows?",
+                  "asset_id": "illustration--common-misconceptions--warm-light-cool-shadows"
+                },
+                {
+                  "entry_id": "common-misconceptions--never-use-black",
+                  "title": "Never use black?",
+                  "asset_id": "illustration--common-misconceptions--never-use-black"
+                },
+                {
+                  "entry_id": "common-misconceptions--gray-means-muddy",
+                  "title": "Gray means muddy?",
+                  "asset_id": "illustration--common-misconceptions--gray-means-muddy"
+                },
+                {
+                  "entry_id": "common-misconceptions--white-only-lightens",
+                  "title": "White only lightens?",
+                  "asset_id": "illustration--common-misconceptions--white-only-lightens"
+                },
+                {
+                  "entry_id": "common-misconceptions--warm-colors-always-advance",
+                  "title": "Warm colors always advance?",
+                  "asset_id": "illustration--common-misconceptions--warm-colors-always-advance"
+                },
+                {
+                  "entry_id": "common-misconceptions--complements-always-make-gray",
+                  "title": "Complements always make gray?",
+                  "asset_id": "illustration--common-misconceptions--complements-always-make-gray"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "workspace_variants": [
+    {
+      "id": "light-inspector",
+      "title": "Light Inspector",
+      "asset_id": "workspace--light-inspector"
+    },
+    {
+      "id": "dark-lab",
+      "title": "Dark Color Lab",
+      "asset_id": "workspace--dark-lab"
+    },
+    {
+      "id": "tabbed-comparison",
+      "title": "Tabbed Comparison",
+      "asset_id": "workspace--tabbed-comparison"
+    },
+    {
+      "id": "drawer-studio",
+      "title": "Drawer Studio",
+      "asset_id": "workspace--drawer-studio"
+    }
+  ],
+  "source_text": {
+    "path": "data/source-screen-text.json",
+    "status": "unverified_ocr",
+    "canonical_text": "guides[].title, description, entries[], tip, footer and ui"
+  },
+  "html_pages": {
+    "understand-your-color": "guides/understand-your-color.html",
+    "build-a-color-harmony": "guides/build-a-color-harmony.html",
+    "see-color-in-context": "guides/see-color-in-context.html",
+    "understand-paint-behavior": "guides/understand-paint-behavior.html",
+    "color-language": "guides/color-language.html",
+    "mixing-with-intention": "guides/mixing-with-intention.html",
+    "design-your-palette": "guides/design-your-palette.html",
+    "read-light-on-form": "guides/read-light-on-form.html",
+    "shadows-and-reflections": "guides/shadows-and-reflections.html",
+    "compose-with-color": "guides/compose-with-color.html",
+    "perception-and-atmosphere": "guides/perception-and-atmosphere.html",
+    "know-your-paint": "guides/know-your-paint.html",
+    "layers-and-surface": "guides/layers-and-surface.html",
+    "decode-studio-feedback": "guides/decode-studio-feedback.html",
+    "color-troubleshooting": "guides/color-troubleshooting.html",
+    "choosing-axes-and-locks": "guides/choosing-axes-and-locks.html",
+    "harmony-recipes": "guides/harmony-recipes.html",
+    "edges-and-emphasis": "guides/edges-and-emphasis.html",
+    "screen-versus-paint": "guides/screen-versus-paint.html",
+    "common-misconceptions": "guides/common-misconceptions.html"
+  },
+  "implementation_notes": [
+    "All 20 guide modals are implemented as editable HTML text.",
+    "Source CTA labels are retained in footer.primary_label; the HTML uses consistent previous/next navigation.",
+    "Original workspace screenshots are included as reference images; this deliverable does not implement a pigment mixing engine.",
+    "Guide illustrations preserve the source pixels, including any conceptual limitations of the generated reference artwork."
+  ]
+}
