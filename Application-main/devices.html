@@ -75,6 +75,53 @@
          .dv-link h6 { font-size: 15px; font-weight: 700; color: #1a1d1f; } .dark .dv-link h6 { color: #fcfcfc; }
          .dv-link p { font-size: 12px; color: #6f767e; margin-top: 2px; }
          .dv-link > i:last-child { color: #6f767e; }
+         /* pairing code + QR */
+         .dv-code-wrap { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; padding: 14px; border-radius: 14px; background: #f4f4f4; }
+         .dark .dv-code-wrap { background: #1a1d1f; }
+         .dv-qr { width: 150px; height: 150px; border-radius: 10px; background: #fff; flex: 0 0 150px; }
+         .dv-code-side { flex: 1; min-width: 180px; }
+         .dv-code-side label { display: block; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #8c9097; margin-bottom: 4px; }
+         .dv-code { font-family: 'Source Code Pro', monospace; font-size: 30px; letter-spacing: .12em; font-weight: 600; color: #1a1d1f; }
+         .dark .dv-code { color: #fff; }
+         .dv-code.expired { color: #8c9097; text-decoration: line-through; }
+         .dv-code-meta { font-size: 12px; color: #6f767e; margin-top: 4px; display: flex; align-items: center; gap: 6px; }
+         .dv-code-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+         /* device / capture lists */
+         .dv-block { margin-top: 24px; }
+         .dv-block-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+         .dv-block-head h6 { font-size: 16px; font-weight: 700; color: #1a1d1f; display: flex; align-items: center; gap: 10px; }
+         .dark .dv-block-head h6 { color: #fcfcfc; }
+         .dv-block-head h6 i { color: #2a85ff; }
+         .dv-count { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(42,133,255,.12); color: #2a85ff; }
+         .dv-count:empty { display: none; }
+         .dv-headlink { font-size: 13px; font-weight: 600; color: #2a85ff; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+         .dv-list { display: flex; flex-direction: column; gap: 8px; }
+         .dv-empty { font-size: 13px; color: #6f767e; padding: 14px; border-radius: 12px; background: #f4f4f4; }
+         .dark .dv-empty { background: #1a1d1f; }
+         .dv-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; background: #f4f4f4; }
+         .dark .dv-row { background: #1a1d1f; }
+         .dv-row-ico { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: rgba(42,133,255,.12); color: #2a85ff; font-size: 16px; flex: 0 0 40px; }
+         .dv-sw { width: 40px; height: 40px; border-radius: 10px; flex: 0 0 40px; border: 1px solid rgba(0,0,0,.12); }
+         .dv-row-main { flex: 1; min-width: 0; }
+         .dv-row-main b { display: block; font-size: 14px; font-weight: 700; color: #1a1d1f; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+         .dark .dv-row-main b { color: #fcfcfc; }
+         .dv-row-main small { display: block; font-size: 12px; color: #6f767e; margin-top: 2px; }
+         .dv-row-main code { font-family: 'Source Code Pro', monospace; }
+         .dv-status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #6f767e; white-space: nowrap; }
+         .dv-status i { width: 8px; height: 8px; border-radius: 50%; background: #8c9097; }
+         .dv-status.on { color: #34c759; } .dv-status.on i { background: #34c759; box-shadow: 0 0 0 3px rgba(52,199,89,.2); }
+         .dv-row-actions { display: flex; gap: 6px; flex: 0 0 auto; }
+         .dv-iconbtn { width: 34px; height: 34px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; background: #fff; color: #6f767e; border: 1px solid #ececec; cursor: pointer; text-decoration: none; font-size: 13px; }
+         .dark .dv-iconbtn { background: #272b30; border-color: #33383f; color: #c5c8cc; }
+         .dv-iconbtn:hover { color: #2a85ff; border-color: #2a85ff; }
+         .dv-iconbtn.danger:hover { color: #ff6a55; border-color: #ff6a55; }
+         .dv-recipe { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+         .dv-recipe span { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; color: #1a1d1f; background: #fff; border-radius: 8px; padding: 3px 7px 3px 4px; }
+         .dark .dv-recipe span { background: #272b30; color: #fff; }
+         .dv-recipe i { width: 14px; height: 14px; border-radius: 4px; display: inline-block; border: 1px solid rgba(0,0,0,.1); }
+         .dv-recipe small { color: #8c9097; font-weight: 600; }
+         .dv-more { margin-top: 12px; text-align: center; }
+         @media (max-width: 640px) { .dv-row { flex-wrap: wrap; } .dv-status { order: 3; } .dv-row-actions { margin-left: auto; } }
       </style>
 
    </head>
@@ -220,15 +267,56 @@
                <section class="bg-white dark:bg-neutral-7 p-6 rounded-lg border-2 border-[#F4F4F4] dark:border-0 shadow-[0px_4px_14px_-6px_#F4F4F4] dark:shadow-none dv-hero">
                   <div>
                      <h5 class="text-neutral-6 dark:text-neutral-1 text-xl leading-[1.6] font-semibold -tracking-[0.4px] relative pl-5 before:w-[5px] before:h-full before:bg-secondary-3 before:rounded before:absolute before:left-0 before:top-0">Devices</h5>
-                     <p class="text-neutral-4 text-sm font-semibold mt-1">Take a composition off the screen: draw it in VR/AR, project it onto hardware, or pick colors straight from a camera.</p>
+                     <p class="text-neutral-4 text-sm font-semibold mt-1">Pair the Alchroma phone, tablet and Meta Quest apps to this account. Colors you capture on a device show up here and in your Paint Collection automatically.</p>
                   </div>
-                  <span class="dv-pill"><span class="dv-dot"></span> No device connected</span>
+                  <span class="dv-pill" id="dvPill"><span class="dv-dot"></span> <span id="dvPillText">Checking devices…</span></span>
                </section>
 
                <section class="dv-grid">
+                  <!-- Pair a phone / tablet (webapp shows the code) -->
+                  <div class="bg-white dark:bg-neutral-7 p-6 rounded-lg border-2 border-[#F4F4F4] dark:border-0 shadow-[0px_4px_14px_-6px_#F4F4F4] dark:shadow-none dv-card" id="dvPhoneCard">
+                     <div class="dv-ico"><i class="fa-regular fa-mobile-screen-button"></i></div>
+                     <h6>Pair a phone or tablet <span>Android / iOS</span></h6>
+                     <p>Log in inside the app with your usual email and password, or pair it in seconds with a code from this page.</p>
+                     <ol class="dv-steps">
+                        <li><b>Install</b> the Alchroma app <span id="dvAppLinks"></span></li>
+                        <li><b>Get a code</b> below, then in the app tap <em>Pair with code</em> — or scan the QR with the phone camera</li>
+                        <li><b>Done</b> — captures from the app appear here and in your Paint Collection</li>
+                     </ol>
+                     <div class="dv-code-wrap" id="dvWebCode" hidden>
+                        <canvas id="dvQr" class="dv-qr" width="180" height="180" aria-label="Pairing QR code"></canvas>
+                        <div class="dv-code-side">
+                           <label>Pairing code</label>
+                           <div class="dv-code" id="dvWebCodeText">···· ····</div>
+                           <div class="dv-code-meta"><i class="fa-regular fa-clock"></i> <span id="dvWebCodeExpiry">expires in 10:00</span></div>
+                           <div class="dv-code-actions">
+                              <button type="button" id="dvCopyCode" class="theme-btn-regular style-2 inline-flex! items-center gap-2"><i class="fa-regular fa-copy"></i> Copy</button>
+                              <a id="dvOpenApp" class="theme-btn-regular style-2 inline-flex! items-center gap-2" href="#" hidden><i class="fa-regular fa-arrow-up-right-from-square"></i> Open app</a>
+                           </div>
+                        </div>
+                     </div>
+                     <div class="dv-actions">
+                        <button type="button" id="dvWebCodeBtn" class="theme-btn-primary inline-flex! items-center gap-2"><i class="fa-regular fa-qrcode"></i> Get pairing code</button>
+                     </div>
+                  </div>
+
+                  <!-- Pair a headset (device shows the code) -->
+                  <div class="bg-white dark:bg-neutral-7 p-6 rounded-lg border-2 border-[#F4F4F4] dark:border-0 shadow-[0px_4px_14px_-6px_#F4F4F4] dark:shadow-none dv-card" id="dvHeadsetCard">
+                     <div class="dv-ico"><i class="fa-regular fa-vr-cardboard"></i></div>
+                     <h6>Pair a headset <span>Meta Quest</span></h6>
+                     <p>No typing in VR: the Quest app shows a 6-digit code on its start screen. Enter it here and the headset is linked to this account.</p>
+                     <div class="dv-field">
+                        <label>Code shown in the headset</label>
+                        <input id="dvPairCode" type="text" inputmode="numeric" maxlength="7" placeholder="000 000" autocomplete="off">
+                     </div>
+                     <div class="dv-actions">
+                        <button type="button" class="theme-btn-primary inline-flex! items-center gap-2" data-dv="pair"><i class="fa-regular fa-link"></i> Pair headset</button>
+                     </div>
+                  </div>
+
                   <!-- Drawing mode (VR/AR) -->
                   <div class="bg-white dark:bg-neutral-7 p-6 rounded-lg border-2 border-[#F4F4F4] dark:border-0 shadow-[0px_4px_14px_-6px_#F4F4F4] dark:shadow-none dv-card">
-                     <div class="dv-ico"><i class="fa-regular fa-vr-cardboard"></i></div>
+                     <div class="dv-ico"><i class="fa-regular fa-head-vr"></i></div>
                      <h6>Drawing mode <span>VR / AR</span></h6>
                      <p>Open your saved composition in a headset or on a phone and trace it layer by layer in the order set on the Colors page.</p>
                      <ol class="dv-steps">
@@ -236,10 +324,8 @@
                         <li><b>Select an image</b> — Gallery or Camera</li>
                         <li><b>Preview</b> — pick <em>AR mode</em> or <em>Classic mode</em></li>
                         <li><b>Camera</b> — the composition is overlaid; move the <em>Opacity</em> slider to hide / show it</li>
-                        <li><b>VR view</b> — synced headset shows the same layer you are on</li>
                      </ol>
                      <div class="dv-actions">
-                        <button type="button" class="theme-btn-primary inline-flex! items-center gap-2" data-dv="vr"><i class="fa-regular fa-link"></i> Connect headset</button>
                         <a href="portfolio.html" class="theme-btn-regular style-2 inline-flex! items-center gap-2">Choose from Portfolio</a>
                      </div>
                   </div>
@@ -281,20 +367,25 @@
                      </div>
                      <div class="dv-saved" id="dvSaved"></div>
                   </div>
+               </section>
 
-                  <!-- Synced headset -->
-                  <div class="bg-white dark:bg-neutral-7 p-6 rounded-lg border-2 border-[#F4F4F4] dark:border-0 shadow-[0px_4px_14px_-6px_#F4F4F4] dark:shadow-none dv-card">
-                     <div class="dv-ico"><i class="fa-regular fa-arrows-rotate"></i></div>
-                     <h6>Synced headset</h6>
-                     <p>Keep the headset, phone and this dashboard on the same composition and the same layer. Pairing uses a 6-digit code shown in the headset app.</p>
-                     <div class="dv-field">
-                        <label>Pairing code</label>
-                        <input id="dvPairCode" type="text" inputmode="numeric" maxlength="6" placeholder="000000">
-                     </div>
-                     <div class="dv-actions">
-                        <button type="button" class="theme-btn-primary inline-flex! items-center gap-2" data-dv="pair"><i class="fa-regular fa-link"></i> Pair</button>
-                     </div>
+               <!-- Paired devices -->
+               <section class="bg-white dark:bg-neutral-7 p-6 rounded-lg border-2 border-[#F4F4F4] dark:border-0 shadow-[0px_4px_14px_-6px_#F4F4F4] dark:shadow-none dv-block">
+                  <div class="dv-block-head">
+                     <h6><i class="fa-regular fa-link"></i> Paired devices</h6>
+                     <button type="button" id="dvRefresh" class="dv-iconbtn" title="Refresh"><i class="fa-regular fa-rotate"></i></button>
                   </div>
+                  <div id="dvDevices" class="dv-list"><div class="dv-empty">Loading…</div></div>
+               </section>
+
+               <!-- Captures -->
+               <section class="bg-white dark:bg-neutral-7 p-6 rounded-lg border-2 border-[#F4F4F4] dark:border-0 shadow-[0px_4px_14px_-6px_#F4F4F4] dark:shadow-none dv-block">
+                  <div class="dv-block-head">
+                     <h6><i class="fa-regular fa-eye-dropper"></i> Captured on devices <span id="dvCapCount" class="dv-count"></span></h6>
+                     <a href="paint-collection.html?open=library" class="dv-headlink">Open Paint Collection <i class="fa-regular fa-arrow-right"></i></a>
+                  </div>
+                  <div id="dvCaptures" class="dv-list"><div class="dv-empty">Loading…</div></div>
+                  <div class="dv-more"><button type="button" id="dvMore" class="theme-btn-regular style-2" hidden>Show more</button></div>
                </section>
 
                <section class="dv-links">
@@ -313,86 +404,9 @@
       <script src="assets/js/auth.js"></script>
       <script>(function(){ if (window.Auth) Auth.requireAuth('signin.html'); })();</script>
       <script src="assets/js/entitlements.js"></script>
-
       <script src="assets/js/color-library.js?v=3"></script>
-      <script>
-         (function () {
-            var toast = function (m, o) { if (window.GM && GM.toast) GM.toast(m, o); else alert(m); };
-
-            // ---- Camera colour picker (saved to the Color Library) ----
-            var video = document.getElementById('dvVideo'), wrap = document.getElementById('dvCamWrap');
-            var idle = document.getElementById('dvCamIdle'), cross = document.getElementById('dvCross');
-            var start = document.getElementById('dvCamStart'), stop = document.getElementById('dvCamStop');
-            var picked = document.getElementById('dvPicked'), sw = document.getElementById('dvPickedSw');
-            var hexEl = document.getElementById('dvPickedHex'), nameEl = document.getElementById('dvPickedName');
-            var saveBtn = document.getElementById('dvPickedSave'), savedEl = document.getElementById('dvSaved');
-            var sample = document.getElementById('dvSample');
-            var stream = null;
-            var SAVED_KEY = 'gm_camera_colors';
-            function saved() { try { return JSON.parse(localStorage.getItem(SAVED_KEY) || '[]'); } catch (e) { return []; } }
-            function renderSaved() {
-               savedEl.innerHTML = saved().slice(0, 12).map(function (c) { return '<span><i style="background:' + c.hex + '"></i>' + c.name + ' <small style="color:#8c9097">' + c.hex + '</small></span>'; }).join('');
-            }
-            start.addEventListener('click', function () {
-               if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { toast('Camera access is not available in this browser.', { kind: 'warn', icon: 'fa-regular fa-triangle-exclamation' }); return; }
-               navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false }).then(function (s) {
-                  stream = s; video.srcObject = s; video.hidden = false; idle.hidden = true; start.hidden = true; stop.hidden = false;
-                  video.play();
-               }).catch(function () { toast('Camera permission was denied.', { kind: 'warn', icon: 'fa-regular fa-triangle-exclamation' }); });
-            });
-            stop.addEventListener('click', function () {
-               if (stream) stream.getTracks().forEach(function (t) { t.stop(); });
-               stream = null; video.hidden = true; idle.hidden = false; start.hidden = false; stop.hidden = true; cross.hidden = true;
-            });
-            wrap.addEventListener('click', function (e) {
-               if (!stream || !video.videoWidth) return;
-               var r = wrap.getBoundingClientRect();
-               var fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height;
-               sample.width = video.videoWidth; sample.height = video.videoHeight;
-               var ctx = sample.getContext('2d'); ctx.drawImage(video, 0, 0);
-               // average a 7x7 patch so the sample is stable
-               var x = Math.round(fx * sample.width), y = Math.round(fy * sample.height);
-               var d = ctx.getImageData(Math.max(0, x - 3), Math.max(0, y - 3), 7, 7).data;
-               var R = 0, G = 0, B = 0, n = d.length / 4;
-               for (var i = 0; i < d.length; i += 4) { R += d[i]; G += d[i + 1]; B += d[i + 2]; }
-               var hex = '#' + [R / n, G / n, B / n].map(function (v) { return ('0' + Math.round(v).toString(16)).slice(-2); }).join('').toUpperCase();
-               hexEl.value = hex; sw.style.background = hex; picked.hidden = false;
-               cross.hidden = false; cross.style.left = (fx * 100) + '%'; cross.style.top = (fy * 100) + '%';
-            });
-            saveBtn.addEventListener('click', function () {
-               var hex = hexEl.value, name = (nameEl.value || '').trim() || hex;
-               var list = saved(); list.unshift({ hex: hex, name: name, at: Date.now() });
-               try { localStorage.setItem(SAVED_KEY, JSON.stringify(list.slice(0, 200))); } catch (e) {}
-               if (window.ColorLibrary && ColorLibrary.add) ColorLibrary.add(name, hex);
-               renderSaved(); nameEl.value = '';
-               toast('“' + name + '” saved to your Color Library', { kind: 'ok', icon: 'fa-regular fa-check', href: 'paint-collection.html?open=library', linkText: 'Open' });
-            });
-            renderSaved();
-
-            // ---- Project to a second window ----
-            document.querySelectorAll('[data-dv]').forEach(function (b) {
-               b.addEventListener('click', function () {
-                  var what = b.getAttribute('data-dv');
-                  if (what === 'project') {
-                     var st = null; try { st = sessionStorage.getItem('geomagic:state'); } catch (e) {}
-                     var items = (window.GM && GM.portfolio) ? GM.portfolio.list() : [];
-                     var src = items.length ? items[0].thumb : null;
-                     if (!src && !st) { toast('Save a composition to your Portfolio first, then project it.', { kind: 'warn', icon: 'fa-regular fa-triangle-exclamation', href: 'dashboard.html', linkText: 'Dashboard' }); return; }
-                     var w = window.open('', 'gm-projection', 'width=1280,height=800');
-                     if (!w) { toast('Pop-up blocked — allow pop-ups to open the projection window.', { kind: 'warn' }); return; }
-                     w.document.write('<title>GeoMagic projection</title><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;height:100vh"><img src="' + (src || '') + '" style="max-width:100%;max-height:100%;object-fit:contain"></body>');
-                     toast('Projection window opened — drag it to the projector screen and press F11.', { kind: 'ok', icon: 'fa-regular fa-check' });
-                  } else if (what === 'pair') {
-                     var code = (document.getElementById('dvPairCode').value || '').trim();
-                     if (!/^\d{6}$/.test(code)) { toast('Enter the 6-digit code shown in the headset app.', { kind: 'warn', icon: 'fa-regular fa-triangle-exclamation' }); return; }
-                     toast('Pairing service is not connected to this build yet — the code was recorded.', { kind: 'warn', icon: 'fa-regular fa-link' });
-                  } else {
-                     toast('Headset pairing is not connected to this build yet. Use the mobile app flow described in the card.', { kind: 'warn', icon: 'fa-regular fa-vr-cardboard' });
-                  }
-               });
-            });
-         })();
-      </script>
+      <script src="assets/js/qr.js"></script>
+      <script src="assets/js/devices-page.js?v=1"></script>
    </body>
 
 </html>

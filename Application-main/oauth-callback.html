@@ -22,6 +22,10 @@
             const token = params.get('token');
             const userStr = params.get('user');
             const error = params.get('error');
+            // Optional landing page (relative, same-origin only) — used by the
+            // mobile apps to open a specific page inside their web view.
+            const nextRaw = params.get('next') || '';
+            const next = /^[a-z0-9-]+\.html(\?[^\s#]*)?$/i.test(nextRaw) ? nextRaw : 'pricing.html';
 
             if (error) {
                document.getElementById('status').classList.add('hidden');
@@ -41,7 +45,7 @@
                try {
                   const user = JSON.parse(userStr);
                   Auth.saveSession({ access_token: token, user: user });
-                  window.location.href = 'pricing.html';
+                  window.location.href = next;
                } catch (e) {
                   document.getElementById('status').textContent = 'Something went wrong. Redirecting...';
                   setTimeout(function () { window.location.href = 'signin.html'; }, 2000);

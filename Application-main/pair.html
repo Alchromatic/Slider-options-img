@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+   <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Pair device | GeoMagic</title>
+      <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon/favicon-32x32.png">
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Source+Code+Pro:wght@600&display=swap" rel="stylesheet">
+      <link rel="stylesheet" href="assets/fontawesome/fontawesome.min.css">
+      <link rel="stylesheet" href="assets/css/output.css">
+      <style>
+         body { font-family: Inter, system-ui, sans-serif; }
+         .pr-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
+         .pr-card { width: 100%; max-width: 420px; background: #fff; border-radius: 20px; padding: 28px 24px; box-shadow: 0 10px 40px -20px rgba(0,0,0,.3); text-align: center; }
+         .dark .pr-card { background: #1a1d1f; }
+         .pr-ico { width: 56px; height: 56px; border-radius: 16px; margin: 0 auto 14px; display: flex; align-items: center; justify-content: center; font-size: 24px; background: rgba(42,133,255,.12); color: #2a85ff; }
+         h1 { font-size: 20px; font-weight: 700; color: #1a1d1f; } .dark h1 { color: #fcfcfc; }
+         p { font-size: 14px; color: #6f767e; line-height: 1.6; margin-top: 6px; }
+         .pr-code { margin: 18px 0 6px; font-family: 'Source Code Pro', monospace; font-size: 34px; letter-spacing: .12em; font-weight: 600; color: #1a1d1f; }
+         .dark .pr-code { color: #fff; }
+         .pr-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 14px 18px; border-radius: 12px; font-weight: 700; font-size: 15px; text-decoration: none; margin-top: 14px; }
+         .pr-primary { background: #2a85ff; color: #fff; }
+         .pr-ghost { background: #f4f4f4; color: #1a1d1f; } .dark .pr-ghost { background: #272b30; color: #fff; }
+         .pr-links { margin-top: 16px; font-size: 13px; color: #6f767e; }
+         .pr-links a { color: #2a85ff; font-weight: 600; }
+         .pr-steps { text-align: left; margin-top: 18px; font-size: 13px; color: #6f767e; padding-left: 18px; }
+         .pr-steps li { margin: 4px 0; }
+         .pr-steps b { color: #1a1d1f; } .dark .pr-steps b { color: #fcfcfc; }
+      </style>
+   </head>
+
+   <body class="bg-[#F4F4F4] dark:bg-neutral-8">
+      <div class="pr-wrap">
+         <div class="pr-card">
+            <div class="pr-ico"><i class="fa-regular fa-link"></i></div>
+            <h1>Pair this device</h1>
+            <p>Open the Alchroma app to finish pairing with your GeoMagic account.</p>
+            <div class="pr-code" id="prCode">—</div>
+            <p id="prExpiry" style="font-size:12px">Codes expire after 10 minutes.</p>
+            <a class="pr-btn pr-primary" id="prOpen" href="#"><i class="fa-regular fa-arrow-up-right-from-square"></i> Open the Alchroma app</a>
+            <a class="pr-btn pr-ghost" id="prCopy" href="#"><i class="fa-regular fa-copy"></i> Copy code</a>
+            <ol class="pr-steps">
+               <li>If the app did not open, <b>install it</b> first (links below) and come back to this page.</li>
+               <li>In the app choose <b>Pair with code</b> and enter the code above.</li>
+            </ol>
+            <div class="pr-links" id="prLinks"></div>
+         </div>
+      </div>
+
+      <script>
+         (function () {
+            var params = new URLSearchParams(location.search);
+            var code = (params.get('code') || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 8);
+            var API = (location.protocol.indexOf('http') === 0) ? location.origin : 'https://alchromaticdemo.up.railway.app';
+            var codeEl = document.getElementById('prCode'), open = document.getElementById('prOpen'), copy = document.getElementById('prCopy');
+            if (!code) {
+               codeEl.textContent = '—';
+               document.getElementById('prExpiry').textContent = 'This link has no pairing code. Open the Devices page in GeoMagic and tap “Get pairing code”.';
+               open.style.display = 'none'; copy.style.display = 'none';
+            } else {
+               codeEl.textContent = code.slice(0, 4) + ' ' + code.slice(4);
+            }
+            var scheme = 'alchroma';
+            function setLink() { open.href = scheme + '://pair?code=' + code; }
+            setLink();
+            fetch(API + '/api/devices/config').then(function (r) { return r.json(); }).then(function (c) {
+               if (c.deep_link_scheme) { scheme = c.deep_link_scheme; setLink(); }
+               var apps = c.apps || {}, links = [];
+               if (apps.android) links.push('<a href="' + apps.android + '">Android APK</a>');
+               if (apps.ios) links.push('<a href="' + apps.ios + '">iOS (TestFlight)</a>');
+               if (apps.quest) links.push('<a href="' + apps.quest + '">Quest APK</a>');
+               document.getElementById('prLinks').innerHTML = links.length ? 'Get the app: ' + links.join(' · ') : '';
+            }).catch(function () {});
+            copy.addEventListener('click', function (e) {
+               e.preventDefault();
+               if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(function () { copy.innerHTML = '<i class="fa-regular fa-check"></i> Copied'; });
+               else window.prompt('Pairing code', code);
+            });
+            // On a phone, try to hand straight over to the app.
+            if (code && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+               setTimeout(function () { location.href = open.href; }, 600);
+            }
+         })();
+      </script>
+   </body>
+
+</html>

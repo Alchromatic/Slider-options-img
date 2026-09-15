@@ -1,0 +1,2126 @@
+From effc9f11d6ec18959474e07fe92f0219aa945997 Mon Sep 17 00:00:00 2001
+From: samridh6759 <samridh6759@gmail.com>
+Date: Tue, 15 Sep 2026 12:18:11 +0530
+Subject: [PATCH] Connect the AR app to the GeoMagic backend (shared login,
+ device pairing, captures)
+
+- Assets/Alchroma: SDK for auth, device pairing (code + deep link), captures with
+  offline queue, heartbeat, signed-in web pages and a runtime sign-in overlay;
+  bootstraps itself, no scene changes needed
+- CreatePaintAPI / ColorItem: save, list and delete colors through
+  /api/devices/captures under the signed-in account (was the anonymous, shared
+  geomagic-backend.iapplabz.co.in list)
+- ColorUnmixAPI: backend URL from AlchromaConfig, Bearer token when signed in
+- UnmixColorDetector: saves the unmixed color + recipe to the account; guards
+  the 3-slot palette array
+- AndroidManifest / ProjectSettings: alchroma:// deep link (Android + iOS)
+- ALCHROMA_INTEGRATION.md: architecture, API contract, test plan
+---
+ ALCHROMA_INTEGRATION.md                      | 212 +++++++++++
+ Assets/Alchroma/Runtime/AlchromaApi.cs       | 142 +++++++
+ Assets/Alchroma/Runtime/AlchromaAuth.cs      | 102 +++++
+ Assets/Alchroma/Runtime/AlchromaBootstrap.cs |  25 ++
+ Assets/Alchroma/Runtime/AlchromaCaptures.cs  | 176 +++++++++
+ Assets/Alchroma/Runtime/AlchromaConfig.cs    |  48 +++
+ Assets/Alchroma/Runtime/AlchromaDevice.cs    | 102 +++++
+ Assets/Alchroma/Runtime/AlchromaLoginUI.cs   | 376 +++++++++++++++++++
+ Assets/Alchroma/Runtime/AlchromaPairing.cs   | 204 ++++++++++
+ Assets/Alchroma/Runtime/AlchromaSession.cs   |  87 +++++
+ Assets/Alchroma/Runtime/AlchromaWebPages.cs  |  52 +++
+ Assets/Alchroma/Runtime/AlchromaWebView.cs   |  80 ++++
+ Assets/Ali/UnmixColorDetector.cs             |  12 +
+ Assets/Plugins/Android/AndroidManifest.xml   |  12 +-
+ Assets/Scripts/ColorItem.cs                  |  40 +-
+ Assets/Scripts/ColorUnmixAPI.cs              |  13 +-
+ Assets/Scripts/CreatePaintAPI.cs             | 162 ++++----
+ ProjectSettings/ProjectSettings.asset        |   3 +-
+ 18 files changed, 1755 insertions(+), 93 deletions(-)
+ create mode 100644 ALCHROMA_INTEGRATION.md
+ create mode 100644 Assets/Alchroma/Runtime/AlchromaApi.cs
+ create mode 100644 Assets/Alchroma/Runtime/AlchromaAuth.cs
+ create mode 100644 Assets/Alchroma/Runtime/AlchromaBootstrap.cs
+ create mode 100644 Assets/Alchroma/Runtime/AlchromaCaptures.cs
+ create mode 100644 Assets/Alchroma/Runtime/AlchromaConfig.cs
+ create mode 100644 Assets/Alchroma/Runtime/AlchromaDevice.cs
+ create mode 100644 Assets/Alchroma/Runtime/AlchromaLoginUI.cs
+ create mode 100644 Assets/Alchroma/Runtime/AlchromaPairing.cs
+ create mode 100644 Assets/Alchroma/Runtime/AlchromaSession.cs
+ create mode 100644 Assets/Alchroma/Runtime/AlchromaWebPages.cs
+ create mode 100644 Assets/Alchroma/Runtime/AlchromaWebView.cs
+
+diff --git a/ALCHROMA_INTEGRATION.md b/ALCHROMA_INTEGRATION.md
+new file mode 100644
+index 0000000..469213c
+--- /dev/null
++++ b/ALCHROMA_INTEGRATION.md
+@@ -0,0 +1,212 @@
++# GeoMagic ↔ Alchroma apps — integration guide
++
++This branch connects the Alchroma apps (Android / iOS on `AlchromaAR`, Meta Quest on
++`AlchromaVR`) to the GeoMagic web backend so that:
++
++* users sign in with the **same account** as the webapp (or pair a device with a code),
++* every color captured / unmixed in the apps is **saved under that account** and shows
++  up on the webapp **Devices** page and in **Paint Collection → My Colors**,
++* the webapp's own pages (Portfolio, Templates, Paint Collection…) can be opened from the
++  app already signed in,
++* a device can be **unpaired from the webapp**, which signs the app out on its next request.
++
++Nothing needs to be added to a scene: `Assets/Alchroma/Runtime/AlchromaBootstrap.cs`
++starts everything after the first scene loads.
++
++---
++
++## 1. Architecture
++
++```mermaid
++flowchart LR
++    subgraph Apps["Alchroma apps (Unity)"]
++        AR["Android / iOS app<br/>AlchromaAR (Vuforia)"]
++        VR["Meta Quest app<br/>AlchromaVR (Meta XR)"]
++        SDK["Assets/Alchroma<br/>(auth · pairing · captures · web pages)"]
++        AR --> SDK
++        VR --> SDK
++    end
++
++    subgraph Backend["GeoMagic backend (FastAPI · Railway)"]
++        AUTH["/api/auth/*<br/>login · me"]
++        DEV["/api/devices/*<br/>pair · register · heartbeat · captures"]
++        UNMIX["/unmix/simple"]
++        PAL["/api/palettes<br/>My Colors"]
++        DB[("Supabase Postgres<br/>auth_users · user_devices<br/>device_captures · user_palettes")]
++        AUTH --> DB
++        DEV --> DB
++        PAL --> DB
++    end
++
++    subgraph Web["GeoMagic webapp"]
++        DEVPAGE["Devices page<br/>pair codes · QR · device list · captures"]
++        PAGES["Portfolio · Templates<br/>Paint Collection"]
++    end
++
++    SDK -- "Bearer token (JSON)" --> AUTH
++    SDK -- "Bearer token (JSON)" --> DEV
++    SDK --> UNMIX
++    SDK -. "opens signed-in" .-> PAGES
++    DEVPAGE --> DEV
++    PAGES --> PAL
++```
++
++**Boundary for the app developers:** the apps only talk to `/api/auth/login`,
++`/api/devices/*` and `/unmix/simple`, all through `Assets/Alchroma`. Accounts, the
++database, the Devices page and the webapp pages are owned by the backend/webapp side and
++need no app work.
++
++---
++
++## 2. How a device gets signed in
++
++| Flow | Who types what | Used by |
++|------|----------------|---------|
++| **A. Code on the device** | App shows a 6-digit code → user enters it on the webapp *Devices → Pair a headset* | Quest (no typing in VR), projectors |
++| **B. Code on the webapp** | Webapp shows an 8-character code + QR → user enters it in the app (*Pair with code*), scans the QR, or taps the `alchroma://pair?code=…` link | Phone, tablet |
++| **C. Email + password** | Same credentials as the webapp, typed in the app | Phone, tablet |
++
++All three end with the app holding a **device token**: a JWT for the user with a `did`
++(device id) claim, valid 90 days, revocable from the Devices page. The SDK stores it in
++`PlayerPrefs` and sends it as `Authorization: Bearer …` on every call.
++
++```mermaid
++sequenceDiagram
++    participant Q as Quest app
++    participant B as Backend
++    participant W as Webapp (Devices page)
++    Q->>B: POST /api/devices/pair/start {device_id, type…}
++    B-->>Q: {code: 374247, poll_secret}
++    Q->>Q: show "374 247"
++    W->>B: POST /api/devices/pair/claim {code} (user JWT)
++    B-->>W: {paired, device}
++    loop every 3 s
++        Q->>B: GET /api/devices/pair/status?code&poll_secret
++    end
++    B-->>Q: {status: claimed, access_token, user, device}
++    Q->>B: POST /api/devices/captures (device token)
++```
++
++---
++
++## 3. Backend API used by the apps
++
++Base URL: `https://alchromaticdemo.up.railway.app` (`AlchromaConfig.BaseUrl`, overridable at runtime).
++
++| Method & path | Auth | Purpose |
++|---------------|------|---------|
++| `POST /api/auth/login` `{email,password}` | – | Same login as the webapp → user JWT |
++| `POST /api/devices/register` `{device_id,device_type,platform,name,app_version}` | user or device | Register this install → **device token** |
++| `POST /api/devices/pair/start` (device info) | – | Flow A: get a 6-digit code + poll secret |
++| `GET /api/devices/pair/status?code&poll_secret` | – | Flow A: `pending` → `claimed` (+ session, once) → `consumed` |
++| `POST /api/devices/pair/redeem` `{code, …device info}` | – | Flow B: redeem the webapp's code → device token |
++| `POST /api/devices/heartbeat` | device | Keeps the device "online" on the Devices page |
++| `POST /api/devices/captures` `{hex,name?,source?,recipe?,meta?}` | user or device | Save a color (also merged into *My Colors*) |
++| `POST /api/devices/captures/batch` `{captures:[…]}` | user or device | Flush an offline queue |
++| `GET /api/devices/captures?limit&offset&device_id&source` | user or device | The user's captures, newest first |
++| `DELETE /api/devices/captures/{id}` | user or device | Delete one |
++| `POST /unmix/simple` `{target_color}` | optional | Unchanged; the SDK adds the Bearer token when signed in |
++
++`401 {"detail":"device_revoked"}` means the device was unpaired from the webapp: the SDK
++clears the session and shows the sign-in overlay again.
++
++`device_type`: `phone | tablet | headset | projector | desktop | other` ·
++`platform`: `android | ios | quest | web | windows | macos | other` ·
++`source`: `camera | unmix | picker | projector | web_camera | manual | other`
++
++---
++
++## 4. What changed in the Unity projects
++
++### Added — `Assets/Alchroma/Runtime/` (identical on both branches)
++
++| File | Role |
++|------|------|
++| `AlchromaConfig.cs` | Base URL (persisted, overridable), deep-link scheme, `AutoShowLogin`, heartbeat interval |
++| `AlchromaSession.cs` | Stored token + user (`PlayerPrefs`), `Changed` event |
++| `AlchromaApi.cs` | JSON client (`Get/Post/Patch/Delete`), adds the Bearer token, handles `device_revoked` |
++| `AlchromaDevice.cs` | Stable per-install `device_id`, type/platform detection (`ForceType` to override) |
++| `AlchromaAuth.cs` | `Login(email, password)`, `RegisterDevice()`, `Validate()`, `Logout()` |
++| `AlchromaPairing.cs` | Flow A (`StartCodePairing` + polling), Flow B (`RedeemCode`, deep links), heartbeat |
++| `AlchromaCaptures.cs` | `Save / List / Delete` captures, offline queue + `FlushQueue()` |
++| `AlchromaWebPages.cs` | Opens Portfolio / Templates / Paint Collection signed in (system browser, or in-app with `ALCHROMA_WEBVIEW`) |
++| `AlchromaWebView.cs` | Optional in-app web view (compiled only with `ALCHROMA_WEBVIEW` + gree/unity-webview) |
++| `AlchromaLoginUI.cs` | Runtime-built sign-in / pairing overlay (email+password, *Pair with code*, headset code display) |
++| `AlchromaBootstrap.cs` | `RuntimeInitializeOnLoadMethod`: creates the persistent `[Alchroma]` object |
++
++### Modified
++
++| Branch | File | Change |
++|--------|------|--------|
++| both | `Assets/Scripts/ColorUnmixAPI.cs` | URL comes from `AlchromaConfig`; Bearer token added when signed in |
++| AR | `Assets/Scripts/CreatePaintAPI.cs` | Same public API, but saves/lists/deletes through `/api/devices/captures` (was `geomagic-backend.iapplabz.co.in`, anonymous and shared by everyone) |
++| VR | `Assets/Scripts/APIsManager.cs` | Same as above |
++| both | `Assets/Scripts/ColorItem.cs` | Delete goes through the manager → backend |
++| AR | `Assets/Ali/UnmixColorDetector.cs` | Saves the unmixed color + recipe to the account; guards the 3-slot palette array (the API can return 4 paints) |
++| VR | `Assets/Ali/Scripts/UnmixHandler.cs` | Same |
++| VR | `Assets/Ali/Scripts/saveColor.cs` | Fixed two inverted null checks (`if (!colorDetector) colorDetector.SaveColor(...)`) — Save never reached the backend before |
++| AR | `Assets/Plugins/Android/AndroidManifest.xml` | `alchroma://` deep-link intent filter, `exported`, `singleTask`, INTERNET |
++| AR | `ProjectSettings/ProjectSettings.asset` | iOS URL scheme `alchroma` |
++
++Public class names, method names and `Datum`/`Data` shapes are unchanged, so existing
++scenes, prefabs and UnityEvents keep working. `paintListResponse` now starts as an empty
++list (it used to be `null` until the network answered) and the color lists redraw when
++the list arrives or the user signs in/out.
++
++---
++
++## 5. Building & testing
++
++### Prerequisites (unchanged)
++* `AlchromaAR`: Unity **2022.3.62f3**. `Packages/manifest.json` references Vuforia as
++  `file:C:/com.ptc.vuforia.engine-11.4.4.tgz` — put that archive at that path (or edit the
++  reference) or the project will not open.
++* `AlchromaVR`: Unity **6000.3.10f1**. The ZED integration is referenced from a local
++  folder (`file:C:/Users/123/Downloads/unity-zed-integration-main`) — same remark.
++
++### No wiring needed
++Open the project, press Play or build. On first start the sign-in overlay appears
++(phones: email/password or *Pair with code*; Quest: a 6-digit code). Set
++`AlchromaConfig.AutoShowLogin = false` from a `[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]`
++if you want to show your own UI instead and call `AlchromaAuth` / `AlchromaPairing` yourself.
++
++### Test script
++1. **Phone, flow C** — start the app → sign in with a webapp account → Console shows
++   `[Alchroma] POST /api/devices/register -> 200`. Webapp → Devices lists the phone as *Online*.
++2. **Phone, flow B** — sign out (`AlchromaAuth.Logout()` or clear app data) → on the
++   webapp Devices page tap *Get pairing code* → in the app tap *Pair with code* and type it
++   (or scan the QR with the phone camera, or open the `alchroma://pair?code=…` link) → the
++   overlay closes, the device appears on the Devices page.
++3. **Quest, flow A** — start the app → a code is shown → enter it on the Devices page
++   (*Pair a headset*) → within ~3 s the overlay closes.
++4. **Capture** — pick/save a color in the app → it appears on the Devices page
++   (*Captured on devices*) with the device name, and in Paint Collection → My Colors.
++5. **Unmix** — run an unmix → the target color + recipe appear on the Devices page.
++6. **Unpair** — on the Devices page tap *Unpair* → the next app request returns
++   `device_revoked`, the app shows the sign-in overlay again.
++7. **Offline** — turn off networking, save a color (it is queued), sign in / reconnect →
++   the queue is flushed (`[Alchroma] Flushed N queued capture(s)`).
++
++### Pointing a build at a local backend
++`AlchromaConfig.BaseUrl = "http://192.168.1.10:8000";` (persisted in PlayerPrefs). For a
++plain-http URL on Android/iOS you also need cleartext traffic allowed in the manifest /
++ATS exception — production is https, so leave that out of release builds.
++
++### Optional: in-app web view
++1. `Packages/manifest.json`: `"net.gree.unity-webview": "https://github.com/gree/unity-webview.git?path=/dist/package-nofragment"`
++2. Player Settings → Scripting Define Symbols: `ALCHROMA_WEBVIEW`
++3. `AlchromaWebPages.OpenPortfolio()` now opens inside the app with a *Close* bar.
++   Without the define the same call opens the system browser, already signed in.
++
++---
++
++## 6. Notes / follow-ups
++
++* The webapp session for the in-app pages is passed through `oauth-callback.html?token=…`
++  (same mechanism the Google/Facebook login already uses). If that is a concern later,
++  swap it for a one-time exchange code.
++* Deep links: Android is handled by the manifest intent filter; iOS by the `alchroma` URL
++  scheme in Player Settings. Quest does not need deep links (flow A).
++* `Assets/Alchroma` has no `.meta` files in this branch; Unity generates them on first
++  import — commit them with your next change.
++* Paid assets (AVProVideo, OpenCVForUnity) are untouched by this integration.
+diff --git a/Assets/Alchroma/Runtime/AlchromaApi.cs b/Assets/Alchroma/Runtime/AlchromaApi.cs
+new file mode 100644
+index 0000000..03dac0b
+--- /dev/null
++++ b/Assets/Alchroma/Runtime/AlchromaApi.cs
+@@ -0,0 +1,142 @@
++using System;
++using System.Collections;
++using System.Text;
++using Newtonsoft.Json;
++using Newtonsoft.Json.Linq;
++using UnityEngine;
++using UnityEngine.Networking;
++
++namespace Alchroma
++{
++    /// <summary>Result of one backend call. `json` is null when the body was not a JSON object.</summary>
++    public class ApiResponse
++    {
++        public bool ok;
++        public long status;
++        public string text;
++        public JObject json;
++        public string error;
++
++        /// <summary>The backend's `detail` message when there is one, else the transport error.</summary>
++        public string Detail
++        {
++            get
++            {
++                var d = json?["detail"];
++                if (d != null && d.Type == JTokenType.String) return (string)d;
++                if (d != null && d.Type == JTokenType.Array && d.HasValues) return d.First?["msg"]?.ToString() ?? d.ToString(Formatting.None);
++                return error;
++            }
++        }
++
++        public T As<T>() => json == null ? default : json.ToObject<T>();
++    }
++
++    /// <summary>
++    /// Thin JSON client for the GeoMagic backend. Lives on a persistent
++    /// "[Alchroma]" GameObject that is created on first use. Adds the Bearer
++    /// token automatically and clears the session when the backend says the
++    /// device was revoked or the token expired.
++    /// </summary>
++    public class AlchromaApi : MonoBehaviour
++    {
++        static AlchromaApi instance;
++
++        public static AlchromaApi Instance
++        {
++            get
++            {
++                if (instance == null)
++                {
++                    var go = new GameObject("[Alchroma]");
++                    DontDestroyOnLoad(go);
++                    instance = go.AddComponent<AlchromaApi>();
++                }
++                return instance;
++            }
++        }
++
++        /// <summary>Raised when a request came back 401 for a session we thought was valid.</summary>
++        public static event Action SessionLost;
++
++        public int timeoutSeconds = 30;
++
++        void Awake()
++        {
++            if (instance != null && instance != this)
++            {
++                Destroy(this);
++                return;
++            }
++            instance = this;
++            DontDestroyOnLoad(gameObject);
++            AlchromaSession.Load();
++        }
++
++        public static void Get(string path, Action<ApiResponse> done, bool auth = true)
++            => Instance.StartCoroutine(Instance.Send("GET", path, null, done, auth));
++
++        public static void Post(string path, object body, Action<ApiResponse> done, bool auth = true)
++            => Instance.StartCoroutine(Instance.Send("POST", path, body, done, auth));
++
++        public static void Patch(string path, object body, Action<ApiResponse> done, bool auth = true)
++            => Instance.StartCoroutine(Instance.Send("PATCH", path, body, done, auth));
++
++        public static void Delete(string path, Action<ApiResponse> done, bool auth = true)
++            => Instance.StartCoroutine(Instance.Send("DELETE", path, null, done, auth));
++
++        IEnumerator Send(string method, string path, object body, Action<ApiResponse> done, bool auth)
++        {
++            var url = AlchromaConfig.Url(path);
++            using (var req = new UnityWebRequest(url, method))
++            {
++                if (body != null)
++                {
++                    var json = body as string ?? JsonConvert.SerializeObject(body);
++                    req.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
++                    req.SetRequestHeader("Content-Type", "application/json");
++                }
++                req.downloadHandler = new DownloadHandlerBuffer();
++                req.SetRequestHeader("Accept", "application/json");
++                req.timeout = timeoutSeconds;
++                if (auth && !string.IsNullOrEmpty(AlchromaSession.AccessToken))
++                    req.SetRequestHeader("Authorization", "Bearer " + AlchromaSession.AccessToken);
++
++                yield return req.SendWebRequest();
++
++                var res = new ApiResponse { status = req.responseCode, text = req.downloadHandler != null ? req.downloadHandler.text : null };
++                try
++                {
++                    if (!string.IsNullOrWhiteSpace(res.text) && res.text.TrimStart().StartsWith("{"))
++                        res.json = JObject.Parse(res.text);
++                }
++                catch (Exception) { /* not a JSON object body */ }
++
++                res.ok = req.result == UnityWebRequest.Result.Success;
++                if (!res.ok)
++                {
++                    if (req.result == UnityWebRequest.Result.ConnectionError)
++                        res.error = "Network error: " + req.error;
++                    else
++                        res.error = res.Detail ?? ("HTTP " + req.responseCode + " " + req.error);
++                }
++
++                if (AlchromaConfig.VerboseLogs)
++                    Debug.Log($"[Alchroma] {method} {path} -> {res.status}{(res.ok ? "" : " " + res.error)}");
++
++                if (res.status == 401 && auth && AlchromaSession.IsLoggedIn)
++                {
++                    var detail = res.Detail ?? "";
++                    if (detail == "device_revoked" || detail.StartsWith("Invalid or expired"))
++                    {
++                        Debug.LogWarning("[Alchroma] Session is no longer valid (" + detail + "), signing out.");
++                        AlchromaSession.Clear();
++                        SessionLost?.Invoke();
++                    }
++                }
++
++                done?.Invoke(res);
++            }
++        }
++    }
++}
+diff --git a/Assets/Alchroma/Runtime/AlchromaAuth.cs b/Assets/Alchroma/Runtime/AlchromaAuth.cs
+new file mode 100644
+index 0000000..0053f4e
+--- /dev/null
++++ b/Assets/Alchroma/Runtime/AlchromaAuth.cs
+@@ -0,0 +1,102 @@
++using System;
++using Newtonsoft.Json.Linq;
++
++namespace Alchroma
++{
++    /// <summary>
++    /// Account actions. Login uses the same /api/auth/login as the webapp, then
++    /// registers this device to swap the 7-day user token for a 90-day device
++    /// token (revocable from the webapp Devices page).
++    /// </summary>
++    public static class AlchromaAuth
++    {
++        /// <summary>done(success, errorMessage)</summary>
++        public static void Login(string email, string password, Action<bool, string> done)
++        {
++            email = (email ?? "").Trim();
++            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
++            {
++                done?.Invoke(false, "Enter your email and password");
++                return;
++            }
++            AlchromaApi.Post("/api/auth/login", new { email, password }, res =>
++            {
++                if (!res.ok || res.json == null)
++                {
++                    done?.Invoke(false, res.Detail ?? "Login failed");
++                    return;
++                }
++                var user = res.json["user"]?.ToObject<AlchromaUser>();
++                AlchromaSession.Set((string)res.json["access_token"], "user", user);
++                // Registration failing (offline, etc.) must not undo a successful login.
++                RegisterDevice((ok, err) => done?.Invoke(true, null));
++            }, auth: false);
++        }
++
++        /// <summary>Register / refresh this device for the signed-in user and store the device token.</summary>
++        public static void RegisterDevice(Action<bool, string> done)
++        {
++            if (!AlchromaSession.IsLoggedIn)
++            {
++                done?.Invoke(false, "not_logged_in");
++                return;
++            }
++            AlchromaApi.Post("/api/devices/register", AlchromaDevice.Info(), res =>
++            {
++                if (!res.ok || res.json == null)
++                {
++                    done?.Invoke(false, res.Detail ?? "Device registration failed");
++                    return;
++                }
++                ApplyDeviceSession(res.json);
++                done?.Invoke(true, null);
++            });
++        }
++
++        /// <summary>Store a {access_token, user, device} payload from /register, /pair/redeem or /pair/status.</summary>
++        public static void ApplyDeviceSession(JObject payload)
++        {
++            if (payload == null) return;
++            var user = payload["user"] != null && payload["user"].Type == JTokenType.Object
++                ? payload["user"].ToObject<AlchromaUser>()
++                : AlchromaSession.User;
++            AlchromaSession.Set((string)payload["access_token"], (string)payload["token_type"] ?? "device", user);
++        }
++
++        /// <summary>Check the stored token with the backend. done(valid)</summary>
++        public static void Validate(Action<bool> done)
++        {
++            if (!AlchromaSession.IsLoggedIn)
++            {
++                done?.Invoke(false);
++                return;
++            }
++            if (AlchromaSession.TokenType == "device")
++            {
++                // heartbeat also fails with device_revoked when the webapp unpaired us
++                AlchromaApi.Post("/api/devices/heartbeat", null, res => done?.Invoke(res.ok || res.status != 401));
++                return;
++            }
++            AlchromaApi.Get("/api/auth/me", res =>
++            {
++                if (res.ok && res.json?["user"] != null)
++                {
++                    var fresh = res.json["user"].ToObject<AlchromaUser>();
++                    if (fresh != null && fresh.id != null && (AlchromaSession.User == null || fresh.email != AlchromaSession.User.email))
++                        AlchromaSession.Set(AlchromaSession.AccessToken, AlchromaSession.TokenType, fresh);
++                    done?.Invoke(true);
++                }
++                else
++                {
++                    // network errors keep the cached session; a definite 401 has already cleared it
++                    done?.Invoke(res.status != 401);
++                }
++            });
++        }
++
++        public static void Logout()
++        {
++            AlchromaSession.Clear();
++        }
++    }
++}
+diff --git a/Assets/Alchroma/Runtime/AlchromaBootstrap.cs b/Assets/Alchroma/Runtime/AlchromaBootstrap.cs
+new file mode 100644
+index 0000000..4a0da7d
+--- /dev/null
++++ b/Assets/Alchroma/Runtime/AlchromaBootstrap.cs
+@@ -0,0 +1,25 @@
++using UnityEngine;
++
++namespace Alchroma
++{
++    /// <summary>
++    /// Zero-setup entry point: after the first scene loads this creates the
++    /// persistent [Alchroma] object with the API client, the pairing / heartbeat
++    /// component and (unless AlchromaConfig.AutoShowLogin is false) the sign-in
++    /// overlay, then flushes any captures that were queued while signed out.
++    /// Nothing needs to be added to a scene.
++    /// </summary>
++    public static class AlchromaBootstrap
++    {
++        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
++        static void Init()
++        {
++            var host = AlchromaApi.Instance.gameObject;
++            if (host.GetComponent<AlchromaPairing>() == null) host.AddComponent<AlchromaPairing>();
++            if (host.GetComponent<AlchromaLoginUI>() == null) host.AddComponent<AlchromaLoginUI>();
++            AlchromaCaptures.FlushQueue();
++            if (AlchromaConfig.VerboseLogs)
++                Debug.Log($"[Alchroma] ready — backend {AlchromaConfig.BaseUrl}, device {AlchromaDevice.Type}/{AlchromaDevice.Platform}, signed in: {AlchromaSession.IsLoggedIn}");
++        }
++    }
++}
+diff --git a/Assets/Alchroma/Runtime/AlchromaCaptures.cs b/Assets/Alchroma/Runtime/AlchromaCaptures.cs
+new file mode 100644
+index 0000000..e167cc7
+--- /dev/null
++++ b/Assets/Alchroma/Runtime/AlchromaCaptures.cs
+@@ -0,0 +1,176 @@
++using System;
++using System.Collections.Generic;
++using Newtonsoft.Json.Linq;
++using UnityEngine;
++
++namespace Alchroma
++{
++    /// <summary>
++    /// Colors captured on this device. Every Save() lands in the user's account
++    /// (Devices page + "My Colors" in the Paint Collection). When nobody is signed
++    /// in or the network is down the capture is queued in PlayerPrefs and flushed
++    /// by FlushQueue() (called at startup and after every successful sign-in).
++    /// </summary>
++    public static class AlchromaCaptures
++    {
++        [Serializable]
++        public class RecipeItem
++        {
++            public string name;
++            public string hex;
++            public float? percentage;
++            public float? parts;
++        }
++
++        [Serializable]
++        public class Capture
++        {
++            public int id;
++            public string hex;
++            public string rgb;          // "r,g,b"
++            public string name;
++            public string source;       // camera | unmix | picker | projector | web_camera | manual | other
++            public string device_id;
++            public string device_type;
++            public string device_name;
++            public List<RecipeItem> recipe;
++            public string created_at;
++        }
++
++        const string QueueKey = "alchroma.captureQueue";
++        const int QueueCap = 500;
++
++        /// <summary>done(success, capture, error). error == "not_logged_in" means it was queued.</summary>
++        public static void Save(string hex, string name = null, string source = "camera",
++            IList<RecipeItem> recipe = null, JObject meta = null, Action<bool, Capture, string> done = null)
++        {
++            var clean = NormalizeHex(hex);
++            if (clean == null)
++            {
++                done?.Invoke(false, null, "Invalid color: " + hex);
++                return;
++            }
++            var body = new JObject
++            {
++                ["hex"] = clean,
++                ["name"] = string.IsNullOrWhiteSpace(name) ? null : name.Trim(),
++                ["source"] = string.IsNullOrEmpty(source) ? "camera" : source,
++                ["device_id"] = AlchromaDevice.Id,
++            };
++            if (recipe != null && recipe.Count > 0) body["recipe"] = JArray.FromObject(recipe);
++            if (meta != null) body["meta"] = meta;
++
++            if (!AlchromaSession.IsLoggedIn)
++            {
++                Enqueue(body);
++                done?.Invoke(false, null, "not_logged_in");
++                return;
++            }
++            AlchromaApi.Post("/api/devices/captures", body, res =>
++            {
++                if (!res.ok)
++                {
++                    // keep it for later if the server was unreachable, drop it if it was rejected
++                    if (res.status == 0 || res.status >= 500) Enqueue(body);
++                    done?.Invoke(false, null, res.Detail ?? "Save failed");
++                    return;
++                }
++                done?.Invoke(true, res.json?["capture"]?.ToObject<Capture>(), null);
++            });
++        }
++
++        /// <summary>Newest first. done(success, captures, total)</summary>
++        public static void List(int limit, Action<bool, List<Capture>, int> done, string source = null)
++        {
++            if (!AlchromaSession.IsLoggedIn)
++            {
++                done?.Invoke(false, new List<Capture>(), 0);
++                return;
++            }
++            var path = "/api/devices/captures?limit=" + Mathf.Clamp(limit, 1, 500);
++            if (!string.IsNullOrEmpty(source)) path += "&source=" + Uri.EscapeDataString(source);
++            AlchromaApi.Get(path, res =>
++            {
++                if (!res.ok || res.json == null)
++                {
++                    done?.Invoke(false, new List<Capture>(), 0);
++                    return;
++                }
++                var list = res.json["captures"]?.ToObject<List<Capture>>() ?? new List<Capture>();
++                done?.Invoke(true, list, (int?)res.json["total"] ?? list.Count);
++            });
++        }
++
++        public static void Delete(int id, Action<bool, string> done)
++        {
++            AlchromaApi.Delete("/api/devices/captures/" + id, res => done?.Invoke(res.ok, res.ok ? null : res.Detail));
++        }
++
++        // ------------------------------------------------------------- queue
++
++        public static int QueuedCount => LoadQueue().Count;
++
++        public static void FlushQueue()
++        {
++            if (!AlchromaSession.IsLoggedIn) return;
++            var q = LoadQueue();
++            if (q.Count == 0) return;
++            var batch = new JArray();
++            for (int i = 0; i < Mathf.Min(q.Count, 200); i++) batch.Add(q[i]);
++            AlchromaApi.Post("/api/devices/captures/batch", new JObject { ["captures"] = batch }, res =>
++            {
++                if (!res.ok) return;
++                var rest = new JArray();
++                for (int i = batch.Count; i < q.Count; i++) rest.Add(q[i]);
++                SaveQueue(rest);
++                if (AlchromaConfig.VerboseLogs) Debug.Log("[Alchroma] Flushed " + batch.Count + " queued capture(s)");
++                if (rest.Count > 0) FlushQueue();
++            });
++        }
++
++        static void Enqueue(JObject body)
++        {
++            var q = LoadQueue();
++            q.Add(body);
++            while (q.Count > QueueCap) q.RemoveAt(0);
++            SaveQueue(q);
++        }
++
++        static JArray LoadQueue()
++        {
++            try
++            {
++                var raw = PlayerPrefs.GetString(QueueKey, "");
++                return string.IsNullOrEmpty(raw) ? new JArray() : JArray.Parse(raw);
++            }
++            catch (Exception)
++            {
++                return new JArray();
++            }
++        }
++
++        static void SaveQueue(JArray q)
++        {
++            PlayerPrefs.SetString(QueueKey, q.ToString(Newtonsoft.Json.Formatting.None));
++            PlayerPrefs.Save();
++        }
++
++        /// <summary>"1e2448", "#1E2448" or "1E2448FF" -> "#1E2448"; null when it is not a color.</summary>
++        public static string NormalizeHex(string hex)
++        {
++            var h = (hex ?? "").Trim().TrimStart('#').ToUpperInvariant();
++            if (h.Length == 8) h = h.Substring(0, 6);
++            if (h.Length == 3) h = "" + h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
++            if (h.Length != 6) return null;
++            foreach (var c in h)
++                if (!Uri.IsHexDigit(c)) return null;
++            return "#" + h;
++        }
++
++        public static string ColorToHex(Color color)
++        {
++            Color32 c = color;
++            return string.Format("#{0:X2}{1:X2}{2:X2}", c.r, c.g, c.b);
++        }
++    }
++}
+diff --git a/Assets/Alchroma/Runtime/AlchromaConfig.cs b/Assets/Alchroma/Runtime/AlchromaConfig.cs
+new file mode 100644
+index 0000000..c20e14d
+--- /dev/null
++++ b/Assets/Alchroma/Runtime/AlchromaConfig.cs
+@@ -0,0 +1,48 @@
++using UnityEngine;
++
++namespace Alchroma
++{
++    /// <summary>
++    /// Where the GeoMagic / Alchroma backend lives and a few global switches.
++    /// The base URL is persisted so a debug menu can point a build at staging
++    /// without a rebuild (AlchromaConfig.BaseUrl = "http://192.168.1.10:8000").
++    /// </summary>
++    public static class AlchromaConfig
++    {
++        public const string DefaultBaseUrl = "https://alchromaticdemo.up.railway.app";
++
++        /// <summary>Custom URL scheme handled by the apps (alchroma://pair?code=XXXX).</summary>
++        public const string DeepLinkScheme = "alchroma";
++
++        const string BaseUrlKey = "alchroma.baseUrl";
++
++        public static string BaseUrl
++        {
++            get => PlayerPrefs.GetString(BaseUrlKey, DefaultBaseUrl).TrimEnd('/');
++            set
++            {
++                PlayerPrefs.SetString(BaseUrlKey, string.IsNullOrEmpty(value) ? DefaultBaseUrl : value.TrimEnd('/'));
++                PlayerPrefs.Save();
++            }
++        }
++
++        public static string Url(string path)
++        {
++            if (string.IsNullOrEmpty(path)) return BaseUrl;
++            return BaseUrl + (path.StartsWith("/") ? path : "/" + path);
++        }
++
++        /// <summary>
++        /// When true (default) the SDK shows its own sign-in / pairing overlay at
++        /// startup whenever nobody is signed in. Set it to false from a
++        /// [RuntimeInitializeOnLoadMethod(BeforeSceneLoad)] in your own code if you
++        /// want to drive AlchromaLoginUI (or your own UI) yourself.
++        /// </summary>
++        public static bool AutoShowLogin = true;
++
++        /// <summary>Seconds between heartbeats that keep the device "online" on the Devices page.</summary>
++        public static float HeartbeatSeconds = 60f;
++
++        public static bool VerboseLogs = true;
++    }
++}
+diff --git a/Assets/Alchroma/Runtime/AlchromaDevice.cs b/Assets/Alchroma/Runtime/AlchromaDevice.cs
+new file mode 100644
+index 0000000..f74451f
+--- /dev/null
++++ b/Assets/Alchroma/Runtime/AlchromaDevice.cs
+@@ -0,0 +1,102 @@
++using System;
++using Newtonsoft.Json.Linq;
++using UnityEngine;
++
++namespace Alchroma
++{
++    /// <summary>
++    /// Identity of this install as the backend sees it. The id is a GUID created
++    /// once per install (more stable than SystemInfo.deviceUniqueIdentifier, which
++    /// needs extra permissions on some Android versions).
++    /// </summary>
++    public static class AlchromaDevice
++    {
++        const string IdKey = "alchroma.deviceId";
++        static string id;
++
++        /// <summary>Set this before the first backend call to override the auto-detected type ("headset", "tablet", "phone", "projector").</summary>
++        public static string ForceType;
++
++        public static string Id
++        {
++            get
++            {
++                if (string.IsNullOrEmpty(id))
++                {
++                    id = PlayerPrefs.GetString(IdKey, "");
++                    if (string.IsNullOrEmpty(id))
++                    {
++                        id = Guid.NewGuid().ToString("N");
++                        PlayerPrefs.SetString(IdKey, id);
++                        PlayerPrefs.Save();
++                    }
++                }
++                return id;
++            }
++        }
++
++        public static bool IsHeadset
++        {
++            get
++            {
++                var model = SystemInfo.deviceModel ?? "";
++                return model.IndexOf("Quest", StringComparison.OrdinalIgnoreCase) >= 0
++                    || model.IndexOf("Oculus", StringComparison.OrdinalIgnoreCase) >= 0
++                    || model.IndexOf("Pico", StringComparison.OrdinalIgnoreCase) >= 0;
++            }
++        }
++
++        public static bool IsTablet
++        {
++            get
++            {
++                if (Screen.dpi <= 0) return false;
++                float w = Screen.width / Screen.dpi, h = Screen.height / Screen.dpi;
++                return Mathf.Sqrt(w * w + h * h) >= 6.5f;
++            }
++        }
++
++        public static string Type
++        {
++            get
++            {
++                if (!string.IsNullOrEmpty(ForceType)) return ForceType;
++                if (IsHeadset) return "headset";
++                return IsTablet ? "tablet" : "phone";
++            }
++        }
++
++        public static string Platform
++        {
++            get
++            {
++#if UNITY_IOS
++                return "ios";
++#elif UNITY_ANDROID
++                return IsHeadset ? "quest" : "android";
++#elif UNITY_STANDALONE_WIN
++                return "windows";
++#elif UNITY_STANDALONE_OSX
++                return "macos";
++#else
++                return "other";
++#endif
++            }
++        }
++
++        public static string Name => string.IsNullOrEmpty(SystemInfo.deviceModel) ? Type : SystemInfo.deviceModel;
++
++        /// <summary>Body for /api/devices/register, /pair/start and /pair/redeem.</summary>
++        public static JObject Info()
++        {
++            return new JObject
++            {
++                ["device_id"] = Id,
++                ["device_type"] = Type,
++                ["platform"] = Platform,
++                ["name"] = Name,
++                ["app_version"] = Application.version,
++            };
++        }
++    }
++}
+diff --git a/Assets/Alchroma/Runtime/AlchromaLoginUI.cs b/Assets/Alchroma/Runtime/AlchromaLoginUI.cs
+new file mode 100644
+index 0000000..a92edf2
+--- /dev/null
++++ b/Assets/Alchroma/Runtime/AlchromaLoginUI.cs
+@@ -0,0 +1,376 @@
++using System;
++using UnityEngine;
++using UnityEngine.EventSystems;
++using UnityEngine.UI;
++
++namespace Alchroma
++{
++    /// <summary>
++    /// Self-contained sign-in / pairing overlay built from code (no prefab, no
++    /// scene edits). Shown automatically at startup when nobody is signed in
++    /// (AlchromaConfig.AutoShowLogin) and again if the device is revoked.
++    ///
++    ///   phone / tablet : email + password, or "Pair with code" from the Devices page
++    ///   headset        : shows the 6-digit code to type on the Devices page
++    ///
++    /// Call AlchromaLoginUI.Show() / Hide() to drive it yourself, or build your
++    /// own UI on top of AlchromaAuth / AlchromaPairing and set AutoShowLogin=false.
++    /// </summary>
++    public class AlchromaLoginUI : MonoBehaviour
++    {
++        public static AlchromaLoginUI Instance { get; private set; }
++
++        static readonly Color Bg = new Color(0.07f, 0.075f, 0.08f, 0.96f);
++        static readonly Color Panel = new Color(0.11f, 0.12f, 0.13f, 1f);
++        static readonly Color Field = new Color(0.17f, 0.18f, 0.2f, 1f);
++        static readonly Color Accent = new Color(0.16f, 0.52f, 1f, 1f);
++        static readonly Color Muted = new Color(0.62f, 0.65f, 0.68f, 1f);
++
++        Canvas canvas;
++        GameObject root, formGroup, codeGroup, headsetGroup;
++        InputField emailField, passwordField, codeField;
++        Text status, headsetCode;
++        Button loginBtn, redeemBtn;
++        bool built;
++
++        public static void Show()
++        {
++            var ui = Instance != null ? Instance : AlchromaApi.Instance.gameObject.AddComponent<AlchromaLoginUI>();
++            ui.Open();
++        }
++
++        public static void Hide()
++        {
++            if (Instance != null) Instance.Close();
++        }
++
++        void Awake()
++        {
++            Instance = this;
++        }
++
++        void Start()
++        {
++            AlchromaSession.Load();
++            AlchromaSession.Changed += OnSessionChanged;
++            AlchromaApi.SessionLost += OnSessionLost;
++            AlchromaPairing.CodeReady += OnCodeReady;
++            AlchromaPairing.Failed += OnPairFailed;
++
++            if (AlchromaSession.IsLoggedIn)
++            {
++                AlchromaAuth.Validate(valid => { if (!valid && AlchromaConfig.AutoShowLogin) Open(); });
++            }
++            else if (AlchromaConfig.AutoShowLogin)
++            {
++                Open();
++            }
++        }
++
++        void OnDestroy()
++        {
++            AlchromaSession.Changed -= OnSessionChanged;
++            AlchromaApi.SessionLost -= OnSessionLost;
++            AlchromaPairing.CodeReady -= OnCodeReady;
++            AlchromaPairing.Failed -= OnPairFailed;
++        }
++
++        void OnSessionChanged()
++        {
++            if (AlchromaSession.IsLoggedIn)
++            {
++                AlchromaCaptures.FlushQueue();
++                Close();
++            }
++            else if (AlchromaConfig.AutoShowLogin)
++            {
++                Open();   // signed out (Logout or revoked): offer to sign in again
++            }
++        }
++
++        void OnSessionLost()
++        {
++            if (AlchromaConfig.AutoShowLogin) Open();
++        }
++
++        void OnCodeReady(string code)
++        {
++            if (headsetCode != null) headsetCode.text = code.Length == 6 ? code.Substring(0, 3) + " " + code.Substring(3) : code;
++            SetStatus("Enter this code on GeoMagic → Devices → Pair a headset", Muted);
++        }
++
++        void OnPairFailed(string msg)
++        {
++            SetStatus(msg, new Color(1f, 0.45f, 0.35f));
++        }
++
++        // ------------------------------------------------------------ open/close
++
++        public void Open()
++        {
++            if (!built) Build();
++            root.SetActive(true);
++            bool headset = AlchromaDevice.IsHeadset;
++            headsetGroup.SetActive(headset);
++            formGroup.SetActive(!headset);
++            codeGroup.SetActive(false);
++            SetStatus(headset ? "Getting a pairing code…" : "", Muted);
++            if (headset)
++            {
++                var pairing = AlchromaPairing.Instance != null ? AlchromaPairing.Instance : AlchromaApi.Instance.gameObject.AddComponent<AlchromaPairing>();
++                if (string.IsNullOrEmpty(pairing.CurrentCode)) pairing.StartCodePairing();
++                else OnCodeReady(pairing.CurrentCode);
++            }
++        }
++
++        public void Close()
++        {
++            if (root != null) root.SetActive(false);
++        }
++
++        // ------------------------------------------------------------- actions
++
++        void DoLogin()
++        {
++            SetStatus("Signing in…", Muted);
++            loginBtn.interactable = false;
++            AlchromaAuth.Login(emailField.text, passwordField.text, (ok, err) =>
++            {
++                loginBtn.interactable = true;
++                if (!ok) SetStatus(err ?? "Login failed", new Color(1f, 0.45f, 0.35f));
++            });
++        }
++
++        void DoRedeem()
++        {
++            SetStatus("Pairing…", Muted);
++            redeemBtn.interactable = false;
++            var pairing = AlchromaPairing.Instance != null ? AlchromaPairing.Instance : AlchromaApi.Instance.gameObject.AddComponent<AlchromaPairing>();
++            pairing.RedeemCode(codeField.text, (ok, err) =>
++            {
++                redeemBtn.interactable = true;
++                if (!ok) SetStatus(err ?? "Pairing failed", new Color(1f, 0.45f, 0.35f));
++            });
++        }
++
++        void SetStatus(string msg, Color c)
++        {
++            if (status == null) return;
++            status.text = msg ?? "";
++            status.color = c;
++        }
++
++        // ----------------------------------------------------------------- UI
++
++        void Build()
++        {
++            built = true;
++            bool headset = AlchromaDevice.IsHeadset;
++            if (!headset) EnsureEventSystem();   // the headset panel is display-only (the XR rig owns input)
++
++            root = new GameObject("AlchromaLoginUI");
++            root.transform.SetParent(transform, false);
++            canvas = root.AddComponent<Canvas>();
++            root.AddComponent<GraphicRaycaster>();
++
++            if (headset)
++            {
++                // world-space panel 1.6 m in front of the user (display only)
++                canvas.renderMode = RenderMode.WorldSpace;
++                var rt = root.GetComponent<RectTransform>();
++                rt.sizeDelta = new Vector2(900, 600);
++                var cam = Camera.main;
++                var origin = cam != null ? cam.transform.position : Vector3.zero;
++                var fwd = cam != null ? Vector3.ProjectOnPlane(cam.transform.forward, Vector3.up) : Vector3.forward;
++                if (fwd.sqrMagnitude < 0.01f) fwd = Vector3.forward;
++                fwd.Normalize();
++                root.transform.position = origin + fwd * 1.6f;
++                root.transform.rotation = Quaternion.LookRotation(fwd, Vector3.up);
++                root.transform.localScale = Vector3.one * 0.0012f;
++            }
++            else
++            {
++                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
++                canvas.sortingOrder = 30000;
++                var scaler = root.AddComponent<CanvasScaler>();
++                scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
++                scaler.referenceResolution = new Vector2(1080, 1920);
++                scaler.matchWidthOrHeight = 0.5f;
++            }
++
++            var dim = MakeImage(root.transform, "Dim", Bg);
++            Stretch(dim.rectTransform);
++
++            var panel = MakeImage(root.transform, "Panel", Panel);
++            var prt = panel.rectTransform;
++            prt.anchorMin = new Vector2(0.5f, 0.5f); prt.anchorMax = new Vector2(0.5f, 0.5f);
++            prt.sizeDelta = new Vector2(860, 600);
++            // height follows the content (the "Pair with code" section can be toggled open)
++            var panelFit = panel.gameObject.AddComponent<ContentSizeFitter>();
++            panelFit.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
++
++            var layout = panel.gameObject.AddComponent<VerticalLayoutGroup>();
++            layout.padding = new RectOffset(48, 48, 48, 48);
++            layout.spacing = 18;
++            layout.childForceExpandHeight = false;
++            layout.childForceExpandWidth = true;
++            layout.childControlHeight = true;
++            layout.childControlWidth = true;
++
++            MakeText(panel.transform, "Title", "Sign in to GeoMagic", 44, FontStyle.Bold, Color.white, TextAnchor.MiddleCenter, 60);
++            MakeText(panel.transform, "Sub", "Use the same account as the web app. Colors you capture will show up in your Paint Collection.", 24, FontStyle.Normal, Muted, TextAnchor.MiddleCenter, 80);
++
++            // ---- phone / tablet: email + password
++            formGroup = MakeGroup(panel.transform, "Form");
++            emailField = MakeInput(formGroup.transform, "Email", "Email", InputField.ContentType.EmailAddress);
++            passwordField = MakeInput(formGroup.transform, "Password", "Password", InputField.ContentType.Password);
++            loginBtn = MakeButton(formGroup.transform, "Log in", DoLogin, Accent, 30);
++            MakeButton(formGroup.transform, "Pair with a code from the Devices page", () => { codeGroup.SetActive(!codeGroup.activeSelf); }, Field, 24);
++
++            codeGroup = MakeGroup(formGroup.transform, "Code");
++            codeField = MakeInput(codeGroup.transform, "PairCode", "Code (e.g. ABCD2345)", InputField.ContentType.Alphanumeric);
++            redeemBtn = MakeButton(codeGroup.transform, "Pair this device", DoRedeem, Accent, 28);
++            codeGroup.SetActive(false);
++
++            // ---- headset: show the code
++            headsetGroup = MakeGroup(panel.transform, "Headset");
++            MakeText(headsetGroup.transform, "HsLabel", "Your pairing code", 26, FontStyle.Normal, Muted, TextAnchor.MiddleCenter, 40);
++            headsetCode = MakeText(headsetGroup.transform, "HsCode", "··· ···", 96, FontStyle.Bold, Color.white, TextAnchor.MiddleCenter, 120);
++            MakeText(headsetGroup.transform, "HsHelp", "On a computer or phone open GeoMagic → Devices → Pair a headset and enter this code.", 24, FontStyle.Normal, Muted, TextAnchor.MiddleCenter, 80);
++
++            status = MakeText(panel.transform, "Status", "", 24, FontStyle.Normal, Muted, TextAnchor.MiddleCenter, 70);
++            MakeButton(panel.transform, "Continue without an account", () => Close(), Field, 24);
++        }
++
++        // ------------------------------------------------------------ helpers
++
++        static Font uiFont;
++
++        public static Font UiFont
++        {
++            get
++            {
++                if (uiFont == null)
++                {
++                    try { uiFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"); } catch (Exception) { }
++                    if (uiFont == null)
++                    {
++                        try { uiFont = Resources.GetBuiltinResource<Font>("Arial.ttf"); } catch (Exception) { }
++                    }
++                    if (uiFont == null) uiFont = Font.CreateDynamicFontFromOSFont("Arial", 16);
++                }
++                return uiFont;
++            }
++        }
++
++        public static void EnsureEventSystem()
++        {
++#if UNITY_2023_1_OR_NEWER
++            var es = UnityEngine.Object.FindFirstObjectByType<EventSystem>();
++#else
++            var es = UnityEngine.Object.FindObjectOfType<EventSystem>();
++#endif
++            if (es != null) return;
++            var go = new GameObject("EventSystem");
++            go.AddComponent<EventSystem>();
++#if ENABLE_INPUT_SYSTEM && !ENABLE_LEGACY_INPUT_MANAGER
++            go.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
++#else
++            go.AddComponent<StandaloneInputModule>();
++#endif
++            DontDestroyOnLoad(go);
++        }
++
++        static void Stretch(RectTransform rt)
++        {
++            rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one;
++            rt.offsetMin = Vector2.zero; rt.offsetMax = Vector2.zero;
++        }
++
++        static Image MakeImage(Transform parent, string name, Color color)
++        {
++            var go = new GameObject(name);
++            go.transform.SetParent(parent, false);
++            var img = go.AddComponent<Image>();
++            img.color = color;
++            return img;
++        }
++
++        static GameObject MakeGroup(Transform parent, string name)
++        {
++            var go = new GameObject(name);
++            go.transform.SetParent(parent, false);
++            go.AddComponent<RectTransform>();
++            // a VerticalLayoutGroup reports its preferred height to the parent group
++            // by itself; no ContentSizeFitter (Unity warns about fitters inside groups)
++            var l = go.AddComponent<VerticalLayoutGroup>();
++            l.spacing = 14;
++            l.childForceExpandHeight = false;
++            l.childForceExpandWidth = true;
++            l.childControlHeight = true;
++            l.childControlWidth = true;
++            return go;
++        }
++
++        static Text MakeText(Transform parent, string name, string value, int size, FontStyle style, Color color, TextAnchor anchor, float height)
++        {
++            var go = new GameObject(name);
++            go.transform.SetParent(parent, false);
++            var t = go.AddComponent<Text>();
++            t.font = UiFont;
++            t.fontSize = size;
++            t.fontStyle = style;
++            t.color = color;
++            t.alignment = anchor;
++            t.horizontalOverflow = HorizontalWrapMode.Wrap;
++            t.verticalOverflow = VerticalWrapMode.Overflow;
++            t.text = value;
++            var le = go.AddComponent<LayoutElement>();
++            le.preferredHeight = height;
++            le.minHeight = height;
++            return t;
++        }
++
++        static InputField MakeInput(Transform parent, string name, string placeholder, InputField.ContentType type)
++        {
++            var bg = MakeImage(parent, name, Field);
++            var le = bg.gameObject.AddComponent<LayoutElement>();
++            le.preferredHeight = 96; le.minHeight = 96;
++
++            var textGo = new GameObject("Text");
++            textGo.transform.SetParent(bg.transform, false);
++            var text = textGo.AddComponent<Text>();
++            text.font = UiFont; text.fontSize = 30; text.color = Color.white; text.alignment = TextAnchor.MiddleLeft;
++            text.supportRichText = false;
++            var trt = text.rectTransform; Stretch(trt); trt.offsetMin = new Vector2(24, 0); trt.offsetMax = new Vector2(-24, 0);
++
++            var phGo = new GameObject("Placeholder");
++            phGo.transform.SetParent(bg.transform, false);
++            var ph = phGo.AddComponent<Text>();
++            ph.font = UiFont; ph.fontSize = 30; ph.color = Muted; ph.alignment = TextAnchor.MiddleLeft; ph.text = placeholder;
++            var prt = ph.rectTransform; Stretch(prt); prt.offsetMin = new Vector2(24, 0); prt.offsetMax = new Vector2(-24, 0);
++
++            var input = bg.gameObject.AddComponent<InputField>();
++            input.targetGraphic = bg;
++            input.textComponent = text;
++            input.placeholder = ph;
++            input.contentType = type;
++            input.lineType = InputField.LineType.SingleLine;
++            return input;
++        }
++
++        public static Button MakeButton(Transform parent, string label, Action onClick, Color color, int fontSize)
++        {
++            var bg = MakeImage(parent, "Button:" + label, color);
++            var le = bg.gameObject.AddComponent<LayoutElement>();
++            le.preferredHeight = 92; le.minHeight = 92;
++            var btn = bg.gameObject.AddComponent<Button>();
++            btn.targetGraphic = bg;
++            var t = MakeText(bg.transform, "Label", label, fontSize, FontStyle.Bold, Color.white, TextAnchor.MiddleCenter, 92);
++            Stretch(t.rectTransform);
++            UnityEngine.Object.Destroy(t.GetComponent<LayoutElement>());
++            btn.onClick.AddListener(() => onClick?.Invoke());
++            return btn;
++        }
++    }
++}
+diff --git a/Assets/Alchroma/Runtime/AlchromaPairing.cs b/Assets/Alchroma/Runtime/AlchromaPairing.cs
+new file mode 100644
+index 0000000..f58c822
+--- /dev/null
++++ b/Assets/Alchroma/Runtime/AlchromaPairing.cs
+@@ -0,0 +1,204 @@
++using System;
++using System.Collections;
++using Newtonsoft.Json.Linq;
++using UnityEngine;
++
++namespace Alchroma
++{
++    /// <summary>
++    /// Pairs this device to a GeoMagic account without typing a password:
++    ///
++    ///   * Code pairing (headset / projector): StartCodePairing() asks the backend
++    ///     for a 6-digit code, raises CodeReady so you can show it, and polls until
++    ///     the user enters the code on the webapp Devices page.
++    ///   * Redeem (phone / tablet): the webapp shows a code + QR; RedeemCode() or a
++    ///     deep link "alchroma://pair?code=XXXXXXXX" finishes the pairing.
++    ///
++    /// Also sends the heartbeat that keeps the device "online" on the Devices page.
++    /// Added automatically to the [Alchroma] object by AlchromaBootstrap.
++    /// </summary>
++    public class AlchromaPairing : MonoBehaviour
++    {
++        public static AlchromaPairing Instance { get; private set; }
++
++        /// <summary>Show this code to the user (headset flow).</summary>
++        public static event Action<string> CodeReady;
++        /// <summary>Pairing finished; AlchromaSession is now signed in.</summary>
++        public static event Action Paired;
++        /// <summary>Something went wrong (message is user-readable).</summary>
++        public static event Action<string> Failed;
++
++        public string CurrentCode { get; private set; }
++
++        string pollSecret;
++        float pollInterval = 3f;
++        int expiresIn = 600;
++        Coroutine polling;
++        Coroutine heartbeat;
++        string lastDeepLink;
++        int startSeq;   // ignores the reply of a /pair/start that was superseded
++
++        void Awake()
++        {
++            Instance = this;
++        }
++
++        void OnEnable()
++        {
++            Application.deepLinkActivated += OnDeepLink;
++            if (!string.IsNullOrEmpty(Application.absoluteURL)) OnDeepLink(Application.absoluteURL);
++            heartbeat = StartCoroutine(Heartbeat());
++        }
++
++        void OnDisable()
++        {
++            Application.deepLinkActivated -= OnDeepLink;
++            if (heartbeat != null) StopCoroutine(heartbeat);
++            StopCodePairing();
++        }
++
++        // ------------------------------------------------------------ code flow
++
++        public void StartCodePairing()
++        {
++            StopCodePairing();
++            int seq = ++startSeq;
++            AlchromaApi.Post("/api/devices/pair/start", AlchromaDevice.Info(), res =>
++            {
++                if (seq != startSeq || AlchromaSession.IsLoggedIn) return;
++                if (!res.ok || res.json == null)
++                {
++                    Failed?.Invoke(res.Detail ?? "Could not get a pairing code");
++                    return;
++                }
++                CurrentCode = (string)res.json["code"];
++                pollSecret = (string)res.json["poll_secret"];
++                pollInterval = Mathf.Max(2f, (float?)res.json["interval"] ?? 3f);
++                expiresIn = (int?)res.json["expires_in"] ?? 600;
++                CodeReady?.Invoke(CurrentCode);
++                polling = StartCoroutine(Poll(CurrentCode, pollSecret));
++            }, auth: false);
++        }
++
++        public void StopCodePairing()
++        {
++            startSeq++;
++            if (polling != null)
++            {
++                StopCoroutine(polling);
++                polling = null;
++            }
++        }
++
++        IEnumerator Poll(string code, string secret)
++        {
++            float deadline = Time.realtimeSinceStartup + expiresIn;
++            while (Time.realtimeSinceStartup < deadline)
++            {
++                yield return new WaitForSecondsRealtime(pollInterval);
++
++                bool waiting = true;
++                string status = "error";
++                JObject payload = null;
++                AlchromaApi.Get("/api/devices/pair/status?code=" + Uri.EscapeDataString(code) + "&poll_secret=" + Uri.EscapeDataString(secret), res =>
++                {
++                    if (res.ok && res.json != null) status = (string)res.json["status"] ?? "error";
++                    else if (res.status == 404) status = "expired";
++                    payload = res.json;
++                    waiting = false;
++                }, auth: false);
++                while (waiting) yield return null;
++
++                if (status == "claimed")
++                {
++                    polling = null;
++                    AlchromaAuth.ApplyDeviceSession(payload);
++                    CurrentCode = null;
++                    Paired?.Invoke();
++                    yield break;
++                }
++                if (status == "expired" || status == "consumed")
++                {
++                    break;
++                }
++                // "pending" or a transient error: keep polling
++            }
++            polling = null;
++            Failed?.Invoke("The pairing code expired — here is a new one");
++            StartCodePairing();
++        }
++
++        // ---------------------------------------------------------- redeem flow
++
++        /// <summary>Redeem a code from the webapp Devices page (typed, scanned or deep-linked). done(success, error)</summary>
++        public void RedeemCode(string code, Action<bool, string> done = null)
++        {
++            code = (code ?? "").Trim();
++            if (code.Length < 4)
++            {
++                done?.Invoke(false, "Enter the code shown on the Devices page");
++                return;
++            }
++            var body = AlchromaDevice.Info();
++            body["code"] = code;
++            AlchromaApi.Post("/api/devices/pair/redeem", body, res =>
++            {
++                if (!res.ok || res.json == null)
++                {
++                    var msg = res.status == 404 ? "Code not found or expired — get a new one from the Devices page" : (res.Detail ?? "Pairing failed");
++                    Failed?.Invoke(msg);
++                    done?.Invoke(false, msg);
++                    return;
++                }
++                StopCodePairing();
++                AlchromaAuth.ApplyDeviceSession(res.json);
++                Paired?.Invoke();
++                done?.Invoke(true, null);
++            }, auth: false);
++        }
++
++        void OnDeepLink(string url)
++        {
++            if (string.IsNullOrEmpty(url) || url == lastDeepLink) return;
++            lastDeepLink = url;
++            var code = CodeFromUrl(url);
++            if (string.IsNullOrEmpty(code)) return;
++            if (AlchromaConfig.VerboseLogs) Debug.Log("[Alchroma] Deep link pairing code received");
++            RedeemCode(code);
++        }
++
++        /// <summary>Extracts ?code= from "alchroma://pair?code=X" or "https://host/pair.html?code=X".</summary>
++        public static string CodeFromUrl(string url)
++        {
++            try
++            {
++                var q = url.IndexOf('?');
++                if (q < 0) return null;
++                foreach (var kv in url.Substring(q + 1).Split('&'))
++                {
++                    var eq = kv.IndexOf('=');
++                    if (eq <= 0) continue;
++                    if (kv.Substring(0, eq) == "code")
++                        return Uri.UnescapeDataString(kv.Substring(eq + 1).Split('#')[0]);
++                }
++            }
++            catch (Exception e)
++            {
++                Debug.LogWarning("[Alchroma] Could not parse deep link: " + e.Message);
++            }
++            return null;
++        }
++
++        // ------------------------------------------------------------ heartbeat
++
++        IEnumerator Heartbeat()
++        {
++            while (true)
++            {
++                yield return new WaitForSecondsRealtime(Mathf.Max(15f, AlchromaConfig.HeartbeatSeconds));
++                if (AlchromaSession.IsLoggedIn && AlchromaSession.TokenType == "device")
++                    AlchromaApi.Post("/api/devices/heartbeat", null, null);
++            }
++        }
++    }
++}
+diff --git a/Assets/Alchroma/Runtime/AlchromaSession.cs b/Assets/Alchroma/Runtime/AlchromaSession.cs
+new file mode 100644
+index 0000000..1703b83
+--- /dev/null
++++ b/Assets/Alchroma/Runtime/AlchromaSession.cs
+@@ -0,0 +1,87 @@
++using System;
++using Newtonsoft.Json;
++using Newtonsoft.Json.Linq;
++using UnityEngine;
++
++namespace Alchroma
++{
++    [Serializable]
++    public class AlchromaUser
++    {
++        public string id;
++        public string email;
++        public string name;
++        public string organization_name;
++        public string workspace_id;
++    }
++
++    /// <summary>
++    /// The signed-in account on this device, persisted in PlayerPrefs.
++    /// TokenType is "user" right after an email/password login and "device" once
++    /// the device has been registered/paired (long-lived, revocable from the
++    /// webapp Devices page).
++    /// </summary>
++    public static class AlchromaSession
++    {
++        const string Key = "alchroma.session";
++
++        public static string AccessToken { get; private set; }
++        public static string TokenType { get; private set; }
++        public static AlchromaUser User { get; private set; }
++
++        public static bool IsLoggedIn => !string.IsNullOrEmpty(AccessToken) && User != null;
++
++        /// <summary>Raised after Set() and Clear().</summary>
++        public static event Action Changed;
++
++        static bool loaded;
++
++        public static void Load()
++        {
++            if (loaded) return;
++            loaded = true;
++            try
++            {
++                var raw = PlayerPrefs.GetString(Key, "");
++                if (string.IsNullOrEmpty(raw)) return;
++                var j = JObject.Parse(raw);
++                AccessToken = (string)j["access_token"];
++                TokenType = (string)j["token_type"] ?? "user";
++                User = j["user"] != null && j["user"].Type == JTokenType.Object ? j["user"].ToObject<AlchromaUser>() : null;
++            }
++            catch (Exception e)
++            {
++                Debug.LogWarning("[Alchroma] Stored session could not be read, clearing it: " + e.Message);
++                Clear();
++            }
++        }
++
++        public static void Set(string accessToken, string tokenType, AlchromaUser user)
++        {
++            loaded = true;
++            AccessToken = accessToken;
++            TokenType = string.IsNullOrEmpty(tokenType) ? "user" : tokenType;
++            User = user;
++            var j = new JObject
++            {
++                ["access_token"] = accessToken,
++                ["token_type"] = TokenType,
++                ["user"] = user == null ? null : JObject.FromObject(user),
++            };
++            PlayerPrefs.SetString(Key, j.ToString(Formatting.None));
++            PlayerPrefs.Save();
++            Changed?.Invoke();
++        }
++
++        public static void Clear()
++        {
++            loaded = true;
++            AccessToken = null;
++            TokenType = null;
++            User = null;
++            PlayerPrefs.DeleteKey(Key);
++            PlayerPrefs.Save();
++            Changed?.Invoke();
++        }
++    }
++}
+diff --git a/Assets/Alchroma/Runtime/AlchromaWebPages.cs b/Assets/Alchroma/Runtime/AlchromaWebPages.cs
+new file mode 100644
+index 0000000..0c0cf77
+--- /dev/null
++++ b/Assets/Alchroma/Runtime/AlchromaWebPages.cs
+@@ -0,0 +1,52 @@
++using System;
++using Newtonsoft.Json;
++using UnityEngine;
++
++namespace Alchroma
++{
++    /// <summary>
++    /// Opens the webapp's own pages (Portfolio, Templates, Paint Collection…)
++    /// signed in as the current user. The page is opened through
++    /// oauth-callback.html, which stores the session in the web view and then
++    /// redirects to `next`, so the sidebar pages are exactly the webapp's.
++    ///
++    /// Default: the system browser (Application.OpenURL). Define ALCHROMA_WEBVIEW
++    /// and add the gree/unity-webview package to show the pages inside the app
++    /// instead (see AlchromaWebView.cs and the integration guide).
++    /// </summary>
++    public static class AlchromaWebPages
++    {
++        public const string Dashboard = "dashboard.html";
++        public const string Portfolio = "portfolio.html";
++        public const string Templates = "templates.html";
++        public const string PaintCollection = "paint-collection.html";
++        public const string Devices = "devices.html";
++        public const string ColorGuide = "color-guide.html";
++
++        public static string UrlFor(string page)
++        {
++            page = string.IsNullOrEmpty(page) ? Dashboard : page.TrimStart('/');
++            if (!AlchromaSession.IsLoggedIn) return AlchromaConfig.Url("/" + page);
++            var user = JsonConvert.SerializeObject(AlchromaSession.User);
++            return AlchromaConfig.Url("/oauth-callback.html")
++                + "?token=" + Uri.EscapeDataString(AlchromaSession.AccessToken)
++                + "&user=" + Uri.EscapeDataString(user)
++                + "&next=" + Uri.EscapeDataString(page);
++        }
++
++        public static void Open(string page)
++        {
++            var url = UrlFor(page);
++#if ALCHROMA_WEBVIEW
++            AlchromaWebView.Show(url);
++#else
++            Application.OpenURL(url);
++#endif
++        }
++
++        public static void OpenPortfolio() => Open(Portfolio);
++        public static void OpenTemplates() => Open(Templates);
++        public static void OpenPaintCollection() => Open(PaintCollection);
++        public static void OpenDevices() => Open(Devices);
++    }
++}
+diff --git a/Assets/Alchroma/Runtime/AlchromaWebView.cs b/Assets/Alchroma/Runtime/AlchromaWebView.cs
+new file mode 100644
+index 0000000..42cf54c
+--- /dev/null
++++ b/Assets/Alchroma/Runtime/AlchromaWebView.cs
+@@ -0,0 +1,80 @@
++// In-app web view for the webapp pages. Optional: only compiled when the
++// ALCHROMA_WEBVIEW scripting define is set AND the gree/unity-webview package is
++// in the project (Packages/manifest.json:
++//   "net.gree.unity-webview": "https://github.com/gree/unity-webview.git?path=/dist/package-nofragment"
++// ). Without the define AlchromaWebPages.Open falls back to the system browser.
++#if ALCHROMA_WEBVIEW
++using UnityEngine;
++using UnityEngine.UI;
++
++namespace Alchroma
++{
++    public class AlchromaWebView : MonoBehaviour
++    {
++        static AlchromaWebView instance;
++        WebViewObject web;
++        Canvas bar;
++
++        const int BarHeight = 96;
++
++        public static void Show(string url)
++        {
++            if (instance == null)
++            {
++                var go = new GameObject("[AlchromaWebView]");
++                DontDestroyOnLoad(go);
++                instance = go.AddComponent<AlchromaWebView>();
++                instance.Build();
++            }
++            instance.Load(url);
++        }
++
++        public static void Hide()
++        {
++            if (instance == null) return;
++            instance.web.SetVisibility(false);
++            instance.bar.gameObject.SetActive(false);
++        }
++
++        void Build()
++        {
++            web = new GameObject("WebViewObject").AddComponent<WebViewObject>();
++            web.Init(
++                cb: msg => { },
++                err: msg => Debug.LogWarning("[Alchroma] WebView error: " + msg),
++                httpErr: msg => Debug.LogWarning("[Alchroma] WebView HTTP error: " + msg),
++                ld: msg => web.SetVisibility(true),
++                enableWKWebView: true);
++            web.SetMargins(0, BarHeight, 0, 0);
++
++            // simple top bar with a close button so the user can get back to the app
++            var barGo = new GameObject("AlchromaWebViewBar");
++            barGo.transform.SetParent(transform, false);
++            bar = barGo.AddComponent<Canvas>();
++            bar.renderMode = RenderMode.ScreenSpaceOverlay;
++            bar.sortingOrder = 32000;
++            barGo.AddComponent<GraphicRaycaster>();
++            AlchromaLoginUI.EnsureEventSystem();
++
++            var bg = new GameObject("Bar").AddComponent<Image>();
++            bg.transform.SetParent(barGo.transform, false);
++            bg.color = new Color(0.07f, 0.075f, 0.08f, 1f);
++            var rt = bg.rectTransform;
++            rt.anchorMin = new Vector2(0, 1); rt.anchorMax = new Vector2(1, 1); rt.pivot = new Vector2(0.5f, 1);
++            rt.sizeDelta = new Vector2(0, BarHeight);
++
++            var close = AlchromaLoginUI.MakeButton(bg.transform, "Close", () => Hide(), new Color(0.16f, 0.52f, 1f), 28);
++            var crt = close.GetComponent<RectTransform>();
++            crt.anchorMin = new Vector2(1, 0.5f); crt.anchorMax = new Vector2(1, 0.5f); crt.pivot = new Vector2(1, 0.5f);
++            crt.anchoredPosition = new Vector2(-16, 0); crt.sizeDelta = new Vector2(180, 64);
++        }
++
++        void Load(string url)
++        {
++            bar.gameObject.SetActive(true);
++            web.LoadURL(url);
++            web.SetVisibility(true);
++        }
++    }
++}
++#endif
+diff --git a/Assets/Ali/UnmixColorDetector.cs b/Assets/Ali/UnmixColorDetector.cs
+index d5e6c60..231bf4b 100644
+--- a/Assets/Ali/UnmixColorDetector.cs
++++ b/Assets/Ali/UnmixColorDetector.cs
+@@ -41,14 +41,26 @@ public class UnmixColorDetector : ColorDetector
+         Debug.Log("Api Success");
+         foreach (ColorUnmixAPI.PaintMix paint in result.paints)
+         {
++            if (index >= savedColors.savedColors.Length) break;   // the palette UI has 3 slots
+             savedColors.savedColors[index].SetSavedColor(paint.name, HexToColor(paint.hex), paint.percentage);
+             Debug.Log($"{savedColors.savedColors[index].colorName} saved");
+             index++;
+         }
+ 
++        SaveRecipeToAccount(result);
+         apiRequestSuccess?.Invoke();
+     }
+ 
++    // Store the unmixed color and its recipe under the signed-in account so it
++    // shows up on the webapp Devices page and in the Paint Collection.
++    private void SaveRecipeToAccount(ColorUnmixAPI.UnmixResult result)
++    {
++        var recipe = new System.Collections.Generic.List<Alchroma.AlchromaCaptures.RecipeItem>();
++        foreach (var p in result.paints)
++            recipe.Add(new Alchroma.AlchromaCaptures.RecipeItem { name = p.name, hex = p.hex, percentage = p.percentage, parts = p.parts });
++        Alchroma.AlchromaCaptures.Save(result.targetColor, null, "unmix", recipe);
++    }
++
+     protected override void Start()
+     {
+         index = 0;
+diff --git a/Assets/Plugins/Android/AndroidManifest.xml b/Assets/Plugins/Android/AndroidManifest.xml
+index b9d6e13..71ec7c3 100644
+--- a/Assets/Plugins/Android/AndroidManifest.xml
++++ b/Assets/Plugins/Android/AndroidManifest.xml
+@@ -5,6 +5,7 @@
+     package="your.package.name.here">
+ 
+     <!-- Permissions -->
++    <uses-permission android:name="android.permission.INTERNET" />
+     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+         android:maxSdkVersion="32" />
+     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"
+@@ -12,11 +13,20 @@
+ 
+     <application>
+         <activity android:name="com.unity3d.player.UnityPlayerActivity"
+-                  android:theme="@style/UnityThemeSelector">
++                  android:theme="@style/UnityThemeSelector"
++                  android:exported="true"
++                  android:launchMode="singleTask">
+             <intent-filter>
+                 <action android:name="android.intent.action.MAIN" />
+                 <category android:name="android.intent.category.LAUNCHER" />
+             </intent-filter>
++            <!-- GeoMagic device pairing deep link: alchroma://pair?code=XXXXXXXX (see Assets/Alchroma) -->
++            <intent-filter>
++                <action android:name="android.intent.action.VIEW" />
++                <category android:name="android.intent.category.DEFAULT" />
++                <category android:name="android.intent.category.BROWSABLE" />
++                <data android:scheme="alchroma" />
++            </intent-filter>
+             <meta-data android:name="unityplayer.UnityActivity" android:value="true" />
+         </activity>
+     </application>
+diff --git a/Assets/Scripts/ColorItem.cs b/Assets/Scripts/ColorItem.cs
+index b6b0794..b325bef 100644
+--- a/Assets/Scripts/ColorItem.cs
++++ b/Assets/Scripts/ColorItem.cs
+@@ -2,8 +2,6 @@ using UnityEngine;
+ using UnityEngine.UI;
+ using System;
+ using static CreatePaintAPI;
+-using System.Collections;
+-using UnityEngine.Networking;
+ using System.Globalization;
+ 
+ public class ColorItem : MonoBehaviour
+@@ -73,31 +71,25 @@ public class ColorItem : MonoBehaviour
+     {
+         DeletePaintById(_paintData._id);
+     }
++    // Deletes through the GeoMagic backend (see CreatePaintAPI / Assets/Alchroma).
+     public void DeletePaintById(string paintId)
+     {
+-        string url = $"https://geomagic-backend.iapplabz.co.in/api/color/delete/{paintId}";
+-        StartCoroutine(DeletePaintRequest(url));
+-    }
+-
+-    private IEnumerator DeletePaintRequest(string url)
+-    {
+-        UnityWebRequest request = UnityWebRequest.Delete(url);
+-        request.SetRequestHeader("Content-Type", "application/json");
+-
+-        yield return request.SendWebRequest();
+-
+-        if (request.result == UnityWebRequest.Result.Success)
+-        {
+-            ConsoleManager.instance.ShowMessage("Paint deleted successfully!");
+-            Debug.Log("Paint deleted successfully");
+-            Destroy(gameObject);
+-            CreatePaintAPI.instance.OnColorDeleted(_paintData._id);
+-        }
+-        else
++        if (CreatePaintAPI.instance == null) return;
++        CreatePaintAPI.instance.DeletePaint(paintId, (ok, error) =>
+         {
+-            ConsoleManager.instance.ShowMessage(request.error);
+-            Debug.LogError("Delete failed: " + request.error);
+-        }
++            if (ok)
++            {
++                if (ConsoleManager.instance != null) ConsoleManager.instance.ShowMessage("Paint deleted successfully!");
++                Debug.Log("Paint deleted successfully");
++                CreatePaintAPI.instance.OnColorDeleted(paintId);
++                if (this != null) Destroy(gameObject);
++            }
++            else
++            {
++                if (ConsoleManager.instance != null) ConsoleManager.instance.ShowMessage("Delete failed: " + error);
++                Debug.LogError("Delete failed: " + error);
++            }
++        });
+     }
+ 
+ }
+diff --git a/Assets/Scripts/ColorUnmixAPI.cs b/Assets/Scripts/ColorUnmixAPI.cs
+index 94ad5d5..f98597b 100644
+--- a/Assets/Scripts/ColorUnmixAPI.cs
++++ b/Assets/Scripts/ColorUnmixAPI.cs
+@@ -16,8 +16,9 @@ public class ColorUnmixAPI : MonoBehaviour
+     // API CONFIGURATION
+     // ============================================================
+ 
+-    private const string API_URL =
+-        "https://alchromaticdemo.up.railway.app/unmix/simple";
++    // Same backend as the webapp (Assets/Alchroma/Runtime/AlchromaConfig.cs);
++    // the account's Bearer token is added when the user is signed in.
++    private static string API_URL => Alchroma.AlchromaConfig.Url("/unmix/simple");
+ 
+     [Header("API Settings")]
+     [SerializeField] private int requestTimeoutSeconds = 30;
+@@ -201,6 +202,14 @@ public class ColorUnmixAPI : MonoBehaviour
+             "application/json"
+         );
+ 
++        if (!string.IsNullOrEmpty(Alchroma.AlchromaSession.AccessToken))
++        {
++            request.SetRequestHeader(
++                "Authorization",
++                "Bearer " + Alchroma.AlchromaSession.AccessToken
++            );
++        }
++
+         yield return request.SendWebRequest();
+ 
+         IsRequestRunning = false;
+diff --git a/Assets/Scripts/CreatePaintAPI.cs b/Assets/Scripts/CreatePaintAPI.cs
+index cb02214..747d6cb 100644
+--- a/Assets/Scripts/CreatePaintAPI.cs
++++ b/Assets/Scripts/CreatePaintAPI.cs
+@@ -1,9 +1,16 @@
+-﻿using System.Collections;
++using System;
+ using System.Collections.Generic;
++using Alchroma;
++using Newtonsoft.Json.Linq;
+ using UnityEngine;
+-using UnityEngine.Networking;
+-using System;
+ 
++/// <summary>
++/// Saves / lists / deletes the user's colors through the GeoMagic backend
++/// (/api/devices/captures, see Assets/Alchroma) instead of the old
++/// geomagic-backend.iapplabz.co.in server. The public surface is unchanged so
++/// ColorDetector, ColorItem and the scene UnityEvents keep working — but colors
++/// are now per account and appear on the webapp Devices page + Paint Collection.
++/// </summary>
+ public class CreatePaintAPI : MonoBehaviour
+ {
+     public static CreatePaintAPI instance;
+@@ -13,11 +20,7 @@ public class CreatePaintAPI : MonoBehaviour
+     public delegate void OnColorNotSaved();
+     public OnColorNotSaved OnColorNotSavedDele;
+ 
+-    public PaintListResponse paintListResponse;
+-
+-
+-    private string apiUrl = "https://geomagic-backend.iapplabz.co.in/api/color/create";
+-    private string listUrl = "https://geomagic-backend.iapplabz.co.in/api/color/list";
++    public PaintListResponse paintListResponse = new PaintListResponse { success = true, data = new List<Datum>() };
+ 
+     void Awake()
+     {
+@@ -30,16 +33,38 @@ public class CreatePaintAPI : MonoBehaviour
+             Destroy(gameObject);
+         }
+     }
++
+     private void Start()
+     {
+         GetPaintList();
++        AlchromaSession.Changed += GetPaintList;   // reload when the user signs in / out
++    }
++
++    private void OnDestroy()
++    {
++        AlchromaSession.Changed -= GetPaintList;
++        if (instance == this) instance = null;
+     }
+ 
+     // 🔹 Save paint
+     public void SavePaintFromButton(string name, string rgb, string hex)
+     {
+-        StartCoroutine(SendCreatePaintRequest(name, rgb, hex));
++        var meta = string.IsNullOrEmpty(rgb) ? null : new JObject { ["rgb"] = rgb };
++        AlchromaCaptures.Save(hex, name, "camera", null, meta, (ok, capture, error) =>
++        {
++            if (ok && capture != null)
++            {
++                Notify("Color Saved Successfully!");
++                OnColorSavedDele?.Invoke(ToData(capture));
++            }
++            else
++            {
++                Notify(error == "not_logged_in" ? "Sign in to save colors to your account" : "Error: " + error);
++                OnColorNotSavedDele?.Invoke();
++            }
++        });
+     }
++
+     public void OnColorDeleted(string paintId)
+     {
+         for (int i = 0; i < paintListResponse.data.Count; i++)
+@@ -51,76 +76,86 @@ public class CreatePaintAPI : MonoBehaviour
+             }
+         }
+     }
+-    IEnumerator SendCreatePaintRequest(string name, string rgb, string hex)
+-    {
+-        WWWForm form = new WWWForm();
+-        form.AddField("name", name);
+-        form.AddField("RGB", rgb + ",1");
+-        form.AddField("HEX", hex);
+-        form.AddField("isDefault", "true");
+ 
+-        using (UnityWebRequest request = UnityWebRequest.Post(apiUrl, form))
++    // 🔹 Delete paint (used by ColorItem)
++    public void DeletePaint(string paintId, Action<bool, string> done)
++    {
++        if (!int.TryParse(paintId, out var id))
+         {
+-            yield return request.SendWebRequest();
+-
+-            if (request.result == UnityWebRequest.Result.Success)
+-            {
+-                ConsoleManager.instance.ShowMessage("Color Saved Successfully!");
+-                CreatePaintRoot createPaintRoot = JsonUtility.FromJson<CreatePaintRoot>(request.downloadHandler.text);
+-                Debug.Log("Response: " + request.downloadHandler.text);
+-                Debug.Log("ID: " + createPaintRoot.data._id);
+-                OnColorSavedDele?.Invoke(createPaintRoot.data);
+-            }
+-            else
+-            {
+-                Debug.LogError("Error: " + request.error);
+-                ConsoleManager.instance.ShowMessage(request.error);
+-                OnColorNotSavedDele?.Invoke();
+-            }
++            done?.Invoke(false, "Unknown color id");
++            return;
+         }
++        AlchromaCaptures.Delete(id, done);
+     }
+ 
+     // 🔹 Get Paint List
+     public void GetPaintList()
+     {
+-        StartCoroutine(SendGetPaintListRequest());
++        if (!AlchromaSession.IsLoggedIn)
++        {
++            paintListResponse = new PaintListResponse { success = true, data = new List<Datum>() };
++            RefreshLists();
++            return;
++        }
++        AlchromaCaptures.List(200, (ok, captures, total) =>
++        {
++            if (!ok) return;
++            var data = new List<Datum>();
++            foreach (var c in captures) data.Add(ToDatum(c));
++            paintListResponse = new PaintListResponse { success = true, data = data };   // newest first
++            RefreshLists();
++        });
+     }
+ 
+-    IEnumerator SendGetPaintListRequest()
++    // The list arrives asynchronously; redraw any color lists that are on screen.
++    private void RefreshLists()
+     {
+-        using (UnityWebRequest request = UnityWebRequest.Get(listUrl))
+-        {
+-            yield return request.SendWebRequest();
++#if UNITY_2023_1_OR_NEWER
++        var detectors = FindObjectsByType<ColorDetector>(FindObjectsSortMode.None);
++#else
++        var detectors = FindObjectsOfType<ColorDetector>();
++#endif
++        foreach (var d in detectors) d.ShowSavedColors();
++    }
+ 
+-            if (request.result == UnityWebRequest.Result.Success)
+-            {
+-                string json = request.downloadHandler.text;
+-                paintListResponse = JsonUtility.FromJson<PaintListResponse>(json);
+-
+-                if (paintListResponse != null && paintListResponse.success && paintListResponse.data != null && paintListResponse.data != null)
+-                {
+-                    Debug.Log("Result "+ request.downloadHandler.text);
+-                    ReversePaintList();
+-                }
+-                else
+-                {
+-                    Debug.Log("else Result " + request.downloadHandler.text);
+-                }
+-            }
+-            else
+-            {
+-                Debug.LogError("API List Error: " + request.error);
+-            }
+-        }
++    private static void Notify(string message)
++    {
++        Debug.Log("[CreatePaintAPI] " + message);
++        if (ConsoleManager.instance != null) ConsoleManager.instance.ShowMessage(message);
++    }
++
++    private static DateTime ParseDate(string iso)
++    {
++        return DateTime.TryParse(iso, null, System.Globalization.DateTimeStyles.RoundtripKind, out var dt) ? dt : DateTime.UtcNow;
+     }
+-    private void ReversePaintList()
++
++    private static Datum ToDatum(AlchromaCaptures.Capture c)
+     {
+-        if (paintListResponse != null && paintListResponse.data != null)
++        return new Datum
+         {
+-            paintListResponse.data.Reverse();
+-        }
++            _id = c.id.ToString(),
++            name = c.name,
++            RGB = c.rgb + ",1",
++            HEX = c.hex,
++            isDefault = true,
++            createdAt = ParseDate(c.created_at),
++            updatedAt = ParseDate(c.created_at),
++        };
+     }
+ 
++    private static Data ToData(AlchromaCaptures.Capture c)
++    {
++        return new Data
++        {
++            _id = c.id.ToString(),
++            name = c.name,
++            RGB = c.rgb + ",1",
++            HEX = c.hex,
++            isDefault = true,
++            createdAt = ParseDate(c.created_at),
++            updatedAt = ParseDate(c.created_at),
++        };
++    }
+ }
+ 
+ [Serializable]
+@@ -162,6 +197,3 @@ public class CreatePaintRoot
+     public Data data;
+     public string message;
+ }
+-
+-
+-
+diff --git a/ProjectSettings/ProjectSettings.asset b/ProjectSettings/ProjectSettings.asset
+index c3ccf1d..5af9f19 100644
+--- a/ProjectSettings/ProjectSettings.asset
++++ b/ProjectSettings/ProjectSettings.asset
+@@ -232,7 +232,8 @@ PlayerSettings:
+   iOSLaunchScreenCustomStoryboardPath: 
+   iOSLaunchScreeniPadCustomStoryboardPath: 
+   iOSDeviceRequirements: []
+-  iOSURLSchemes: []
++  iOSURLSchemes:
++  - alchroma
+   macOSURLSchemes: []
+   iOSBackgroundModes: 0
+   iOSMetalForceHardShadows: 0
+-- 
+2.51.2.windows.1
+

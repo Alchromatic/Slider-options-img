@@ -157,12 +157,18 @@ app.include_router(billing_router)
 from palettes_routes import router as palettes_router, init_palettes_tables
 app.include_router(palettes_router)
 
+# ==================== DEVICES (mobile / tablet / Quest apps) ====================
+# Device <-> user pairing and the colors those apps capture. See devices_routes.py.
+from devices_routes import router as devices_router, init_devices_tables
+app.include_router(devices_router)
+
 
 @app.on_event("startup")
 def _init_auth():
     init_auth_tables()
     init_billing_tables()
     init_palettes_tables()
+    init_devices_tables()
     init_image_library_tables()
 
 from version_router import router as version_router

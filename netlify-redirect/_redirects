@@ -1,0 +1,6 @@
+# geomagic-app.netlify.app -> Alchromatic sign-in on Railway.
+# Netlify-side only; nothing on Railway changes.
+# The "!" forces the rule so any file left in the publish directory can't win.
+# 302 = temporary (browsers re-check). Change to 301! once the move is final.
+
+/*    https://alchromaticdemo.up.railway.app/signin.html    302!
