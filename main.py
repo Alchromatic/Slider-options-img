@@ -162,6 +162,10 @@ app.include_router(palettes_router)
 from devices_routes import router as devices_router, init_devices_tables
 app.include_router(devices_router)
 
+# ==================== PORTFOLIO (saved compositions, shared by web + apps) ====================
+from portfolio_routes import router as portfolio_router, init_portfolio_tables
+app.include_router(portfolio_router)
+
 
 @app.on_event("startup")
 def _init_auth():
@@ -169,6 +173,7 @@ def _init_auth():
     init_billing_tables()
     init_palettes_tables()
     init_devices_tables()
+    init_portfolio_tables()
     init_image_library_tables()
 
 from version_router import router as version_router

@@ -173,7 +173,11 @@
    }
 
    // ---------------------------------------------------------------------
-   // Portfolio store (per user, in this browser)
+   // Portfolio store: the server (/api/portfolio, portfolio_routes.py) is the
+   // source of truth for a signed-in user, so items follow them across browsers
+   // and the Alchroma apps. localStorage is a per-user cache that keeps the page
+   // instant and holds items saved offline (synced: false) until they upload.
+   // Fires 'gm:portfolio' on window whenever the list changes.
    // ---------------------------------------------------------------------
    function userKey() {
       var u = null;
@@ -181,35 +185,127 @@
       var id = (u && (u.email || u.id)) ? String(u.email || u.id).toLowerCase() : 'guest';
       return 'gm_portfolio:' + id;
    }
+   function pfToken() { try { return localStorage.getItem('gm_access_token'); } catch (_) { return null; } }
+   function pfApi(method, path, body) {
+      var headers = { 'Content-Type': 'application/json' };
+      var tok = pfToken();
+      if (tok) headers.Authorization = 'Bearer ' + tok;
+      return fetch(API_BASE + '/api/portfolio' + path, { method: method, headers: headers, body: body ? JSON.stringify(body) : undefined })
+         .then(function (r) {
+            return r.json().catch(function () { return {}; }).then(function (d) {
+               if (!r.ok) { var e = new Error((d && d.detail) || ('HTTP ' + r.status)); e.status = r.status; throw e; }
+               return d;
+            });
+         });
+   }
+   function pfChanged() { try { window.dispatchEvent(new CustomEvent('gm:portfolio')); } catch (_) {} }
+   function pfUpload(item) {
+      var body = {};
+      for (var k in item) if (k !== 'synced' && k !== 'hasShapes') body[k] = item[k];
+      return pfApi('POST', '', body).then(function () { item.synced = true; return item; });
+   }
+   var pfMem = null, pfMemKey = null;      // in-memory list (may hold more than the cache fits)
    var portfolio = {
       list: function () {
-         try { return JSON.parse(localStorage.getItem(userKey()) || '[]'); } catch (_) { return []; }
+         var key = userKey();
+         if (pfMem && pfMemKey === key) return pfMem.slice();
+         try { pfMem = JSON.parse(localStorage.getItem(key) || '[]'); } catch (_) { pfMem = []; }
+         pfMemKey = key;
+         return pfMem.slice();
       },
       _write: function (items) {
-         try { localStorage.setItem(userKey(), JSON.stringify(items)); return true; }
-         catch (e) { return false; }
+         pfMem = items.slice(); pfMemKey = userKey();
+         // localStorage is ~5MB: drop shape data from the oldest entries first
+         // (synced ones can re-fetch it), then drop the oldest synced entries
+         // from the cache only, until the save fits.
+         var cache = items.map(function (p) { return Object.assign({}, p); });
+         while (true) {
+            try { localStorage.setItem(pfMemKey, JSON.stringify(cache)); return true; } catch (e) {}
+            var shrunk = false;
+            for (var i = cache.length - 1; i >= 0; i--) {
+               if (cache[i].shapes) { delete cache[i].shapes; shrunk = true; break; }
+            }
+            if (shrunk) continue;
+            for (var j = cache.length - 1; j >= 0; j--) {
+               if (cache[j].synced) { cache.splice(j, 1); shrunk = true; break; }
+            }
+            if (!shrunk) { if (!cache.length) return false; cache.pop(); }
+         }
       },
       add: function (item) {
          var items = portfolio.list();
          item.id = item.id || ('p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6));
          item.createdAt = item.createdAt || Date.now();
+         item.synced = false;
+         item.hasShapes = !!(item.shapes && item.shapes.length);
          items.unshift(item);
-         // localStorage is ~5MB: drop shape data from the oldest entries first,
-         // then drop the oldest entries, until the save fits.
-         while (!portfolio._write(items) && items.length) {
-            var shrunk = false;
-            for (var i = items.length - 1; i >= 0; i--) {
-               if (items[i].shapes) { delete items[i].shapes; shrunk = true; break; }
-            }
-            if (!shrunk) items.pop();
-         }
+         portfolio._write(items);
+         pfChanged();
+         if (pfToken()) pfUpload(item).then(function () { portfolio._write(portfolio.list()); }).catch(function () {});
          return item;
       },
+      rename: function (id, title) {
+         var items = portfolio.list(), hit = null;
+         items.forEach(function (p) { if (p.id === id) { p.title = title; hit = p; } });
+         if (!hit) return;
+         portfolio._write(items); pfChanged();
+         if (hit.synced && pfToken()) pfApi('PATCH', '/' + encodeURIComponent(id), { title: title }).catch(function () {});
+      },
       remove: function (id) {
+         var gone = portfolio.get(id);
          portfolio._write(portfolio.list().filter(function (p) { return p.id !== id; }));
+         pfChanged();
+         if (gone && gone.synced && pfToken()) pfApi('DELETE', '/' + encodeURIComponent(id)).catch(function () {});
       },
       get: function (id) {
          return portfolio.list().filter(function (p) { return p.id === id; })[0] || null;
+      },
+      // Resolves to the item with its shapes (fetched from the server when the
+      // cache had to drop them, or when it was saved from another device).
+      load: function (id) {
+         var p = portfolio.get(id);
+         if (!p) return Promise.resolve(null);
+         if ((p.shapes && p.shapes.length) || !p.synced || !p.hasShapes || !pfToken()) return Promise.resolve(p);
+         return pfApi('GET', '/' + encodeURIComponent(id)).then(function (d) {
+            var full = Object.assign({}, p, d.item, { synced: true });
+            var items = portfolio.list().map(function (x) { return x.id === id ? full : x; });
+            portfolio._write(items);
+            return full;
+         }).catch(function () { return p; });
+      },
+      // Pull the server list, upload local-only items (saved before sync existed
+      // or while offline), drop synced items deleted elsewhere. Best-effort.
+      sync: function () {
+         if (!pfToken()) return Promise.resolve(portfolio.list());
+         var key = userKey(), server = [];
+         function page(offset) {
+            return pfApi('GET', '?limit=200&offset=' + offset).then(function (d) {
+               server = server.concat(d.items || []);
+               return (server.length < (d.total || 0) && (d.items || []).length) ? page(server.length) : null;
+            });
+         }
+         return page(0).then(function () {
+            if (userKey() !== key) return portfolio.list();
+            var local = portfolio.list(), byId = {}, onServer = {};
+            local.forEach(function (p) { byId[p.id] = p; });
+            var merged = server.map(function (s) {
+               onServer[s.id] = true;
+               var item = Object.assign({}, s, { synced: true });
+               var l = byId[s.id];
+               if (l && l.shapes && l.shapes.length) item.shapes = l.shapes;
+               return item;
+            });
+            var pending = local.filter(function (p) { return !p.synced && !onServer[p.id]; });
+            merged = pending.concat(merged).sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+            portfolio._write(merged);
+            pfChanged();
+            return pending.reduce(function (chain, p) {
+               return chain.then(function () { return pfUpload(p).catch(function () {}); });
+            }, Promise.resolve()).then(function () {
+               if (pending.length) { portfolio._write(portfolio.list()); pfChanged(); }
+               return portfolio.list();
+            });
+         }).catch(function () { return portfolio.list(); });
       }
    };
 

@@ -273,6 +273,7 @@
    // ------------------------------------------------------------- boot ----
    loadConfig();
    refreshAll();
+   if (window.GM && GM.portfolio && GM.portfolio.sync) GM.portfolio.sync();   // 'Project' uses the latest item
    // arriving from a headset link (?pair=123456) pre-fills the code
    var pre = new URLSearchParams(location.search).get('pair');
    if (pre && /^\d{6}$/.test(pre)) { $('dvPairCode').value = pre.slice(0, 3) + ' ' + pre.slice(3); $('dvHeadsetCard').scrollIntoView({ behavior: 'smooth' }); }

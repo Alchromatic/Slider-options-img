@@ -312,17 +312,18 @@
                var open = e.target.closest('[data-open]');
                if (open) {
                   e.preventDefault();
-                  var p = GM.portfolio.get(open.getAttribute('data-open'));
-                  if (!p) return;
-                  if (p.shapes && p.shapes.length) {
-                     // hand the saved shapes to the Colors page (same carry-forward as the Dashboard)
-                     try { sessionStorage.setItem('geomagic:state', JSON.stringify({ baseShapes: p.shapes, logic: p.logic || 'original', colorOrder: p.colorOrder || null, limit: p.limit == null ? null : p.limit, w: p.w, h: p.h })); } catch (err) {}
-                     location.href = 'templates.html';
-                  } else {
-                     // only the picture survived (storage was full) — reopen it as an upload
-                     try { localStorage.setItem('gm_pending_library_image', JSON.stringify({ id: p.id, title: p.title, url: p.thumb })); } catch (err) {}
-                     location.href = 'dashboard.html';
-                  }
+                  GM.portfolio.load(open.getAttribute('data-open')).then(function (p) {
+                     if (!p) return;
+                     if (p.shapes && p.shapes.length) {
+                        // hand the saved shapes to the Colors page (same carry-forward as the Dashboard)
+                        try { sessionStorage.setItem('geomagic:state', JSON.stringify({ baseShapes: p.shapes, logic: p.logic || 'original', colorOrder: p.colorOrder || null, limit: p.limit == null ? null : p.limit, w: p.w, h: p.h })); } catch (err) {}
+                        location.href = 'templates.html';
+                     } else {
+                        // only the picture survived (storage was full) — reopen it as an upload
+                        try { localStorage.setItem('gm_pending_library_image', JSON.stringify({ id: p.id, title: p.title, url: p.thumb })); } catch (err) {}
+                        location.href = 'dashboard.html';
+                     }
+                  });
                   return;
                }
                var dl = e.target.closest('[data-dl]');
@@ -335,19 +336,18 @@
                if (rn) {
                   var r = GM.portfolio.get(rn.getAttribute('data-rename')); if (!r) return;
                   var name = prompt('Rename this item', r.title || '');
-                  if (name != null && name.trim()) {
-                     var all = GM.portfolio.list();
-                     all.forEach(function (x) { if (x.id === r.id) x.title = name.trim(); });
-                     GM.portfolio._write(all); render();
-                  }
+                  if (name != null && name.trim()) GM.portfolio.rename(r.id, name.trim());
                   return;
                }
                var del = e.target.closest('[data-del]');
                if (del) {
-                  if (confirm('Delete this saved image from your Portfolio?')) { GM.portfolio.remove(del.getAttribute('data-del')); render(); }
+                  if (confirm('Delete this saved image from your Portfolio?')) { GM.portfolio.remove(del.getAttribute('data-del')); }
                }
             });
+            // re-render on any change (save / rename / delete / server sync)
+            window.addEventListener('gm:portfolio', render);
             render();
+            if (GM.portfolio.sync) GM.portfolio.sync();
          })();
       </script>
    </body>
