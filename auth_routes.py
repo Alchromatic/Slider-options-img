@@ -55,7 +55,7 @@ async def auth_register(req: AuthRegisterRequest):
     try:
         with get_db() as conn:
             cursor = conn.cursor(cursor_factory=RealDictCursor)
-            cursor.execute("SELECT id FROM auth_users WHERE email = %s", (req.email,))
+            cursor.execute("SELECT id FROM auth_users WHERE email = %s AND parent_tenant_id IS NULL", (req.email,))
             if cursor.fetchone():
                 raise HTTPException(status_code=400, detail="Email already registered")
 
@@ -97,7 +97,7 @@ async def auth_login(req: AuthLoginRequest):
     try:
         with get_db() as conn:
             cursor = conn.cursor(cursor_factory=RealDictCursor)
-            cursor.execute("SELECT * FROM auth_users WHERE email = %s", (req.email,))
+            cursor.execute("SELECT * FROM auth_users WHERE email = %s AND parent_tenant_id IS NULL", (req.email,))
             user = cursor.fetchone()
 
             if not user or not verify_password(req.password, user["password_hash"]):
@@ -166,7 +166,7 @@ def _oauth_upsert_user(email: str, name: Optional[str] = None) -> dict:
     """Find or create a user by email (for OAuth logins). Returns token + user."""
     with get_db() as conn:
         cursor = conn.cursor(cursor_factory=RealDictCursor)
-        cursor.execute("SELECT * FROM auth_users WHERE email = %s", (email,))
+        cursor.execute("SELECT * FROM auth_users WHERE email = %s AND parent_tenant_id IS NULL", (email,))
         user = cursor.fetchone()
 
         if user:
