@@ -166,6 +166,11 @@ app.include_router(devices_router)
 from portfolio_routes import router as portfolio_router, init_portfolio_tables
 app.include_router(portfolio_router)
 
+# ==================== PROMO CODES (free images, admin-generated) ====================
+from promo_routes import user_router as promo_user_router, admin_router as promo_admin_router, init_promo_tables
+app.include_router(promo_user_router)
+app.include_router(promo_admin_router)
+
 
 @app.on_event("startup")
 def _init_auth():
@@ -174,6 +179,7 @@ def _init_auth():
     init_palettes_tables()
     init_devices_tables()
     init_portfolio_tables()
+    init_promo_tables()
     init_image_library_tables()
 
 from version_router import router as version_router

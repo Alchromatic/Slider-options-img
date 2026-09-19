@@ -601,7 +601,7 @@
       <script src="assets/js/colors-data.js"></script>
       <script src="assets/js/palette-mixing.js?v=4"></script>
       <!-- editable named-color library that feeds the unmixer palette -->
-      <script src="assets/js/color-library.js?v=4"></script>
+      <script src="assets/js/color-library.js?v=5"></script>
       <script>
          // value badges + blue-fill track for the palette-mixing sliders
          document.querySelectorAll('.pm-range').forEach(function (r) {
@@ -1122,17 +1122,20 @@
                var canvas = document.getElementById('dash-canvas');
                if (!canvas) return;
                var f = [];
-               if (values.exposure) f.push('brightness(' + (1 + values.exposure / 100) + ')');
-               if (values.brightness) f.push('brightness(' + (1 + values.brightness / 100) + ')');
-               if (values.contrast) f.push('contrast(' + (1 + values.contrast / 100) + ')');
-               if (values.saturation) f.push('saturate(' + (1 + values.saturation / 100) + ')');
-               if (values.vibrance) f.push('saturate(' + (1 + values.vibrance / 80) + ')');
+               // brightness/contrast/saturate reject negative amounts (the whole filter is then
+               // ignored and the old one stays), so never go below 0
+               var amt = function (v) { return Math.max(0, v); };
+               if (values.exposure) f.push('brightness(' + amt(1 + values.exposure / 100) + ')');
+               if (values.brightness) f.push('brightness(' + amt(1 + values.brightness / 100) + ')');
+               if (values.contrast) f.push('contrast(' + amt(1 + values.contrast / 100) + ')');
+               if (values.saturation) f.push('saturate(' + amt(1 + values.saturation / 100) + ')');
+               if (values.vibrance) f.push('saturate(' + amt(1 + values.vibrance / 80) + ')');
                if (values.warmth) {
                   if (values.warmth > 0) f.push('sepia(' + (values.warmth / 200) + ')');
                   else f.push('hue-rotate(' + (values.warmth / 4) + 'deg)');
                }
                if (values.tint) f.push('hue-rotate(' + (values.tint / 4) + 'deg)');
-               if (values.highlights) f.push('brightness(' + (1 + values.highlights / 200) + ')');
+               if (values.highlights) f.push('brightness(' + amt(1 + values.highlights / 200) + ')');
                if (values.shadows) f.push('brightness(' + (1 + values.shadows / 300) + ') contrast(' + (1 + Math.abs(values.shadows) / 400) + ')');
                if (values.blackpoint) f.push('contrast(' + (1 + values.blackpoint / 100) + ')');
                if (values.sharpness) f.push('contrast(' + (1 + values.sharpness / 200) + ')');
@@ -1654,6 +1657,7 @@
          .pm-pick-hint b { color: #ffc324; }
          .pm-brand-row { display: flex; align-items: center; gap: 8px; }
          .pm-brand-row .pm-select-wrap { position: relative; flex: 1; min-width: 0; }
+         .pm-panel.pm-settings .pm-brand-row .pm-select-wrap select { padding: 11px 34px 11px 36px !important; }
          .pm-brand-row .pm-select-wrap > i.fa-magnifying-glass { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #6f767e; font-size: 13px; pointer-events: none; }
          .pm-brand-row select { width: 100%; appearance: none; -webkit-appearance: none; background: #1f2226 !important; border: 1px solid #2c2f34 !important; border-radius: 10px !important; color: #fff !important; padding: 11px 34px 11px 36px !important; font-size: 13px !important; font-weight: 600; }
          .pm-brand-row .pm-select-wrap > i.fa-chevron-down { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #9aa0a6; font-size: 12px; pointer-events: none; }
@@ -1674,7 +1678,7 @@
          .pm-color-row.silenced .sw { background-image: linear-gradient(135deg, transparent 46%, #ff5252 46%, #ff5252 54%, transparent 54%); }
          .pm-color-empty { padding: 18px 12px; font-size: 12px; color: #6f767e; text-align: center; }
          .pm-panel.pm-settings .trycolors-palette-toggle summary { display: flex; align-items: center; justify-content: space-between; }
-         .pm-panel.pm-settings .trycolors-palette-toggle summary::after { content: "\\f078"; font-family: "Font Awesome 6 Pro", "Font Awesome 6 Free"; font-weight: 400; font-size: 11px; color: #6f767e; transition: transform .15s; }
+         .pm-panel.pm-settings .trycolors-palette-toggle summary::after { content: "\f078"; font-family: "Font Awesome 6 Pro", "Font Awesome 6 Free"; font-weight: 400; font-size: 11px; color: #6f767e; transition: transform .15s; }
          .pm-panel.pm-settings .trycolors-palette-toggle[open] summary::after { transform: rotate(180deg); }
 
          /* match-mode toggle + ranked candidates in the side panel */

@@ -97,6 +97,28 @@
          window.location.href = data.checkout_url;
       },
 
+      /* Redeem a promo code for free images. -> {ok, status, detail, data}.
+         On success the entitlements (and the badge) are refreshed from the reply. */
+      async redeemCode(code) {
+         try {
+            const res = await fetch(`${API_BASE}/api/billing/redeem-code`, {
+               method: 'POST',
+               headers: authHeaders({ 'Content-Type': 'application/json' }),
+               body: JSON.stringify({ code: code }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && data.entitlements) {
+               this.ent = data.entitlements;
+               if (typeof Billing.renderBadge === 'function') Billing.renderBadge();
+            }
+            const detail = typeof data.detail === 'string' ? data.detail
+               : (res.status === 401 ? 'Please sign in to use a code.' : 'Could not check that code, please try again.');
+            return { ok: res.ok, status: res.status, detail: detail, data: data };
+         } catch (e) {
+            return { ok: false, status: 0, detail: 'No connection. Check your internet and try again.', data: {} };
+         }
+      },
+
       async verifySession(sessionId) {
          const res = await fetch(`${API_BASE}/api/billing/verify-session`, {
             method: 'POST',

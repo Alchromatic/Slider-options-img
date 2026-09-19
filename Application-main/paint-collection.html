@@ -187,7 +187,7 @@
                <section class="p-6 bg-white dark:bg-neutral-7 border-2 border-[#f4f4f4] dark:border-0 shadow-[0px_4px_14px_-6px_#F4F4F4] dark:shadow-none rounded-lg">
                   <div class="flex max-md:flex-col items-start md:items-center justify-between mb-8 gap-8 max-md:pb-6">
                      <h5 class="text-neutral-6 dark:text-neutral-1 text-xl leading-[1.6] font-semibold -tracking-[0.4px] relative pl-5 before:w-[5px] before:h-full before:bg-secondary-3 before:rounded before:absolute before:left-0 before:top-0">Paint Collection</h5>
-                     <a href="#" class="theme-btn-primary inline-flex! items-center gap-2 px-4! py-2!"><i class="fa-regular fa-plus"></i> Add New</a>
+                     <a href="#" id="pcAddNew" class="theme-btn-primary inline-flex! items-center gap-2 px-4! py-2!"><i class="fa-regular fa-plus"></i> Add New</a>
                   </div>
                   <div class="space-y-8">
                      <div class="flex items-center gap-4.5 lg:gap-8 max-md:-mr-6">
@@ -304,7 +304,7 @@
       <script src="assets/js/main.js"></script>
       <script src="assets/js/app-shell.js"></script>
       <!-- editable named-color library (same module the Colors page uses) -->
-      <script src="assets/js/color-library.js?v=4"></script>
+      <script src="assets/js/color-library.js?v=5"></script>
       <style>
          .pc-lib-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
          .pc-lib-chip { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 12px; background: #f4f4f4; }
@@ -329,6 +329,13 @@
             }
             render();
             setInterval(render, 800); // the editor modal writes to localStorage; keep the grid in sync
+            var addNew = document.getElementById('pcAddNew');
+            if (addNew) addNew.addEventListener('click', function (e) {
+               e.preventDefault();
+               if (!window.ColorLibrary || !ColorLibrary.open) return;
+               ColorLibrary.open();
+               var n = document.getElementById('clNewName'); if (n) n.focus();
+            });
             if (new URLSearchParams(location.search).get('open') === 'library') {
                setTimeout(function () { var b = document.getElementById('colorLibraryBtn'); if (b) b.click(); }, 300);
             }

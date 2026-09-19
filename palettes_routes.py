@@ -27,6 +27,16 @@ the apps and device captures all change the same list:
     DELETE /api/palettes/my-colors/colors/{hex}                  remove one
     POST   /api/palettes/my-colors/merge          {colors:[...]} add missing, never remove
 
+Groups ("Studio Set", "Oils"...) are the user's other palettes; each one is its
+own entry in the recipe palette dropdown. Same auth and rules as My Colors:
+
+    GET    /api/palettes/groups                       -> {groups: [{id, name, colors, updated_at}]}
+    POST   /api/palettes/groups                       {name, colors?}  create
+    PATCH  /api/palettes/groups/{id}                  {name}           rename
+    DELETE /api/palettes/groups/{id}                                   delete (colors stay in My Colors)
+    POST   /api/palettes/groups/{id}/colors           {hex, name?}     add one (no-op if present)
+    DELETE /api/palettes/groups/{id}/colors/{hex}                      remove one
+
 ``{hex}`` is the color without "#" (e.g. ``FEE100``).  Each change runs in one
 transaction holding the row lock, so concurrent edits and captures don't
 overwrite each other.  POST /api/palettes refuses the name "My Colors" (a whole
@@ -361,6 +371,150 @@ def merge_my_colors(req: ColorMerge, request: Request):
         added = [c for c in incoming if c["hex"] not in have][: max(0, MY_COLORS_CAP - len(colors))]
         if added:
             row = _store_my_colors(cur, row["id"], colors + added)
+        conn.commit()
+    return _my_colors_out(row)
+
+
+# ---------------------------------------------------------------------------
+# Groups: named palettes other than "My Colors"
+# ---------------------------------------------------------------------------
+
+class GroupIn(BaseModel):
+    name: str = Field(..., min_length=1, max_length=80)
+    colors: List[Color] = Field(default_factory=list)
+
+
+class GroupRename(BaseModel):
+    name: str = Field(..., min_length=1, max_length=80)
+
+
+def _group_name(raw: str) -> str:
+    name = (raw or "").strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="A group needs a name.")
+    if name.lower() == MY_COLORS.lower():
+        raise HTTPException(status_code=409, detail='"My Colors" is the library itself; pick another name.')
+    return name
+
+
+def _lock_group(cur, uid: str, group_id: int) -> Dict[str, Any]:
+    cur.execute(
+        "SELECT id, name, colors, updated_at FROM user_palettes "
+        "WHERE id = %s AND user_id = %s AND name <> %s FOR UPDATE",
+        (group_id, uid, MY_COLORS),
+    )
+    row = cur.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Group not found.")
+    return dict(row)
+
+
+def _name_taken(cur, uid: str, name: str, except_id: Optional[int] = None) -> bool:
+    cur.execute(
+        "SELECT 1 FROM user_palettes WHERE user_id = %s AND lower(name) = lower(%s) AND id <> %s",
+        (uid, name, except_id or -1),
+    )
+    return cur.fetchone() is not None
+
+
+@router.get("/groups")
+def list_groups(request: Request):
+    """Every palette of the user except "My Colors", newest first."""
+    uid = _auth(request)["user_id"]
+    with get_db() as conn:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute(
+            "SELECT id, name, colors, updated_at FROM user_palettes "
+            "WHERE user_id = %s AND name <> %s ORDER BY id DESC",
+            (uid, MY_COLORS),
+        )
+        rows = cur.fetchall()
+    return {"groups": [_my_colors_out(dict(r)) for r in rows]}
+
+
+@router.post("/groups")
+def create_group(req: GroupIn, request: Request):
+    uid = _auth(request)["user_id"]
+    name = _group_name(req.name)
+    colors = _clean_colors(req.colors)[:MY_COLORS_CAP]
+    with get_db() as conn:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        if _name_taken(cur, uid, name):
+            raise HTTPException(status_code=409, detail="You already have a group with that name.")
+        cur.execute(
+            "INSERT INTO user_palettes (user_id, name, colors, updated_at) VALUES (%s, %s, %s, NOW()) "
+            "ON CONFLICT (user_id, name) DO NOTHING RETURNING id, name, colors, updated_at",
+            (uid, name, json.dumps(colors)),
+        )
+        row = cur.fetchone()
+        if not row:                        # created by a parallel request a moment ago
+            raise HTTPException(status_code=409, detail="You already have a group with that name.")
+        conn.commit()
+    return _my_colors_out(dict(row))
+
+
+@router.patch("/groups/{group_id}")
+def rename_group(group_id: int, req: GroupRename, request: Request):
+    uid = _auth(request)["user_id"]
+    name = _group_name(req.name)
+    with get_db() as conn:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        row = _lock_group(cur, uid, group_id)
+        if _name_taken(cur, uid, name, except_id=group_id):
+            raise HTTPException(status_code=409, detail="You already have a group with that name.")
+        if row["name"] != name:
+            cur.execute(
+                "UPDATE user_palettes SET name = %s, updated_at = NOW() WHERE id = %s "
+                "RETURNING id, name, colors, updated_at",
+                (name, group_id),
+            )
+            row = dict(cur.fetchone())
+        conn.commit()
+    return _my_colors_out(row)
+
+
+@router.delete("/groups/{group_id}")
+def delete_group(group_id: int, request: Request):
+    """Delete a group. Its colors stay in My Colors."""
+    uid = _auth(request)["user_id"]
+    with get_db() as conn:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        _lock_group(cur, uid, group_id)
+        cur.execute("DELETE FROM user_palettes WHERE id = %s", (group_id,))
+        conn.commit()
+    return {"deleted": True, "id": group_id}
+
+
+@router.post("/groups/{group_id}/colors")
+def add_group_color(group_id: int, req: Color, request: Request):
+    uid = _auth(request)["user_id"]
+    hx = _hex_or_400(req.hex)
+    with get_db() as conn:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        row = _lock_group(cur, uid, group_id)
+        colors = list(row["colors"] or [])
+        if _index_of(colors, hx) is None:
+            if len(colors) >= MY_COLORS_CAP:
+                raise HTTPException(status_code=409, detail=f"This group is full ({MY_COLORS_CAP} colors).")
+            colors.append({"hex": hx, "name": (req.name or "").strip() or hx})
+            row = _store_my_colors(cur, group_id, colors)
+        conn.commit()
+    return _my_colors_out(row)
+
+
+@router.delete("/groups/{group_id}/colors/{hex}")
+def delete_group_color(group_id: int, hex: str, request: Request):
+    uid = _auth(request)["user_id"]
+    hx = _hex_or_400(hex)
+    with get_db() as conn:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        row = _lock_group(cur, uid, group_id)
+        colors = list(row["colors"] or [])
+        i = _index_of(colors, hx)
+        if i is None:
+            raise HTTPException(status_code=404, detail="That color is not in this group.")
+        del colors[i]
+        row = _store_my_colors(cur, group_id, colors)
         conn.commit()
     return _my_colors_out(row)
 

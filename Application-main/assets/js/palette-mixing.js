@@ -949,6 +949,14 @@ function renderTrycolorsResultsFromUnmix(data, maxParts) {
     trycolorsResults.innerHTML = buildTrycolorsRecipeHtml(data);
     renderMatchBadge(data, data.mix_method ? formatMixMethodSafe(data.mix_method) : '');
 }
+// "kubelka_munk" -> "Kubelka–Munk", "trycolors_pro" -> "Trycolors Pro"
+function formatMixMethod(m) {
+    if (!m) return '';
+    const known = { kubelka_munk: 'Kubelka–Munk', km: 'Kubelka–Munk', mixbox: 'Mixbox', spectral: 'Spectral', rgb: 'RGB', lab: 'Lab' };
+    const k = String(m).toLowerCase();
+    if (known[k]) return known[k];
+    return String(m).replace(/[_-]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
 function formatMixMethodSafe(m) { try { return typeof formatMixMethod === 'function' ? formatMixMethod(m) : String(m); } catch (e) { return String(m); } }
 
 // Allow Enter key to submit

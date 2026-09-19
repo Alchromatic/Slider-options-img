@@ -51,6 +51,8 @@
    const renderingSection = $("#rendering-logic-section");
 
    const opacityEl   = document.querySelector('input[title="shape-opacity"]');
+   const MIN_OPACITY = 20;                 // below this the shapes are invisible
+   if (opacityEl && +opacityEl.min < MIN_OPACITY) opacityEl.min = MIN_OPACITY;
    const randomEl    = document.querySelector('input[title="random-shapes"]');
    const mutationsEl = document.querySelector('input[title="mutations"]');
 
@@ -136,7 +138,7 @@
       if (isNaN(v)) v = dflt;
       return Math.max(lo, Math.min(hi, v));
    };
-   const opacity   = () => clampInt(opacityEl   && opacityEl.value,   0, 255, 180);
+   const opacity   = () => clampInt(opacityEl   && opacityEl.value,   MIN_OPACITY, 255, 180);
    const candidates= () => clampInt(randomEl    && randomEl.value,    1, 300, 50);
    const mutations = () => clampInt(mutationsEl && mutationsEl.value, 1, 300, 100);
 
@@ -869,6 +871,7 @@
       if (!shapes.length) return 0;
       const prevLimit = shapeLimit;
       shapeLimit = shapes.length;
+      selectedIndex = null;                // no selection outline in the sampled pixels
       render(shapes.length);               // ensure the full image is composited
       const W = canvas.width, H = canvas.height;
       let buf;
@@ -1207,7 +1210,11 @@
       const c = document.createElement("canvas");
       c.width = Math.max(1, Math.round(canvas.width * scale));
       c.height = Math.max(1, Math.round(canvas.height * scale));
+      // copy a clean frame: without the yellow selection outline
+      const sel = selectedIndex;
+      if (sel != null) { selectedIndex = null; render(); }
       c.getContext("2d").drawImage(canvas, 0, 0, c.width, c.height);
+      if (sel != null) { selectedIndex = sel; render(); }
       return c.toDataURL("image/jpeg", 0.82);
    }
    // Save -> the user's Portfolio (my saved photos), instead of only downloading.

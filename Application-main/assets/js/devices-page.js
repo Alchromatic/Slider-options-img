@@ -167,13 +167,14 @@
       var recipeHtml = recipe.length ? '<div class="dv-recipe">' + recipe.map(function (p) {
          return '<span title="' + esc(p.name || '') + '"><i style="background:' + esc(p.hex || '#999') + '"></i>' + esc(p.name || p.hex) + (p.percentage != null ? ' <small>' + (Math.round(p.percentage * 10) / 10) + '%</small>' : '') + '</span>';
       }).join('') + '</div>' : '';
-      return '<div class="dv-row dv-cap" data-id="' + c.id + '">'
+      return '<div class="dv-row dv-cap" data-id="' + c.id + '" data-hex="' + esc(c.hex) + '" data-name="' + esc(name || c.hex) + '">'
          + '<span class="dv-sw" style="background:' + esc(c.hex) + '"></span>'
          + '<div class="dv-row-main"><b>' + esc(name || c.hex) + '</b>'
          + '<small><code>' + esc(c.hex) + '</code> · RGB ' + esc(c.rgb) + ' · ' + esc(SOURCE_LABEL[c.source] || c.source || '') + (c.device_name || c.device_type ? ' · ' + esc(c.device_name || TYPE_LABEL[c.device_type] || '') : '') + ' · ' + ago(c.created_at) + '</small>'
          + recipeHtml + '</div>'
          + '<div class="dv-row-actions">'
          + '<a class="dv-iconbtn" href="templates.html?target=' + encodeURIComponent(c.hex) + '" title="Find a paint recipe for this color"><i class="fa-regular fa-eye-dropper"></i></a>'
+         + '<button type="button" class="dv-iconbtn" data-act="group" title="Add to group"><i class="fa-regular fa-layer-group"></i></button>'
          + '<button type="button" class="dv-iconbtn danger" data-act="delete" title="Delete"><i class="fa-regular fa-trash-can"></i></button>'
          + '</div></div>';
    }
@@ -194,7 +195,41 @@
       }
    }
    $('dvMore').addEventListener('click', function () { loadCaptures(false); });
+   // "Add to group": pick one of the user's groups (or make a new one) for this color
+   function openGroupPicker(row) {
+      var open = row.querySelector('.dv-grp');
+      if (open) { open.remove(); return; }
+      if (!window.ColorLibrary || !ColorLibrary.groups) return;
+      var sel = document.createElement('select');
+      sel.className = 'dv-grp';
+      sel.setAttribute('aria-label', 'Add to group');
+      sel.style.cssText = 'height:34px;max-width:190px;border-radius:8px;padding:0 8px;font-size:13px;font-weight:600;background:transparent;color:inherit;border:1px solid rgba(128,128,128,.45);';
+      sel.innerHTML = '<option value="">Add to group…</option>' + ColorLibrary.groups().map(function (g) {
+         return '<option value="' + g.id + '">' + esc(g.name) + ' (' + (g.colors || []).length + ')</option>';
+      }).join('') + '<option value="__new">+ New group…</option>';
+      row.querySelector('.dv-row-actions').prepend(sel);
+      sel.focus();
+      sel.addEventListener('change', async function () {
+         var hex = row.getAttribute('data-hex'), name = row.getAttribute('data-name');
+         if (sel.value === '__new') {
+            var gname = (prompt('Name the new group') || '').trim();
+            if (!gname) { sel.value = ''; return; }
+            try {
+               var g = await api('POST', '/api/palettes/groups', { name: gname, colors: [{ hex: hex, name: name }] });
+               await ColorLibrary.reloadGroups();
+               toast('Added to the new group “' + esc(g.name) + '”', { kind: 'ok', icon: 'fa-regular fa-check' });
+            } catch (err) { toast(err.message, { kind: 'warn' }); return; }
+         } else if (sel.value) {
+            var grp = ColorLibrary.groups().filter(function (x) { return String(x.id) === sel.value; })[0];
+            if (!(await ColorLibrary.addToGroup(parseInt(sel.value, 10), hex, name))) return;
+            toast('Added to “' + esc(grp ? grp.name : 'group') + '”', { kind: 'ok', icon: 'fa-regular fa-check' });
+         } else return;
+         sel.remove();
+      });
+   }
    $('dvCaptures').addEventListener('click', async function (e) {
+      var gbtn = e.target.closest('button[data-act="group"]');
+      if (gbtn) { openGroupPicker(gbtn.closest('.dv-row')); return; }
       var btn = e.target.closest('button[data-act="delete"]'); if (!btn) return;
       var row = btn.closest('.dv-row'), id = row.getAttribute('data-id');
       try { await api('DELETE', '/api/devices/captures/' + id); row.remove(); captureTotal--; $('dvCapCount').textContent = captureTotal || ''; }
@@ -203,7 +238,12 @@
 
    function refreshAll() { loadDevices(); loadCaptures(true); }
    $('dvRefresh').addEventListener('click', refreshAll);
-   setInterval(function () { if (document.visibilityState === 'visible') { loadDevices(); if (captureOffset <= PAGE) loadCaptures(true); } }, 15000);
+   setInterval(function () {
+      if (document.visibilityState !== 'visible') return;
+      loadDevices();
+      // don't redraw the list under an open "Add to group" picker
+      if (captureOffset <= PAGE && !document.querySelector('#dvCaptures .dv-grp')) loadCaptures(true);
+   }, 15000);
 
    // ------------------------------------------ camera picker (web capture) ----
    (function () {

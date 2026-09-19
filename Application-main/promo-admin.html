@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta name="robots" content="noindex">
+   <title>Promo Codes · Admin | GeoMagic</title>
+
+   <link rel="shortcut icon" type="image/x-icon" href="assets/img/favicon/favicon.ico">
+   <link rel="preconnect" href="https://fonts.googleapis.com">
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..800&display=swap" rel="stylesheet">
+   <link rel="stylesheet" href="assets/fontawesome/fontawesome.min.css">
+
+   <script src="https://cdn.tailwindcss.com"></script>
+   <script>
+      tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } } };
+   </script>
+   <style>
+      body { font-family: 'Inter', sans-serif; }
+      input::placeholder, textarea::placeholder { color: #6b7280; }
+      .code { font-family: 'Source Code Pro', ui-monospace, monospace; letter-spacing: .04em; }
+      .fld { width: 100%; background: #0a0a0a; border: 1px solid #404040; border-radius: .5rem; padding: .5rem .75rem; font-size: .875rem; outline: none; }
+      .fld:focus { border-color: #3b82f6; }
+      .lbl { display: block; font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: #737373; margin-bottom: .375rem; }
+   </style>
+</head>
+
+<body class="bg-neutral-950 text-neutral-200 min-h-screen">
+   <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+
+      <header class="mb-8">
+         <h1 class="text-2xl font-bold text-white flex items-center gap-3">
+            <i class="fa-solid fa-ticket text-blue-500"></i> Promo Codes
+         </h1>
+         <p class="text-sm text-neutral-400 mt-1">
+            Generate codes that give free images. A signed-in user enters one under
+            <em>Have a code?</em> on the Pricing page; the images are added to their credits
+            and the use is recorded against their account.
+         </p>
+      </header>
+
+      <!-- Admin token -->
+      <section class="bg-neutral-900 border border-neutral-800 rounded-xl p-4 mb-6">
+         <label class="lbl" for="adminToken">Admin token <span class="normal-case text-neutral-600">(X-Admin-Token — never your user password)</span></label>
+         <div class="flex flex-wrap gap-3">
+            <input id="adminToken" type="password" placeholder="Paste ADMIN_TOKEN…" class="fld flex-1 min-w-[220px]">
+            <button id="saveToken" class="bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-4 py-2 rounded-lg">Save &amp; verify</button>
+            <span id="tokenStatus" class="self-center text-sm"></span>
+         </div>
+      </section>
+
+      <div class="grid lg:grid-cols-[380px_1fr] gap-6 items-start">
+
+         <!-- Generate -->
+         <section class="bg-neutral-900 border border-neutral-800 rounded-xl p-5">
+            <h2 class="text-white font-semibold mb-4"><i class="fa-solid fa-wand-magic-sparkles text-blue-500 mr-2"></i>Generate codes</h2>
+            <form id="genForm" class="space-y-4" autocomplete="off">
+               <div class="grid grid-cols-2 gap-3">
+                  <div>
+                     <label class="lbl" for="gCount">Number of codes</label>
+                     <input id="gCount" type="number" min="1" max="1000" value="10" class="fld" required>
+                  </div>
+                  <div>
+                     <label class="lbl" for="gImages">Free images each</label>
+                     <input id="gImages" type="number" min="1" max="100000" value="20" class="fld" required>
+                  </div>
+               </div>
+               <div class="grid grid-cols-2 gap-3">
+                  <div>
+                     <label class="lbl" for="gUses">Uses per code</label>
+                     <input id="gUses" type="number" min="1" max="1000000" value="1" class="fld" required>
+                     <p class="text-xs text-neutral-500 mt-1">1 = one person. Each user can use a code once.</p>
+                  </div>
+                  <div>
+                     <label class="lbl" for="gExpires">Expires</label>
+                     <input id="gExpires" type="date" class="fld">
+                     <p class="text-xs text-neutral-500 mt-1">Empty = never.</p>
+                  </div>
+               </div>
+               <div>
+                  <label class="lbl" for="gBatch">Batch label</label>
+                  <input id="gBatch" type="text" maxlength="80" placeholder="e.g. QA team — September" class="fld">
+               </div>
+               <div>
+                  <label class="lbl" for="gNote">Note <span class="normal-case text-neutral-600">(optional)</span></label>
+                  <input id="gNote" type="text" maxlength="300" placeholder="Who it's for / why" class="fld">
+               </div>
+               <details class="text-sm">
+                  <summary class="cursor-pointer text-neutral-400 hover:text-neutral-200">More options</summary>
+                  <div class="grid grid-cols-2 gap-3 mt-3">
+                     <div>
+                        <label class="lbl" for="gPrefix">Prefix</label>
+                        <input id="gPrefix" type="text" maxlength="6" value="GM" class="fld code uppercase">
+                     </div>
+                     <div>
+                        <label class="lbl" for="gCustom">Custom code</label>
+                        <input id="gCustom" type="text" maxlength="40" placeholder="e.g. LAUNCH50" class="fld code uppercase">
+                     </div>
+                  </div>
+                  <p class="text-xs text-neutral-500 mt-2">A custom code is one code (number of codes is ignored). Give it more uses to share it with many people.</p>
+               </details>
+               <button id="genBtn" type="submit" class="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-semibold px-4 py-2.5 rounded-lg">Generate</button>
+               <p id="genMsg" class="text-sm" role="status" aria-live="polite"></p>
+            </form>
+
+            <div id="genResult" class="mt-5 hidden">
+               <div class="flex items-center justify-between gap-2 mb-2">
+                  <h3 class="text-white text-sm font-semibold" id="genTitle"></h3>
+                  <div class="flex gap-2">
+                     <button id="copyCodes" class="text-xs bg-neutral-800 hover:bg-neutral-700 px-3 py-1.5 rounded-md"><i class="fa-regular fa-copy mr-1"></i>Copy</button>
+                     <button id="csvCodes" class="text-xs bg-neutral-800 hover:bg-neutral-700 px-3 py-1.5 rounded-md"><i class="fa-regular fa-file-csv mr-1"></i>CSV</button>
+                  </div>
+               </div>
+               <textarea id="genCodes" readonly rows="8" class="fld code text-xs leading-6 resize-y"></textarea>
+               <p class="text-xs text-neutral-500 mt-2">The CSV includes a sign-up link per code (<span class="code">pricing.html?code=…</span>) that fills the code in for the user.</p>
+            </div>
+         </section>
+
+         <div class="space-y-6 min-w-0">
+            <!-- Batches -->
+            <section class="bg-neutral-900 border border-neutral-800 rounded-xl p-5">
+               <div class="flex items-center justify-between mb-3">
+                  <h2 class="text-white font-semibold"><i class="fa-solid fa-layer-group text-blue-500 mr-2"></i>Batches</h2>
+                  <button id="reloadAll" class="text-xs bg-neutral-800 hover:bg-neutral-700 px-3 py-1.5 rounded-md"><i class="fa-solid fa-rotate mr-1"></i>Refresh</button>
+               </div>
+               <div class="overflow-x-auto">
+                  <table class="w-full text-sm">
+                     <thead class="text-left text-xs uppercase tracking-wide text-neutral-500">
+                        <tr><th class="py-2 pr-3">Batch</th><th class="py-2 pr-3">Codes</th><th class="py-2 pr-3">Images each</th><th class="py-2 pr-3">Used</th><th class="py-2 pr-3">Images given</th><th class="py-2 pr-3">Expires</th><th class="py-2"></th></tr>
+                     </thead>
+                     <tbody id="batchRows"><tr><td colspan="7" class="py-4 text-neutral-500">Save the admin token to load.</td></tr></tbody>
+                  </table>
+               </div>
+            </section>
+
+            <!-- Codes -->
+            <section class="bg-neutral-900 border border-neutral-800 rounded-xl p-5">
+               <h2 class="text-white font-semibold mb-3"><i class="fa-solid fa-list text-blue-500 mr-2"></i>Codes</h2>
+               <div class="flex flex-wrap gap-3 mb-3">
+                  <select id="fBatch" class="fld !w-auto min-w-[180px]"><option value="">All batches</option></select>
+                  <select id="fStatus" class="fld !w-auto">
+                     <option value="">Any status</option><option value="active">Active</option><option value="used">Used up</option>
+                     <option value="expired">Expired</option><option value="disabled">Disabled</option>
+                  </select>
+                  <input id="fQ" type="search" placeholder="Code or user email…" class="fld flex-1 min-w-[200px]">
+               </div>
+               <div class="overflow-x-auto">
+                  <table class="w-full text-sm">
+                     <thead class="text-left text-xs uppercase tracking-wide text-neutral-500">
+                        <tr><th class="py-2 pr-3">Code</th><th class="py-2 pr-3">Images</th><th class="py-2 pr-3">Uses</th><th class="py-2 pr-3">Status</th><th class="py-2 pr-3">Used by</th><th class="py-2 pr-3">Batch</th><th class="py-2"></th></tr>
+                     </thead>
+                     <tbody id="codeRows"></tbody>
+                  </table>
+               </div>
+               <div class="flex items-center justify-between mt-3 text-sm text-neutral-400">
+                  <span id="codeCount"></span>
+                  <div class="flex gap-2">
+                     <button id="prevPage" class="bg-neutral-800 hover:bg-neutral-700 disabled:opacity-40 px-3 py-1.5 rounded-md">Previous</button>
+                     <button id="nextPage" class="bg-neutral-800 hover:bg-neutral-700 disabled:opacity-40 px-3 py-1.5 rounded-md">Next</button>
+                  </div>
+               </div>
+            </section>
+         </div>
+      </div>
+   </div>
+
+   <script>
+      const API_BASE = (new URLSearchParams(location.search).get('api') || '').replace(/\/$/, '') || location.origin;
+      const TOKEN_KEY = 'gm_admin_token';           // shared with library-admin / admin-dashboard
+      const PAGE = 50;
+      const $ = (id) => document.getElementById(id);
+      const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+      const fmtDate = (iso) => iso ? new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+      const fmtWhen = (iso) => iso ? new Date(iso).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+
+      let token = '';
+      try { token = localStorage.getItem(TOKEN_KEY) || ''; } catch (e) {}
+      let offset = 0, lastGen = null, qTimer = null;
+
+      async function api(path, opts = {}) {
+         const res = await fetch(API_BASE + path, { ...opts, headers: { 'X-Admin-Token': token, 'Content-Type': 'application/json', ...(opts.headers || {}) } });
+         const data = await res.json().catch(() => ({}));
+         if (!res.ok) throw new Error((data && typeof data.detail === 'string' && data.detail) || ('HTTP ' + res.status));
+         return data;
+      }
+
+      // ---- token ----
+      $('adminToken').value = token;
+      $('saveToken').onclick = async () => {
+         token = $('adminToken').value.trim();
+         try { localStorage.setItem(TOKEN_KEY, token); } catch (e) {}
+         await verify();
+      };
+      async function verify() {
+         const el = $('tokenStatus');
+         if (!token) { el.innerHTML = '<span class="text-neutral-500">No token set</span>'; return false; }
+         try {
+            await api('/api/admin/verify');
+            el.innerHTML = '<span class="text-green-400"><i class="fa-solid fa-check"></i> Connected</span>';
+            await reloadAll();
+            return true;
+         } catch (e) {
+            el.innerHTML = '<span class="text-red-400"><i class="fa-solid fa-xmark"></i> ' + esc(e.message) + '</span>';
+            return false;
+         }
+      }
+
+      // ---- generate ----
+      $('genForm').addEventListener('submit', async (e) => {
+         e.preventDefault();
+         const msg = $('genMsg');
+         const custom = $('gCustom').value.trim();
+         const body = {
+            count: custom ? 1 : parseInt($('gCount').value, 10),
+            images: parseInt($('gImages').value, 10),
+            max_redemptions: parseInt($('gUses').value, 10),
+            batch: $('gBatch').value.trim() || null,
+            note: $('gNote').value.trim() || null,
+            prefix: $('gPrefix').value.trim(),
+         };
+         if (custom) body.code = custom;
+         // end of the chosen day, local time
+         if ($('gExpires').value) body.expires_at = new Date($('gExpires').value + 'T23:59:59').toISOString();
+         if (!(body.count >= 1) || !(body.images >= 1) || !(body.max_redemptions >= 1)) {
+            msg.className = 'text-sm text-red-400'; msg.textContent = 'Number of codes, images and uses must be at least 1.'; return;
+         }
+         $('genBtn').disabled = true; msg.className = 'text-sm text-neutral-400'; msg.textContent = 'Generating…';
+         try {
+            const r = await api('/api/admin/promo-codes', { method: 'POST', body: JSON.stringify(body) });
+            lastGen = r;
+            msg.className = 'text-sm text-green-400';
+            msg.textContent = `Created ${r.codes.length} code${r.codes.length === 1 ? '' : 's'} in “${r.batch}”.`;
+            $('genTitle').textContent = `${r.codes.length} × ${r.images} images` + (r.max_redemptions > 1 ? `, ${r.max_redemptions} uses each` : '');
+            $('genCodes').value = r.codes.join('\n');
+            $('genResult').classList.remove('hidden');
+            $('gCustom').value = '';
+            await reloadAll(r.batch);
+         } catch (err) {
+            msg.className = 'text-sm text-red-400'; msg.textContent = err.message;
+         } finally { $('genBtn').disabled = false; }
+      });
+      $('copyCodes').onclick = async () => {
+         try { await navigator.clipboard.writeText($('genCodes').value); $('copyCodes').innerHTML = '<i class="fa-solid fa-check mr-1"></i>Copied'; }
+         catch (e) { $('genCodes').select(); document.execCommand('copy'); }
+         setTimeout(() => { $('copyCodes').innerHTML = '<i class="fa-regular fa-copy mr-1"></i>Copy'; }, 1500);
+      };
+      $('csvCodes').onclick = () => {
+         if (!lastGen) return;
+         const q = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+         const link = (c) => location.origin + '/pricing.html?code=' + encodeURIComponent(c);
+         const rows = [['code', 'images', 'uses', 'batch', 'expires', 'link']]
+            .concat(lastGen.codes.map((c) => [c, lastGen.images, lastGen.max_redemptions, lastGen.batch, lastGen.expires_at || '', link(c)]));
+         const blob = new Blob([rows.map((r) => r.map(q).join(',')).join('\r\n')], { type: 'text/csv' });
+         const a = document.createElement('a');
+         a.href = URL.createObjectURL(blob);
+         a.download = 'promo-codes-' + lastGen.batch.replace(/[^\w-]+/g, '_') + '.csv';
+         document.body.appendChild(a); a.click(); a.remove();
+      };
+
+      // ---- batches ----
+      async function loadBatches() {
+         const { batches } = await api('/api/admin/promo-codes/batches');
+         const sel = $('fBatch'), keep = sel.value;
+         sel.innerHTML = '<option value="">All batches</option>' + batches.map((b) => `<option value="${esc(b.batch)}">${esc(b.batch)}</option>`).join('');
+         sel.value = batches.some((b) => b.batch === keep) ? keep : '';
+         $('batchRows').innerHTML = batches.length ? batches.map((b) => {
+            const allOff = b.disabled === b.codes;
+            return `<tr class="border-t border-neutral-800">
+               <td class="py-2 pr-3"><button class="text-blue-400 hover:underline text-left" data-view="${esc(b.batch)}">${esc(b.batch)}</button>
+                  ${b.note ? `<div class="text-xs text-neutral-500">${esc(b.note)}</div>` : ''}<div class="text-xs text-neutral-600">${fmtDate(b.created_at)}</div></td>
+               <td class="py-2 pr-3">${b.codes}${b.disabled ? ` <span class="text-xs text-neutral-500">(${b.disabled} off)</span>` : ''}</td>
+               <td class="py-2 pr-3">${esc(b.images)}</td>
+               <td class="py-2 pr-3">${b.redemptions} / ${b.capacity}</td>
+               <td class="py-2 pr-3">${b.images_given}</td>
+               <td class="py-2 pr-3">${fmtDate(b.expires_at)}</td>
+               <td class="py-2 text-right"><button class="text-xs ${allOff ? 'bg-neutral-800 hover:bg-neutral-700' : 'bg-red-900/60 hover:bg-red-800'} px-3 py-1.5 rounded-md" data-batch-toggle="${esc(b.batch)}" data-off="${allOff ? '0' : '1'}">${allOff ? 'Turn all on' : 'Turn all off'}</button></td>
+            </tr>`;
+         }).join('') : '<tr><td colspan="7" class="py-4 text-neutral-500">No codes yet. Generate some on the left.</td></tr>';
+      }
+      $('batchRows').addEventListener('click', async (e) => {
+         const view = e.target.closest('[data-view]');
+         if (view) { $('fBatch').value = view.dataset.view; offset = 0; loadCodes(); return; }
+         const t = e.target.closest('[data-batch-toggle]');
+         if (!t) return;
+         const off = t.dataset.off === '1';
+         if (off && !confirm(`Turn off every code in “${t.dataset.batchToggle}”? Nobody will be able to use them until you turn them back on.`)) return;
+         try { await api('/api/admin/promo-codes/batches/disable', { method: 'POST', body: JSON.stringify({ batch: t.dataset.batchToggle, disabled: off }) }); await reloadAll(); }
+         catch (err) { alert(err.message); }
+      });
+
+      // ---- codes ----
+      const STATUS = {
+         active: 'bg-green-900/50 text-green-300', used: 'bg-neutral-800 text-neutral-300',
+         expired: 'bg-amber-900/50 text-amber-300', disabled: 'bg-red-900/50 text-red-300',
+      };
+      async function loadCodes() {
+         const p = new URLSearchParams({ limit: PAGE, offset });
+         if ($('fBatch').value) p.set('batch', $('fBatch').value);
+         if ($('fStatus').value) p.set('status', $('fStatus').value);
+         if ($('fQ').value.trim()) p.set('q', $('fQ').value.trim());
+         const { codes, total } = await api('/api/admin/promo-codes?' + p);
+         $('codeRows').innerHTML = codes.length ? codes.map((c) => `<tr class="border-t border-neutral-800 align-top">
+               <td class="py-2 pr-3 code text-white whitespace-nowrap">${esc(c.code)}</td>
+               <td class="py-2 pr-3">${c.images}</td>
+               <td class="py-2 pr-3 whitespace-nowrap">${c.redeemed_count} / ${c.max_redemptions}</td>
+               <td class="py-2 pr-3"><span class="text-xs px-2 py-0.5 rounded-full ${STATUS[c.status] || ''}">${esc(c.status)}</span>
+                  ${c.expires_at ? `<div class="text-xs text-neutral-500 mt-1">until ${fmtDate(c.expires_at)}</div>` : ''}</td>
+               <td class="py-2 pr-3">${c.redemptions.length ? c.redemptions.map((r) =>
+                  `<div title="user id ${esc(r.user_id)}">${esc(r.email || r.user_id)} <span class="text-xs text-neutral-500">${fmtWhen(r.redeemed_at)}</span></div>`).join('')
+                  : '<span class="text-neutral-600">—</span>'}</td>
+               <td class="py-2 pr-3 text-neutral-400">${esc(c.batch)}</td>
+               <td class="py-2 text-right"><button class="text-xs bg-neutral-800 hover:bg-neutral-700 px-3 py-1.5 rounded-md" data-toggle="${esc(c.code)}" data-off="${c.disabled ? '0' : '1'}">${c.disabled ? 'Turn on' : 'Turn off'}</button></td>
+            </tr>`).join('') : '<tr><td colspan="7" class="py-4 text-neutral-500">No codes match.</td></tr>';
+         $('codeCount').textContent = total ? `${offset + 1}–${offset + codes.length} of ${total}` : '';
+         $('prevPage').disabled = offset === 0;
+         $('nextPage').disabled = offset + codes.length >= total;
+      }
+      $('codeRows').addEventListener('click', async (e) => {
+         const t = e.target.closest('[data-toggle]');
+         if (!t) return;
+         try {
+            await api('/api/admin/promo-codes/' + encodeURIComponent(t.dataset.toggle), { method: 'PATCH', body: JSON.stringify({ disabled: t.dataset.off === '1' }) });
+            await reloadAll();
+         } catch (err) { alert(err.message); }
+      });
+      $('fBatch').onchange = $('fStatus').onchange = () => { offset = 0; loadCodes().catch((e) => alert(e.message)); };
+      $('fQ').oninput = () => { clearTimeout(qTimer); qTimer = setTimeout(() => { offset = 0; loadCodes().catch(() => {}); }, 300); };
+      $('prevPage').onclick = () => { offset = Math.max(0, offset - PAGE); loadCodes(); };
+      $('nextPage').onclick = () => { offset += PAGE; loadCodes(); };
+      $('reloadAll').onclick = () => reloadAll().catch((e) => alert(e.message));
+
+      async function reloadAll(showBatch) {
+         await loadBatches();
+         if (showBatch) { $('fBatch').value = showBatch; offset = 0; }
+         await loadCodes();
+      }
+
+      if (token) verify();
+   </script>
+</body>
+
+</html>

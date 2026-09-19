@@ -362,6 +362,7 @@ class CaptureIn(BaseModel):
     meta: Optional[Dict[str, Any]] = None
     device_id: Optional[str] = Field(None, description="Only needed with a user token; device tokens carry it.")
     add_to_library: bool = Field(True, description="Also merge into the user's 'My Colors' palette.")
+    group_id: Optional[int] = Field(None, description="Also add it to this group (one of the user's palettes).")
 
 
 class CaptureBatch(BaseModel):
@@ -759,6 +760,27 @@ def _merge_into_my_colors(cur, user_id: str, colors: List[Dict[str, str]]) -> No
     )
 
 
+def _add_to_group(cur, user_id: str, group_id: int, colors: List[Dict[str, str]]) -> None:
+    """Append colors to one of the user's groups (404 if it isn't theirs; a full group is left as is)."""
+    cur.execute(
+        "SELECT colors FROM user_palettes WHERE id = %s AND user_id = %s AND name <> %s FOR UPDATE",
+        (group_id, user_id, MY_COLORS),
+    )
+    row = cur.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Group not found.")
+    existing = list(row["colors"] or [])
+    seen = {str(c.get("hex", "")).upper() for c in existing}
+    for c in colors:
+        if c["hex"] not in seen and len(existing) < MY_COLORS_CAP:
+            seen.add(c["hex"])
+            existing.append(c)
+    cur.execute(
+        "UPDATE user_palettes SET colors = %s, updated_at = NOW() WHERE id = %s",
+        (json.dumps(existing), group_id),
+    )
+
+
 def _insert_captures(cur, ctx: Dict[str, Any], items: List[CaptureIn]) -> List[Dict[str, Any]]:
     user = _user_summary(cur, ctx["user_id"])
     out: List[Dict[str, Any]] = []
@@ -815,6 +837,12 @@ def _insert_captures(cur, ctx: Dict[str, Any], items: List[CaptureIn]) -> List[D
         if item.add_to_library:
             library.append({"hex": hx, "name": name})
     _merge_into_my_colors(cur, user["id"], library)
+    by_group: Dict[int, List[Dict[str, str]]] = {}
+    for item, row in zip(items, out):
+        if item.group_id is not None:
+            by_group.setdefault(item.group_id, []).append({"hex": row["hex"], "name": row["name"]})
+    for group_id, colors in by_group.items():
+        _add_to_group(cur, user["id"], group_id, colors)
     _touch_device(cur, user["id"], ctx["device_id"])
     return out
 

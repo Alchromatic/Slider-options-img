@@ -263,3 +263,86 @@ def test_cap(user):
     r = _req("POST", MC + "/colors", t, {"hex": "#FEFEFE"})
     assert r.status_code == 409 and "full" in r.json()["detail"]
     assert _req("POST", MC + "/colors", t, {"hex": "#000001"}).status_code == 200   # existing: no-op, not full
+
+
+# ---------------------------------------------------------------------------
+# Groups (/api/palettes/groups)
+# ---------------------------------------------------------------------------
+G = "/api/palettes/groups"
+
+
+def test_groups_crud(user, made):
+    t = user["token"]
+    assert _req("GET", G, t).json() == {"groups": []}
+    r = _req("POST", G, t, {"name": " Studio Set ", "colors": [{"hex": "#abc"}, {"hex": "#AABBCC", "name": "dup"}, {"hex": "bad!"}]})
+    assert r.status_code == 200, r.text
+    g = r.json()
+    assert g["name"] == "Studio Set" and g["colors"] == [{"hex": "#AABBCC", "name": "#AABBCC"}]
+    gid = g["id"]
+    assert _req("POST", G, t, {"name": "studio set"}).status_code == 409          # name taken (any case)
+    assert _req("POST", G, t, {"name": "my colors"}).status_code == 409           # reserved
+    assert _req("POST", G, t, {"name": "   "}).status_code == 400
+    oils = _req("POST", G, t, {"name": "Oils"}).json()
+    assert [x["name"] for x in _req("GET", G, t).json()["groups"]] == ["Oils", "Studio Set"]   # newest first
+    # add / no-op / remove
+    g = _req("POST", f"{G}/{gid}/colors", t, {"hex": "#fee100", "name": "Lemon"}).json()
+    assert g["colors"][-1] == {"hex": "#FEE100", "name": "Lemon"}
+    g2 = _req("POST", f"{G}/{gid}/colors", t, {"hex": "#FEE100", "name": "Other"}).json()
+    assert g2["colors"] == g["colors"]
+    r = _req("DELETE", f"{G}/{gid}/colors/AABBCC", t)
+    assert r.status_code == 200 and [c["hex"] for c in r.json()["colors"]] == ["#FEE100"]
+    assert _req("DELETE", f"{G}/{gid}/colors/AABBCC", t).status_code == 404
+    # rename
+    assert _req("PATCH", f"{G}/{gid}", t, {"name": "Oils"}).status_code == 409
+    r = _req("PATCH", f"{G}/{gid}", t, {"name": "Studio"})
+    assert r.status_code == 200 and r.json()["name"] == "Studio"
+    # My Colors is not a group, and groups don't touch My Colors
+    _req("POST", MC + "/colors", t, {"hex": "#FEE100", "name": "Lemon"})
+    mc_id = _req("GET", MC, t).json()["id"]
+    assert _req("PATCH", f"{G}/{mc_id}", t, {"name": "x"}).status_code == 404
+    assert _req("DELETE", f"{G}/{mc_id}", t).status_code == 404
+    assert _req("POST", f"{G}/{mc_id}/colors", t, {"hex": "#000001"}).status_code == 404
+    assert _req("DELETE", f"{G}/{gid}", t).status_code == 200
+    assert _req("DELETE", f"{G}/{gid}", t).status_code == 404
+    assert _hexes(_req("GET", MC, t).json()) == ["#FEE100"]                       # colors stay in My Colors
+    # another user can't see or change these groups
+    other = _new_user(); made.append(other)
+    assert _req("GET", G, other["token"]).json() == {"groups": []}
+    assert _req("POST", f"{G}/{oils['id']}/colors", other["token"], {"hex": "#123456"}).status_code == 404
+    assert _req("PATCH", f"{G}/{oils['id']}", other["token"], {"name": "mine"}).status_code == 404
+
+
+def test_capture_into_a_group(user, made):
+    t = user["token"]
+    dev, _ = _device(user)
+    gid = _req("POST", G, t, {"name": "Camera picks"}).json()["id"]
+    r = _req("POST", "/api/devices/captures", dev, {"hex": "#224466", "name": "Deep blue", "group_id": gid})
+    assert r.status_code == 200, r.text
+    g = [x for x in _req("GET", G, t).json()["groups"] if x["id"] == gid][0]
+    assert g["colors"] == [{"hex": "#224466", "name": "Deep blue"}]
+    assert "#224466" in _hexes(_req("GET", MC, t).json())                           # and in My Colors
+    # batch with a group
+    r = _req("POST", "/api/devices/captures/batch", dev, {"captures": [
+        {"hex": "#224466", "group_id": gid}, {"hex": "#664422", "group_id": gid}]})
+    assert r.status_code == 200
+    g = [x for x in _req("GET", G, t).json()["groups"] if x["id"] == gid][0]
+    assert [c["hex"] for c in g["colors"]] == ["#224466", "#664422"]
+    # someone else's group: 404 and nothing saved
+    other = _new_user(); made.append(other)
+    theirs = _req("POST", G, other["token"], {"name": "Theirs"}).json()["id"]
+    before = _req("GET", "/api/devices/captures?limit=500", t).json()["total"]
+    r = _req("POST", "/api/devices/captures", dev, {"hex": "#010101", "group_id": theirs})
+    assert r.status_code == 404
+    assert _req("GET", "/api/devices/captures?limit=500", t).json()["total"] == before
+    assert "#010101" not in _hexes(_req("GET", MC, t).json())
+
+
+def test_parallel_adds_to_one_group(user):
+    t = user["token"]
+    gid = _req("POST", G, t, {"name": "Busy"}).json()["id"]
+    hexes = ["#%06X" % (0x102030 + i * 4099) for i in range(15)]
+    with ThreadPoolExecutor(max_workers=15) as ex:
+        codes = list(ex.map(lambda h: _req("POST", f"{G}/{gid}/colors", t, {"hex": h}).status_code, hexes))
+    assert codes == [200] * 15
+    g = [x for x in _req("GET", G, t).json()["groups"] if x["id"] == gid][0]
+    assert sorted(c["hex"] for c in g["colors"]) == sorted(hexes)

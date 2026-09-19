@@ -41,6 +41,8 @@
       logout(redirect = 'signin.html') {
          localStorage.removeItem(TOKEN_KEY);
          localStorage.removeItem(USER_KEY);
+         // the open composition (and other per-tab state) belongs to this user
+         try { sessionStorage.clear(); } catch (e) {}
          if (redirect) window.location.href = redirect;
       },
 

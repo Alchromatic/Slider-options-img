@@ -173,6 +173,38 @@
                   <h3 class="text-neutral-7 dark:text-neutral-1 text-3xl font-semibold -tracking-[0.96px] mb-2">Choose your plan</h3>
                   <p id="planStatus" class="text-neutral-4 text-[15px] font-semibold -tracking-[0.15px]">Pick the plan that fits how you create. <span class="text-theme-primary-2">Test mode</span> — use card 4242 4242 4242 4242.</p>
                </div>
+               <!-- promo code: free images -->
+               <style>
+                  /* own styles: output.css is a prebuilt Tailwind file without these utilities */
+                  .promo-box { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 24px; padding: 20px; margin-bottom: 32px; background: #fff; border: 2px solid #F4F4F4; border-radius: 16px; }
+                  .dark .promo-box { background: var(--color-neutral-7); border-color: var(--color-neutral-6); }
+                  .promo-text { flex: 1 1 200px; }
+                  .promo-text h6 { margin: 0 0 4px; color: var(--color-neutral-7); font-size: 15px; font-weight: 600; letter-spacing: -0.15px; }
+                  .dark .promo-text h6 { color: var(--color-neutral-1); }
+                  .promo-text h6 i { color: var(--color-theme-primary-2); margin-right: 8px; }
+                  .promo-text p { margin: 0; color: var(--color-neutral-4); font-size: 12px; font-weight: 600; letter-spacing: -0.12px; }
+                  .promo-form { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; max-width: 100%; }
+                  .promo-input { width: 16rem; max-width: 100%; padding: 12px 16px; border: 0; border-radius: 12px; background: #F4F4F4; color: var(--color-neutral-7); font-family: inherit; font-size: 15px; font-weight: 600; line-height: 1.4; letter-spacing: .06em; text-transform: uppercase; outline: none; }
+                  .promo-input::placeholder { color: #9A9FA5; letter-spacing: normal; text-transform: none; }
+                  .promo-input:focus { box-shadow: 0 0 0 2px var(--color-theme-primary); }
+                  .dark .promo-input { background: var(--color-neutral-6); color: var(--color-neutral-1); }
+                  .promo-msg { width: 100%; margin: 0; color: var(--color-neutral-4); font-size: 14px; font-weight: 600; letter-spacing: -0.14px; }
+                  .promo-msg.ok { color: var(--color-theme-primary-2); }
+                  .promo-msg.err { color: #FF6A55; }
+                  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+               </style>
+               <div id="promoBox" class="promo-box">
+                  <div class="promo-text">
+                     <h6><i class="fa-regular fa-ticket"></i>Have a code?</h6>
+                     <p>Enter it to add free images to your account.</p>
+                  </div>
+                  <form id="promoForm" class="promo-form" novalidate>
+                     <label for="promoCode" class="visually-hidden">Promo code</label>
+                     <input id="promoCode" class="promo-input" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="40" placeholder="GM-XXXXX-XXXXX">
+                     <button id="promoBtn" type="submit" class="theme-btn-primary">Redeem</button>
+                  </form>
+                  <p id="promoMsg" class="promo-msg" role="status" aria-live="polite" hidden></p>
+               </div>
                <div id="plansGrid" class="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
                   <p class="text-neutral-4">Loading plans…</p>
                </div>
@@ -273,10 +305,65 @@
       <script src="assets/js/entitlements.js"></script>
       <script>
          (function () {
+            // A shared link pricing.html?code=… keeps the code through sign-in / sign-up
+            // (both land back here), so it can be filled in for the user.
+            const linkCode = new URLSearchParams(location.search).get('code');
+            if (linkCode) { try { localStorage.setItem('gm_pending_code', linkCode); } catch (e) {} }
             if (window.Auth && !Auth.requireAuth('signin.html')) return;
 
             const grid = document.getElementById('plansGrid');
             const statusEl = document.getElementById('planStatus');
+
+            // ---- "Have a code?" -> free images ----
+            const promoForm = document.getElementById('promoForm');
+            const promoInput = document.getElementById('promoCode');
+            const promoBtn = document.getElementById('promoBtn');
+            const promoMsg = document.getElementById('promoMsg');
+            function promoSay(text, kind) {
+               promoMsg.hidden = !text;
+               promoMsg.textContent = text || '';
+               promoMsg.className = 'promo-msg' + (kind ? ' ' + kind : '');
+            }
+            let pending = null;
+            try { pending = localStorage.getItem('gm_pending_code'); localStorage.removeItem('gm_pending_code'); } catch (e) {}
+            if (pending) {
+               promoInput.value = pending;
+               promoSay('Press Redeem to add the free images to your account.');
+            }
+            if (linkCode) {
+               const qs = new URLSearchParams(location.search); qs.delete('code');
+               window.history.replaceState({}, '', location.pathname + (qs.toString() ? '?' + qs : ''));
+            }
+            promoForm.addEventListener('submit', async (e) => {
+               e.preventDefault();
+               const code = promoInput.value.trim();
+               if (!code) { promoSay('Enter your code first.', 'err'); promoInput.focus(); return; }
+               promoBtn.disabled = true;
+               promoBtn.textContent = 'Checking…';
+               const r = await Billing.redeemCode(code);
+               promoBtn.disabled = false;
+               promoBtn.textContent = 'Redeem';
+               if (r.ok) {
+                  const n = r.data.images;
+                  const ent = r.data.entitlements || {};
+                  const left = ent.unlimited_images ? '' : ` You now have ${ent.images_remaining} images left.`;
+                  promoSay(`Code accepted: ${n} free ${n === 1 ? 'image' : 'images'} added.${left}`, 'ok');
+                  promoInput.value = '';
+                  showStatus();
+               } else {
+                  promoSay(r.detail, 'err');
+                  promoInput.focus();
+               }
+            });
+
+            function showStatus() {
+               const me = Billing.ent;
+               if (!me || !statusEl) return;
+               const left = me.unlimited_images ? 'unlimited' : me.images_remaining;
+               statusEl.innerHTML = `You're on <strong>${me.plan_name}</strong> — ${left} images left this month` +
+                  (me.credits ? ` (+${me.credits} credits)` : '') +
+                  `. <span class="text-theme-primary-2">Test mode</span> — use card 4242 4242 4242 4242.`;
+            }
 
             // When Stripe redirects back here (?session_id=...&status=success) we must
             // ACTIVATE the plan before checking it — otherwise the plan still reads as
@@ -363,13 +450,7 @@
                await handleStripeReturn();
                let current = null;
                try { const me = await Billing.load(); if (me) current = me.plan_id; } catch (e) {}
-               if (current && statusEl) {
-                  const me = Billing.ent;
-                  const left = me.unlimited_images ? 'unlimited' : me.images_remaining;
-                  statusEl.innerHTML = `You're on <strong>${me.plan_name}</strong> — ${left} images left this month` +
-                     (me.credits ? ` (+${me.credits} credits)` : '') +
-                     `. <span class="text-theme-primary-2">Test mode</span> — use card 4242 4242 4242 4242.`;
-               }
+               if (current) showStatus();
                let plans = [];
                try { plans = await Billing.plans(); } catch (e) {
                   grid.innerHTML = '<p class="text-red-500">Could not load plans. Is the backend running?</p>';

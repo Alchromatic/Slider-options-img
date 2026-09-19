@@ -46,12 +46,15 @@
    // ---- server sync ----
    const MY = "My Colors";
    const MYC = "/api/palettes/my-colors";
-   let serverPalettes = [];               // named palettes [{id, name, colors:[{hex,name}]}]
+   let serverPalettes = [];               // groups [{id, name, colors:[{hex,name}]}], newest first
    const srv = new WeakMap();             // library entry -> {hex, name} as the server has it
    const unsent = new Set();              // entries added here that never reached the server (offline)
    const adding = new Set();              // entries whose add / import is on its way
    const dirty = new Set();               // entries edited here, PATCH pending
    let flushTimer = null, flushing = null;
+   // hexes deleted here while offline; kept per user and sent on the next load
+   function pendingDeletes() { const k = libKey(); try { return k ? JSON.parse(localStorage.getItem(k + ":del") || "[]") : []; } catch (_) { return []; } }
+   function savePendingDeletes(list) { const k = libKey(); if (!k) return; try { if (list.length) localStorage.setItem(k + ":del", JSON.stringify(list)); else localStorage.removeItem(k + ":del"); } catch (_) {} }
 
    function apiBase() {
       try {
@@ -92,12 +95,13 @@
          if (e) { srv.set(e, { hex: H, name: c.name || "" }); unsent.delete(e); }
       });
       if (dirty.size || flushing) return;
+      const gone = new Set(pendingDeletes());          // deleted offline, not yet on the server
       // Entries still being added (or waiting to be sent) keep their identity,
       // so their pending request still recognises them after the swap.
       const keep = new Map();
       adding.forEach((e) => keep.set(e.hex, e));
       unsent.forEach((e) => keep.set(e.hex, e));
-      lib = p.colors.filter((c) => c && c.hex).map((c) => {
+      lib = p.colors.filter((c) => c && c.hex && !gone.has(String(c.hex).toUpperCase())).map((c) => {
          const H = String(c.hex).toUpperCase();
          let e = keep.get(H);
          if (e) keep.delete(H);
@@ -138,6 +142,7 @@
       const r = await call("DELETE", colorPath(s.hex));
       if (r.ok) applyServer(r.data);
       else if (r.status === 404) serverLoad();
+      else if (r.status === 0) savePendingDeletes(pendingDeletes().concat([s.hex]));   // retried on the next load
    }
 
    function markDirty(e) {
@@ -196,20 +201,39 @@
       return reload ? "reload" : null;
    }
 
-   async function serverSave(name, colors) {
-      if (!authToken()) return null;
-      try {
-         const r = await fetch(apiBase() + "/api/palettes", {
-            method: "POST", headers: authHeaders(),
-            body: JSON.stringify({ name: name, colors: colors }),
-         });
-         return r.ok ? await r.json() : null;
-      } catch (_) { return null; }
+   // ---- groups: the user's other palettes, one dropdown entry each (/api/palettes/groups) ----
+   const GRP = "/api/palettes/groups";
+   function esc(v) { return String(v == null ? "" : v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+   async function groupCall(method, path, body) {
+      const r = await call(method, GRP + path, body);
+      if (!r.ok) alert(detail(r, r.status === 0 ? "No connection. Please try again." : "That didn't work, please try again."));
+      return r;
    }
-   function rememberServer(saved) {
-      if (!saved) return;
-      serverPalettes = serverPalettes.filter((p) => p.name !== saved.name);
-      serverPalettes.unshift(saved);
+   function rememberGroup(g) {            // insert or replace one group
+      if (!g || g.id == null) return;
+      const i = serverPalettes.findIndex((p) => p.id === g.id);
+      if (i >= 0) serverPalettes[i] = g; else serverPalettes.unshift(g);
+      groupsChanged();
+   }
+   function forgetGroup(id) {
+      serverPalettes = serverPalettes.filter((p) => p.id !== id);
+      groupsChanged();
+   }
+   function groupsChanged() {
+      if (modal && modal.classList.contains("open")) renderGroups();
+      const sel = document.getElementById("trycolorsPaletteSelect");
+      const keep = sel ? sel.value : null;           // rebuilding the options resets the choice
+      refreshSelector();
+      if (sel && keep && Array.from(sel.options).some((o) => o.value === keep)) sel.value = keep;
+      const g = sel && serverPalettes.find((p) => sel.value === "__srvpal__:" + p.id);
+      if (g && typeof window.applyUnmixerPalette === "function") {
+         window.applyUnmixerPalette((g.colors || []).map((c) => ({ hex: c.hex, name: c.name || null })), "__srvpal__");
+      }
+   }
+   async function loadGroups() {
+      if (!authToken()) { serverPalettes = []; return; }
+      const r = await call("GET", GRP);
+      if (r.ok && r.data && Array.isArray(r.data.groups)) serverPalettes = r.data.groups;
    }
    async function serverLoad() {
       if (!authToken() || !libKey()) {                  // nobody signed in: empty library
@@ -226,15 +250,25 @@
          const r = cols.length ? await call("POST", MYC + "/merge", { colors: cols }) : { ok: true };
          if (r.ok) { try { localStorage.removeItem(KEY); } catch (_) {} }
       }
+      // colors deleted here while offline
+      const dels = pendingDeletes();
+      if (dels.length) {
+         const left = [];
+         for (const hx of dels) {
+            const r = await call("DELETE", colorPath(hx));
+            if (!r.ok && r.status !== 404) left.push(hx);
+         }
+         savePendingDeletes(left);
+      }
       // colors added here while offline
       const pending = Array.from(unsent).filter((e) => lib.indexOf(e) >= 0);
       if (pending.length) {
          const r = await call("POST", MYC + "/merge", { colors: pending.map((e) => ({ hex: e.hex, name: e.name })) });
          if (r.ok) applyServer(r.data);
       }
-      const res = await Promise.all([call("GET", MYC), call("GET", "/api/palettes")]);
-      if (res[1].ok && res[1].data && Array.isArray(res[1].data.palettes)) serverPalettes = res[1].data.palettes;
+      const res = await Promise.all([call("GET", MYC), loadGroups()]);
       if (res[0].ok) applyServer(res[0].data);
+      if (modal && modal.classList.contains("open")) renderGroups();
       refreshSelector();
    }
 
@@ -282,17 +316,28 @@
       // server-saved palettes (DB) for the unmixer dropdown
       serverPalettes: () => serverPalettes.slice(),
       getServerPalette: (id) => serverPalettes.find((p) => String(p.id) === String(id)) || null,
+      groups: () => serverPalettes.slice(),
+      // Add one color to a group; resolves to true when saved.
+      async addToGroup(groupId, hex, name) {
+         const H = normHex(hex); if (!H) return false;
+         const r = await groupCall("POST", "/" + groupId + "/colors", { hex: H, name: name || H });
+         if (r.ok) rememberGroup(r.data);
+         return r.ok;
+      },
+      reloadGroups: async () => { await loadGroups(); groupsChanged(); },
       appendServerOptions(select) {
          if (!select) return;
+         const live = new Set();
          serverPalettes.forEach((p) => {
             if (p.name === MY) return;   // "My Colors" is already shown via the editable library
             const v = "__srvpal__:" + p.id;
-            if (Array.from(select.options).some((o) => o.value === v)) return;
-            const o = document.createElement("option");
-            o.value = v;
+            live.add(v);
+            let o = Array.from(select.options).find((x) => x.value === v);
+            if (!o) { o = document.createElement("option"); o.value = v; select.appendChild(o); }
             o.textContent = "★ " + p.name + " (" + ((p.colors || []).length) + " colors)";
-            select.appendChild(o);
          });
+         // groups deleted here or on another device
+         Array.from(select.options).forEach((o) => { if (o.value.indexOf("__srvpal__:") === 0 && !live.has(o.value)) o.remove(); });
       },
       reloadFromServer: () => serverLoad(),
    };
@@ -337,13 +382,32 @@
       .cl-saverow input { flex:1 1 auto; min-width:0; height:38px; border-radius:8px; border:1px solid #e0e0e0; background:#fff; color:#1a1a1a; padding:0 10px; font-size:14px; font-weight:600; }
       .dark .cl-saverow input, html[data-theme=dark] .cl-saverow input { background:#16181a; border-color:#33383f; color:#e9eef2; }
       .cl-empty { text-align:center; color:#8a8f94; font-size:13px; padding:18px 0; }
+      .cl-row .cl-pick { flex:0 0 auto; width:18px; height:18px; accent-color:#2a85ff; cursor:pointer; }
+      .cl-hint { font-size:12px; opacity:.7; margin:6px 0 0; }
+      .cl-groups-title { font-size:15px; font-weight:700; margin:18px 0 8px; }
+      .cl-groups { display:flex; flex-direction:column; gap:8px; }
+      .cl-group { padding:10px; border-radius:10px; background:#f4f4f4; }
+      .dark .cl-group { background:#202225; }
+      .cl-group-head { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+      .cl-group-head .cl-gname { flex:1 1 140px; min-width:0; height:34px; border-radius:8px; border:1px solid #e0e0e0; background:#fff; color:#1a1a1a; padding:0 10px; font-size:14px; font-weight:700; }
+      .dark .cl-group-head .cl-gname { background:#16181a; border-color:#33383f; color:#e9eef2; }
+      .cl-gcount { font-size:12px; opacity:.7; white-space:nowrap; }
+      .cl-btn-sm { height:34px; padding:0 12px; font-size:13px; }
+      .cl-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+      .cl-chip { display:inline-flex; align-items:center; gap:6px; padding:3px 4px 3px 3px; border-radius:999px; background:#fff; font-size:12px; font-weight:600; max-width:100%; }
+      .dark .cl-chip { background:#16181a; }
+      .cl-chip i { width:18px; height:18px; border-radius:50%; flex:0 0 18px; border:1px solid rgba(0,0,0,.15); }
+      .cl-chip span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:140px; }
+      .cl-chip button { border:0; background:none; color:inherit; opacity:.55; cursor:pointer; font-size:14px; line-height:1; padding:0 4px; }
+      .cl-chip button:hover { opacity:1; color:#c0392b; }
       #colorLibraryBtn { margin-left:8px; }
       `;
       document.head.appendChild(s);
    })();
 
    // ---- modal (built lazily) ----
-   let modal = null, listEl = null;
+   let modal = null, listEl = null, groupsEl = null;
+   const picked = new Set();              // hexes ticked in the list (for groups)
    function buildModal() {
       if (modal) return;
       modal = document.createElement("div");
@@ -352,7 +416,7 @@
       modal.innerHTML = `
          <div class="cl-modal-card">
             <h3 class="cl-title">Color Library</h3>
-            <div class="cl-info">Add colors with their RGB, give the palette a name, and click <strong>Save palette</strong> &mdash; it appears in the unmixer's palette dropdown and is saved to your account. Or use <strong>Save &amp; Use as My Colors</strong> for your quick everyday set.</div>
+            <div class="cl-info">Your colors are saved to your account. Tick some, name them and click <strong>Save as group</strong>: each group appears in the palette dropdown on its own, like a paint brand. Or use <strong>Save &amp; Use as My Colors</strong> for your whole set.</div>
             <div id="colorLibraryList" class="cl-list"></div>
             <div class="cl-addrow">
                <input type="color" id="clNewColor" value="#cc4444" title="Pick color">
@@ -361,9 +425,12 @@
                <button id="clAddBtn" type="button" class="cl-btn cl-btn-primary">Add</button>
             </div>
             <div class="cl-saverow">
-               <input type="text" id="clPaletteName" placeholder="Name this palette (e.g. Studio Set)" maxlength="80">
-               <button id="clSaveAsBtn" type="button" class="cl-btn cl-btn-primary">Save palette</button>
+               <input type="text" id="clPaletteName" placeholder="Name a group (e.g. Studio Set)" maxlength="80">
+               <button id="clSaveAsBtn" type="button" class="cl-btn cl-btn-primary">Save as group</button>
             </div>
+            <p class="cl-hint" id="clPickHint">Tick colors to put them in the group (none ticked = all colors).</p>
+            <div class="cl-groups-title">Groups</div>
+            <div id="clGroups" class="cl-groups"></div>
             <div class="cl-actions">
                <button id="clImportBtn" type="button" class="cl-btn">Import current palette</button>
                <span style="flex:1 1 auto;"></span>
@@ -373,6 +440,10 @@
          </div>`;
       document.body.appendChild(modal);
       listEl = modal.querySelector("#colorLibraryList");
+      groupsEl = modal.querySelector("#clGroups");
+      groupsEl.addEventListener("click", onGroupClick);
+      groupsEl.addEventListener("change", onGroupRename);
+      groupsEl.addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.dataset.role === "gname") e.target.blur(); });
 
       modal.addEventListener("click", (e) => { if (e.target === modal) close(); });
       modal.querySelector("#clCloseBtn").addEventListener("click", close);
@@ -397,6 +468,7 @@
       if (!lib.length) { listEl.innerHTML = `<div class="cl-empty">No colors yet. Add one below, or import the current palette.</div>`; return; }
       listEl.innerHTML = lib.map((c, i) => `
          <div class="cl-row" data-i="${i}">
+            <input type="checkbox" class="cl-pick" data-role="pick" title="Tick to put in a group" ${picked.has(c.hex) ? "checked" : ""}>
             <input type="color" value="${c.hex}" data-role="color" title="${rgbLabel(c.hex)}">
             <input type="text" class="cl-name" value="${(c.name || "").replace(/"/g, "&quot;")}" data-role="name" placeholder="Name">
             <input type="text" class="cl-hex" value="${c.hex}" data-role="hex" maxlength="7">
@@ -412,8 +484,82 @@
          // only a full #RRGGBB counts (a 3-digit prefix typed on the way is not a color change)
          hex.addEventListener("input", () => { const v = hex.value.trim(); const h = /^#?[0-9a-f]{6}$/i.test(v) ? normHex(v) : null; if (h) { color.value = h; ColorLibrary.update(i, name.value, h); } });
          name.addEventListener("input", () => ColorLibrary.update(i, name.value, hex.value));
-         row.querySelector('[data-role=del]').addEventListener("click", () => { ColorLibrary.remove(i); renderList(); changed(); });
+         row.querySelector('[data-role=del]').addEventListener("click", () => { picked.delete(lib[i] && lib[i].hex); ColorLibrary.remove(i); renderList(); changed(); });
+         row.querySelector('[data-role=pick]').addEventListener("change", (e) => {
+            const c = lib[i]; if (!c) return;
+            if (e.target.checked) picked.add(c.hex); else picked.delete(c.hex);
+            updatePickHint();
+         });
       });
+      updatePickHint();
+   }
+
+   // ---- groups in the editor ----
+   function pickedColors() {
+      return lib.filter((c) => picked.has(c.hex)).map((c) => ({ hex: c.hex, name: c.name || c.hex }));
+   }
+   function updatePickHint() {
+      const el = modal && modal.querySelector("#clPickHint");
+      if (!el) return;
+      const n = pickedColors().length;
+      el.textContent = n ? `${n} color${n === 1 ? "" : "s"} ticked: Save as group, or add them to a group below.`
+         : "Tick colors to put them in the group (none ticked = all colors).";
+   }
+   function renderGroups() {
+      if (!groupsEl) return;
+      if (!authToken()) { groupsEl.innerHTML = `<div class="cl-empty">Sign in to make groups.</div>`; return; }
+      if (!serverPalettes.length) { groupsEl.innerHTML = `<div class="cl-empty">No groups yet.</div>`; return; }
+      groupsEl.innerHTML = serverPalettes.map((g) => `
+         <div class="cl-group" data-gid="${esc(g.id)}">
+            <div class="cl-group-head">
+               <input type="text" class="cl-gname" data-role="gname" value="${esc(g.name)}" maxlength="80" title="Rename the group">
+               <span class="cl-gcount">${(g.colors || []).length} colors</span>
+               <button type="button" class="cl-btn cl-btn-sm" data-role="gadd" title="Add the ticked colors to this group">+ Add ticked</button>
+               <button type="button" class="cl-del" data-role="gdel" title="Delete the group (its colors stay in your library)">✕</button>
+            </div>
+            <div class="cl-chips">${(g.colors || []).map((c) => `
+               <span class="cl-chip" title="${esc(c.name)} ${esc(c.hex)}"><i style="background:${esc(c.hex)}"></i><span>${esc(c.name || c.hex)}</span><button type="button" data-role="gremove" data-hex="${esc(c.hex)}" title="Remove from this group">×</button></span>`).join("") || '<span class="cl-gcount">Empty: tick colors above, then + Add ticked.</span>'}
+            </div>
+         </div>`).join("");
+   }
+   async function onGroupClick(e) {
+      const btn = e.target.closest("button[data-role]");
+      const box = btn && btn.closest("[data-gid]");
+      if (!box) return;
+      const id = parseInt(box.dataset.gid, 10);
+      const g = serverPalettes.find((p) => p.id === id);
+      if (!g) return;
+      const role = btn.dataset.role;
+      if (role === "gdel") {
+         if (!confirm(`Delete the group "${g.name}"? Its colors stay in your library.`)) return;
+         const r = await groupCall("DELETE", "/" + id);
+         if (r.ok || r.status === 404) forgetGroup(id);
+      } else if (role === "gremove") {
+         const r = await groupCall("DELETE", "/" + id + "/colors/" + btn.dataset.hex.replace("#", ""));
+         if (r.ok) rememberGroup(r.data);
+      } else if (role === "gadd") {
+         const have = new Set((g.colors || []).map((c) => String(c.hex).toUpperCase()));
+         const todo = pickedColors().filter((c) => !have.has(c.hex));
+         if (!pickedColors().length) { alert("Tick the colors to add first."); return; }
+         if (!todo.length) { alert("Those colors are already in this group."); return; }
+         btn.disabled = true;
+         for (const c of todo) {                      // one call per color
+            const r = await groupCall("POST", "/" + id + "/colors", c);
+            if (!r.ok) break;
+            rememberGroup(r.data);
+         }
+         picked.clear(); renderList();
+      }
+   }
+   async function onGroupRename(e) {
+      if (e.target.dataset.role !== "gname") return;
+      const box = e.target.closest("[data-gid]");
+      const id = parseInt(box.dataset.gid, 10);
+      const g = serverPalettes.find((p) => p.id === id);
+      const name = e.target.value.trim();
+      if (!g || !name || name === g.name) { if (g) e.target.value = g.name; return; }
+      const r = await groupCall("PATCH", "/" + id, { name: name });
+      if (r.ok) rememberGroup(r.data); else e.target.value = g.name;
    }
 
    function addFromInputs() {
@@ -482,27 +628,25 @@
    }
 
    async function saveAsNew() {
-      if (!authToken()) { alert("Sign in to save palettes to your account."); return; }
+      if (!authToken()) { alert("Sign in to save groups to your account."); return; }
       if (!lib.length) { alert("Add some colors first."); return; }
       const input = modal && modal.querySelector("#clPaletteName");
       const name = (input ? input.value : "").trim();
-      if (!name) { alert("Type a name for the palette first."); if (input) input.focus(); return; }
-      if (name === MY) { alert('"My Colors" is this library itself. Pick another name for the palette.'); if (input) input.focus(); return; }
-      const saved = await serverSave(name, lib);
-      if (!saved) { alert("Could not save the palette. Please try again."); return; }
-      rememberServer(saved);
-      refreshSelector();
-      // Select + load the saved palette in the unmixer so it's usable right away.
-      const sel = document.getElementById("trycolorsPaletteSelect");
-      if (sel) {
-         sel.value = "__srvpal__:" + saved.id;
-         if (typeof window.applyUnmixerPalette === "function") {
-            window.applyUnmixerPalette((saved.colors || []).map((c) => ({ hex: c.hex, name: c.name || null })), "__srvpal__");
-         }
-      }
+      if (!name) { alert("Type a name for the group first."); if (input) input.focus(); return; }
+      if (name.toLowerCase() === MY.toLowerCase()) { alert('"My Colors" is this library itself. Pick another name for the group.'); if (input) input.focus(); return; }
+      const colors = pickedColors().length ? pickedColors() : lib.map((c) => ({ hex: c.hex, name: c.name || c.hex }));
+      const r = await groupCall("POST", "", { name: name, colors: colors });
+      if (!r.ok) { if (input) input.focus(); return; }
       if (input) input.value = "";
-      alert('Saved "' + name + '". It now appears in the palette dropdown.');
-      close();
+      picked.clear();
+      // select + load the new group in the unmixer so it's usable right away
+      const sel = document.getElementById("trycolorsPaletteSelect");
+      serverPalettes = serverPalettes.filter((p) => p.id !== r.data.id);
+      serverPalettes.unshift(r.data);
+      refreshSelector();
+      if (sel) sel.value = "__srvpal__:" + r.data.id;
+      groupsChanged();
+      renderList();
    }
 
    function saveAndUse() {
@@ -519,7 +663,7 @@
       close();
    }
 
-   function open() { buildModal(); renderList(); modal.classList.add("open"); modal.style.display = "flex"; }
+   function open() { buildModal(); renderList(); renderGroups(); modal.classList.add("open"); modal.style.display = "flex"; }
    function close() { if (modal) { modal.classList.remove("open"); modal.style.display = "none"; } }
 
    // ---- wire the "Edit Library" trigger button (added in templates.html) ----
