@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <meta name="robots" content="noindex, nofollow">
+   <title>GeoMagic Coupon Codes</title>
+   <style>
+      :root {
+         --bg: #f4f5f7; --card: #ffffff; --text: #1a1d1f; --muted: #6f767e; --line: #e4e6ea;
+         --field: #f4f5f7; --accent: #2a85ff; --accent-text: #ffffff; --ok: #3f9d52; --err: #d9423a;
+      }
+      @media (prefers-color-scheme: dark) {
+         :root { --bg: #111315; --card: #1a1d1f; --text: #eef0f2; --muted: #9aa0a6; --line: #2c3035; --field: #232629; --ok: #83bf6e; --err: #ff6a55; }
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Inter, Roboto, sans-serif; }
+      main { max-width: 760px; margin: 0 auto; padding: 32px 16px 48px; }
+      h1 { font-size: 24px; margin: 0 0 4px; letter-spacing: -0.4px; }
+      .lead { color: var(--muted); margin: 0 0 24px; }
+      .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; margin-bottom: 16px; }
+      .card h2 { font-size: 16px; margin: 0 0 14px; }
+      .grid { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .grid .full { grid-column: 1 / -1; }
+      @media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
+      label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+      .hint { display: block; font-size: 12px; color: var(--muted); margin-top: 4px; font-weight: 400; }
+      input { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--field); color: var(--text); font: inherit; }
+      input:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
+      .code-font { font-family: ui-monospace, "SFMono-Regular", Consolas, monospace; letter-spacing: .04em; text-transform: uppercase; }
+      .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+      .check { display: flex; gap: 8px; align-items: center; font-size: 13px; font-weight: 400; margin: 10px 0 0; }
+      .check input { width: auto; }
+      button { border: 0; border-radius: 10px; padding: 10px 16px; font: inherit; font-weight: 600; cursor: pointer; background: var(--field); color: var(--text); }
+      button.primary { background: var(--accent); color: var(--accent-text); }
+      button:disabled { opacity: .55; cursor: default; }
+      .msg { font-size: 14px; margin: 12px 0 0; min-height: 1.5em; }
+      .msg.ok { color: var(--ok); }
+      .msg.err { color: var(--err); }
+      table { width: 100%; border-collapse: collapse; font-size: 14px; }
+      th, td { text-align: left; padding: 8px 6px; border-top: 1px solid var(--line); vertical-align: middle; }
+      th { font-size: 12px; color: var(--muted); font-weight: 600; border-top: 0; }
+      td button { padding: 5px 10px; font-size: 13px; }
+      .table-wrap { overflow-x: auto; }
+      details summary { cursor: pointer; color: var(--muted); font-size: 14px; margin-top: 4px; }
+      [hidden] { display: none !important; }
+   </style>
+</head>
+
+<body>
+   <main>
+      <h1>Coupon codes</h1>
+      <p class="lead">Create codes that give free images in GeoMagic. A signed-in user enters the code under "Have a code?" on the Pricing page, and the images are added to their account.</p>
+
+      <section class="card" aria-labelledby="connTitle">
+         <h2 id="connTitle">1. Connect</h2>
+         <div class="grid">
+            <div class="full">
+               <label for="apiBase">GeoMagic address</label>
+               <input id="apiBase" type="url" value="https://alchromaticdemo.up.railway.app" autocomplete="off">
+            </div>
+            <div class="full">
+               <label for="adminToken">Admin token <span class="hint">The ADMIN_TOKEN set on the server. Not a user password.</span></label>
+               <input id="adminToken" type="password" autocomplete="off" placeholder="Paste the admin token">
+            </div>
+         </div>
+         <label class="check"><input id="remember" type="checkbox"> Remember on this computer</label>
+         <div class="row" style="margin-top:14px">
+            <button id="connectBtn" class="primary" type="button">Connect</button>
+         </div>
+         <p id="connMsg" class="msg" role="status" aria-live="polite"></p>
+      </section>
+
+      <section class="card" aria-labelledby="genTitle">
+         <h2 id="genTitle">2. Create codes</h2>
+         <form id="genForm" novalidate>
+            <div class="grid">
+               <div>
+                  <label for="count">Number of codes</label>
+                  <input id="count" type="number" min="1" max="1000" value="10" inputmode="numeric">
+               </div>
+               <div>
+                  <label for="images">Free images per code</label>
+                  <input id="images" type="number" min="1" max="100000" value="20" inputmode="numeric">
+               </div>
+               <div>
+                  <label for="uses">Uses per code <span class="hint">1 = one person. A person can use a code once.</span></label>
+                  <input id="uses" type="number" min="1" max="1000000" value="1" inputmode="numeric">
+               </div>
+               <div>
+                  <label for="expires">Expires <span class="hint">Leave empty for no expiry.</span></label>
+                  <input id="expires" type="date">
+               </div>
+               <div class="full">
+                  <label for="label">Label <span class="hint">To find this set later, e.g. "Testers September".</span></label>
+                  <input id="label" type="text" maxlength="80">
+               </div>
+            </div>
+            <details>
+               <summary>More options</summary>
+               <div class="grid" style="margin-top:12px">
+                  <div>
+                     <label for="prefix">Prefix</label>
+                     <input id="prefix" class="code-font" type="text" maxlength="6" value="GM">
+                  </div>
+                  <div>
+                     <label for="custom">Your own code <span class="hint">Makes one code with this text.</span></label>
+                     <input id="custom" class="code-font" type="text" maxlength="40" placeholder="LAUNCH50">
+                  </div>
+                  <div class="full">
+                     <label for="note">Note</label>
+                     <input id="note" type="text" maxlength="300">
+                  </div>
+               </div>
+            </details>
+            <div class="row" style="margin-top:16px">
+               <button id="genBtn" class="primary" type="submit" disabled>Create codes</button>
+            </div>
+            <p id="genMsg" class="msg" role="status" aria-live="polite"></p>
+         </form>
+      </section>
+
+      <section id="resultCard" class="card" aria-labelledby="resTitle" hidden>
+         <div class="row" style="justify-content:space-between; margin-bottom:10px">
+            <h2 id="resTitle" style="margin:0"></h2>
+            <div class="row">
+               <button id="copyAll" type="button">Copy all</button>
+               <button id="csvBtn" type="button">Download CSV</button>
+            </div>
+         </div>
+         <div class="table-wrap">
+            <table>
+               <thead><tr><th>Code</th><th>Images</th><th>Uses</th><th>Link for the user</th><th></th></tr></thead>
+               <tbody id="codeRows"></tbody>
+            </table>
+         </div>
+      </section>
+
+      <section class="card" aria-labelledby="batchTitle">
+         <div class="row" style="justify-content:space-between; margin-bottom:10px">
+            <h2 id="batchTitle" style="margin:0">3. Codes created so far</h2>
+            <button id="refreshBtn" type="button" disabled>Refresh</button>
+         </div>
+         <div class="table-wrap">
+            <table>
+               <thead><tr><th>Label</th><th>Codes</th><th>Images each</th><th>Used</th><th>Expires</th></tr></thead>
+               <tbody id="batchRows"><tr><td colspan="5" style="color:var(--muted)">Connect to see them.</td></tr></tbody>
+            </table>
+         </div>
+      </section>
+   </main>
+
+   <script>
+      (function () {
+         var KEY_API = 'gm_coupon_api', KEY_TOKEN = 'gm_coupon_token';
+         var $ = function (id) { return document.getElementById(id); };
+         var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+         var fmtDate = function (iso) { return iso ? new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : 'Never'; };
+         var connected = false, last = null;
+
+         function store(k, v) { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch (e) {} }
+         function read(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+         var savedApi = read(KEY_API), savedToken = read(KEY_TOKEN);
+         if (savedApi) $('apiBase').value = savedApi;
+         if (savedToken) { $('adminToken').value = savedToken; $('remember').checked = true; }
+
+         function base() { return $('apiBase').value.trim().replace(/\/+$/, ''); }
+         function say(el, text, kind) { el.textContent = text || ''; el.className = 'msg' + (kind ? ' ' + kind : ''); }
+
+         async function api(path, opts) {
+            opts = opts || {};
+            var res;
+            try {
+               res = await fetch(base() + path, {
+                  method: opts.method || 'GET',
+                  headers: { 'Content-Type': 'application/json', 'X-Admin-Token': $('adminToken').value.trim() },
+                  body: opts.body ? JSON.stringify(opts.body) : undefined,
+               });
+            } catch (e) { throw new Error('Could not reach ' + base() + '. Check the address and your connection.'); }
+            var data = await res.json().catch(function () { return {}; });
+            if (!res.ok) {
+               var d = data && data.detail;
+               if (Array.isArray(d)) d = d.map(function (x) { return x.msg; }).join('; ');
+               if (res.status === 401) d = 'The admin token is not correct.';
+               if (res.status === 503 && /ADMIN_TOKEN/.test(d || '')) d = 'Coupon admin is switched off on the server: ADMIN_TOKEN is not set there.';
+               throw new Error(d || ('The server answered ' + res.status + '.'));
+            }
+            return data;
+         }
+
+         async function connect() {
+            var msg = $('connMsg');
+            if (!base()) { say(msg, 'Enter the GeoMagic address.', 'err'); return; }
+            if (!$('adminToken').value.trim()) { say(msg, 'Paste the admin token.', 'err'); return; }
+            $('connectBtn').disabled = true; say(msg, 'Connecting…');
+            try {
+               await api('/api/admin/verify');
+               connected = true;
+               store(KEY_API, base());
+               store(KEY_TOKEN, $('remember').checked ? $('adminToken').value.trim() : '');
+               say(msg, 'Connected.', 'ok');
+               $('genBtn').disabled = false; $('refreshBtn').disabled = false;
+               loadBatches();
+            } catch (e) {
+               connected = false;
+               $('genBtn').disabled = true; $('refreshBtn').disabled = true;
+               say(msg, e.message, 'err');
+            } finally { $('connectBtn').disabled = false; }
+         }
+         $('connectBtn').addEventListener('click', connect);
+         $('remember').addEventListener('change', function () { if (!this.checked) store(KEY_TOKEN, ''); });
+
+         function num(id) { return parseInt($(id).value, 10); }
+
+         $('genForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            var msg = $('genMsg');
+            if (!connected) { say(msg, 'Connect first.', 'err'); return; }
+            var custom = $('custom').value.trim();
+            var body = {
+               count: custom ? 1 : num('count'),
+               images: num('images'),
+               max_redemptions: num('uses'),
+               batch: $('label').value.trim() || null,
+               note: $('note').value.trim() || null,
+               prefix: $('prefix').value.trim(),
+            };
+            if (custom) body.code = custom;
+            if ($('expires').value) body.expires_at = new Date($('expires').value + 'T23:59:59').toISOString();
+            if (!(body.count >= 1 && body.count <= 1000)) { say(msg, 'Number of codes must be between 1 and 1000.', 'err'); return; }
+            if (!(body.images >= 1)) { say(msg, 'Free images per code must be at least 1.', 'err'); return; }
+            if (!(body.max_redemptions >= 1)) { say(msg, 'Uses per code must be at least 1.', 'err'); return; }
+            $('genBtn').disabled = true; say(msg, 'Creating…');
+            try {
+               var r = await api('/api/admin/promo-codes', { method: 'POST', body: body });
+               last = r;
+               showResult(r);
+               say(msg, 'Created ' + r.codes.length + (r.codes.length === 1 ? ' code' : ' codes') + ' with the label "' + r.batch + '".', 'ok');
+               $('custom').value = '';
+               loadBatches();
+            } catch (err) { say(msg, err.message, 'err'); }
+            finally { $('genBtn').disabled = false; }
+         });
+
+         function link(code) { return base() + '/pricing.html?code=' + encodeURIComponent(code); }
+
+         function showResult(r) {
+            $('resTitle').textContent = r.codes.length + (r.codes.length === 1 ? ' code' : ' codes') + ', ' + r.images + ' free images each';
+            $('codeRows').innerHTML = r.codes.map(function (c) {
+               return '<tr><td class="code-font">' + esc(c) + '</td><td>' + r.images + '</td><td>' + r.max_redemptions + '</td>'
+                  + '<td style="word-break:break-all;font-size:12px">' + esc(link(c)) + '</td>'
+                  + '<td><button type="button" data-copy="' + esc(c) + '">Copy</button></td></tr>';
+            }).join('');
+            $('resultCard').hidden = false;
+         }
+
+         async function copyText(text, btn) {
+            try { await navigator.clipboard.writeText(text); }
+            catch (e) {
+               var t = document.createElement('textarea'); t.value = text; document.body.appendChild(t); t.select();
+               try { document.execCommand('copy'); } catch (e2) {} t.remove();
+            }
+            if (btn) { var old = btn.textContent; btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = old; }, 1200); }
+         }
+         $('codeRows').addEventListener('click', function (e) {
+            var b = e.target.closest('[data-copy]'); if (b) copyText(b.getAttribute('data-copy'), b);
+         });
+         $('copyAll').addEventListener('click', function () { if (last) copyText(last.codes.join('\n'), this); });
+         $('csvBtn').addEventListener('click', function () {
+            if (!last) return;
+            var q = function (v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; };
+            var rows = [['code', 'free images', 'uses', 'label', 'expires', 'link']].concat(last.codes.map(function (c) {
+               return [c, last.images, last.max_redemptions, last.batch, last.expires_at || '', link(c)];
+            }));
+            var blob = new Blob([rows.map(function (r) { return r.map(q).join(','); }).join('\r\n')], { type: 'text/csv' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'coupon-codes-' + String(last.batch).replace(/[^\w-]+/g, '_') + '.csv';
+            document.body.appendChild(a); a.click(); a.remove();
+         });
+
+         async function loadBatches() {
+            try {
+               var r = await api('/api/admin/promo-codes/batches');
+               $('batchRows').innerHTML = r.batches.length ? r.batches.map(function (b) {
+                  return '<tr><td>' + esc(b.batch) + '</td><td>' + b.codes + '</td><td>' + esc(b.images) + '</td><td>' + b.redemptions + ' of ' + b.capacity + '</td><td>' + fmtDate(b.expires_at) + '</td></tr>';
+               }).join('') : '<tr><td colspan="5" style="color:var(--muted)">No codes yet.</td></tr>';
+            } catch (e) {
+               $('batchRows').innerHTML = '<tr><td colspan="5" style="color:var(--err)">' + esc(e.message) + '</td></tr>';
+            }
+         }
+         $('refreshBtn').addEventListener('click', loadBatches);
+
+         if (savedToken) connect();
+      })();
+   </script>
+</body>
+
+</html>
