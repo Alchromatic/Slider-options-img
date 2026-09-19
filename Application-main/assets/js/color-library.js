@@ -1,7 +1,12 @@
 /* ============================================================
    Color Library — store & edit named colors (name + RGB) that
    feed the Trycolors unmixer.
-   - Persisted in localStorage (per device), survives reloads.
+   - "My Colors" lives on the server (/api/palettes/my-colors) and is
+     changed one color at a time, so edits here, in the apps and colors
+     captured on devices don't overwrite each other. The server list is
+     the truth, even when it is empty.
+   - A per-user copy in localStorage ("geomagic:colorLibrary:<user id>")
+     shows the list instantly; nobody signed in = empty library.
    - Surfaces as "★ My Colors" in the unmixer palette dropdown
      (see palette-mixing.js hooks: ColorLibrary / applyUnmixerPalette).
    - Edited via a modal opened from the "Edit Library" button.
@@ -9,23 +14,45 @@
 (function () {
    "use strict";
 
-   const KEY = "geomagic:colorLibrary";
+   const KEY = "geomagic:colorLibrary";   // + ":" + user id; the bare key is the old shared list
 
-   function load() {
+   function authToken() { try { return localStorage.getItem("gm_access_token"); } catch (_) { return null; } }
+   // the signed-in user's id, from the token (same id the server keys palettes by)
+   function userId() {
+      const t = authToken();
+      if (!t) return null;
       try {
-         const a = JSON.parse(localStorage.getItem(KEY) || "[]");
-         return Array.isArray(a) ? a.filter((x) => x && x.hex) : [];
+         const p = JSON.parse(atob(t.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+         if (p && p.sub) return String(p.sub);
+      } catch (_) {}
+      try { const u = JSON.parse(localStorage.getItem("gm_user") || "null"); return u && u.id ? String(u.id) : null; } catch (_) { return null; }
+   }
+   function libKey() { const u = userId(); return u ? KEY + ":" + u : null; }
+   function load() {
+      const k = libKey();
+      if (!k) return [];
+      try {
+         const a = JSON.parse(localStorage.getItem(k) || "[]");
+         return Array.isArray(a) ? a.filter((x) => x && x.hex).map((x) => ({ name: x.name || "", hex: String(x.hex).toUpperCase() })) : [];
       } catch (_) { return []; }
    }
    let lib = load();
-   function persist() { try { localStorage.setItem(KEY, JSON.stringify(lib)); } catch (_) {} }
+   function persist() {
+      const k = libKey();
+      if (!k) return;
+      try { localStorage.setItem(k, JSON.stringify(lib.map((c) => ({ name: c.name, hex: c.hex })))); } catch (_) {}
+   }
 
-   // ---- server sync: per-user palettes saved in the DB (/api/palettes) ----
-   // Lets a signed-in user's colors follow them across devices instead of
-   // living only in this browser's localStorage. Best-effort: if logged out or
-   // offline, everything still works locally.
+   // ---- server sync ----
    const MY = "My Colors";
-   let serverPalettes = [];               // [{id, name, colors:[{hex,name}]}]
+   const MYC = "/api/palettes/my-colors";
+   let serverPalettes = [];               // named palettes [{id, name, colors:[{hex,name}]}]
+   const srv = new WeakMap();             // library entry -> {hex, name} as the server has it
+   const unsent = new Set();              // entries added here that never reached the server (offline)
+   const adding = new Set();              // entries whose add / import is on its way
+   const dirty = new Set();               // entries edited here, PATCH pending
+   let flushTimer = null, flushing = null;
+
    function apiBase() {
       try {
          const q = (new URLSearchParams(location.search).get("api") || "").replace(/\/$/, "");
@@ -33,13 +60,142 @@
       } catch (_) {}
       return (location.protocol.indexOf("http") === 0) ? location.origin : "";
    }
-   function authToken() { try { return localStorage.getItem("gm_access_token"); } catch (_) { return null; } }
    function authHeaders() {
       const h = { "Content-Type": "application/json" };
       const t = authToken();
       if (t) h["Authorization"] = "Bearer " + t;
       return h;
    }
+   // -> {ok, status, data}; status 0 = network error
+   async function call(method, path, body) {
+      try {
+         // keepalive: a rename flushed as the tab closes still reaches the server
+         const r = await fetch(apiBase() + path, { method: method, headers: authHeaders(), body: body ? JSON.stringify(body) : undefined, keepalive: method !== "GET" });
+         let data = null;
+         try { data = await r.json(); } catch (_) {}
+         return { ok: r.ok, status: r.status, data: data };
+      } catch (_) { return { ok: false, status: 0, data: null }; }
+   }
+   function colorPath(hex) { return MYC + "/colors/" + String(hex).replace("#", ""); }
+   function detail(r, fallback) { return (r && r.data && typeof r.data.detail === "string") ? r.data.detail : fallback; }
+
+   // Replace the library with the server's list (the truth, even when empty).
+   // Skipped while edits typed here are still on their way, so they aren't lost;
+   // the next load catches up.
+   function applyServer(p) {
+      if (!p || !Array.isArray(p.colors)) return;
+      // entries added here (import, offline) that the server now has: track them
+      // even if the swap below is skipped, so later edits / deletes reach it
+      p.colors.forEach((c) => {
+         const H = String(c.hex).toUpperCase();
+         const e = lib.find((x) => x.hex === H && !srv.has(x));
+         if (e) { srv.set(e, { hex: H, name: c.name || "" }); unsent.delete(e); }
+      });
+      if (dirty.size || flushing) return;
+      // Entries still being added (or waiting to be sent) keep their identity,
+      // so their pending request still recognises them after the swap.
+      const keep = new Map();
+      adding.forEach((e) => keep.set(e.hex, e));
+      unsent.forEach((e) => keep.set(e.hex, e));
+      lib = p.colors.filter((c) => c && c.hex).map((c) => {
+         const H = String(c.hex).toUpperCase();
+         let e = keep.get(H);
+         if (e) keep.delete(H);
+         else { e = { name: c.name || "", hex: H }; srv.set(e, { hex: H, name: e.name }); }
+         return e;
+      });
+      keep.forEach((e) => lib.push(e));                                  // not on the server yet
+      persist();
+      changed();
+   }
+
+   async function sendAdd(e) {
+      if (!authToken()) return;
+      const sent = { hex: e.hex, name: e.name };
+      adding.add(e);
+      const r = await call("POST", MYC + "/colors", sent);
+      adding.delete(e);
+      if (r.ok) {
+         unsent.delete(e);
+         const onServer = (r.data.colors || []).find((c) => String(c.hex).toUpperCase() === sent.hex);
+         srv.set(e, { hex: sent.hex, name: onServer ? onServer.name : sent.name });
+         if (lib.indexOf(e) < 0) { sendDelete(e); return; }            // removed while the add was on its way
+         if (e.hex !== sent.hex || e.name !== sent.name) { markDirty(e); return; }
+         applyServer(r.data);
+      } else if (r.status === 0) {
+         unsent.add(e);                                                   // retried on the next load
+      } else if (r.status === 409 || r.status === 400) {
+         const i = lib.indexOf(e);
+         if (i >= 0) { lib.splice(i, 1); persist(); changed(); }
+         alert(detail(r, "Could not add that color."));
+      }
+   }
+
+   async function sendDelete(e) {
+      if (flushing) await flushing;                                       // let a pending hex change land first
+      const s = srv.get(e);
+      if (!s || !authToken()) return;
+      const r = await call("DELETE", colorPath(s.hex));
+      if (r.ok) applyServer(r.data);
+      else if (r.status === 404) serverLoad();
+   }
+
+   function markDirty(e) {
+      dirty.add(e);
+      clearTimeout(flushTimer);
+      flushTimer = setTimeout(flushEdits, 600);   // typing / dragging the picker -> one PATCH
+   }
+   // Send pending renames / hex changes, one PATCH per color (from the hex the server knows).
+   function flushEdits() {
+      clearTimeout(flushTimer); flushTimer = null;
+      if (flushing) return flushing.then(() => (dirty.size ? flushEdits() : null));
+      if (!dirty.size) return Promise.resolve();
+      // `flushing` is cleared in .then (always after this assignment), never
+      // inside sendEdits: a run that finishes without awaiting would otherwise
+      // leave it set for good and block every later applyServer().
+      flushing = sendEdits().then((next) => {
+         flushing = null;
+         if (next === "retry") { clearTimeout(flushTimer); flushTimer = setTimeout(flushEdits, 5000); }
+         else if (next === "reload") return serverLoad();
+      });
+      return flushing;
+   }
+   async function sendEdits() {
+      let reload = false;
+      while (dirty.size) {
+         const e = dirty.values().next().value;
+         dirty.delete(e);
+         const s = srv.get(e);
+         if (!s || lib.indexOf(e) < 0 || !authToken()) continue;          // not on the server yet / removed
+         const body = {};
+         if (e.hex !== s.hex) body.hex = e.hex;
+         if (e.name !== s.name) body.name = e.name;
+         if (!Object.keys(body).length) continue;
+         const sent = { hex: e.hex, name: e.name };
+         const r = await call("PATCH", colorPath(s.hex), body);
+         if (r.ok) {
+            const c = (r.data.colors || []).find((x) => String(x.hex).toUpperCase() === sent.hex);
+            if (c) {
+               srv.set(e, { hex: sent.hex, name: c.name });
+               if (e.hex === sent.hex && e.name === sent.name) e.name = c.name;   // e.g. blank name -> the hex
+               else dirty.add(e);                                               // changed again meanwhile
+            }
+            persist();
+         } else if (r.status === 409) {
+            alert(detail(r, "That color is already in your library."));
+            reload = true;
+         } else if (r.status === 404) {
+            reload = true;                                                  // removed on another device
+         } else if (r.status === 0) {
+            dirty.add(e);
+            return "retry";
+         } else {
+            return null;
+         }
+      }
+      return reload ? "reload" : null;
+   }
+
    async function serverSave(name, colors) {
       if (!authToken()) return null;
       try {
@@ -55,27 +211,31 @@
       serverPalettes = serverPalettes.filter((p) => p.name !== saved.name);
       serverPalettes.unshift(saved);
    }
-   function syncMyColors() { serverSave(MY, lib).then(rememberServer); }
    async function serverLoad() {
-      if (!authToken()) return;
-      try {
-         const r = await fetch(apiBase() + "/api/palettes", { headers: authHeaders() });
-         if (!r.ok) return;
-         const data = await r.json();
-         serverPalettes = Array.isArray(data.palettes) ? data.palettes : [];
-         const mine = serverPalettes.find((p) => p.name === MY);
-         if (mine && Array.isArray(mine.colors) && mine.colors.length) {
-            lib = mine.colors.filter((c) => c && c.hex).map((c) => ({ name: c.name || "", hex: c.hex }));
-            persist();
-         } else if (lib.length) {
-            rememberServer(await serverSave(MY, lib));   // first-time migration up
-         }
-      } catch (_) {}
-      refreshSelector();
-      const sel = document.getElementById("trycolorsPaletteSelect");
-      if (sel && sel.value === "__mycolors__" && typeof window.applyUnmixerPalette === "function") {
-         window.applyUnmixerPalette(ColorLibrary.asPalette(), "__mycolors__");
+      if (!authToken() || !libKey()) {                  // nobody signed in: empty library
+         if (lib.length) { lib = []; changed(); }
+         return;
       }
+      // One time: move the old list that was shared by everyone on this browser
+      // into the account (merge only adds), then drop it.
+      let legacy = null, hadLegacy = false;
+      try { const raw = localStorage.getItem(KEY); hadLegacy = raw != null; legacy = JSON.parse(raw || "null"); } catch (_) {}
+      if (hadLegacy) {
+         const cols = (Array.isArray(legacy) ? legacy : [])
+            .filter((c) => c && normHex(c.hex)).map((c) => ({ hex: normHex(c.hex), name: (c.name || "").trim() }));
+         const r = cols.length ? await call("POST", MYC + "/merge", { colors: cols }) : { ok: true };
+         if (r.ok) { try { localStorage.removeItem(KEY); } catch (_) {} }
+      }
+      // colors added here while offline
+      const pending = Array.from(unsent).filter((e) => lib.indexOf(e) >= 0);
+      if (pending.length) {
+         const r = await call("POST", MYC + "/merge", { colors: pending.map((e) => ({ hex: e.hex, name: e.name })) });
+         if (r.ok) applyServer(r.data);
+      }
+      const res = await Promise.all([call("GET", MYC), call("GET", "/api/palettes")]);
+      if (res[1].ok && res[1].data && Array.isArray(res[1].data.palettes)) serverPalettes = res[1].data.palettes;
+      if (res[0].ok) applyServer(res[0].data);
+      refreshSelector();
    }
 
    function normHex(h) {
@@ -96,9 +256,29 @@
       size: () => lib.length,
       // [{hex, name}] for the unmixer (names fall back to a label if blank).
       asPalette: () => lib.map((c, i) => ({ hex: c.hex, name: (c.name && c.name.trim()) || ("Color " + (i + 1)) })),
-      add(name, hex) { const H = normHex(hex); if (!H) return false; lib.push({ name: (name || "").trim() || H, hex: H }); persist(); return true; },
-      update(i, name, hex) { if (!lib[i]) return; const H = normHex(hex); lib[i] = { name: (name || "").trim() || lib[i].name, hex: H || lib[i].hex }; persist(); },
-      remove(i) { if (lib[i]) { lib.splice(i, 1); persist(); } },
+      has: (hex) => { const H = normHex(hex); return !!H && lib.some((c) => c.hex === H); },
+      // Each change is applied here at once and sent to the server on its own.
+      add(name, hex) {
+         const H = normHex(hex); if (!H) return false;
+         if (lib.some((c) => c.hex === H)) return true;                  // already in the library
+         const e = { name: (name || "").trim() || H, hex: H };
+         lib.push(e); persist(); changed();
+         sendAdd(e);
+         return true;
+      },
+      update(i, name, hex) {
+         const e = lib[i]; if (!e) return;
+         const H = normHex(hex);
+         e.name = (name || "").trim() || e.name;
+         if (H) e.hex = H;
+         persist(); markDirty(e);
+      },
+      remove(i) {
+         const e = lib[i]; if (!e) return;
+         lib.splice(i, 1); dirty.delete(e); unsent.delete(e); adding.delete(e); persist();
+         sendDelete(e);
+      },
+      flush: () => flushEdits(),
       // server-saved palettes (DB) for the unmixer dropdown
       serverPalettes: () => serverPalettes.slice(),
       getServerPalette: (id) => serverPalettes.find((p) => String(p.id) === String(id)) || null,
@@ -229,16 +409,19 @@
          const name = row.querySelector('[data-role=name]');
          const hex = row.querySelector('[data-role=hex]');
          color.addEventListener("input", () => { hex.value = color.value.toUpperCase(); ColorLibrary.update(i, name.value, color.value); });
-         hex.addEventListener("input", () => { const h = normHex(hex.value); if (h) { color.value = h; ColorLibrary.update(i, name.value, h); } });
+         // only a full #RRGGBB counts (a 3-digit prefix typed on the way is not a color change)
+         hex.addEventListener("input", () => { const v = hex.value.trim(); const h = /^#?[0-9a-f]{6}$/i.test(v) ? normHex(v) : null; if (h) { color.value = h; ColorLibrary.update(i, name.value, h); } });
          name.addEventListener("input", () => ColorLibrary.update(i, name.value, hex.value));
-         row.querySelector('[data-role=del]').addEventListener("click", () => { ColorLibrary.remove(i); renderList(); afterLibraryMutation(); });
+         row.querySelector('[data-role=del]').addEventListener("click", () => { ColorLibrary.remove(i); renderList(); changed(); });
       });
    }
 
    function addFromInputs() {
       const name = modal.querySelector("#clNewName").value;
       const hex = modal.querySelector("#clNewHex").value || modal.querySelector("#clNewColor").value;
-      if (!ColorLibrary.add(name, hex)) { alert("Enter a valid color (e.g. #CC4444)."); return; }
+      if (!normHex(hex)) { alert("Enter a valid color (e.g. #CC4444)."); return; }
+      if (ColorLibrary.has(hex)) { alert("That color is already in your library."); return; }
+      ColorLibrary.add(name, hex);
       modal.querySelector("#clNewName").value = "";
       modal.querySelector("#clNewHex").value = "";
       renderList();
@@ -247,12 +430,21 @@
    function importCurrent() {
       const cur = (typeof window.getUnmixerPalette === "function") ? window.getUnmixerPalette() : [];
       if (!cur.length) { alert("No palette is currently loaded in the unmixer."); return; }
-      let added = 0;
+      const added = [];
       const have = new Set(lib.map((c) => c.hex));
-      cur.forEach((c) => { const H = normHex(c.hex); if (H && !have.has(H)) { lib.push({ name: c.name || H, hex: H }); have.add(H); added++; } });
+      cur.forEach((c) => { const H = normHex(c.hex); if (H && !have.has(H)) { const e = { name: c.name || H, hex: H }; lib.push(e); added.push(e); have.add(H); } });
       persist();
       renderList();
-      if (!added) alert("Those colors are already in your library.");
+      if (!added.length) { alert("Those colors are already in your library."); return; }
+      changed();
+      if (!authToken()) return;
+      // one call for the whole import; merge only adds, so nothing saved elsewhere is lost
+      added.forEach((e) => adding.add(e));
+      call("POST", MYC + "/merge", { colors: added.map((e) => ({ hex: e.hex, name: e.name })) }).then((r) => {
+         added.forEach((e) => adding.delete(e));
+         if (r.ok) applyServer(r.data);
+         else if (r.status === 0) added.forEach((e) => unsent.add(e));
+      });
    }
 
    function refreshSelector() {
@@ -276,13 +468,12 @@
       opt.textContent = `★ My Colors (${lib.length} colors)`;
    }
 
-   // After a structural change to the library (e.g. removing a color), keep
-   // everything that mirrors it in sync: the dropdown count/option AND — if the
-   // unmixer is currently showing "★ My Colors" — its loaded palette grid, so a
-   // removed color disappears immediately instead of lingering until the next
-   // "Save & Use in Unmixer".
-   function afterLibraryMutation() {
-      syncMyColors();          // keep the DB copy in sync after add/remove
+   // After the list changes (added / removed here, or reloaded from the server),
+   // keep everything that mirrors it in sync: the open editor, the dropdown
+   // count/option AND — if the unmixer is currently showing "★ My Colors" — its
+   // loaded palette grid, so a removed color disappears immediately.
+   function changed() {
+      if (modal && modal.classList.contains("open")) renderList();
       refreshSelector();
       const sel = document.getElementById("trycolorsPaletteSelect");
       if (sel && sel.value === "__mycolors__" && typeof window.applyUnmixerPalette === "function") {
@@ -296,6 +487,7 @@
       const input = modal && modal.querySelector("#clPaletteName");
       const name = (input ? input.value : "").trim();
       if (!name) { alert("Type a name for the palette first."); if (input) input.focus(); return; }
+      if (name === MY) { alert('"My Colors" is this library itself. Pick another name for the palette.'); if (input) input.focus(); return; }
       const saved = await serverSave(name, lib);
       if (!saved) { alert("Could not save the palette. Please try again."); return; }
       rememberServer(saved);
@@ -315,7 +507,7 @@
 
    function saveAndUse() {
       persist();
-      syncMyColors();          // remember this palette for the user in the DB
+      flushEdits();            // send any rename / hex change still waiting
       refreshSelector();
       const sel = document.getElementById("trycolorsPaletteSelect");
       if (lib.length && typeof window.applyUnmixerPalette === "function") {
@@ -340,6 +532,11 @@
    } else {
       wireButton(); refreshSelector(); serverLoad();
    }
+   // coming back to the tab picks up colors added on other devices (captures, the apps)
+   document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") serverLoad();
+      else flushEdits();
+   });
 
    window.ColorLibrary.open = open; // allow programmatic open
 })();

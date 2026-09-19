@@ -292,11 +292,18 @@ def get_user_plan_id(user_id: str) -> str:
         return DEFAULT_PLAN
 
 
-def get_credits(user_id: str) -> int:
+def get_credits(user_id: str, cursor=None) -> int:
+    """PAYG credits left. Pass the open cursor when already inside get_db(), so a
+    request never holds two pooled connections at once."""
+    sql = "SELECT credits FROM image_credits WHERE user_id = %s"
     try:
+        if cursor is not None:
+            cursor.execute(sql, (user_id,))
+            row = cursor.fetchone()
+            return int(row["credits"]) if row else 0
         with get_db() as conn:
             cursor = conn.cursor(cursor_factory=RealDictCursor)
-            cursor.execute("SELECT credits FROM image_credits WHERE user_id = %s", (user_id,))
+            cursor.execute(sql, (user_id,))
             row = cursor.fetchone()
             return int(row["credits"]) if row else 0
     except Exception:
@@ -485,19 +492,19 @@ async def list_plans():
 
 
 @router.get("/me")
-async def billing_me(request: Request):
+def billing_me(request: Request):
     payload = _user_from_request(request)
     return get_entitlements(payload["sub"])
 
 
 @router.get("/entitlements")
-async def entitlements(request: Request):
+def entitlements(request: Request):
     payload = _user_from_request(request)
     return get_entitlements(payload["sub"])
 
 
 @router.post("/consume-image")
-async def consume_image(request: Request):
+def consume_image(request: Request):
     """Atomically check the user's image quota and consume one unit.
 
     Order: monthly allowance first, then pay-as-you-go credits. Unlimited plans
@@ -535,7 +542,7 @@ async def consume_image(request: Request):
                 monthly_remaining = limit - (used + 1)
                 return {
                     "allowed": True,
-                    "remaining": monthly_remaining + get_credits(user_id),
+                    "remaining": monthly_remaining + get_credits(user_id, cursor),
                     "source": "plan",
                 }
 
@@ -562,7 +569,7 @@ async def consume_image(request: Request):
 
 
 @router.post("/create-checkout-session")
-async def create_checkout_session(req: CheckoutRequest, request: Request):
+def create_checkout_session(req: CheckoutRequest, request: Request):
     if not STRIPE_SECRET_KEY:
         raise HTTPException(status_code=500, detail="Stripe is not configured")
     payload = _user_from_request(request)
@@ -708,7 +715,7 @@ def _fulfill(user_id: str, plan_id: str, kind: str, session) -> dict:
 
 
 @router.post("/create-portal-session")
-async def create_portal_session(request: Request):
+def create_portal_session(request: Request):
     if not STRIPE_SECRET_KEY:
         raise HTTPException(status_code=500, detail="Stripe is not configured")
     payload = _user_from_request(request)

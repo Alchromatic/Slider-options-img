@@ -50,7 +50,7 @@ class AuthLoginRequest(BaseModel):
 
 
 @router.post("/register")
-async def auth_register(req: AuthRegisterRequest):
+def auth_register(req: AuthRegisterRequest):
     """Register a new user."""
     try:
         with get_db() as conn:
@@ -92,7 +92,7 @@ async def auth_register(req: AuthRegisterRequest):
 
 
 @router.post("/login")
-async def auth_login(req: AuthLoginRequest):
+def auth_login(req: AuthLoginRequest):
     """Login with email/password."""
     try:
         with get_db() as conn:
@@ -123,7 +123,7 @@ async def auth_login(req: AuthLoginRequest):
 
 
 @router.get("/me")
-async def auth_me(request: Request):
+def auth_me(request: Request):
     """Get the current user from a Bearer JWT."""
     auth_header = request.headers.get("Authorization", "")
     if not auth_header.startswith("Bearer "):

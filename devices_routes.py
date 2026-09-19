@@ -725,6 +725,13 @@ def _merge_into_my_colors(cur, user_id: str, colors: List[Dict[str, str]]) -> No
     """Prepend new colors to the user's 'My Colors' palette (dedupe by hex)."""
     if not colors:
         return
+    # create the row first so FOR UPDATE always has a row to lock (two first
+    # captures, or a capture racing a web edit, would otherwise overwrite)
+    cur.execute(
+        "INSERT INTO user_palettes (user_id, name, colors, updated_at) "
+        "VALUES (%s, %s, '[]'::jsonb, NOW()) ON CONFLICT (user_id, name) DO NOTHING",
+        (user_id, MY_COLORS),
+    )
     cur.execute(
         "SELECT colors FROM user_palettes WHERE user_id = %s AND name = %s FOR UPDATE",
         (user_id, MY_COLORS),

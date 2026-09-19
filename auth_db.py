@@ -11,10 +11,13 @@ import os
 import time
 import hashlib
 import secrets
+import threading
 from contextlib import contextmanager
 
 import jwt
 import psycopg2
+import psycopg2.extensions
+from fastapi import HTTPException
 from psycopg2.extras import RealDictCursor  # re-exported for routes
 
 try:
@@ -28,15 +31,129 @@ except ImportError:
 # =============================================================================
 SUPABASE_CONNECTION_STRING = os.getenv("SUPABASE_CONNECTION_STRING", "")
 
+# -----------------------------------------------------------------------------
+# Connection pool
+# -----------------------------------------------------------------------------
+# Supabase's session-mode pooler (port 5432) accepts only `pool_size` (15)
+# client connections in total, shared with the multi-model project, and refuses
+# the next one (EMAXCONNSESSION). Opening a connection per request made ~15
+# overlapping requests fail with 500. So instead:
+#   * at most DB_POOL_MAX connections per process; a request that finds them
+#     all busy waits up to DB_POOL_WAIT s for one instead of failing,
+#   * connections are reused, and closed after DB_POOL_IDLE s unused, so a
+#     quiet app doesn't keep session slots the other project needs,
+#   * a refused connect is retried briefly; if the database still can't be
+#     reached the request gets 503 (try again), not a 500.
+DB_POOL_MAX = max(1, int(os.getenv("DB_POOL_MAX", "8")))
+DB_POOL_WAIT = float(os.getenv("DB_POOL_WAIT", "20"))
+DB_POOL_IDLE = float(os.getenv("DB_POOL_IDLE", "60"))
+_PING_AFTER = 20.0                      # re-check a connection unused this long before reuse
+
+_slots = threading.BoundedSemaphore(DB_POOL_MAX)
+_idle_lock = threading.Lock()
+_idle = []                              # [(conn, last_used_monotonic)], most recent last
+_reaper = None
+
+
+class DatabaseBusy(HTTPException):
+    """No database connection could be had in time (503, safe to retry)."""
+
+    def __init__(self, detail="The database is busy right now, please try again."):
+        super().__init__(status_code=503, detail=detail, headers={"Retry-After": "2"})
+
+
+def _close_quietly(conn):
+    try:
+        conn.close()
+    except Exception:
+        pass
+
+
+def _connect():
+    last = None
+    for delay in (0, 0.25, 0.75, 1.5):
+        if delay:
+            time.sleep(delay)
+        try:
+            return psycopg2.connect(
+                SUPABASE_CONNECTION_STRING,
+                connect_timeout=10,
+                keepalives=1, keepalives_idle=30, keepalives_interval=10, keepalives_count=3,
+                application_name="geomagic-api",
+            )
+        except psycopg2.OperationalError as e:   # e.g. EMAXCONNSESSION while the other app is busy
+            last = e
+    print(f"[WARN] database connect failed: {last}")
+    raise DatabaseBusy() from last
+
+
+def _reap_loop():
+    while True:
+        time.sleep(10)
+        now = time.monotonic()
+        with _idle_lock:
+            stale = [c for c, used in _idle if now - used > DB_POOL_IDLE or c.closed]
+            _idle[:] = [(c, used) for c, used in _idle if not (now - used > DB_POOL_IDLE or c.closed)]
+        for c in stale:
+            _close_quietly(c)
+
+
+def _take():
+    """A live connection: a recent idle one if there is one, else a new one."""
+    while True:
+        with _idle_lock:
+            item = _idle.pop() if _idle else None
+        if item is None:
+            return _connect()
+        conn, used = item
+        idle_for = time.monotonic() - used
+        if conn.closed or idle_for > DB_POOL_IDLE:
+            _close_quietly(conn)
+            continue
+        if idle_for > _PING_AFTER:
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT 1")
+                conn.rollback()
+            except Exception:
+                _close_quietly(conn)
+                continue
+        return conn
+
+
+def _give(conn):
+    """Back to the pool, with any uncommitted work rolled back (as closing used to do)."""
+    global _reaper
+    try:
+        if conn.closed:
+            return
+        if conn.get_transaction_status() != psycopg2.extensions.TRANSACTION_STATUS_IDLE:
+            conn.rollback()
+        if conn.autocommit:
+            conn.autocommit = False
+    except Exception:
+        _close_quietly(conn)
+        return
+    with _idle_lock:
+        _idle.append((conn, time.monotonic()))
+        if _reaper is None:
+            _reaper = threading.Thread(target=_reap_loop, name="db-pool-reaper", daemon=True)
+            _reaper.start()
+
 
 @contextmanager
 def get_db():
-    """Get a database connection (same pattern as role_profile_routes.get_db)."""
-    conn = psycopg2.connect(SUPABASE_CONNECTION_STRING)
+    """A pooled database connection; uncommitted changes are rolled back on exit."""
+    if not _slots.acquire(timeout=DB_POOL_WAIT):
+        raise DatabaseBusy()
+    conn = None
     try:
+        conn = _take()
         yield conn
     finally:
-        conn.close()
+        if conn is not None:
+            _give(conn)
+        _slots.release()
 
 
 # =============================================================================

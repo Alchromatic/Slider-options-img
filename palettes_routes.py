@@ -11,23 +11,39 @@ instead of living only in browser localStorage.
 Endpoints (all require a Bearer JWT, same scheme as billing.py):
 
     GET    /api/palettes            -> list the current user's saved palettes
-    POST   /api/palettes            -> create or update a palette (by name)
+    POST   /api/palettes            -> create or update a named palette (by name)
     DELETE /api/palettes/{id}       -> delete one of the user's palettes
 
 A palette is ``{id, name, colors:[{hex, name}]}``.  Palettes are unique per
-(user_id, name), so saving "My Colors" again just updates it.
+(user_id, name), so saving a named palette again just updates it.
+
+"My Colors" is edited one color at a time (Bearer user JWT or device token; an
+unpaired device gets ``401 device_revoked``), because the web Color Library,
+the apps and device captures all change the same list:
+
+    GET    /api/palettes/my-colors                -> {id, name, colors, updated_at}
+    POST   /api/palettes/my-colors/colors         {hex, name?}   add one (no-op if present)
+    PATCH  /api/palettes/my-colors/colors/{hex}   {name?, hex?}  rename / change hex
+    DELETE /api/palettes/my-colors/colors/{hex}                  remove one
+    POST   /api/palettes/my-colors/merge          {colors:[...]} add missing, never remove
+
+``{hex}`` is the color without "#" (e.g. ``FEE100``).  Each change runs in one
+transaction holding the row lock, so concurrent edits and captures don't
+overwrite each other.  POST /api/palettes refuses the name "My Colors" (a whole
+list replace would drop colors added elsewhere in the meantime).
 """
 
 from __future__ import annotations
 
 import json
 import re
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from auth_db import RealDictCursor, decode_jwt_token, get_db
+from devices_routes import MY_COLORS, MY_COLORS_CAP, _auth
 
 router = APIRouter(prefix="/api/palettes", tags=["14. User palettes"])
 
@@ -149,6 +165,11 @@ def save_palette(req: PaletteIn, request: Request):
     name = req.name.strip()
     if not name:
         raise HTTPException(status_code=400, detail="Palette name is required.")
+    if name == MY_COLORS:
+        raise HTTPException(
+            status_code=409,
+            detail='"My Colors" is edited one color at a time: use /api/palettes/my-colors.',
+        )
     with get_db() as conn:
         cur = conn.cursor(cursor_factory=RealDictCursor)
         cur.execute(
@@ -181,6 +202,167 @@ def delete_palette(palette_id: int, request: Request):
     if not deleted:
         raise HTTPException(status_code=404, detail="Palette not found.")
     return {"deleted": True, "id": palette_id}
+
+
+# ---------------------------------------------------------------------------
+# "My Colors": single-color edits
+# ---------------------------------------------------------------------------
+
+class ColorEdit(BaseModel):
+    name: Optional[str] = Field(None, description="New name (blank = the hex).")
+    hex: Optional[str] = Field(None, description="New hex, e.g. '#FEE100'.")
+
+
+class ColorMerge(BaseModel):
+    colors: List[Color] = Field(default_factory=list)
+
+
+def _my_colors_out(row: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    if not row:
+        return {"id": None, "name": MY_COLORS, "colors": [], "updated_at": None}
+    ts = row.get("updated_at")
+    return {
+        "id": row["id"],
+        "name": row["name"],
+        "colors": row["colors"] or [],
+        "updated_at": ts.isoformat() if ts else None,
+    }
+
+
+def _lock_my_colors(cur, uid: str) -> Dict[str, Any]:
+    """Create the user's "My Colors" row if needed, then lock it until commit."""
+    cur.execute(
+        "INSERT INTO user_palettes (user_id, name, colors, updated_at) "
+        "VALUES (%s, %s, '[]'::jsonb, NOW()) ON CONFLICT (user_id, name) DO NOTHING",
+        (uid, MY_COLORS),
+    )
+    cur.execute(
+        "SELECT id, name, colors, updated_at FROM user_palettes "
+        "WHERE user_id = %s AND name = %s FOR UPDATE",
+        (uid, MY_COLORS),
+    )
+    return dict(cur.fetchone())
+
+
+def _store_my_colors(cur, row_id: int, colors: List[dict]) -> Dict[str, Any]:
+    cur.execute(
+        "UPDATE user_palettes SET colors = %s, updated_at = NOW() WHERE id = %s "
+        "RETURNING id, name, colors, updated_at",
+        (json.dumps(colors), row_id),
+    )
+    return dict(cur.fetchone())
+
+
+def _hex_or_400(value: Optional[str]) -> str:
+    hx = _norm_hex(value or "")
+    if not hx:
+        raise HTTPException(status_code=400, detail=f"Invalid hex color: {value!r}")
+    return hx
+
+
+def _index_of(colors: List[dict], hx: str) -> Optional[int]:
+    for i, c in enumerate(colors):
+        if str(c.get("hex", "")).upper() == hx:
+            return i
+    return None
+
+
+@router.get("/my-colors")
+def get_my_colors(request: Request):
+    """The user's "My Colors" (``id: null`` and no colors until the first one is added)."""
+    uid = _auth(request)["user_id"]
+    with get_db() as conn:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute(
+            "SELECT id, name, colors, updated_at FROM user_palettes WHERE user_id = %s AND name = %s",
+            (uid, MY_COLORS),
+        )
+        row = cur.fetchone()
+    return _my_colors_out(dict(row) if row else None)
+
+
+@router.post("/my-colors/colors")
+def add_my_color(req: Color, request: Request):
+    """Add one color to the end of "My Colors". Nothing changes if the hex is already there."""
+    uid = _auth(request)["user_id"]
+    hx = _hex_or_400(req.hex)
+    with get_db() as conn:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        row = _lock_my_colors(cur, uid)
+        colors = list(row["colors"] or [])
+        if _index_of(colors, hx) is None:
+            if len(colors) >= MY_COLORS_CAP:
+                raise HTTPException(status_code=409, detail=f"My Colors is full ({MY_COLORS_CAP} colors).")
+            colors.append({"hex": hx, "name": (req.name or "").strip() or hx})
+            row = _store_my_colors(cur, row["id"], colors)
+        conn.commit()
+    return _my_colors_out(row)
+
+
+@router.patch("/my-colors/colors/{hex}")
+def edit_my_color(hex: str, req: ColorEdit, request: Request):
+    """Rename a color and/or change its hex. 404 if it isn't there, 409 if the new hex is."""
+    uid = _auth(request)["user_id"]
+    old = _hex_or_400(hex)
+    new = _hex_or_400(req.hex) if req.hex is not None else old
+    with get_db() as conn:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        row = _lock_my_colors(cur, uid)
+        colors = list(row["colors"] or [])
+        i = _index_of(colors, old)
+        if i is None:
+            raise HTTPException(status_code=404, detail="That color is not in My Colors.")
+        if new != old and _index_of(colors, new) is not None:
+            raise HTTPException(status_code=409, detail="That color is already in My Colors.")
+        name = str(colors[i].get("name") or "").strip() or old
+        if req.name is not None:
+            name = req.name.strip() or new
+        elif new != old and name.upper() == old:
+            name = new                     # a name that was just the hex follows the hex
+        if colors[i] != {"hex": new, "name": name}:
+            colors[i] = {"hex": new, "name": name}
+            row = _store_my_colors(cur, row["id"], colors)
+        conn.commit()
+    return _my_colors_out(row)
+
+
+@router.delete("/my-colors/colors/{hex}")
+def delete_my_color(hex: str, request: Request):
+    """Remove one color. 404 if it isn't there."""
+    uid = _auth(request)["user_id"]
+    hx = _hex_or_400(hex)
+    with get_db() as conn:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        row = _lock_my_colors(cur, uid)
+        colors = list(row["colors"] or [])
+        i = _index_of(colors, hx)
+        if i is None:
+            raise HTTPException(status_code=404, detail="That color is not in My Colors.")
+        del colors[i]
+        row = _store_my_colors(cur, row["id"], colors)
+        conn.commit()
+    return _my_colors_out(row)
+
+
+@router.post("/my-colors/merge")
+def merge_my_colors(req: ColorMerge, request: Request):
+    """Append the colors that aren't in "My Colors" yet (up to the cap); never removes any.
+
+    Used once to move an old browser list into the account, and by the apps to
+    send colors added while offline. Invalid hexes and duplicates are skipped.
+    """
+    uid = _auth(request)["user_id"]
+    incoming = _clean_colors(req.colors)
+    with get_db() as conn:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        row = _lock_my_colors(cur, uid)
+        colors = list(row["colors"] or [])
+        have = {str(c.get("hex", "")).upper() for c in colors}
+        added = [c for c in incoming if c["hex"] not in have][: max(0, MY_COLORS_CAP - len(colors))]
+        if added:
+            row = _store_my_colors(cur, row["id"], colors + added)
+        conn.commit()
+    return _my_colors_out(row)
 
 
 __all__ = ["router", "init_palettes_tables"]
