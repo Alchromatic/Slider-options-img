@@ -5,3 +5,10 @@ git remote add origin https://github.com/Alchromatic/Slider-options-img.git
 git branch -M main
 git push -u origin main
 
+git init
+git add .
+git commit -m "Fix colour picker shape selection and add Clean Outline line drawing with live sliders"
+git remote add origin https://github.com/Alchromatic/Slider-options-img.git
+git branch -M main
+git push -u origin main
+

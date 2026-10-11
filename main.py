@@ -2629,45 +2629,56 @@ class LineDrawingResponse(BaseModel):
 @app.post("/line-drawing", response_model=LineDrawingResponse, tags=["1. Drawing"])
 async def create_line_drawing(
     image: UploadFile = File(...),
-    style: str = Form("detailed"),  # sketch, detailed (crosshatch/architectural are JS-only)
+    style: str = Form("detailed"),  # sketch, detailed, outline (crosshatch/architectural are JS-only)
     detail: int = Form(80),  # 20-100
     line_weight: int = Form(2),  # 1-4
     show_grid: bool = Form(False),
+    low: int = Form(40),  # outline: Canny low threshold
+    high: int = Form(100),  # outline: Canny high threshold
+    min_size: int = Form(25),  # outline: drop line pieces smaller than this (px)
+    thickness: int = Form(1),  # outline: line thickness (px)
 ):
     """
     Convert an image to a black & white line drawing suitable for tracing.
-    
+
     **Parameters:**
     - `image`: Image file (PNG, JPG, etc.)
-    - `style`: 'sketch' or 'detailed' (crosshatch/architectural are client-side only)
+    - `style`: 'sketch', 'detailed' or 'outline' (crosshatch/architectural are client-side only)
     - `detail`: Detail level 20-100 (default: 80)
     - `line_weight`: Line thickness 1-4 (default: 2)
     - `show_grid`: Add grid overlay for tracing reference (default: false)
-    
+    - `low`, `high`, `min_size`, `thickness`: 'outline' style settings, same as outline.py's
+      --low/--high/--min-size/--thickness (defaults 40, 100, 25, 1)
+
     **Returns:** Base64 encoded PNG image
     """
-    
+
     detail = max(20, min(100, detail))
     line_weight = max(1, min(4, line_weight))
-    
+
     # Only handle fast styles via API
-    if style not in ["sketch", "detailed"]:
-        raise HTTPException(status_code=400, detail="Only 'sketch' and 'detailed' styles supported via API. Use client-side for crosshatch/architectural.")
-    
+    if style not in ["sketch", "detailed", "outline"]:
+        raise HTTPException(status_code=400, detail="Only 'sketch', 'detailed' and 'outline' styles supported via API. Use client-side for crosshatch/architectural.")
+    if style == "outline" and not (0 <= low < high and min_size >= 1 and thickness >= 1):
+        raise HTTPException(status_code=400, detail="Outline needs 0 <= low < high, min_size >= 1 and thickness >= 1.")
+
     try:
         image_data = await image.read()
         nparr = np.frombuffer(image_data, np.uint8)
-        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        
+        # outline.py reads the file straight as grayscale; do the same so it matches exactly.
+        img = cv2.imdecode(nparr, cv2.IMREAD_GRAYSCALE if style == "outline" else cv2.IMREAD_COLOR)
+
         if img is None:
             raise HTTPException(status_code=400, detail="Invalid image file")
-        
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        
-        if style == "sketch":
-            result = pencil_sketch(gray, detail, line_weight)
+
+        if style == "outline":
+            result = clean_outline_lines(clean_outline_base(img), low, high, min_size, thickness)
         else:
-            result = detailed_sketch(gray, detail, line_weight)
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            if style == "sketch":
+                result = pencil_sketch(gray, detail, line_weight)
+            else:
+                result = detailed_sketch(gray, detail, line_weight)
         
         if show_grid:
             result = add_grid_lines(result)
@@ -2686,6 +2697,50 @@ async def create_line_drawing(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Processing error: {str(e)}")
+
+
+@app.post("/line-drawing/outline-base", tags=["1. Drawing"])
+async def line_drawing_outline_base(image: UploadFile = File(...)):
+    """
+    Slider-independent half of the 'outline' style (outline.py): read as grayscale,
+    shrink to at most 1600px, bilateral smoothing. Returns that image as a PNG.
+
+    The browser runs the slider-driven half (Canny, speck removal, thickness) on it,
+    so the sliders update instantly and the drawing still matches outline.py exactly.
+    """
+    image_data = await image.read()
+    gray = cv2.imdecode(np.frombuffer(image_data, np.uint8), cv2.IMREAD_GRAYSCALE)
+    if gray is None:
+        raise HTTPException(status_code=400, detail="Invalid image file")
+    ok, buffer = cv2.imencode('.png', clean_outline_base(gray))
+    if not ok:
+        raise HTTPException(status_code=500, detail="Could not encode image")
+    return Response(content=buffer.tobytes(), media_type="image/png")
+
+
+# ---- 'outline' style: the client's outline.py, split at the slider boundary ----
+OUTLINE_MAX_DIM = 1600
+
+
+def clean_outline_base(gray: np.ndarray) -> np.ndarray:
+    """outline.py before Canny: standardize resolution, then suppress fine texture."""
+    scale = min(1.0, OUTLINE_MAX_DIM / max(gray.shape))
+    if scale < 1:
+        gray = cv2.resize(gray, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
+    return cv2.bilateralFilter(gray, 9, 60, 60)
+
+
+def clean_outline_lines(smooth: np.ndarray, low: int, high: int, min_size: int, thickness: int) -> np.ndarray:
+    """outline.py from Canny on: edges, drop short fragments, thicken. Black lines on white."""
+    edges = cv2.Canny(smooth, low, high, L2gradient=True)
+    count, labels, stats, _ = cv2.connectedComponentsWithStats(edges, connectivity=8)
+    keep = np.zeros(count, dtype=np.uint8)
+    keep[1:] = (stats[1:, cv2.CC_STAT_AREA] >= min_size).astype(np.uint8) * 255
+    edges = keep[labels]
+    if thickness > 1:
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (thickness, thickness))
+        edges = cv2.dilate(edges, kernel)
+    return 255 - edges
 
 
 def pencil_sketch(gray: np.ndarray, detail: int, line_weight: int) -> np.ndarray:

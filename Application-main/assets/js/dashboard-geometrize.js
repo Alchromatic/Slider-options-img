@@ -114,9 +114,11 @@
    let selectiveMode = false;  // Selective Resolution: draw a region to add detail
    let srDrawing = false;      // true while dragging out the region
    let srPath = [];            // freehand region path (canvas px)
-   // Click-to-pick cycling: clicking an overlapping spot picks the smallest shape
-   // first, and clicking the same spot again cycles through the others.
+   // Click-to-pick cycling: clicking an overlapping spot picks the shape that
+   // contributes most to the colour on screen; clicking again cycles the others.
    let pickKey = "", pickList = [], pickPos = 0;
+   // The colour on screen at the last pick, and the shape it was picked for.
+   let picked = null;
 
    // carries the generated result across pages (dashboard -> templates)
    const STORE_KEY = "geomagic:state";
@@ -242,8 +244,8 @@
          else { ctx.strokeStyle = col; ctx.lineWidth = 1; ctx.stroke(); }
       }
 
-      // selection highlight (only when the full image is shown)
-      if (n === total && selectedIndex != null && shapes[selectedIndex]) {
+      // selection highlight (not during a partial/animated draw)
+      if (upTo == null && selectedIndex != null && selectedIndex < n && shapes[selectedIndex]) {
          tracePath(shapes[selectedIndex]);
          // Selection = yellow outline (client: "yellow on selection", no red dot)
          ctx.save();
@@ -347,33 +349,47 @@
       setTimeout(finish, 32);
    });
 
-   // Approx pixel area of a shape — used to prefer small detail over the
-   // big "widest" shape that normally sits on top under the cursor.
-   function shapeArea(s) {
-      const d = s.data;
-      switch (s.type) {
-         case 0: case 1: return Math.abs((d[2] - d[0]) * (d[3] - d[1]));
-         case 2: return Math.abs((d[0] * (d[3] - d[5]) + d[2] * (d[5] - d[1]) + d[4] * (d[1] - d[3])) / 2);
-         case 3: case 4: return Math.PI * Math.abs(d[2] * d[3]);
-         case 5: return Math.PI * d[2] * d[2];
-         case 6: case 7: return Math.hypot((d[2] || 0) - d[0], (d[3] || 0) - d[1]) * Math.max(6, canvas.width / 80);
-         default: return Infinity;
-      }
+   // A shape's colour as currently drawn (after any colour-grouping remap).
+   function shownRgb(s) {
+      const to = colorRemap && colorRemap[shapeHex(s)];
+      return to ? hexToRgb(to) : s.color.slice(0, 3);
+   }
+   const toHex6 = ([r, g, b]) => ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+
+   // The colour on screen at (x,y): the rendered pixel under the cursor.
+   // Shapes are translucent and stacked, so this blend is what the user is
+   // pointing at — usually no single shape's own colour matches it exactly.
+   // A single pixel (not an average) so thin lines can still be picked.
+   // Call on a clean render (no selection outline).
+   function seenColorAt(x, y) {
+      const px = Math.max(0, Math.min(canvas.width - 1, Math.floor(x)));
+      const py = Math.max(0, Math.min(canvas.height - 1, Math.floor(y)));
+      const [r, g, b] = ctx.getImageData(px, py, 1, 1).data;
+      return [r, g, b];
    }
 
-   // All shapes under (x,y) (skipping background index 0), sorted SMALLEST first
-   // so the default pick is the fine detail, not the largest covering shape.
+   // All drawn shapes under (x,y) (skipping background index 0), ranked by how
+   // much each contributes to the colour on screen there: a shape's share is
+   // its opacity times whatever the shapes painted above it let through. So
+   // clicking the bridge picks the bridge stroke on top rather than a broad
+   // translucent stroke beneath it. Shapes hidden by the slider are skipped.
    function shapesUnder(x, y) {
+      const n = shapeLimit != null ? Math.min(shapeLimit, shapes.length) : shapes.length;
       const hits = [];
-      for (let i = shapes.length - 1; i >= 1; i--) {
+      let through = 1; // share of light still passing the shapes above
+      for (let i = n - 1; i >= 1; i--) {
          const mode = tracePath(shapes[i]);
          let inside;
          if (mode === "fill") inside = ctx.isPointInPath(x, y);
          else { ctx.lineWidth = Math.max(6, canvas.width / 80); inside = ctx.isPointInStroke(x, y); }
-         if (inside) hits.push(i);
+         if (inside) {
+            const a = (shapes[i].color[3] == null ? 255 : shapes[i].color[3]) / 255;
+            hits.push({ i, share: a * through });
+            through *= 1 - a;
+         }
       }
-      hits.sort((a, b) => shapeArea(shapes[a]) - shapeArea(shapes[b]));
-      return hits;
+      hits.sort((a, b) => b.share - a.share || b.i - a.i);
+      return hits.map((h) => h.i);
    }
 
    function updateSelectionInfo() {
@@ -382,25 +398,31 @@
          return;
       }
       const s = shapes[selectedIndex];
-      const [r, g, b, a = 255] = s.color;
+      const a = s.color[3] == null ? 255 : s.color[3];
+      const shapeRgb = shownRgb(s);
+      // The picked colour is what was on screen at the click; the shape's own
+      // (translucent) colour is shown next to its type.
+      const [r, g, b] = (picked && picked.shape === s) ? picked.seen : shapeRgb;
       if (selType) {
          let label = `#${selectedIndex} · ${SHAPE_NAME[s.type] || s.type}`;
          if (pickList.length > 1) label += ` · ${pickPos + 1}/${pickList.length} here — click to cycle`;
          selType.textContent = label;
       }
-      const hex6 = ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
-      if (selColor) selColor.style.background = `rgba(${r},${g},${b},${a / 255})`;
-      if (selRgba) selRgba.textContent = `rgb(${r}, ${g}, ${b})`;
+      const hex6 = toHex6([r, g, b]);
+      if (selColor) selColor.style.background = `rgb(${r},${g},${b})`;
+      if (selRgba) {
+         selRgba.innerHTML = `<i class="gm-shape-chip" style="background:rgba(${shapeRgb.join(",")},${a / 255})"></i>`
+            + `shape #${toHex6(shapeRgb)} · ${Math.round(a / 255 * 100)}%`;
+      }
       if (selHex) selHex.value = "#" + hex6;
       if (selBar) { selBar.classList.remove("hidden"); selBar.classList.add("show"); }
       emit("geomagic:selected", { hex: "#" + hex6, index: selectedIndex });
 
       const tcInput = document.getElementById("trycolorsInput");
       if (tcInput) {
-         const hex = ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
-         tcInput.value = hex;
+         tcInput.value = hex6;
          const tcPreview = document.getElementById("trycolorsPreview");
-         if (tcPreview) tcPreview.style.background = "#" + hex;
+         if (tcPreview) tcPreview.style.background = "#" + hex6;
          const tcBtn = document.getElementById("trycolorsBtn");
          if (tcBtn) tcBtn.disabled = false;
       }
@@ -430,13 +452,17 @@
       const rect = canvas.getBoundingClientRect();
       const x = (e.clientX - rect.left) * (canvas.width / rect.width);
       const y = (e.clientY - rect.top) * (canvas.height / rect.height);
-      const list = shapesUnder(x, y);
-      if (!list.length) { selectedIndex = null; pickList = []; pickKey = ""; render(); updateSelectionInfo(); return; }
-      const key = list.join(",");
-      if (key === pickKey) pickPos = (pickPos + 1) % list.length; // same overlap stack → cycle
-      else { pickKey = key; pickPos = 0; }                        // new spot → smallest first
+      // Read the on-screen colour from a clean render (no selection outline).
+      if (selectedIndex != null) { selectedIndex = null; render(); }
+      const seen = seenColorAt(x, y);
+      let list = shapesUnder(x, y);
+      if (!list.length) { pickList = []; pickKey = ""; updateSelectionInfo(); return; }
+      const key = list.slice().sort((a, b) => a - b).join(",");
+      if (key === pickKey) { list = pickList; pickPos = (pickPos + 1) % list.length; } // same overlap stack → cycle
+      else { pickKey = key; pickPos = 0; }                                           // new spot → most visible first
       pickList = list;
       selectedIndex = list[pickPos];
+      picked = { shape: shapes[selectedIndex], seen };
       render();
       updateSelectionInfo();
    });

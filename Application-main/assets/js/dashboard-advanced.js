@@ -66,6 +66,108 @@
       weightEl.addEventListener("input", () => { weightVal.textContent = weightEl.value; });
    }
 
+   // ---- Clean Outline: the client's tracing recipe (clean-outline.js) ----
+   // The slow part runs once per image; the sliders then redraw live.
+   const coEls = { low: $("#coLow"), high: $("#coHigh"), minSize: $("#coMinSize"), thickness: $("#coThickness") };
+   const coVals = { low: $("#coLowVal"), high: $("#coHighVal"), minSize: $("#coMinSizeVal"), thickness: $("#coThicknessVal") };
+   let outlineState = null, outlineFile = null, outlineDrawn = false, redrawQueued = false;
+
+   const isOutlineStyle = () => !!styleSel && styleSel.value === "outline";
+   function outlineOpts() {
+      const v = (k, d) => (coEls[k] ? parseInt(coEls[k].value, 10) : d);
+      return { low: v("low", 40), high: v("high", 100), minSize: v("minSize", 25), thickness: v("thickness", 1) };
+   }
+   // Blue fill up to the thumb (main.js only paints sliders that have a value tooltip).
+   function paintSliderFill(el) {
+      if (!el) return;
+      const min = +el.min || 0, max = +el.max || 100;
+      const pct = ((+el.value - min) / (max - min || 1)) * 100;
+      el.style.background = `linear-gradient(to right, #2A85FF ${pct}%, #272B30 ${pct}%)`;
+   }
+   [detailEl, weightEl].forEach((el) => {
+      if (!el) return;
+      paintSliderFill(el);
+      el.addEventListener("input", () => paintSliderFill(el));
+   });
+   function syncOutlineLabels() {
+      for (const k in coEls) {
+         if (coEls[k] && coVals[k]) coVals[k].textContent = coEls[k].value;
+         paintSliderFill(coEls[k]);
+      }
+   }
+   // Faint edges must stay below strong edges: push the other slider along.
+   function keepThresholdOrder(changed) {
+      const lo = coEls.low, hi = coEls.high;
+      if (!lo || !hi || +lo.value < +hi.value) return;
+      if (changed === "low") hi.value = Math.min(+hi.max, +lo.value + 1);
+      else lo.value = Math.max(+lo.min, +hi.value - 1);
+   }
+   // Show only the controls that apply to the chosen style.
+   function syncStyleControls() {
+      const outline = isOutlineStyle();
+      document.querySelectorAll("[data-ld-outline]").forEach((el) => el.classList.toggle("hidden", !outline));
+      document.querySelectorAll("[data-ld-classic]").forEach((el) => el.classList.toggle("hidden", outline));
+   }
+   function queueOutlineRedraw() {
+      if (!outlineDrawn || !isOutlineStyle() || !outlineState || outlineFile !== currentSourceFile()) return;
+      if (redrawQueued) return;
+      redrawQueued = true;
+      // Next frame while dragging; the timer covers a backgrounded tab (rAF paused).
+      let done = false;
+      const run = () => { if (done) return; done = true; redrawQueued = false; drawOutline(); };
+      requestAnimationFrame(run);
+      setTimeout(run, 32);
+   }
+   Object.keys(coEls).forEach((k) => {
+      if (!coEls[k]) return;
+      coEls[k].addEventListener("input", () => { keepThresholdOrder(k); syncOutlineLabels(); queueOutlineRedraw(); });
+   });
+   document.querySelectorAll("[data-co-preset]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+         let preset = {};
+         try { preset = JSON.parse(btn.dataset.coPreset); } catch (_) {}
+         for (const k in preset) if (coEls[k]) coEls[k].value = preset[k];
+         syncOutlineLabels();
+         queueOutlineRedraw();
+      });
+   });
+   if (styleSel) styleSel.addEventListener("change", syncStyleControls);
+   if (gridEl) gridEl.addEventListener("change", queueOutlineRedraw);
+   syncStyleControls();
+   syncOutlineLabels();
+
+   function showDrawing(canvas, msg) {
+      fullSizeCanvas = canvas;
+      mainCanvas.width  = canvas.width;
+      mainCanvas.height = canvas.height;
+      mainCanvas.getContext("2d").drawImage(canvas, 0, 0);
+      mainCanvas.classList.remove("hidden");
+      if (dropZone) dropZone.style.display = "none";
+      if (downloadBtn) downloadBtn.classList.remove("hidden");
+      setStatus(msg);
+   }
+
+   function drawOutline() {
+      const o = outlineOpts();
+      const { w, h } = outlineState;
+      const result = window.CleanOutline.render(outlineState, o);
+      if (gridEl && gridEl.checked) addGridLines(result, w, h);
+      showDrawing(grayToCanvas(result, w, h),
+         `Clean outline ${w}×${h} · edges ${o.low}/${o.high} · specks under ${o.minSize}px removed · thickness ${o.thickness}`
+         + (outlineState.exact ? "" : " · approximate (server unavailable)"));
+      outlineDrawn = true;
+   }
+
+   // Exact (OpenCV on the server) first; in-browser approximation if unreachable.
+   async function prepareOutline(file, img) {
+      const apiBase = window.GM && window.GM.apiBase;
+      if (apiBase) {
+         try { return await window.CleanOutline.prepareFromServer(apiBase, file); }
+         catch (err) { console.warn("Clean outline: server unavailable, using in-browser approximation", err); }
+      }
+      return window.CleanOutline.prepareImage(img);
+   }
+
    if (generateBtn) {
       generateBtn.addEventListener("click", async () => {
          const file = currentSourceFile();
@@ -77,24 +179,25 @@
 
          try {
             const img = await loadImage(file);
-            const result = processImage(
-               img,
-               styleSel ? styleSel.value : "detailed",
-               parseInt(detailEl && detailEl.value, 10) || 80,
-               parseInt(weightEl && weightEl.value, 10) || 2,
-               !!(gridEl && gridEl.checked),
-               !!(outlineEl && outlineEl.checked)
-            );
-            fullSizeCanvas = result.canvas;
-
-            mainCanvas.width  = result.width;
-            mainCanvas.height = result.height;
-            mainCanvas.getContext("2d").drawImage(result.canvas, 0, 0);
-            mainCanvas.classList.remove("hidden");
-            if (dropZone) dropZone.style.display = "none";
-
-            if (downloadBtn) downloadBtn.classList.remove("hidden");
-            setStatus(`Line drawing generated (${result.width}×${result.height})`);
+            if (isOutlineStyle()) {
+               if (!window.CleanOutline) throw new Error("clean-outline.js is not loaded");
+               if (outlineFile !== file) {
+                  outlineState = await prepareOutline(file, img);
+                  outlineFile = file;
+               }
+               drawOutline();
+            } else {
+               const result = processImage(
+                  img,
+                  styleSel ? styleSel.value : "detailed",
+                  parseInt(detailEl && detailEl.value, 10) || 80,
+                  parseInt(weightEl && weightEl.value, 10) || 2,
+                  !!(gridEl && gridEl.checked),
+                  !!(outlineEl && outlineEl.checked)
+               );
+               outlineDrawn = false;
+               showDrawing(result.canvas, `Line drawing generated (${result.width}×${result.height})`);
+            }
          } catch (err) {
             console.error(err);
             setStatus("Error: " + (err && err.message || err), "error");
@@ -152,7 +255,11 @@
          }
       }
       if (showGrid) addGridLines(result, w, h);
+      return { canvas: grayToCanvas(result, w, h), width: w, height: h };
+   }
 
+   // Gray pixels (0..255) -> an opaque canvas.
+   function grayToCanvas(result, w, h) {
       const out = document.createElement("canvas");
       out.width = w; out.height = h;
       const octx = out.getContext("2d");
@@ -165,7 +272,7 @@
          od.data[i * 4 + 3] = 255;
       }
       octx.putImageData(od, 0, 0);
-      return { canvas: out, width: w, height: h };
+      return out;
    }
 
    function toGrayscale(imageData) {

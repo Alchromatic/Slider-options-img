@@ -217,7 +217,7 @@
                                  <div id="dash-selection" class="gm-picked hidden">
                                     <div class="gm-picked-field">
                                        <div class="min-w-0 flex-1">
-                                          <span class="gm-picked-label">Picked color (hex)</span>
+                                          <span class="gm-picked-label">Picked color (on screen)</span>
                                           <div class="flex items-center gap-2.5">
                                              <input id="dash-sel-hex" type="text" class="gm-picked-hex" value="#000000" readonly spellcheck="false" aria-label="Picked color hex">
                                              <span id="dash-sel-color" class="gm-picked-swatch"></span>
@@ -489,9 +489,10 @@
                            <h6 class="text-neutral-4 text-xs leading-6 font-bold uppercase tracking-wider mb-3">Style</h6>
                            <div class="relative">
                               <select id="lineDrawingStyle" class="w-full h-12 py-3 pl-4 pr-10 rounded-xl bg-[#F4F4F4] dark:bg-neutral-8 border border-[#F4F4F4] dark:border-neutral-6 text-neutral-7 dark:text-neutral-1 text-[15px] font-semibold -tracking-[0.15px] appearance-none focus:outline-none cursor-pointer">
+                                 <option value="outline" selected>Clean Outline (tracing)</option>
                                  <option value="stencil">Stencil (Outline Only)</option>
                                  <option value="sketch">Pencil Sketch</option>
-                                 <option value="detailed" selected>Detailed Sketch</option>
+                                 <option value="detailed">Detailed Sketch</option>
                                  <option value="crosshatch">Cross-Hatch Style</option>
                                  <option value="architectural">Architectural</option>
                               </select>
@@ -503,7 +504,7 @@
                         <div>
                            <h6 class="text-neutral-4 text-xs leading-6 font-bold uppercase tracking-wider mb-3">Options</h6>
                            <div class="flex items-center gap-8 h-12">
-                              <label class="relative cursor-pointer flex items-center gap-3 text-neutral-7 dark:text-neutral-1 text-sm font-semibold -tracking-[0.14px]">
+                              <label data-ld-classic class="relative cursor-pointer flex items-center gap-3 text-neutral-7 dark:text-neutral-1 text-sm font-semibold -tracking-[0.14px]">
                                  <input type="checkbox" id="lineDrawingOutlineOnly" class="sr-only peer">
                                  <span class="shrink-0 w-6 h-6 flex items-center justify-center rounded-md bg-[#F4F4F4] dark:bg-transparent border border-[#6F767E66] text-white text-[0px] peer-checked:text-base peer-checked:bg-theme-primary peer-checked:border-theme-primary transition-all duration-300"><i class="fa-regular fa-check"></i></span>
                                  <span>Outline Only</span>
@@ -517,7 +518,7 @@
                         </div>
 
                         <!-- Detail -->
-                        <div>
+                        <div data-ld-classic>
                            <div class="flex items-center justify-between mb-3">
                               <h6 class="text-neutral-4 text-xs leading-6 font-bold uppercase tracking-wider">Detail</h6>
                               <span class="text-neutral-6 dark:text-neutral-1 text-sm font-bold font-mono"><span id="ldDetailVal">80</span>%</span>
@@ -526,13 +527,57 @@
                         </div>
 
                         <!-- Line Weight -->
-                        <div>
+                        <div data-ld-classic>
                            <div class="flex items-center justify-between mb-3">
                               <h6 class="text-neutral-4 text-xs leading-6 font-bold uppercase tracking-wider">Line Weight</h6>
                               <span class="text-neutral-6 dark:text-neutral-1 text-sm font-bold font-mono" id="ldWeightVal">2</span>
                            </div>
                            <input id="lineDrawingWeight" type="range" title="line-drawing-weight" class="range-slider w-full cursor-pointer" min="1" max="4" value="2">
                         </div>
+
+                        <!-- Clean Outline settings (the drawing updates live as these move) -->
+                        <div data-ld-outline class="hidden">
+                           <div class="flex items-center justify-between mb-3">
+                              <h6 class="text-neutral-4 text-xs leading-6 font-bold uppercase tracking-wider">Faint Edges</h6>
+                              <span class="text-neutral-6 dark:text-neutral-1 text-sm font-bold font-mono" id="coLowVal">40</span>
+                           </div>
+                           <input id="coLow" type="range" title="outline-low-threshold" class="range-slider w-full cursor-pointer" min="5" max="200" value="40">
+                           <p class="text-neutral-4 text-xs font-semibold mt-2">Lower picks up more faint detail.</p>
+                        </div>
+                        <div data-ld-outline class="hidden">
+                           <div class="flex items-center justify-between mb-3">
+                              <h6 class="text-neutral-4 text-xs leading-6 font-bold uppercase tracking-wider">Strong Edges</h6>
+                              <span class="text-neutral-6 dark:text-neutral-1 text-sm font-bold font-mono" id="coHighVal">100</span>
+                           </div>
+                           <input id="coHigh" type="range" title="outline-high-threshold" class="range-slider w-full cursor-pointer" min="10" max="300" value="100">
+                           <p class="text-neutral-4 text-xs font-semibold mt-2">Higher keeps only the strongest lines.</p>
+                        </div>
+                        <div data-ld-outline class="hidden">
+                           <div class="flex items-center justify-between mb-3">
+                              <h6 class="text-neutral-4 text-xs leading-6 font-bold uppercase tracking-wider">Remove Specks</h6>
+                              <span class="text-neutral-6 dark:text-neutral-1 text-sm font-bold font-mono"><span id="coMinSizeVal">25</span> px</span>
+                           </div>
+                           <input id="coMinSize" type="range" title="outline-min-size" class="range-slider w-full cursor-pointer" min="1" max="200" value="25">
+                           <p class="text-neutral-4 text-xs font-semibold mt-2">Line pieces shorter than this are removed.</p>
+                        </div>
+                        <div data-ld-outline class="hidden">
+                           <div class="flex items-center justify-between mb-3">
+                              <h6 class="text-neutral-4 text-xs leading-6 font-bold uppercase tracking-wider">Line Thickness</h6>
+                              <span class="text-neutral-6 dark:text-neutral-1 text-sm font-bold font-mono" id="coThicknessVal">1</span>
+                           </div>
+                           <input id="coThickness" type="range" title="outline-thickness" class="range-slider w-full cursor-pointer" min="1" max="5" value="1">
+                           <p class="text-neutral-4 text-xs font-semibold mt-2">Bolder tracing lines.</p>
+                        </div>
+                     </div>
+
+                     <!-- Clean Outline quick settings: each sets only its own slider(s) -->
+                     <div data-ld-outline class="hidden flex items-center gap-2 flex-wrap" style="margin-top: 20px;">
+                        <span class="text-neutral-4 text-xs leading-6 font-bold uppercase tracking-wider" style="margin-right: 4px;">Quick</span>
+                        <button type="button" data-co-preset='{"low":20,"high":60}' class="text-neutral-4 hover:text-neutral-6 dark:hover:text-neutral-1 text-xs font-bold px-3 py-1.5 rounded-full bg-[#F4F4F4] dark:bg-neutral-8 cursor-pointer">More faint details</button>
+                        <button type="button" data-co-preset='{"low":70,"high":150}' class="text-neutral-4 hover:text-neutral-6 dark:hover:text-neutral-1 text-xs font-bold px-3 py-1.5 rounded-full bg-[#F4F4F4] dark:bg-neutral-8 cursor-pointer">Fewer lines</button>
+                        <button type="button" data-co-preset='{"minSize":60}' class="text-neutral-4 hover:text-neutral-6 dark:hover:text-neutral-1 text-xs font-bold px-3 py-1.5 rounded-full bg-[#F4F4F4] dark:bg-neutral-8 cursor-pointer">Remove more specks</button>
+                        <button type="button" data-co-preset='{"thickness":2}' class="text-neutral-4 hover:text-neutral-6 dark:hover:text-neutral-1 text-xs font-bold px-3 py-1.5 rounded-full bg-[#F4F4F4] dark:bg-neutral-8 cursor-pointer">Bolder lines</button>
+                        <button type="button" data-co-preset='{"low":40,"high":100,"minSize":25,"thickness":1}' class="text-theme-primary text-xs font-bold px-3 py-1.5 rounded-full cursor-pointer">Reset</button>
                      </div>
 
                      <div class="flex items-center gap-4 flex-wrap mt-8">
@@ -561,6 +606,8 @@
       <script src="assets/js/geometrize.js"></script>
       <!-- dashboard geometrize wiring -->
       <script src="assets/js/dashboard-geometrize.js"></script>
+      <!-- clean outline (tracing line art) used by the Drawing panel -->
+      <script src="assets/js/clean-outline.js"></script>
       <!-- dashboard advanced controls: line drawing, canvas size, engine, JSON export -->
       <script src="assets/js/dashboard-advanced.js"></script>
       <!-- shared canvas preview: fit, resize, status badge -->

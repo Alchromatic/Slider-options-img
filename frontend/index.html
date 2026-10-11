@@ -122,11 +122,23 @@ canvas.drawing { cursor: crosshair; }
     font-family: monospace;
     font-size: 14px;
 }
+.color-detail-item .shape-swatch {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    margin-right: 6px;
+    vertical-align: -1px;
+    border: 1px solid rgba(0,0,0,0.25);
+    border-radius: 3px;
+}
 .shape-highlight {
     pointer-events: none;
 }
 canvas.picking { cursor: crosshair; }
 #colorPickerBtn.active { background: #00BCD4; color: white; }
+.co-preset { font-size: 11px; padding: 3px 9px; border: 1px solid #ffb74d; border-radius: 12px; background: #fff; color: #e65100; cursor: pointer; }
+.co-preset:hover { background: #fff3e0; }
+[data-ld-hidden] { display: none !important; }
 
 /* Color Matcher Styles */
 .color-matcher-section {
@@ -1547,25 +1559,57 @@ canvas.picking { cursor: crosshair; }
         <div>
             <label style="font-size: 11px; color: #666;">Style:</label>
             <select id="lineDrawingStyle" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;">
+                <option value="outline" selected>Clean Outline (tracing)</option>
                 <option value="stencil">Stencil (Outline Only)</option>
                 <option value="sketch">Pencil Sketch</option>
-                <option value="detailed" selected>Detailed Sketch</option>
+                <option value="detailed">Detailed Sketch</option>
                 <option value="crosshatch">Cross-Hatch Style</option>
                 <option value="architectural">Architectural</option>
             </select>
         </div>
-        <div>
+        <div data-ld-classic>
             <label style="font-size: 11px; color: #666;">Detail: <span id="ldDetailVal">80</span>%</label>
             <input type="range" id="lineDrawingDetail" min="20" max="100" value="80" style="width: 100%;">
         </div>
     </div>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+    <!-- Clean Outline settings (the drawing updates live as these move) -->
+    <div data-ld-outline style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
         <div>
+            <label style="font-size: 11px; color: #666;">Faint Edges: <span id="coLowVal">40</span></label>
+            <input type="range" id="coLow" min="5" max="200" value="40" style="width: 100%;">
+            <div style="font-size: 10px; color: #999;">Lower picks up more faint detail.</div>
+        </div>
+        <div>
+            <label style="font-size: 11px; color: #666;">Strong Edges: <span id="coHighVal">100</span></label>
+            <input type="range" id="coHigh" min="10" max="300" value="100" style="width: 100%;">
+            <div style="font-size: 10px; color: #999;">Higher keeps only the strongest lines.</div>
+        </div>
+        <div>
+            <label style="font-size: 11px; color: #666;">Remove Specks: <span id="coMinSizeVal">25</span> px</label>
+            <input type="range" id="coMinSize" min="1" max="200" value="25" style="width: 100%;">
+            <div style="font-size: 10px; color: #999;">Line pieces shorter than this are removed.</div>
+        </div>
+        <div>
+            <label style="font-size: 11px; color: #666;">Line Thickness: <span id="coThicknessVal">1</span></label>
+            <input type="range" id="coThickness" min="1" max="5" value="1" style="width: 100%;">
+            <div style="font-size: 10px; color: #999;">Bolder tracing lines.</div>
+        </div>
+        <div style="grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
+            <span style="font-size: 11px; color: #666; font-weight: bold;">Quick:</span>
+            <button type="button" class="co-preset" data-co-preset='{"low":20,"high":60}'>More faint details</button>
+            <button type="button" class="co-preset" data-co-preset='{"low":70,"high":150}'>Fewer lines</button>
+            <button type="button" class="co-preset" data-co-preset='{"minSize":60}'>Remove more specks</button>
+            <button type="button" class="co-preset" data-co-preset='{"thickness":2}'>Bolder lines</button>
+            <button type="button" class="co-preset" data-co-preset='{"low":40,"high":100,"minSize":25,"thickness":1}'>Reset</button>
+        </div>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+        <div data-ld-classic>
             <label style="font-size: 11px; color: #666;">Line Weight: <span id="ldWeightVal">2</span></label>
             <input type="range" id="lineDrawingWeight" min="1" max="4" value="2" style="width: 100%;">
         </div>
         <div style="display: flex; flex-direction: column; justify-content: end; gap: 4px;">
-            <label style="font-size: 11px; color: #666; display: flex; align-items: center; gap: 5px;">
+            <label data-ld-classic style="font-size: 11px; color: #666; display: flex; align-items: center; gap: 5px;">
                 <input type="checkbox" id="lineDrawingOutlineOnly"> Outline Only
             </label>
             <label style="font-size: 11px; color: #666; display: flex; align-items: center; gap: 5px;">
@@ -1859,15 +1903,23 @@ canvas.picking { cursor: crosshair; }
 <!-- ====================== COLOR PICKER ======================== -->
 <div class="section">
     <h3>Color Picker</h3>
-    <div class="info">Click on shapes in the canvas to inspect their color values.</div>
+    <div class="info">Click the canvas to pick the color you see there. The shape that contributes most to it is outlined; click the same spot again to cycle through overlapping shapes.</div>
     <button id="colorPickerBtn">Enable Color Picker</button>
-    
+
     <div id="colorPickerPanel" class="color-picker-panel">
         <div class="color-picker-header">
-            <h4>Selected Shape</h4>
+            <h4>Picked Color</h4>
             <div id="colorPreviewBox" class="color-preview-box"></div>
         </div>
         <div class="color-details">
+            <div class="color-detail-item">
+                <label>Picked HEX (on screen)</label>
+                <span id="pickedHexValue">-</span>
+            </div>
+            <div class="color-detail-item">
+                <label>Picked RGB (on screen)</label>
+                <span id="pickedRgbValue">-</span>
+            </div>
             <div class="color-detail-item">
                 <label>Shape Type</label>
                 <span id="shapeTypeValue">-</span>
@@ -1877,19 +1929,19 @@ canvas.picking { cursor: crosshair; }
                 <span id="shapeIndexValue">-</span>
             </div>
             <div class="color-detail-item">
-                <label>RGB</label>
+                <label>Shape RGB</label>
                 <span id="rgbValue">-</span>
             </div>
             <div class="color-detail-item">
-                <label>RGBA</label>
+                <label>Shape RGBA</label>
                 <span id="rgbaValue">-</span>
             </div>
             <div class="color-detail-item">
-                <label>HEX</label>
-                <span id="hexValue">-</span>
+                <label>Shape HEX</label>
+                <span class="shape-swatch" id="shapeSwatch"></span><span id="hexValue">-</span>
             </div>
             <div class="color-detail-item">
-                <label>Alpha</label>
+                <label>Shape Alpha</label>
                 <span id="alphaValue">-</span>
             </div>
         </div>
@@ -2750,6 +2802,9 @@ function updateGroupedColorCount() {
 const colorPickerBtn = document.getElementById("colorPickerBtn");
 const colorPickerPanel = document.getElementById("colorPickerPanel");
 const colorPreviewBox = document.getElementById("colorPreviewBox");
+const pickedHexValue = document.getElementById("pickedHexValue");
+const pickedRgbValue = document.getElementById("pickedRgbValue");
+const shapeSwatch = document.getElementById("shapeSwatch");
 const shapeTypeValue = document.getElementById("shapeTypeValue");
 const shapeIndexValue = document.getElementById("shapeIndexValue");
 const rgbValue = document.getElementById("rgbValue");
@@ -2777,9 +2832,14 @@ let currentRegion = null;
 let isPickingColor = false;
 let selectedShapeIndex = null;
 let currentSelectedColor = null;
-// Click-to-pick cycling: prefer the smallest shape under the cursor, and cycle
-// through overlapping shapes on repeated clicks at the same spot.
+// Click-to-pick cycling: pick the shape that contributes most to the colour on
+// screen, and cycle through overlapping shapes on repeated clicks at the same spot.
 let pickKeyFE = "", pickListFE = [], pickPosFE = 0;
+// What drawCanvas last put on screen — the shapes in paint order (after the
+// slider limit, ordering logic and filters) and their un-scaled render — so
+// the colour picker only considers, and samples, what the user actually sees.
+let lastDrawnShapes = [];
+let lastRenderCanvas = null;
 
 // Geometrize elements (Client-Side)
 const geometrizeInput = document.getElementById("geometrizeInput");
@@ -4796,13 +4856,17 @@ colorPickerBtn.addEventListener("click", () => {
     }
 });
 
+// Same shape codes the renderer (traceShape) and the geometrize engine use.
 function getShapeTypeName(type) {
     const types = {
-        0: "Background",
-        1: "Circle",
+        0: "Rectangle",
+        1: "Rotated Rectangle",
         2: "Triangle",
-        3: "Quad",
-        4: "Ellipse"
+        3: "Ellipse",
+        4: "Rotated Ellipse",
+        5: "Circle",
+        6: "Line",
+        7: "Quadratic Bezier"
     };
     return types[type] || `Type ${type}`;
 }
@@ -4814,149 +4878,121 @@ function rgbToHex(r, g, b) {
     }).join("").toUpperCase();
 }
 
-function getShapeCenter(shape, imgRect) {
-    if (shape.type === 0 && shape.data.length >= 4) {
-        const [x1, y1, x2, y2] = shape.data;
-        return { x: (x1 + x2) / 2, y: (y1 + y2) / 2 };
-    }
-    if (shape.type === 1 && shape.data.length >= 3) {
-        return { x: shape.data[0], y: shape.data[1] };
-    }
-    if (shape.type === 2 && shape.data.length >= 6) {
-        const [A, B, C, D, E, F] = shape.data;
-        return { x: (A + C + E) / 3, y: (B + D + F) / 3 };
-    }
-    if (shape.type === 4 && shape.data.length >= 2) {
-        return { x: shape.data[0], y: shape.data[1] };
-    }
-    return { x: imgRect.w / 2, y: imgRect.h / 2 };
-}
+// Off-screen context used only for hit-testing through traceShape().
+const pickHitCtx = document.createElement("canvas").getContext("2d");
 
 function isPointInShape(x, y, shape, imgRect) {
     // Convert canvas coordinates to image coordinates
     const imgX = (x - imgRect.x) / imgRect.scale;
     const imgY = (y - imgRect.y) / imgRect.scale;
-    
-    if (shape.type === 0) {
-        // Background - covers entire canvas
-        return true;
+
+    pickHitCtx.beginPath();
+    const mode = traceShape(pickHitCtx, shape);
+    if (mode === "fill") return pickHitCtx.isPointInPath(imgX, imgY);
+    if (mode === "stroke") {
+        // Lines and curves are drawn 1px wide; allow a few screen pixels of slack.
+        pickHitCtx.lineWidth = Math.max(1, 6 / imgRect.scale);
+        return pickHitCtx.isPointInStroke(imgX, imgY);
     }
-    
-    if (shape.type === 1) {
-        // Circle
-        const [cx, cy, rad] = shape.data;
-        const dist = Math.hypot(imgX - cx, imgY - cy);
-        return dist <= rad;
-    }
-    
-    if (shape.type === 2) {
-        // Triangle - use barycentric coordinates
-        const [A, B, C, D, E, F] = shape.data;
-        return isPointInTriangle(imgX, imgY, A, B, C, D, E, F);
-    }
-    
-    if (shape.type === 4) {
-        // Ellipse
-        const [cx, cy, rx, ry, ang = 0] = shape.data;
-        const angleRad = (ang * Math.PI) / 180;
-        const cos = Math.cos(-angleRad);
-        const sin = Math.sin(-angleRad);
-        const dx = imgX - cx;
-        const dy = imgY - cy;
-        const rotX = dx * cos - dy * sin;
-        const rotY = dx * sin + dy * cos;
-        return (rotX * rotX) / (rx * rx) + (rotY * rotY) / (ry * ry) <= 1;
-    }
-    
     return false;
 }
 
-function isPointInTriangle(px, py, x1, y1, x2, y2, x3, y3) {
-    const area = 0.5 * (-y2 * x3 + y1 * (-x2 + x3) + x1 * (y2 - y3) + x2 * y3);
-    const s = 1 / (2 * area) * (y1 * x3 - x1 * y3 + (y3 - y1) * px + (x1 - x3) * py);
-    const t = 1 / (2 * area) * (x1 * y2 - y1 * x2 + (y1 - y2) * px + (x2 - x1) * py);
-    return s >= 0 && t >= 0 && (1 - s - t) >= 0;
-}
-
-function findShapeAtPoint(x, y) {
+// The colour on screen at canvas point (x,y): the rendered pixel under the
+// cursor, composited over the white canvas. Shapes are translucent and
+// stacked, so this blend is what the user is pointing at — usually no single
+// shape's own colour matches it exactly. A single pixel (not an average) so
+// 1px lines and thin strokes can still be picked. null outside the image.
+function seenColorAt(x, y) {
+    if (!lastRenderCanvas) return null;
     const imgRect = getImageRect();
-    const working = groupedShapes.length ? groupedShapes : currentShapes;
-
-    // Get currently displayed shapes based on slider
-    const limit = parseInt(slider.value);
-    const displayedShapes = limit > 0 ? working.slice(0, limit) : working;
-
-    // Search from top (last rendered) to bottom (first rendered)
-    for (let i = displayedShapes.length - 1; i >= 0; i--) {
-        const shape = displayedShapes[i];
-        if (isPointInShape(x, y, shape, imgRect)) {
-            return { shape, index: i };
-        }
-    }
-    return null;
+    const ix = Math.floor((x - imgRect.x) / imgRect.scale);
+    const iy = Math.floor((y - imgRect.y) / imgRect.scale);
+    if (ix < 0 || iy < 0 || ix >= lastRenderCanvas.width || iy >= lastRenderCanvas.height) return null;
+    const [r, g, b, a8] = lastRenderCanvas.getContext("2d").getImageData(ix, iy, 1, 1).data;
+    const a = a8 / 255;
+    return [r, g, b].map(c => Math.round(c * a + 255 * (1 - a)));
 }
 
-// Approx pixel area of a shape (used to prefer small detail over the widest shape).
-function shapeAreaFE(s) {
-    const d = s.data;
-    switch (s.type) {
-        case 1: return Math.PI * d[2] * d[2];                              // circle [cx,cy,r]
-        case 2: return Math.abs((d[0]*(d[3]-d[5]) + d[2]*(d[5]-d[1]) + d[4]*(d[1]-d[3])) / 2); // triangle
-        case 4: return Math.PI * Math.abs(d[2] * d[3]);                    // ellipse [cx,cy,rx,ry]
-        default: return Infinity;                                          // background / unknown
-    }
-}
-
-// All shapes under (x,y), smallest-area first, so the default pick is the fine
-// detail rather than the largest covering shape ("widest color" problem).
+// All drawn shapes under (x,y), ranked by how much each contributes to the
+// colour on screen there: a shape's share is its opacity times whatever the
+// shapes painted above it let through. So clicking the bridge picks the
+// bridge stroke on top rather than a broad translucent stroke beneath it.
 function findShapesAtPoint(x, y) {
     const imgRect = getImageRect();
-    const working = groupedShapes.length ? groupedShapes : currentShapes;
-    const limit = parseInt(slider.value);
-    const displayedShapes = limit > 0 ? working.slice(0, limit) : working;
     const hits = [];
-    for (let i = displayedShapes.length - 1; i >= 0; i--) {
-        const shape = displayedShapes[i];
-        if (isPointInShape(x, y, shape, imgRect)) hits.push({ shape, index: i });
+    let through = 1; // share of light still passing the shapes above
+    for (let i = lastDrawnShapes.length - 1; i >= 0; i--) {
+        const shape = lastDrawnShapes[i];
+        if (isPointInShape(x, y, shape, imgRect)) {
+            const a = (shape.color[3] == null ? 255 : shape.color[3]) / 255;
+            hits.push({ shape, index: i, share: a * through });
+            through *= 1 - a;
+        }
     }
-    hits.sort((a, b) => shapeAreaFE(a.shape) - shapeAreaFE(b.shape));
+    hits.sort((a, b) => b.share - a.share || b.index - a.index);
     return hits;
 }
 
-function displayShapeInfo(shape, index) {
+function displayShapeInfo(shape, index, seen) {
     const imgRect = getImageRect();
     const [r, g, b, a] = shape.color;
-    
+    // The picked colour is what's on screen at the click; the shape's own
+    // (translucent) colour is listed separately.
+    const [pr, pg, pb] = seen || [r, g, b];
+    const pickedHex = rgbToHex(pr, pg, pb);
+
     // Set current selected color for matching
-    currentSelectedColor = rgbToHex(r, g, b);
+    currentSelectedColor = pickedHex;
     updateMatchButtonState();
-    
+
     colorPickerPanel.classList.add("active");
-    colorPreviewBox.style.backgroundColor = `rgba(${r},${g},${b},${a/255})`;
-    
+    colorPreviewBox.style.backgroundColor = pickedHex;
+    pickedHexValue.textContent = pickedHex;
+    pickedRgbValue.textContent = `${pr}, ${pg}, ${pb}`;
+
     shapeTypeValue.textContent = getShapeTypeName(shape.type);
     shapeIndexValue.textContent = index;
     rgbValue.textContent = `${r}, ${g}, ${b}`;
     rgbaValue.textContent = `${r}, ${g}, ${b}, ${a}`;
     hexValue.textContent = rgbToHex(r, g, b);
+    shapeSwatch.style.backgroundColor = `rgba(${r},${g},${b},${a/255})`;
     alphaValue.textContent = `${a} (${(a/255*100).toFixed(1)}%)`;
-    
-    // Also update Trycolors input with selected shape color
-    const hexColor = rgbToHex(r, g, b);
+
+    // Also update Trycolors input with the picked colour
     if (typeof setTrycolorsInput === 'function') {
-        setTrycolorsInput(hexColor);
+        setTrycolorsInput(pickedHex);
     }
-    
-    const center = getShapeCenter(shape, imgRect);
+
+    const center = regionShapeCenter(shape);
     positionValue.textContent = `${center.x.toFixed(1)}, ${center.y.toFixed(1)}`;
     scoreValue.textContent = shape.score?.toFixed(4) || "-";
-    
+
     highlightShape(shape, imgRect);
+}
+
+// Records traceShape() calls as an SVG path "d" string, scaled to the screen.
+function svgPathRecorder(scale) {
+    const parts = [];
+    const p = (x, y) => `${x * scale} ${y * scale}`;
+    return {
+        moveTo: (x, y) => parts.push(`M ${p(x, y)}`),
+        lineTo: (x, y) => parts.push(`L ${p(x, y)}`),
+        quadraticCurveTo: (cx, cy, x, y) => parts.push(`Q ${p(cx, cy)} ${p(x, y)}`),
+        closePath: () => parts.push("Z"),
+        rect: (x, y, w, h) => parts.push(`M ${p(x, y)} L ${p(x + w, y)} L ${p(x + w, y + h)} L ${p(x, y + h)} Z`),
+        // traceShape only draws full ellipses: two half arcs.
+        ellipse: (cx, cy, rx, ry, rot) => {
+            const c = Math.cos(rot), s = Math.sin(rot);
+            const arc = `A ${rx * scale} ${ry * scale} ${rot * 180 / Math.PI} 0 1`;
+            parts.push(`M ${p(cx + rx * c, cy + rx * s)} ${arc} ${p(cx - rx * c, cy - rx * s)} ${arc} ${p(cx + rx * c, cy + rx * s)} Z`);
+        },
+        d: () => parts.join(" "),
+    };
 }
 
 function highlightShape(shape, imgRect) {
     clearShapeHighlight();
-    
+
     // Create SVG overlay for precise shape outline
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.id = "shapeHighlight";
@@ -4967,47 +5003,16 @@ function highlightShape(shape, imgRect) {
     svg.style.height = imgRect.h * imgRect.scale + "px";
     svg.style.pointerEvents = "none";
     svg.style.overflow = "visible";
-    
-    let pathElement;
-    const scale = imgRect.scale;
-    
-    if (shape.type === 0) {
-        // Background - rectangle outline
-        pathElement = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-        pathElement.setAttribute("x", "2");
-        pathElement.setAttribute("y", "2");
-        pathElement.setAttribute("width", imgRect.w * scale - 4);
-        pathElement.setAttribute("height", imgRect.h * scale - 4);
-    } else if (shape.type === 1) {
-        // Circle
-        const [cx, cy, rad] = shape.data;
-        pathElement = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        pathElement.setAttribute("cx", cx * scale);
-        pathElement.setAttribute("cy", cy * scale);
-        pathElement.setAttribute("r", rad * scale);
-    } else if (shape.type === 2) {
-        // Triangle
-        const [A, B, C, D, E, F] = shape.data;
-        pathElement = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-        const points = `${A * scale},${B * scale} ${C * scale},${D * scale} ${E * scale},${F * scale}`;
-        pathElement.setAttribute("points", points);
-    } else if (shape.type === 4) {
-        // Ellipse (with rotation support)
-        const [cx, cy, rx, ry, ang = 0] = shape.data;
-        pathElement = document.createElementNS("http://www.w3.org/2000/svg", "ellipse");
-        pathElement.setAttribute("cx", cx * scale);
-        pathElement.setAttribute("cy", cy * scale);
-        pathElement.setAttribute("rx", rx * scale);
-        pathElement.setAttribute("ry", ry * scale);
-        if (ang !== 0) {
-            pathElement.setAttribute("transform", `rotate(${ang} ${cx * scale} ${cy * scale})`);
-        }
-    } else {
-        return;
-    }
-    
+
+    // Outline the shape exactly as drawn (same geometry as traceShape).
+    const rec = svgPathRecorder(imgRect.scale);
+    const mode = traceShape(rec, shape);
+    if (!mode) return;
+    const pathElement = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    pathElement.setAttribute("d", rec.d());
+
     // Style the outline
-    pathElement.setAttribute("fill", "rgba(0, 188, 212, 0.15)");
+    pathElement.setAttribute("fill", mode === "fill" ? "rgba(0, 188, 212, 0.15)" : "none");
     pathElement.setAttribute("stroke", "#00BCD4");
     pathElement.setAttribute("stroke-width", "3");
     pathElement.setAttribute("stroke-dasharray", "8,4");
@@ -5036,7 +5041,8 @@ canvas.addEventListener("click", e => {
 
     const { x, y } = getCanvasPoint(e);
 
-    const list = findShapesAtPoint(x, y);
+    const seen = seenColorAt(x, y);
+    let list = seen ? findShapesAtPoint(x, y) : [];
 
     if (!list.length) {
         colorPickerPanel.classList.remove("active");
@@ -5045,16 +5051,16 @@ canvas.addEventListener("click", e => {
         return;
     }
 
-    // Same overlapping spot clicked again → cycle to the next shape; a new spot
-    // resets to the smallest (most specific) shape there.
-    const key = list.map(h => h.index).join(",");
-    if (key === pickKeyFE) pickPosFE = (pickPosFE + 1) % list.length;
+    // Same overlapping spot clicked again → cycle to the next shape (in the
+    // order first shown there); a new spot resets to the most visible shape.
+    const key = list.map(h => h.index).sort((a, b) => a - b).join(",");
+    if (key === pickKeyFE) { list = pickListFE; pickPosFE = (pickPosFE + 1) % list.length; }
     else { pickKeyFE = key; pickPosFE = 0; }
     pickListFE = list;
 
     const chosen = list[pickPosFE];
     selectedShapeIndex = chosen.index;
-    displayShapeInfo(chosen.shape, chosen.index);
+    displayShapeInfo(chosen.shape, chosen.index, seen);
 
     // Hint that more overlapping shapes are available here.
     if (list.length > 1 && typeof shapeTypeValue !== 'undefined' && shapeTypeValue) {
@@ -6591,10 +6597,76 @@ async function updateRender() {
 /* ==========================================================
    DRAW CANVAS
 ========================================================== */
+
+// Trace one shape's outline (image coordinates) onto `target` — a canvas
+// context, a Path2D, or the SVG recorder used by the picker highlight — and
+// return "fill" or "stroke". Drawing, colour-picker hit-testing and the
+// picker highlight all go through this, so they always agree on geometry.
+function traceShape(target, s) {
+    const d = s.data;
+    switch (s.type) {
+        case 0: { // Rectangle: [x1, y1, x2, y2]
+            const [x1, y1, x2, y2] = d;
+            target.rect(Math.min(x1, x2), Math.min(y1, y2), Math.abs(x2 - x1), Math.abs(y2 - y1));
+            return "fill";
+        }
+        case 1: { // Rotated Rectangle: [x1, y1, x2, y2, angle] — rotated about its centre
+            const [x1, y1, x2, y2, angle] = d;
+            const cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
+            const w = Math.abs(x2 - x1), h = Math.abs(y2 - y1);
+            const r = (angle || 0) * Math.PI / 180, cos = Math.cos(r), sin = Math.sin(r);
+            const pts = [[-w / 2, -h / 2], [w / 2, -h / 2], [w / 2, h / 2], [-w / 2, h / 2]]
+                .map(([px, py]) => [cx + px * cos - py * sin, cy + px * sin + py * cos]);
+            target.moveTo(pts[0][0], pts[0][1]);
+            for (let i = 1; i < 4; i++) target.lineTo(pts[i][0], pts[i][1]);
+            target.closePath();
+            return "fill";
+        }
+        case 2: { // Triangle: [x1, y1, x2, y2, x3, y3]
+            const [A, B, C, D, E, F] = d;
+            target.moveTo(A, B);
+            target.lineTo(C, D);
+            target.lineTo(E, F);
+            target.closePath();
+            return "fill";
+        }
+        case 3: { // Ellipse (non-rotated): [cx, cy, rx, ry]
+            const [cx, cy, rx, ry] = d;
+            target.ellipse(cx, cy, Math.abs(rx), Math.abs(ry), 0, 0, Math.PI * 2);
+            return "fill";
+        }
+        case 4: { // Rotated Ellipse: [cx, cy, rx, ry, angle]
+            const [cx, cy, rx, ry, ang] = d;
+            target.ellipse(cx, cy, Math.abs(rx), Math.abs(ry), (ang || 0) * Math.PI / 180, 0, Math.PI * 2);
+            return "fill";
+        }
+        case 5: { // Circle: [cx, cy, r]
+            const [cx, cy, rad] = d;
+            target.ellipse(cx, cy, Math.abs(rad), Math.abs(rad), 0, 0, Math.PI * 2);
+            return "fill";
+        }
+        case 6: { // Line: [x1, y1, x2, y2]
+            const [x1, y1, x2, y2] = d;
+            target.moveTo(x1, y1);
+            target.lineTo(x2, y2);
+            return "stroke";
+        }
+        case 7: { // Quadratic Bezier: [x1, y1, cx, cy, x2, y2]
+            const [x1, y1, cx, cy, x2, y2] = d;
+            target.moveTo(x1, y1);
+            target.quadraticCurveTo(cx, cy, x2, y2);
+            return "stroke";
+        }
+    }
+    return null;
+}
+
 function drawCanvas(shapes = currentShapes) {
     ctx.fillStyle = "white";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    lastDrawnShapes = shapes;
+    lastRenderCanvas = null;
     if (!shapes.length) return;
 
     const img = getImageRect();
@@ -6604,97 +6676,18 @@ function drawCanvas(shapes = currentShapes) {
     off.width = img.w;
     off.height = img.h;
     const o = off.getContext("2d");
+    o.lineWidth = 1;
 
     shapes.forEach(s => {
         const [r, g, b, a] = s.color;
-        o.fillStyle = `rgba(${r},${g},${b},${a / 255})`;
-        o.strokeStyle = `rgba(${r},${g},${b},${a / 255})`;
-
-        if (s.type === 0) {
-            // Rectangle: [x1, y1, x2, y2]
-            const [x1, y1, x2, y2] = s.data;
-            const rx = Math.min(x1, x2);
-            const ry = Math.min(y1, y2);
-            const rw = Math.abs(x2 - x1);
-            const rh = Math.abs(y2 - y1);
-            o.fillRect(rx, ry, rw, rh);
-        }
-
-        else if (s.type === 1) {
-            // Rotated Rectangle: [x1, y1, x2, y2, angle]
-            const [x1, y1, x2, y2, angle] = s.data;
-            const cx = (x1 + x2) / 2;
-            const cy = (y1 + y2) / 2;
-            const w = Math.abs(x2 - x1);
-            const h = Math.abs(y2 - y1);
-            
-            o.save();
-            o.translate(cx, cy);
-            o.rotate((angle || 0) * Math.PI / 180);
-            o.fillRect(-w / 2, -h / 2, w, h);
-            o.restore();
-        }
-
-        else if (s.type === 2) {
-            // Triangle: [x1, y1, x2, y2, x3, y3]
-            const [A, B, C, D, E, F] = s.data;
-            o.beginPath();
-            o.moveTo(A, B);
-            o.lineTo(C, D);
-            o.lineTo(E, F);
-            o.closePath();
-            o.fill();
-        }
-
-        else if (s.type === 3) {
-            // Ellipse (non-rotated): [cx, cy, rx, ry]
-            const [cx, cy, rx, ry] = s.data;
-            o.beginPath();
-            o.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
-            o.fill();
-        }
-
-        else if (s.type === 4) {
-            // Rotated Ellipse: [cx, cy, rx, ry, angle]
-            const [cx, cy, rx, ry, ang] = s.data;
-            o.save();
-            o.translate(cx, cy);
-            o.rotate((ang || 0) * Math.PI / 180);
-            o.beginPath();
-            o.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
-            o.fill();
-            o.restore();
-        }
-
-        else if (s.type === 5) {
-            // Circle: [cx, cy, r]
-            const [cx, cy, rad] = s.data;
-            o.beginPath();
-            o.arc(cx, cy, rad, 0, Math.PI * 2);
-            o.fill();
-        }
-
-        else if (s.type === 6) {
-            // Line: [x1, y1, x2, y2]
-            const [x1, y1, x2, y2] = s.data;
-            o.lineWidth = 1;
-            o.beginPath();
-            o.moveTo(x1, y1);
-            o.lineTo(x2, y2);
-            o.stroke();
-        }
-
-        else if (s.type === 7) {
-            // Quadratic Bezier: [x1, y1, cx, cy, x2, y2]
-            const [x1, y1, cx, cy, x2, y2] = s.data;
-            o.lineWidth = 1;
-            o.beginPath();
-            o.moveTo(x1, y1);
-            o.quadraticCurveTo(cx, cy, x2, y2);
-            o.stroke();
-        }
+        const col = `rgba(${r},${g},${b},${a / 255})`;
+        o.beginPath();
+        const mode = traceShape(o, s);
+        if (mode === "fill") { o.fillStyle = col; o.fill(); }
+        else if (mode === "stroke") { o.strokeStyle = col; o.stroke(); }
     });
 
+    lastRenderCanvas = off;
     ctx.drawImage(off, x, y, img.w * scale, img.h * scale);
 }
 
@@ -8700,6 +8693,7 @@ geometrize_shape_ShapeTypes.QUADRATIC_BEZIER = 7;
 </script>
 
 <!-- ==================== LINE DRAWING MODULE ==================== -->
+<script src="clean-outline.js"></script>
 <script>
 (function() {
     'use strict';
@@ -8727,6 +8721,93 @@ geometrize_shape_ShapeTypes.QUADRATIC_BEZIER = 7;
         document.getElementById('ldWeightVal').textContent = e.target.value;
     });
 
+    // ---- Clean Outline: the client's tracing recipe (clean-outline.js) ----
+    // The slow part runs once per image; the sliders then redraw live.
+    const coEls = { low: 'coLow', high: 'coHigh', minSize: 'coMinSize', thickness: 'coThickness' };
+    for (const k in coEls) coEls[k] = document.getElementById(coEls[k]);
+    let outlineState = null, outlineFile = null, outlineDrawn = false, redrawQueued = false;
+
+    const isOutlineStyle = () => lineDrawingStyle.value === 'outline';
+    function outlineOpts() {
+        return { low: +coEls.low.value, high: +coEls.high.value, minSize: +coEls.minSize.value, thickness: +coEls.thickness.value };
+    }
+    function syncOutlineLabels() {
+        for (const k in coEls) document.getElementById(coEls[k].id + 'Val').textContent = coEls[k].value;
+    }
+    // Faint edges must stay below strong edges: push the other slider along.
+    function keepThresholdOrder(changed) {
+        const lo = coEls.low, hi = coEls.high;
+        if (+lo.value < +hi.value) return;
+        if (changed === 'low') hi.value = Math.min(+hi.max, +lo.value + 1);
+        else lo.value = Math.max(+lo.min, +hi.value - 1);
+    }
+    // Show only the controls that apply to the chosen style.
+    function syncStyleControls() {
+        const outline = isOutlineStyle();
+        document.querySelectorAll('[data-ld-outline]').forEach(el => el.toggleAttribute('data-ld-hidden', !outline));
+        document.querySelectorAll('[data-ld-classic]').forEach(el => el.toggleAttribute('data-ld-hidden', outline));
+    }
+    function queueOutlineRedraw() {
+        if (!outlineDrawn || !isOutlineStyle() || !outlineState || outlineFile !== lineDrawingImageInput.files[0]) return;
+        if (redrawQueued) return;
+        redrawQueued = true;
+        // Next frame while dragging; the timer covers a backgrounded tab (rAF paused).
+        let done = false;
+        const run = () => { if (done) return; done = true; redrawQueued = false; drawOutline(); };
+        requestAnimationFrame(run);
+        setTimeout(run, 32);
+    }
+    for (const k in coEls) {
+        coEls[k].addEventListener('input', () => { keepThresholdOrder(k); syncOutlineLabels(); queueOutlineRedraw(); });
+    }
+    document.querySelectorAll('[data-co-preset]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            let preset = {};
+            try { preset = JSON.parse(btn.dataset.coPreset); } catch (_) {}
+            for (const k in preset) if (coEls[k]) coEls[k].value = preset[k];
+            syncOutlineLabels();
+            queueOutlineRedraw();
+        });
+    });
+    lineDrawingStyle.addEventListener('change', syncStyleControls);
+    lineDrawingGrid.addEventListener('change', queueOutlineRedraw);
+    syncStyleControls();
+    syncOutlineLabels();
+
+    function drawOutline() {
+        const o = outlineOpts();
+        const { w, h } = outlineState;
+        const result = window.CleanOutline.render(outlineState, o);
+        if (lineDrawingGrid.checked) addGridLines(result, w, h);
+        lineDrawingFullSize = grayToCanvas(result, w, h);
+
+        let dw = w, dh = h;
+        if (w > MAX_CANVAS_WIDTH || h > MAX_CANVAS_HEIGHT) {
+            const ratio = Math.min(MAX_CANVAS_WIDTH / w, MAX_CANVAS_HEIGHT / h);
+            dw = Math.floor(w * ratio);
+            dh = Math.floor(h * ratio);
+        }
+        mainCanvas.width = dw;
+        mainCanvas.height = dh;
+        // Preview = the exact output scaled to fit; Download PNG is full size.
+        const mctx = mainCanvas.getContext('2d');
+        mctx.imageSmoothingQuality = 'high';
+        mctx.drawImage(lineDrawingFullSize, 0, 0, dw, dh);
+
+        downloadBtn.style.display = 'block';
+        statusDiv.textContent = `Clean outline ${w}x${h} · edges ${o.low}/${o.high} · specks under ${o.minSize}px removed · thickness ${o.thickness}`
+            + (outlineState.exact ? '' : ' · approximate (server unavailable)');
+        statusDiv.style.color = outlineState.exact ? '#4CAF50' : '#ff9800';
+        outlineDrawn = true;
+    }
+
+    // Exact (OpenCV on the server) first; in-browser approximation if unreachable.
+    async function prepareOutline(file) {
+        try { return await window.CleanOutline.prepareFromServer(API_BASE, file); }
+        catch (err) { console.warn('Clean outline: server unavailable, using in-browser approximation', err); }
+        return window.CleanOutline.prepareImage(await loadImageFile(file));
+    }
+
     generateBtn.addEventListener('click', async () => {
         const file = lineDrawingImageInput.files[0];
         if (!file) {
@@ -8734,20 +8815,38 @@ geometrize_shape_ShapeTypes.QUADRATIC_BEZIER = 7;
             statusDiv.style.color = '#f44336';
             return;
         }
-        
+
         statusDiv.textContent = 'Generating line drawing...';
         statusDiv.style.color = '#ff9800';
         generateBtn.disabled = true;
-        
+
         const style = lineDrawingStyle.value;
         const detail = parseInt(lineDrawingDetail.value);
         const lineWeight = parseInt(lineDrawingWeight.value);
         const showGrid = lineDrawingGrid.checked;
         const outlineOnly = lineDrawingOutlineOnly.checked;
-        
+
+        if (style === 'outline') {
+            try {
+                if (!window.CleanOutline) throw new Error('clean-outline.js is not loaded');
+                if (outlineFile !== file) {
+                    outlineState = await prepareOutline(file);
+                    outlineFile = file;
+                }
+                drawOutline();
+            } catch (error) {
+                statusDiv.textContent = 'Error: ' + error.message;
+                statusDiv.style.color = '#f44336';
+                console.error(error);
+            }
+            generateBtn.disabled = false;
+            return;
+        }
+        outlineDrawn = false;
+
         try {
             let resultImg;
-            
+
             // Use API for sketch/detailed (only when not outline-only), client-side otherwise
             if (!outlineOnly && (style === 'sketch' || style === 'detailed')) {
                 try {
@@ -8790,6 +8889,38 @@ geometrize_shape_ShapeTypes.QUADRATIC_BEZIER = 7;
         });
     }
     
+    function loadImageFile(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = reject;
+                img.src = e.target.result;
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // Gray pixels (0..255) -> an opaque canvas.
+    function grayToCanvas(result, w, h) {
+        const outCanvas = document.createElement('canvas');
+        outCanvas.width = w;
+        outCanvas.height = h;
+        const outCtx = outCanvas.getContext('2d');
+        const outData = outCtx.createImageData(w, h);
+        for (let i = 0; i < result.length; i++) {
+            const v = result[i] | 0;
+            outData.data[i * 4] = v;
+            outData.data[i * 4 + 1] = v;
+            outData.data[i * 4 + 2] = v;
+            outData.data[i * 4 + 3] = 255;
+        }
+        outCtx.putImageData(outData, 0, 0);
+        return outCanvas;
+    }
+
     async function generateClientSide(file, style, detail, lineWeight, showGrid, outlineOnly) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -8878,21 +9009,8 @@ geometrize_shape_ShapeTypes.QUADRATIC_BEZIER = 7;
         if (showGrid) addGridLines(result, w, h);
         
         // Convert to canvas image - SYNCHRONOUS to avoid blank canvas
-        const outCanvas = document.createElement('canvas');
-        outCanvas.width = w;
-        outCanvas.height = h;
-        const outCtx = outCanvas.getContext('2d');
-        const outData = outCtx.createImageData(w, h);
-        
-        for (let i = 0; i < result.length; i++) {
-            const v = result[i] | 0;
-            outData.data[i * 4] = v;
-            outData.data[i * 4 + 1] = v;
-            outData.data[i * 4 + 2] = v;
-            outData.data[i * 4 + 3] = 255;
-        }
-        outCtx.putImageData(outData, 0, 0);
-        
+        const outCanvas = grayToCanvas(result, w, h);
+
         // Create image synchronously using canvas directly
         const resultImg = new Image();
         resultImg.width = w;
