@@ -483,13 +483,15 @@
                         </span>
                      </div>
 
-                     <div class="grid md:grid-cols-2 gap-x-8 gap-y-7">
+                     <!-- Explicit grid: the compiled CSS has no gap-x-8, so the columns need inline spacing. -->
+                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 28px 48px;">
                         <!-- Style -->
                         <div>
                            <h6 class="text-neutral-4 text-xs leading-6 font-bold uppercase tracking-wider mb-3">Style</h6>
                            <div class="relative">
                               <select id="lineDrawingStyle" class="w-full h-12 py-3 pl-4 pr-10 rounded-xl bg-[#F4F4F4] dark:bg-neutral-8 border border-[#F4F4F4] dark:border-neutral-6 text-neutral-7 dark:text-neutral-1 text-[15px] font-semibold -tracking-[0.15px] appearance-none focus:outline-none cursor-pointer">
                                  <option value="outline" selected>Clean Outline (tracing)</option>
+                                 <option value="ai">AI Line Art (traced from photo)</option>
                                  <option value="stencil">Stencil (Outline Only)</option>
                                  <option value="sketch">Pencil Sketch</option>
                                  <option value="detailed">Detailed Sketch</option>
@@ -517,6 +519,23 @@
                            </div>
                         </div>
 
+                        <!-- AI Line Art: choose how much the AI decides, then fine-tune with the sliders below -->
+                        <div data-ld-ai class="hidden" style="grid-column: 1 / -1;">
+                           <h6 class="text-neutral-4 text-xs leading-6 font-bold uppercase tracking-wider mb-3">AI amount</h6>
+                           <div class="flex items-center gap-4 flex-wrap">
+                              <div class="relative" style="flex: 1 1 320px;">
+                                 <select id="aiMode" class="w-full h-12 py-3 pl-4 pr-10 rounded-xl bg-[#F4F4F4] dark:bg-neutral-8 border border-[#F4F4F4] dark:border-neutral-6 text-neutral-7 dark:text-neutral-1 text-[15px] font-semibold -tracking-[0.15px] appearance-none focus:outline-none cursor-pointer">
+                                    <option value="ai" selected>AI drawing — clean lines, aligned to the photo</option>
+                                    <option value="snap">AI drawing, snapped to the photo's edges where they agree</option>
+                                    <option value="photo">Photo edges only — pixel-exact, where the AI drew</option>
+                                 </select>
+                                 <span class="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-4 pointer-events-none"><i class="fa-regular fa-chevron-down"></i></span>
+                              </div>
+                              <button type="button" id="aiFreshBtn" class="theme-btn-regular style-2 inline-flex! items-center justify-center gap-2">New AI version</button>
+                           </div>
+                           <p class="text-neutral-4 text-xs font-semibold mt-2">An AI draws the outlines that matter and the drawing is lined up with your photo. Generating takes about 10–20 seconds; the settings below update instantly.</p>
+                        </div>
+
                         <!-- Detail -->
                         <div data-ld-classic>
                            <div class="flex items-center justify-between mb-3">
@@ -536,7 +555,7 @@
                         </div>
 
                         <!-- Clean Outline settings (the drawing updates live as these move) -->
-                        <div data-ld-outline class="hidden">
+                        <div data-ld-outline data-ld-edges class="hidden">
                            <div class="flex items-center justify-between mb-3">
                               <h6 class="text-neutral-4 text-xs leading-6 font-bold uppercase tracking-wider">Faint Edges</h6>
                               <span class="text-neutral-6 dark:text-neutral-1 text-sm font-bold font-mono" id="coLowVal">40</span>
@@ -544,7 +563,7 @@
                            <input id="coLow" type="range" title="outline-low-threshold" class="range-slider w-full cursor-pointer" min="5" max="200" value="40">
                            <p class="text-neutral-4 text-xs font-semibold mt-2">Lower picks up more faint detail.</p>
                         </div>
-                        <div data-ld-outline class="hidden">
+                        <div data-ld-outline data-ld-edges class="hidden">
                            <div class="flex items-center justify-between mb-3">
                               <h6 class="text-neutral-4 text-xs leading-6 font-bold uppercase tracking-wider">Strong Edges</h6>
                               <span class="text-neutral-6 dark:text-neutral-1 text-sm font-bold font-mono" id="coHighVal">100</span>
@@ -573,11 +592,13 @@
                      <!-- Clean Outline quick settings: each sets only its own slider(s) -->
                      <div data-ld-outline class="hidden flex items-center gap-2 flex-wrap" style="margin-top: 20px;">
                         <span class="text-neutral-4 text-xs leading-6 font-bold uppercase tracking-wider" style="margin-right: 4px;">Quick</span>
-                        <button type="button" data-co-preset='{"low":20,"high":60}' class="text-neutral-4 hover:text-neutral-6 dark:hover:text-neutral-1 text-xs font-bold px-3 py-1.5 rounded-full bg-[#F4F4F4] dark:bg-neutral-8 cursor-pointer">More faint details</button>
-                        <button type="button" data-co-preset='{"low":70,"high":150}' class="text-neutral-4 hover:text-neutral-6 dark:hover:text-neutral-1 text-xs font-bold px-3 py-1.5 rounded-full bg-[#F4F4F4] dark:bg-neutral-8 cursor-pointer">Fewer lines</button>
+                        <button type="button" data-ld-edges data-co-preset='{"low":20,"high":60}' class="text-neutral-4 hover:text-neutral-6 dark:hover:text-neutral-1 text-xs font-bold px-3 py-1.5 rounded-full bg-[#F4F4F4] dark:bg-neutral-8 cursor-pointer">More faint details</button>
+                        <button type="button" data-ld-edges data-co-preset='{"low":70,"high":150}' class="text-neutral-4 hover:text-neutral-6 dark:hover:text-neutral-1 text-xs font-bold px-3 py-1.5 rounded-full bg-[#F4F4F4] dark:bg-neutral-8 cursor-pointer">Fewer lines</button>
                         <button type="button" data-co-preset='{"minSize":60}' class="text-neutral-4 hover:text-neutral-6 dark:hover:text-neutral-1 text-xs font-bold px-3 py-1.5 rounded-full bg-[#F4F4F4] dark:bg-neutral-8 cursor-pointer">Remove more specks</button>
                         <button type="button" data-co-preset='{"thickness":2}' class="text-neutral-4 hover:text-neutral-6 dark:hover:text-neutral-1 text-xs font-bold px-3 py-1.5 rounded-full bg-[#F4F4F4] dark:bg-neutral-8 cursor-pointer">Bolder lines</button>
-                        <button type="button" data-co-preset='{"low":40,"high":100,"minSize":25,"thickness":1}' class="text-theme-primary text-xs font-bold px-3 py-1.5 rounded-full cursor-pointer">Reset</button>
+                        <button type="button" data-co-preset="reset" class="text-theme-primary text-xs font-bold px-3 py-1.5 rounded-full cursor-pointer">Reset</button>
+                     </div>
+
                      </div>
 
                      <div class="flex items-center gap-4 flex-wrap mt-8">
@@ -589,6 +610,13 @@
                         </button>
                      </div>
                      <div id="lineDrawingStatus" class="text-neutral-4 text-sm font-semibold mt-4 text-center"></div>
+
+                     <!-- Live preview of the drawing, next to the controls (the full-size result is also shown in Images Preview above) -->
+                     <div data-ld-preview class="hidden" style="margin-top: 16px;">
+                        <h6 class="text-neutral-4 text-xs leading-6 font-bold uppercase tracking-wider mb-3">Drawing preview</h6>
+                        <canvas id="lineDrawingPreview" class="w-full" style="display: block; max-height: 420px; object-fit: contain; background: #fff; border-radius: 12px; border: 1px solid #ececec;"></canvas>
+                        <p class="text-neutral-4 text-xs font-semibold mt-2 text-center">Updates live as you change the settings · Download PNG saves the full-size file</p>
+                     </div>
                   </div>
                </section>
                <!-- Drawing panel end -->

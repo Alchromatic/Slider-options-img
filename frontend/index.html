@@ -1560,6 +1560,7 @@ canvas.picking { cursor: crosshair; }
             <label style="font-size: 11px; color: #666;">Style:</label>
             <select id="lineDrawingStyle" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;">
                 <option value="outline" selected>Clean Outline (tracing)</option>
+                <option value="ai">AI Line Art (traced from photo)</option>
                 <option value="stencil">Stencil (Outline Only)</option>
                 <option value="sketch">Pencil Sketch</option>
                 <option value="detailed">Detailed Sketch</option>
@@ -1574,12 +1575,12 @@ canvas.picking { cursor: crosshair; }
     </div>
     <!-- Clean Outline settings (the drawing updates live as these move) -->
     <div data-ld-outline style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-        <div>
+        <div data-ld-edges>
             <label style="font-size: 11px; color: #666;">Faint Edges: <span id="coLowVal">40</span></label>
             <input type="range" id="coLow" min="5" max="200" value="40" style="width: 100%;">
             <div style="font-size: 10px; color: #999;">Lower picks up more faint detail.</div>
         </div>
-        <div>
+        <div data-ld-edges>
             <label style="font-size: 11px; color: #666;">Strong Edges: <span id="coHighVal">100</span></label>
             <input type="range" id="coHigh" min="10" max="300" value="100" style="width: 100%;">
             <div style="font-size: 10px; color: #999;">Higher keeps only the strongest lines.</div>
@@ -1596,11 +1597,24 @@ canvas.picking { cursor: crosshair; }
         </div>
         <div style="grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
             <span style="font-size: 11px; color: #666; font-weight: bold;">Quick:</span>
-            <button type="button" class="co-preset" data-co-preset='{"low":20,"high":60}'>More faint details</button>
-            <button type="button" class="co-preset" data-co-preset='{"low":70,"high":150}'>Fewer lines</button>
+            <button type="button" class="co-preset" data-ld-edges data-co-preset='{"low":20,"high":60}'>More faint details</button>
+            <button type="button" class="co-preset" data-ld-edges data-co-preset='{"low":70,"high":150}'>Fewer lines</button>
             <button type="button" class="co-preset" data-co-preset='{"minSize":60}'>Remove more specks</button>
             <button type="button" class="co-preset" data-co-preset='{"thickness":2}'>Bolder lines</button>
-            <button type="button" class="co-preset" data-co-preset='{"low":40,"high":100,"minSize":25,"thickness":1}'>Reset</button>
+            <button type="button" class="co-preset" data-co-preset="reset">Reset</button>
+        </div>
+        <!-- AI Line Art: an AI draws the outlines; "AI amount" sets how much the photo's own edges take over -->
+        <div data-ld-ai style="grid-column: 1 / -1;">
+            <div style="font-size: 10px; color: #999; margin-bottom: 4px;">An AI draws the outlines that matter and the drawing is lined up with your photo. Takes about 10–20 seconds.</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
+                <label style="font-size: 11px; color: #666;">AI amount:</label>
+                <select id="aiMode" style="flex: 1 1 220px; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;">
+                    <option value="ai" selected>AI drawing — clean lines, aligned to the photo</option>
+                    <option value="snap">AI drawing, snapped to the photo's edges where they agree</option>
+                    <option value="photo">Photo edges only — pixel-exact, where the AI drew</option>
+                </select>
+                <button type="button" class="co-preset" id="aiFreshBtn">New AI version</button>
+            </div>
         </div>
     </div>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
@@ -8721,15 +8735,35 @@ geometrize_shape_ShapeTypes.QUADRATIC_BEZIER = 7;
         document.getElementById('ldWeightVal').textContent = e.target.value;
     });
 
-    // ---- Clean Outline: the client's tracing recipe (clean-outline.js) ----
-    // The slow part runs once per image; the sliders then redraw live.
+    // ---- Clean Outline + AI Line Art (clean-outline.js) ----
+    // Clean Outline is the client's outline.py; AI Line Art keeps only the photo's
+    // edges that an AI drawing marks. The slow part runs once per image; the
+    // sliders then redraw live. Each style keeps its own slider values.
     const coEls = { low: 'coLow', high: 'coHigh', minSize: 'coMinSize', thickness: 'coThickness' };
     for (const k in coEls) coEls[k] = document.getElementById(coEls[k]);
-    let outlineState = null, outlineFile = null, outlineDrawn = false, redrawQueued = false;
+    const aiModeEl = document.getElementById('aiMode'), aiFreshBtn = document.getElementById('aiFreshBtn');
+    const AI_MODE_TEXT = {
+        ai:    'AI drawing, aligned to your photo',
+        snap:  "AI drawing, snapped to your photo's edges where they agree",
+        photo: 'every line follows an edge in your photo',
+    };
+    const STYLE_DEFAULTS = {
+        outline: { low: 40, high: 100, minSize: 25, thickness: 1 },
+        ai:      { low: 10, high: 30, minSize: 25, thickness: 1 }, // the AI band already drops texture
+    };
+    const prepared = { outline: { state: null, file: null }, ai: { state: null, file: null } };
+    const styleValues = {};
+    let shownStyle = lineDrawingStyle.value;
+    let drawnStyle = null, redrawQueued = false;
 
-    const isOutlineStyle = () => lineDrawingStyle.value === 'outline';
+    // 'outline' / 'ai' when a tracing style is selected, else null.
+    const traceStyle = () => (STYLE_DEFAULTS[lineDrawingStyle.value] ? lineDrawingStyle.value : null);
     function outlineOpts() {
         return { low: +coEls.low.value, high: +coEls.high.value, minSize: +coEls.minSize.value, thickness: +coEls.thickness.value };
+    }
+    function setOutlineOpts(values) {
+        for (const k in values) if (coEls[k]) coEls[k].value = values[k];
+        syncOutlineLabels();
     }
     function syncOutlineLabels() {
         for (const k in coEls) document.getElementById(coEls[k].id + 'Val').textContent = coEls[k].value;
@@ -8741,14 +8775,24 @@ geometrize_shape_ShapeTypes.QUADRATIC_BEZIER = 7;
         if (changed === 'low') hi.value = Math.min(+hi.max, +lo.value + 1);
         else lo.value = Math.max(+lo.min, +hi.value - 1);
     }
-    // Show only the controls that apply to the chosen style.
+    // Show only the controls that apply to the chosen style, and swap in that
+    // style's slider values.
     function syncStyleControls() {
-        const outline = isOutlineStyle();
-        document.querySelectorAll('[data-ld-outline]').forEach(el => el.toggleAttribute('data-ld-hidden', !outline));
-        document.querySelectorAll('[data-ld-classic]').forEach(el => el.toggleAttribute('data-ld-hidden', outline));
+        const style = traceStyle();
+        if (STYLE_DEFAULTS[shownStyle]) styleValues[shownStyle] = outlineOpts();
+        if (style && style !== shownStyle) setOutlineOpts(styleValues[style] || STYLE_DEFAULTS[style]);
+        shownStyle = lineDrawingStyle.value;
+        document.querySelectorAll('[data-ld-outline]').forEach(el => el.toggleAttribute('data-ld-hidden', !style));
+        document.querySelectorAll('[data-ld-ai]').forEach(el => el.toggleAttribute('data-ld-hidden', style !== 'ai'));
+        document.querySelectorAll('[data-ld-classic]').forEach(el => el.toggleAttribute('data-ld-hidden', !!style));
+        // Faint/Strong Edges (and their quick buttons) do nothing in "AI drawing" mode.
+        const edgesOff = style === 'ai' && (!aiModeEl || aiModeEl.value === 'ai');
+        document.querySelectorAll('[data-ld-edges]').forEach(el => el.toggleAttribute('data-ld-hidden', edgesOff));
     }
+    if (aiModeEl) aiModeEl.addEventListener('change', syncStyleControls);
     function queueOutlineRedraw() {
-        if (!outlineDrawn || !isOutlineStyle() || !outlineState || outlineFile !== lineDrawingImageInput.files[0]) return;
+        const style = traceStyle(), p = style && prepared[style];
+        if (!p || !p.state || drawnStyle !== style || p.file !== lineDrawingImageInput.files[0]) return;
         if (redrawQueued) return;
         redrawQueued = true;
         // Next frame while dragging; the timer covers a backgrounded tab (rAF paused).
@@ -8763,21 +8807,24 @@ geometrize_shape_ShapeTypes.QUADRATIC_BEZIER = 7;
     document.querySelectorAll('[data-co-preset]').forEach(btn => {
         btn.addEventListener('click', () => {
             let preset = {};
-            try { preset = JSON.parse(btn.dataset.coPreset); } catch (_) {}
-            for (const k in preset) if (coEls[k]) coEls[k].value = preset[k];
-            syncOutlineLabels();
+            if (btn.dataset.coPreset === 'reset') preset = STYLE_DEFAULTS[traceStyle() || 'outline'];
+            else try { preset = JSON.parse(btn.dataset.coPreset); } catch (_) {}
+            setOutlineOpts(preset);
             queueOutlineRedraw();
         });
     });
     lineDrawingStyle.addEventListener('change', syncStyleControls);
     lineDrawingGrid.addEventListener('change', queueOutlineRedraw);
+    if (aiModeEl) aiModeEl.addEventListener('change', queueOutlineRedraw);
     syncStyleControls();
     syncOutlineLabels();
 
     function drawOutline() {
+        const style = traceStyle(), state = prepared[style].state;
         const o = outlineOpts();
-        const { w, h } = outlineState;
-        const result = window.CleanOutline.render(outlineState, o);
+        if (style === 'ai') o.aiMode = (aiModeEl && aiModeEl.value) || 'ai';
+        const { w, h } = state;
+        const result = window.CleanOutline.render(state, o);
         if (lineDrawingGrid.checked) addGridLines(result, w, h);
         lineDrawingFullSize = grayToCanvas(result, w, h);
 
@@ -8795,11 +8842,44 @@ geometrize_shape_ShapeTypes.QUADRATIC_BEZIER = 7;
         mctx.drawImage(lineDrawingFullSize, 0, 0, dw, dh);
 
         downloadBtn.style.display = 'block';
-        statusDiv.textContent = `Clean outline ${w}x${h} · edges ${o.low}/${o.high} · specks under ${o.minSize}px removed · thickness ${o.thickness}`
-            + (outlineState.exact ? '' : ' · approximate (server unavailable)');
-        statusDiv.style.color = outlineState.exact ? '#4CAF50' : '#ff9800';
-        outlineDrawn = true;
+        const edgesTxt = o.aiMode === 'ai' ? '' : `edges ${o.low}/${o.high} · `;
+        const settings = `${edgesTxt}specks under ${o.minSize}px removed · thickness ${o.thickness}`;
+        statusDiv.textContent = style === 'ai'
+            ? `AI Line Art ${w}x${h} · ${settings} · ${AI_MODE_TEXT[o.aiMode] || ''}`
+            : `Clean outline ${w}x${h} · ${settings}` + (state.exact ? '' : ' · approximate (server unavailable)');
+        statusDiv.style.color = state.exact ? '#4CAF50' : '#ff9800';
+        drawnStyle = style;
     }
+
+    // Clean Outline / AI Line Art. `fresh` (AI only) asks the AI again instead of
+    // reusing its last result for this file.
+    async function generateTrace(file, style, fresh) {
+        statusDiv.textContent = style === 'ai' ? 'AI is tracing your photo… (about 10–20 seconds)' : 'Generating line drawing...';
+        statusDiv.style.color = '#ff9800';
+        generateBtn.disabled = true;
+        if (aiFreshBtn) aiFreshBtn.disabled = true;
+        try {
+            if (!window.CleanOutline) throw new Error('clean-outline.js is not loaded');
+            const p = prepared[style];
+            if (p.file !== file || fresh) {
+                p.state = style === 'ai'
+                    ? await window.CleanOutline.prepareAiGuide(API_BASE, file, !!fresh, null)
+                    : await prepareOutline(file);
+                p.file = file;
+            }
+            drawOutline();
+        } catch (error) {
+            statusDiv.textContent = 'Error: ' + error.message;
+            statusDiv.style.color = '#f44336';
+            console.error(error);
+        }
+        generateBtn.disabled = false;
+        if (aiFreshBtn) aiFreshBtn.disabled = false;
+    }
+    if (aiFreshBtn) aiFreshBtn.addEventListener('click', () => {
+        const file = lineDrawingImageInput.files[0];
+        if (file && traceStyle() === 'ai') generateTrace(file, 'ai', true);
+    });
 
     // Exact (OpenCV on the server) first; in-browser approximation if unreachable.
     async function prepareOutline(file) {
@@ -8816,33 +8896,18 @@ geometrize_shape_ShapeTypes.QUADRATIC_BEZIER = 7;
             return;
         }
 
+        const style = lineDrawingStyle.value;
+        if (traceStyle()) { await generateTrace(file, style, false); return; }
+
         statusDiv.textContent = 'Generating line drawing...';
         statusDiv.style.color = '#ff9800';
         generateBtn.disabled = true;
 
-        const style = lineDrawingStyle.value;
         const detail = parseInt(lineDrawingDetail.value);
         const lineWeight = parseInt(lineDrawingWeight.value);
         const showGrid = lineDrawingGrid.checked;
         const outlineOnly = lineDrawingOutlineOnly.checked;
-
-        if (style === 'outline') {
-            try {
-                if (!window.CleanOutline) throw new Error('clean-outline.js is not loaded');
-                if (outlineFile !== file) {
-                    outlineState = await prepareOutline(file);
-                    outlineFile = file;
-                }
-                drawOutline();
-            } catch (error) {
-                statusDiv.textContent = 'Error: ' + error.message;
-                statusDiv.style.color = '#f44336';
-                console.error(error);
-            }
-            generateBtn.disabled = false;
-            return;
-        }
-        outlineDrawn = false;
+        drawnStyle = null;
 
         try {
             let resultImg;

@@ -2718,29 +2718,10 @@ async def line_drawing_outline_base(image: UploadFile = File(...)):
     return Response(content=buffer.tobytes(), media_type="image/png")
 
 
-# ---- 'outline' style: the client's outline.py, split at the slider boundary ----
-OUTLINE_MAX_DIM = 1600
-
-
-def clean_outline_base(gray: np.ndarray) -> np.ndarray:
-    """outline.py before Canny: standardize resolution, then suppress fine texture."""
-    scale = min(1.0, OUTLINE_MAX_DIM / max(gray.shape))
-    if scale < 1:
-        gray = cv2.resize(gray, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
-    return cv2.bilateralFilter(gray, 9, 60, 60)
-
-
-def clean_outline_lines(smooth: np.ndarray, low: int, high: int, min_size: int, thickness: int) -> np.ndarray:
-    """outline.py from Canny on: edges, drop short fragments, thicken. Black lines on white."""
-    edges = cv2.Canny(smooth, low, high, L2gradient=True)
-    count, labels, stats, _ = cv2.connectedComponentsWithStats(edges, connectivity=8)
-    keep = np.zeros(count, dtype=np.uint8)
-    keep[1:] = (stats[1:, cv2.CC_STAT_AREA] >= min_size).astype(np.uint8) * 255
-    edges = keep[labels]
-    if thickness > 1:
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (thickness, thickness))
-        edges = cv2.dilate(edges, kernel)
-    return 255 - edges
+# 'outline' style (the client's outline.py) and 'AI Line Art', which traces on top of it.
+from clean_outline import clean_outline_base, clean_outline_lines
+from ai_lineart_routes import router as ai_lineart_router
+app.include_router(ai_lineart_router)
 
 
 def pencil_sketch(gray: np.ndarray, detail: int, line_weight: int) -> np.ndarray:

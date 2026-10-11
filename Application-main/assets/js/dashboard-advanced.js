@@ -66,16 +66,36 @@
       weightEl.addEventListener("input", () => { weightVal.textContent = weightEl.value; });
    }
 
-   // ---- Clean Outline: the client's tracing recipe (clean-outline.js) ----
-   // The slow part runs once per image; the sliders then redraw live.
+   // ---- Clean Outline + AI Line Art (clean-outline.js) ----
+   // Clean Outline is the client's outline.py; AI Line Art keeps only the photo's
+   // edges that an AI drawing marks. The slow part runs once per image; the
+   // sliders then redraw live. Each style keeps its own slider values.
    const coEls = { low: $("#coLow"), high: $("#coHigh"), minSize: $("#coMinSize"), thickness: $("#coThickness") };
    const coVals = { low: $("#coLowVal"), high: $("#coHighVal"), minSize: $("#coMinSizeVal"), thickness: $("#coThicknessVal") };
-   let outlineState = null, outlineFile = null, outlineDrawn = false, redrawQueued = false;
+   const aiModeEl = $("#aiMode"), aiFreshBtn = $("#aiFreshBtn");
+   const AI_MODE_TEXT = {
+      ai:    "AI drawing, aligned to your photo",
+      snap:  "AI drawing, snapped to your photo's edges where they agree",
+      photo: "every line follows an edge in your photo",
+   };
+   const STYLE_DEFAULTS = {
+      outline: { low: 40, high: 100, minSize: 25, thickness: 1 },
+      ai:      { low: 10, high: 30, minSize: 25, thickness: 1 }, // the AI band already drops texture
+   };
+   const prepared = { outline: { state: null, file: null }, ai: { state: null, file: null } };
+   const styleValues = {};
+   let shownStyle = styleSel ? styleSel.value : "detailed";
+   let drawnStyle = null, redrawQueued = false;
 
-   const isOutlineStyle = () => !!styleSel && styleSel.value === "outline";
+   // "outline" / "ai" when a tracing style is selected, else null.
+   const traceStyle = () => (styleSel && STYLE_DEFAULTS[styleSel.value] ? styleSel.value : null);
    function outlineOpts() {
       const v = (k, d) => (coEls[k] ? parseInt(coEls[k].value, 10) : d);
       return { low: v("low", 40), high: v("high", 100), minSize: v("minSize", 25), thickness: v("thickness", 1) };
+   }
+   function setOutlineOpts(values) {
+      for (const k in values) if (coEls[k]) coEls[k].value = values[k];
+      syncOutlineLabels();
    }
    // Blue fill up to the thumb (main.js only paints sliders that have a value tooltip).
    function paintSliderFill(el) {
@@ -102,14 +122,24 @@
       if (changed === "low") hi.value = Math.min(+hi.max, +lo.value + 1);
       else lo.value = Math.max(+lo.min, +hi.value - 1);
    }
-   // Show only the controls that apply to the chosen style.
+   // Show only the controls that apply to the chosen style, and swap in that
+   // style's slider values.
    function syncStyleControls() {
-      const outline = isOutlineStyle();
-      document.querySelectorAll("[data-ld-outline]").forEach((el) => el.classList.toggle("hidden", !outline));
-      document.querySelectorAll("[data-ld-classic]").forEach((el) => el.classList.toggle("hidden", outline));
+      const style = traceStyle();
+      if (STYLE_DEFAULTS[shownStyle]) styleValues[shownStyle] = outlineOpts();
+      if (style && style !== shownStyle) setOutlineOpts(styleValues[style] || STYLE_DEFAULTS[style]);
+      shownStyle = styleSel ? styleSel.value : shownStyle;
+      document.querySelectorAll("[data-ld-outline]").forEach((el) => el.classList.toggle("hidden", !style));
+      document.querySelectorAll("[data-ld-ai]").forEach((el) => el.classList.toggle("hidden", style !== "ai"));
+      document.querySelectorAll("[data-ld-classic]").forEach((el) => el.classList.toggle("hidden", !!style));
+      // Faint/Strong Edges (and their quick buttons) do nothing in "AI drawing" mode.
+      const edgesOff = style === "ai" && (!aiModeEl || aiModeEl.value === "ai");
+      document.querySelectorAll("[data-ld-edges]").forEach((el) => el.classList.toggle("hidden", edgesOff));
    }
+   if (aiModeEl) aiModeEl.addEventListener("change", syncStyleControls);
    function queueOutlineRedraw() {
-      if (!outlineDrawn || !isOutlineStyle() || !outlineState || outlineFile !== currentSourceFile()) return;
+      const style = traceStyle(), p = style && prepared[style];
+      if (!p || !p.state || drawnStyle !== style || p.file !== currentSourceFile()) return;
       if (redrawQueued) return;
       redrawQueued = true;
       // Next frame while dragging; the timer covers a backgrounded tab (rAF paused).
@@ -125,17 +155,19 @@
    document.querySelectorAll("[data-co-preset]").forEach((btn) => {
       btn.addEventListener("click", () => {
          let preset = {};
-         try { preset = JSON.parse(btn.dataset.coPreset); } catch (_) {}
-         for (const k in preset) if (coEls[k]) coEls[k].value = preset[k];
-         syncOutlineLabels();
+         if (btn.dataset.coPreset === "reset") preset = STYLE_DEFAULTS[traceStyle() || "outline"];
+         else try { preset = JSON.parse(btn.dataset.coPreset); } catch (_) {}
+         setOutlineOpts(preset);
          queueOutlineRedraw();
       });
    });
    if (styleSel) styleSel.addEventListener("change", syncStyleControls);
    if (gridEl) gridEl.addEventListener("change", queueOutlineRedraw);
+   if (aiModeEl) aiModeEl.addEventListener("change", queueOutlineRedraw);
    syncStyleControls();
    syncOutlineLabels();
 
+   const panelPreview = $("#lineDrawingPreview");
    function showDrawing(canvas, msg) {
       fullSizeCanvas = canvas;
       mainCanvas.width  = canvas.width;
@@ -144,18 +176,34 @@
       mainCanvas.classList.remove("hidden");
       if (dropZone) dropZone.style.display = "none";
       if (downloadBtn) downloadBtn.classList.remove("hidden");
+      // Same drawing inside the panel, so changes are visible next to the controls
+      // (the main preview is far above on the page).
+      if (panelPreview) {
+         const scale = Math.min(1, 1000 / canvas.width);
+         panelPreview.width  = Math.round(canvas.width * scale);
+         panelPreview.height = Math.round(canvas.height * scale);
+         const pctx = panelPreview.getContext("2d");
+         pctx.imageSmoothingQuality = "high";
+         pctx.drawImage(canvas, 0, 0, panelPreview.width, panelPreview.height);
+         const wrap = panelPreview.closest("[data-ld-preview]");
+         if (wrap) wrap.classList.remove("hidden");
+      }
       setStatus(msg);
    }
 
    function drawOutline() {
+      const style = traceStyle(), state = prepared[style].state;
       const o = outlineOpts();
-      const { w, h } = outlineState;
-      const result = window.CleanOutline.render(outlineState, o);
+      if (style === "ai") o.aiMode = (aiModeEl && aiModeEl.value) || "ai";
+      const { w, h } = state;
+      const result = window.CleanOutline.render(state, o);
       if (gridEl && gridEl.checked) addGridLines(result, w, h);
-      showDrawing(grayToCanvas(result, w, h),
-         `Clean outline ${w}×${h} · edges ${o.low}/${o.high} · specks under ${o.minSize}px removed · thickness ${o.thickness}`
-         + (outlineState.exact ? "" : " · approximate (server unavailable)"));
-      outlineDrawn = true;
+      const edgesTxt = o.aiMode === "ai" ? "" : `edges ${o.low}/${o.high} · `;
+      const settings = `${edgesTxt}specks under ${o.minSize}px removed · thickness ${o.thickness}`;
+      showDrawing(grayToCanvas(result, w, h), style === "ai"
+         ? `AI Line Art ${w}×${h} · ${settings} · ${AI_MODE_TEXT[o.aiMode] || ""}`
+         : `Clean outline ${w}×${h} · ${settings}` + (state.exact ? "" : " · approximate (server unavailable)"));
+      drawnStyle = style;
    }
 
    // Exact (OpenCV on the server) first; in-browser approximation if unreachable.
@@ -168,43 +216,51 @@
       return window.CleanOutline.prepareImage(img);
    }
 
-   if (generateBtn) {
-      generateBtn.addEventListener("click", async () => {
-         const file = currentSourceFile();
-         if (!file) { setStatus("Upload an image in the preview above first.", "error"); return; }
-         if (!mainCanvas) { setStatus("Preview canvas missing.", "error"); return; }
+   // `fresh` (AI Line Art only) asks the AI again instead of reusing its last result.
+   async function generate(fresh) {
+      const file = currentSourceFile();
+      if (!file) { setStatus("Upload an image in the preview above first.", "error"); return; }
+      if (!mainCanvas) { setStatus("Preview canvas missing.", "error"); return; }
 
-         setStatus("Generating line drawing…", "info");
-         generateBtn.disabled = true;
+      const style = traceStyle();
+      setStatus(style === "ai" ? "AI is tracing your photo… (about 10–20 seconds)" : "Generating line drawing…", "info");
+      generateBtn.disabled = true;
+      if (aiFreshBtn) aiFreshBtn.disabled = true;
 
-         try {
-            const img = await loadImage(file);
-            if (isOutlineStyle()) {
-               if (!window.CleanOutline) throw new Error("clean-outline.js is not loaded");
-               if (outlineFile !== file) {
-                  outlineState = await prepareOutline(file, img);
-                  outlineFile = file;
-               }
-               drawOutline();
-            } else {
-               const result = processImage(
-                  img,
-                  styleSel ? styleSel.value : "detailed",
-                  parseInt(detailEl && detailEl.value, 10) || 80,
-                  parseInt(weightEl && weightEl.value, 10) || 2,
-                  !!(gridEl && gridEl.checked),
-                  !!(outlineEl && outlineEl.checked)
-               );
-               outlineDrawn = false;
-               showDrawing(result.canvas, `Line drawing generated (${result.width}×${result.height})`);
+      try {
+         if (style) {
+            if (!window.CleanOutline) throw new Error("clean-outline.js is not loaded");
+            const p = prepared[style];
+            if (p.file !== file || fresh) {
+               p.state = style === "ai"
+                  ? await window.CleanOutline.prepareAiGuide(
+                       (window.GM && window.GM.apiBase) || "https://alchromaticdemo.up.railway.app", file, !!fresh,
+                       window.Auth && window.Auth.getToken ? window.Auth.getToken() : null)
+                  : await prepareOutline(file, await loadImage(file));
+               p.file = file;
             }
-         } catch (err) {
-            console.error(err);
-            setStatus("Error: " + (err && err.message || err), "error");
+            drawOutline();
+         } else {
+            const result = processImage(
+               await loadImage(file),
+               styleSel ? styleSel.value : "detailed",
+               parseInt(detailEl && detailEl.value, 10) || 80,
+               parseInt(weightEl && weightEl.value, 10) || 2,
+               !!(gridEl && gridEl.checked),
+               !!(outlineEl && outlineEl.checked)
+            );
+            drawnStyle = null;
+            showDrawing(result.canvas, `Line drawing generated (${result.width}×${result.height})`);
          }
-         generateBtn.disabled = false;
-      });
+      } catch (err) {
+         console.error(err);
+         setStatus("Error: " + (err && err.message || err), "error");
+      }
+      generateBtn.disabled = false;
+      if (aiFreshBtn) aiFreshBtn.disabled = false;
    }
+   if (generateBtn) generateBtn.addEventListener("click", () => generate(false));
+   if (aiFreshBtn) aiFreshBtn.addEventListener("click", () => generate(true));
 
    if (downloadBtn) {
       downloadBtn.addEventListener("click", () => {

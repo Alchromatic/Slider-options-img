@@ -162,7 +162,68 @@
       return pts;
    }
 
+   // Binary dilation by a (2r+1)-square, via running sums (rows, then columns).
+   function boxDilate(src, w, h, r) {
+      const tmp = new Uint8Array(w * h), out = new Uint8Array(w * h);
+      for (let y = 0; y < h; y++) {
+         const o = y * w;
+         let run = 0;
+         for (let x = 0; x < Math.min(r, w); x++) run += src[o + x];
+         for (let x = 0; x < w; x++) {
+            if (x + r < w) run += src[o + x + r];
+            if (x - r - 1 >= 0) run -= src[o + x - r - 1];
+            tmp[o + x] = run > 0 ? 1 : 0;
+         }
+      }
+      for (let x = 0; x < w; x++) {
+         let run = 0;
+         for (let y = 0; y < Math.min(r, h); y++) run += tmp[y * w + x];
+         for (let y = 0; y < h; y++) {
+            if (y + r < h) run += tmp[(y + r) * w + x];
+            if (y - r - 1 >= 0) run -= tmp[(y - r - 1) * w + x];
+            out[y * w + x] = run > 0 ? 1 : 0;
+         }
+      }
+      return out;
+   }
+
+   // Zhang-Suen thinning: strokes of any width -> 1 px centre lines (1 = ink).
+   function thinLines(src, w, h) {
+      const img = Uint8Array.from(src);
+      const del = [];
+      let changed = true;
+      while (changed) {
+         changed = false;
+         for (let step = 0; step < 2; step++) {
+            del.length = 0;
+            for (let y = 1; y < h - 1; y++) {
+               for (let x = 1; x < w - 1; x++) {
+                  const i = y * w + x;
+                  if (!img[i]) continue;
+                  const p2 = img[i - w], p3 = img[i - w + 1], p4 = img[i + 1], p5 = img[i + w + 1];
+                  const p6 = img[i + w], p7 = img[i + w - 1], p8 = img[i - 1], p9 = img[i - w - 1];
+                  const B = p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9;
+                  if (B < 2 || B > 6) continue;
+                  let A = 0;
+                  if (!p2 && p3) A++; if (!p3 && p4) A++; if (!p4 && p5) A++; if (!p5 && p6) A++;
+                  if (!p6 && p7) A++; if (!p7 && p8) A++; if (!p8 && p9) A++; if (!p9 && p2) A++;
+                  if (A !== 1) continue;
+                  if (step === 0 ? (p2 * p4 * p6 || p4 * p6 * p8) : (p2 * p4 * p8 || p2 * p6 * p8)) continue;
+                  del.push(i);
+               }
+            }
+            if (del.length) { changed = true; for (const i of del) img[i] = 0; }
+         }
+      }
+      return img;
+   }
+
    // Slider-driven half: hysteresis thresholds, speck removal, thickness.
+   // With an AI guide, opts.aiMode picks how much the AI decides:
+   //   "photo"  only the photo's own edges inside the guide band (pixel-exact)
+   //   "snap"   the AI's strokes, each replaced by the photo's edge where the
+   //            photo clearly has one under it, kept as drawn where it doesn't
+   //   "ai"     the AI's drawing as drawn (aligned to the photo, thinned to 1 px)
    // Returns gray pixels: 0 = line, 255 = paper.
    function render(state, opts) {
       const o = Object.assign({}, DEFAULTS, opts || {});
@@ -192,26 +253,56 @@
          }
       }
 
-      // Drop 8-connected edge pieces smaller than minSize pixels.
+      const aiMode = state.guide ? (o.aiMode || "ai") : null;
+      const tol = Math.max(1, Math.round(state.tol || 10));
+      if (aiMode) state.thinGuide = state.thinGuide || thinLines(state.guide, w, h);
+
+      // AI Line Art: keep only the photo's edges that the AI guide marks.
+      if (state.band && aiMode !== "ai") for (let i = 0; i < n; i++) if (!state.band[i]) map[i] = 0;
+      // "ai": the drawing itself is the candidate set (sliders Faint/Strong don't apply).
+      if (aiMode === "ai") for (let i = 0; i < n; i++) map[i] = state.thinGuide[i] ? 2 : 0;
+
+      // 8-connected pieces of `src` (value 2) -> edges, keeping those with at
+      // least minSize pixels; `test(piece, count)` can veto or replace a piece.
       const edges = new Uint8Array(n);
       const seen = new Uint8Array(n), piece = new Int32Array(n);
-      for (let s = 0; s < n; s++) {
-         if (map[s] !== 2 || seen[s]) continue;
-         let count = 0; sp = 0;
-         stack[sp++] = s; seen[s] = 1;
-         while (sp) {
-            const i = stack[--sp], x = i % w, y = (i - x) / w;
-            piece[count++] = i;
-            for (let ny = y - 1; ny <= y + 1; ny++) {
-               if (ny < 0 || ny >= h) continue;
-               for (let nx = x - 1; nx <= x + 1; nx++) {
-                  if (nx < 0 || nx >= w) continue;
-                  const j = ny * w + nx;
-                  if (map[j] === 2 && !seen[j]) { seen[j] = 1; stack[sp++] = j; }
+      function keepPieces(src, test) {
+         seen.fill(0);
+         for (let s = 0; s < n; s++) {
+            if (src[s] !== 2 || seen[s]) continue;
+            let count = 0; sp = 0;
+            stack[sp++] = s; seen[s] = 1;
+            while (sp) {
+               const i = stack[--sp], x = i % w, y = (i - x) / w;
+               piece[count++] = i;
+               for (let ny = y - 1; ny <= y + 1; ny++) {
+                  if (ny < 0 || ny >= h) continue;
+                  for (let nx = x - 1; nx <= x + 1; nx++) {
+                     if (nx < 0 || nx >= w) continue;
+                     const j = ny * w + nx;
+                     if (src[j] === 2 && !seen[j]) { seen[j] = 1; stack[sp++] = j; }
+                  }
                }
             }
+            if (count >= o.minSize && (!test || test(piece, count))) for (let k = 0; k < count; k++) edges[piece[k]] = 1;
          }
-         if (count >= o.minSize) for (let k = 0; k < count; k++) edges[piece[k]] = 1;
+      }
+      keepPieces(map);
+
+      // "snap": each AI stroke that the photo doesn't back up (under 60% of it
+      // within tol of a kept photo edge) stays in as drawn, thinned to 1 px.
+      if (aiMode === "snap") {
+         const covered = boxDilate(edges, w, h, tol);
+         const guide2 = new Uint8Array(n);
+         for (let i = 0; i < n; i++) guide2[i] = state.guide[i] ? 2 : 0;
+         const photoEdges = edges.slice();
+         keepPieces(guide2, (pc, count) => {
+            let hit = 0;
+            for (let k = 0; k < count; k++) hit += covered[pc[k]];
+            return hit < 0.6 * count;
+         });
+         // the vetoed test only chose pieces; thin the ones added so they match
+         for (let i = 0; i < n; i++) if (edges[i] && !photoEdges[i] && !state.thinGuide[i]) edges[i] = 0;
       }
 
       // Thicken: dst(p) = max over kernel of src(p + offset).
@@ -255,26 +346,67 @@
       return prepare(grayFromRGBA(cx.getImageData(0, 0, w, h).data, w * h), w, h);
    }
 
-   // Exact path: upload the original file; the backend returns outline.py's
-   // smoothed image as a grayscale PNG (lossless), read back pixel for pixel.
-   async function prepareFromServer(apiBase, file) {
-      const fd = new FormData();
-      fd.append("image", file);
-      const res = await fetch(String(apiBase).replace(/\/$/, "") + "/line-drawing/outline-base", { method: "POST", body: fd });
-      if (!res.ok) throw new Error("outline-base: HTTP " + res.status);
-      const bmp = await createImageBitmap(await res.blob(), { colorSpaceConversion: "none", premultiplyAlpha: "none" });
+   // A grayscale PNG (Blob) read back pixel for pixel: { w, h, gray }.
+   async function readGrayPng(blob) {
+      const bmp = await createImageBitmap(blob, { colorSpaceConversion: "none", premultiplyAlpha: "none" });
       const w = bmp.width, h = bmp.height;
       const c = document.createElement("canvas");
       c.width = w; c.height = h;
       const cx = c.getContext("2d");
       cx.drawImage(bmp, 0, 0);
       if (bmp.close) bmp.close();
-      const d = cx.getImageData(0, 0, w, h).data, smooth = new Uint8Array(w * h);
-      for (let i = 0; i < smooth.length; i++) smooth[i] = d[i * 4]; // gray PNG: R = G = B
-      return fromSmoothed(smooth, w, h, true);
+      const d = cx.getImageData(0, 0, w, h).data, gray = new Uint8Array(w * h);
+      for (let i = 0; i < gray.length; i++) gray[i] = d[i * 4]; // gray PNG: R = G = B
+      return { w, h, gray };
+   }
+   const b64Blob = (b64) => new Blob([Uint8Array.from(atob(b64), (ch) => ch.charCodeAt(0))], { type: "image/png" });
+
+   // Exact path: upload the original file; the backend returns outline.py's
+   // smoothed image as a grayscale PNG (lossless).
+   async function prepareFromServer(apiBase, file) {
+      const fd = new FormData();
+      fd.append("image", file);
+      const res = await fetch(String(apiBase).replace(/\/$/, "") + "/line-drawing/outline-base", { method: "POST", body: fd });
+      if (!res.ok) throw new Error("outline-base: HTTP " + res.status);
+      const { w, h, gray } = await readGrayPng(await res.blob());
+      return fromSmoothed(gray, w, h, true);
    }
 
-   const api = { MAX_DIM, DEFAULTS, grayFromRGBA, prepare, prepareImage, prepareFromServer, fromSmoothed, render };
+   // AI Line Art: the backend asks an AI model which outlines matter and returns
+   // the same smoothed base plus the AI's aligned guide and the band around it.
+   // `fresh` asks the AI again instead of reusing the result for this file.
+   async function prepareAiGuide(apiBase, file, fresh, token) {
+      const fd = new FormData();
+      fd.append("image", file);
+      if (fresh) fd.append("fresh", "true");
+      let res;
+      try {
+         res = await fetch(String(apiBase).replace(/\/$/, "") + "/line-drawing/ai-guide", {
+            method: "POST", body: fd, headers: token ? { Authorization: "Bearer " + token } : {},
+         });
+      } catch (e) {
+         throw new Error("Couldn't reach the server for AI Line Art. Check your connection and try again.");
+      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+         const err = new Error(res.status === 404
+            ? "AI Line Art isn't available on this server yet (it needs the latest backend deployed)."
+            : data.detail || "AI Line Art failed (HTTP " + res.status + ")");
+         err.status = res.status;
+         throw err;
+      }
+      const base = await readGrayPng(b64Blob(data.base_png));
+      const band = await readGrayPng(b64Blob(data.band_png));
+      const guide = await readGrayPng(b64Blob(data.guide_png));
+      const state = fromSmoothed(base.gray, base.w, base.h, true);
+      state.band = band.gray.map((v) => (v > 127 ? 1 : 0));
+      state.guide = guide.gray.map((v) => (v < 128 ? 1 : 0));
+      state.tol = data.transform && data.transform.tolerance_px;
+      state.ai = { model: data.model, fit: data.fit, coverage: data.coverage, cached: data.cached };
+      return state;
+   }
+
+   const api = { MAX_DIM, DEFAULTS, grayFromRGBA, prepare, prepareImage, prepareFromServer, prepareAiGuide, fromSmoothed, render };
    if (typeof module !== "undefined" && module.exports) module.exports = api;
    else root.CleanOutline = api;
 })(typeof window !== "undefined" ? window : this);
