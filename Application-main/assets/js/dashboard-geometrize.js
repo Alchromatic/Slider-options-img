@@ -258,6 +258,17 @@
          ctx.shadowBlur = Math.max(6, canvas.width / 90);
          ctx.stroke();
          ctx.restore();
+         // Pick point: the exact spot the on-screen colour was read from.
+         if (picked && picked.shape === shapes[selectedIndex] && picked.x != null) {
+            const r = Math.max(5, canvas.width / 110);
+            ctx.save();
+            ctx.beginPath(); ctx.arc(picked.x, picked.y, r, 0, Math.PI * 2);
+            ctx.lineWidth = Math.max(4, canvas.width / 150); ctx.strokeStyle = "rgba(0,0,0,0.6)"; ctx.stroke();
+            ctx.lineWidth = Math.max(2, canvas.width / 300); ctx.strokeStyle = "#ffffff"; ctx.stroke();
+            ctx.beginPath(); ctx.arc(picked.x, picked.y, Math.max(1.5, r / 4), 0, Math.PI * 2);
+            ctx.fillStyle = "#FFC324"; ctx.fill();
+            ctx.restore();
+         }
       }
    }
 
@@ -406,6 +417,7 @@
       if (selType) {
          let label = `#${selectedIndex} · ${SHAPE_NAME[s.type] || s.type}`;
          if (pickList.length > 1) label += ` · ${pickPos + 1}/${pickList.length} here — click to cycle`;
+         if (picked && picked.shape === s && picked.x != null) label += ` · picked at ${Math.round(picked.x)}, ${Math.round(picked.y)}`;
          selType.textContent = label;
       }
       const hex6 = toHex6([r, g, b]);
@@ -462,7 +474,7 @@
       else { pickKey = key; pickPos = 0; }                                           // new spot → most visible first
       pickList = list;
       selectedIndex = list[pickPos];
-      picked = { shape: shapes[selectedIndex], seen };
+      picked = { shape: shapes[selectedIndex], seen, x, y };
       render();
       updateSelectionInfo();
    });

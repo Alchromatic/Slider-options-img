@@ -1935,6 +1935,10 @@ canvas.picking { cursor: crosshair; }
                 <span id="pickedRgbValue">-</span>
             </div>
             <div class="color-detail-item">
+                <label>Picked at (x, y)</label>
+                <span id="pickedAtValue">-</span>
+            </div>
+            <div class="color-detail-item">
                 <label>Shape Type</label>
                 <span id="shapeTypeValue">-</span>
             </div>
@@ -2818,6 +2822,7 @@ const colorPickerPanel = document.getElementById("colorPickerPanel");
 const colorPreviewBox = document.getElementById("colorPreviewBox");
 const pickedHexValue = document.getElementById("pickedHexValue");
 const pickedRgbValue = document.getElementById("pickedRgbValue");
+const pickedAtValue = document.getElementById("pickedAtValue");
 const shapeSwatch = document.getElementById("shapeSwatch");
 const shapeTypeValue = document.getElementById("shapeTypeValue");
 const shapeIndexValue = document.getElementById("shapeIndexValue");
@@ -4947,7 +4952,7 @@ function findShapesAtPoint(x, y) {
     return hits;
 }
 
-function displayShapeInfo(shape, index, seen) {
+function displayShapeInfo(shape, index, seen, pt) {
     const imgRect = getImageRect();
     const [r, g, b, a] = shape.color;
     // The picked colour is what's on screen at the click; the shape's own
@@ -4963,6 +4968,7 @@ function displayShapeInfo(shape, index, seen) {
     colorPreviewBox.style.backgroundColor = pickedHex;
     pickedHexValue.textContent = pickedHex;
     pickedRgbValue.textContent = `${pr}, ${pg}, ${pb}`;
+    pickedAtValue.textContent = pt ? `${Math.round(pt.x)}, ${Math.round(pt.y)}` : "-";
 
     shapeTypeValue.textContent = getShapeTypeName(shape.type);
     shapeIndexValue.textContent = index;
@@ -4981,7 +4987,7 @@ function displayShapeInfo(shape, index, seen) {
     positionValue.textContent = `${center.x.toFixed(1)}, ${center.y.toFixed(1)}`;
     scoreValue.textContent = shape.score?.toFixed(4) || "-";
 
-    highlightShape(shape, imgRect);
+    highlightShape(shape, imgRect, pt);
 }
 
 // Records traceShape() calls as an SVG path "d" string, scaled to the screen.
@@ -5004,7 +5010,7 @@ function svgPathRecorder(scale) {
     };
 }
 
-function highlightShape(shape, imgRect) {
+function highlightShape(shape, imgRect, pt) {
     clearShapeHighlight();
 
     // Create SVG overlay for precise shape outline
@@ -5041,6 +5047,19 @@ function highlightShape(shape, imgRect) {
     pathElement.appendChild(animate);
     
     svg.appendChild(pathElement);
+
+    // Pick point: the exact spot the on-screen colour was read from.
+    if (pt) {
+        const s = imgRect.scale, cx = pt.x * s, cy = pt.y * s;
+        const ring = (r, stroke, width, fill) => {
+            const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            c.setAttribute("cx", cx); c.setAttribute("cy", cy); c.setAttribute("r", r);
+            c.setAttribute("fill", fill || "none");
+            if (stroke) { c.setAttribute("stroke", stroke); c.setAttribute("stroke-width", width); }
+            svg.appendChild(c);
+        };
+        ring(7, "rgba(0,0,0,0.6)", 4); ring(7, "#ffffff", 2); ring(2, null, 0, "#00BCD4");
+    }
     regionOverlay.appendChild(svg);
 }
 
@@ -5074,7 +5093,8 @@ canvas.addEventListener("click", e => {
 
     const chosen = list[pickPosFE];
     selectedShapeIndex = chosen.index;
-    displayShapeInfo(chosen.shape, chosen.index, seen);
+    const ir = getImageRect();
+    displayShapeInfo(chosen.shape, chosen.index, seen, { x: (x - ir.x) / ir.scale, y: (y - ir.y) / ir.scale });
 
     // Hint that more overlapping shapes are available here.
     if (list.length > 1 && typeof shapeTypeValue !== 'undefined' && shapeTypeValue) {
