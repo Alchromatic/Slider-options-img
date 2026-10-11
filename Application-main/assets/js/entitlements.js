@@ -27,6 +27,12 @@
       if (t) h['Authorization'] = 'Bearer ' + t;
       return h;
    }
+   // The server rejected the saved login (expired, or signed with an old secret):
+   // drop it and send the user to sign in again instead of failing with an alert.
+   function sessionExpired() {
+      try { localStorage.removeItem('gm_access_token'); localStorage.removeItem('gm_user'); } catch (e) {}
+      window.location.href = 'signin.html?expired=1';
+   }
 
    const Billing = {
       apiBase: API_BASE,
@@ -36,6 +42,7 @@
          if (this.ent && !force) return this.ent;
          try {
             const res = await fetch(`${API_BASE}/api/billing/me`, { headers: authHeaders() });
+            if (res.status === 401 && token()) { sessionExpired(); return null; }
             if (res.ok) this.ent = await res.json();
          } catch (e) { /* offline → leave ent null (fail open) */ }
          return this.ent;
@@ -92,6 +99,7 @@
             headers: authHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify(body),
          });
+         if (res.status === 401) { sessionExpired(); return; }
          const data = await res.json().catch(() => ({}));
          if (!res.ok || !data.checkout_url) throw new Error(data.detail || 'Could not start checkout');
          window.location.href = data.checkout_url;

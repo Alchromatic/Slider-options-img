@@ -105,15 +105,23 @@
             const errEl = document.getElementById('signinError');
             const btn = document.getElementById('signinSubmit');
 
-            // Already signed in → check plan and route accordingly.
-            if (window.Auth && Auth.isAuthenticated()) {
-               window.location.href = 'pricing.html';
-               return;
-            }
-
             function showError(msg) {
                errEl.textContent = msg;
                errEl.classList.remove('hidden');
+            }
+
+            // signin.html?logout=1 always signs out (no dialog that the browser could block).
+            const params = new URLSearchParams(location.search);
+            if (window.Auth && params.has('logout')) Auth.logout(null);
+
+            // Already signed in → check plan and route accordingly. A session the
+            // server no longer accepts is cleared instead, so the form below works.
+            if (window.Auth) {
+               Auth.redirectIfSignedIn('pricing.html').then(function (redirecting) {
+                  if (!redirecting && (Auth.sessionExpired || params.has('expired'))) {
+                     showError('Your session has expired. Please sign in again.');
+                  }
+               });
             }
 
             document.getElementById('googleSigninBtn').addEventListener('click', function () {

@@ -609,9 +609,10 @@ def create_checkout_session(req: CheckoutRequest, request: Request):
         meta["credits"] = str(qty * plan.get("image_credits", 0))
 
     try:
+        # No payment_method_types: newer Stripe API versions reject it, and the
+        # accepted methods come from Dashboard → Settings → Payment methods.
         kwargs = dict(
             customer=customer_id,
-            payment_method_types=["card"],
             mode=mode,
             line_items=[{"price": price_id, "quantity": qty}],
             success_url=success_url,

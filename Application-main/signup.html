@@ -150,10 +150,8 @@
             const btn = document.getElementById('signupSubmit');
 
             // Already signed in → go to pricing (which bounces to dashboard if subscribed).
-            if (window.Auth && Auth.isAuthenticated()) {
-               window.location.href = 'pricing.html';
-               return;
-            }
+            // A session the server no longer accepts is cleared instead, so the form works.
+            if (window.Auth) Auth.redirectIfSignedIn('pricing.html');
 
             function showError(msg) {
                errEl.textContent = msg;

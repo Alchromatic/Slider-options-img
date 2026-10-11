@@ -34,13 +34,37 @@
          }
       },
 
+      /* True if the JWT's `exp` has passed (tokens last 7 days). Unreadable
+         tokens return false and are left for the server to judge. */
+      tokenExpired(token) {
+         try {
+            const part = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+            const payload = JSON.parse(atob(part));
+            return typeof payload.exp === 'number' && payload.exp * 1000 <= Date.now();
+         } catch (e) {
+            return false;
+         }
+      },
+
+      /* Signed in = a saved token that hasn't expired. An expired one is dropped,
+         so the sign-in page shows its form instead of bouncing to the app. */
       isAuthenticated() {
-         return !!this.getToken();
+         const token = this.getToken();
+         if (token && this.tokenExpired(token)) {
+            this.clearSession();
+            this.sessionExpired = true;
+            return false;
+         }
+         return !!token;
+      },
+
+      clearSession() {
+         localStorage.removeItem(TOKEN_KEY);
+         localStorage.removeItem(USER_KEY);
       },
 
       logout(redirect = 'signin.html') {
-         localStorage.removeItem(TOKEN_KEY);
-         localStorage.removeItem(USER_KEY);
+         this.clearSession();
          // the open composition (and other per-tab state) belongs to this user
          try { sessionStorage.clear(); } catch (e) {}
          if (redirect) window.location.href = redirect;
@@ -49,9 +73,30 @@
       /* Redirect to sign-in if there is no token. Call at the top of guarded pages. */
       requireAuth(redirect = 'signin.html') {
          if (!this.isAuthenticated()) {
-            window.location.href = redirect;
+            window.location.href = this.sessionExpired
+               ? redirect + (redirect.includes('?') ? '&' : '?') + 'expired=1'
+               : redirect;
             return false;
          }
+         return true;
+      },
+
+      /* For the sign-in / sign-up pages: go to `target` only if the server still
+         accepts the saved session. A rejected one (expired, or signed with an old
+         secret) is cleared so the form can be used. Resolves true if redirecting. */
+      async redirectIfSignedIn(target) {
+         if (!this.isAuthenticated()) return false;
+         try {
+            await this.me();
+         } catch (err) {
+            if (err.status === 401 || err.status === 404) {
+               this.clearSession();
+               this.sessionExpired = true;
+               return false;
+            }
+            // offline or server error: keep going, as before
+         }
+         window.location.href = target;
          return true;
       },
 
@@ -86,7 +131,11 @@
             headers: { Authorization: `Bearer ${token}` },
          });
          const data = await res.json().catch(() => ({}));
-         if (!res.ok) throw new Error(data.detail || 'Not authenticated');
+         if (!res.ok) {
+            const err = new Error(data.detail || 'Not authenticated');
+            err.status = res.status;
+            throw err;
+         }
          return data.user;
       },
    };
