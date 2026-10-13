@@ -385,11 +385,29 @@
       return [r, g, b];
    }
 
-   // All drawn shapes under (x,y) (skipping background index 0), ranked by how
-   // much each contributes to the colour on screen there: a shape's share is
-   // its opacity times whatever the shapes painted above it let through. So
-   // clicking the bridge picks the bridge stroke on top rather than a broad
-   // translucent stroke beneath it. Shapes hidden by the slider are skipped.
+   // Approximate pixel area of a shape (canvas space).
+   function shapeArea(s) {
+      const d = s.data;
+      switch (s.type) {
+         case 0: case 1: return Math.abs((d[2] - d[0]) * (d[3] - d[1]));
+         case 2: return Math.abs((d[0] * (d[3] - d[5]) + d[2] * (d[5] - d[1]) + d[4] * (d[1] - d[3])) / 2);
+         case 3: case 4: return Math.PI * Math.abs(d[2] * d[3]);
+         case 5: return Math.PI * d[2] * d[2];
+         case 6: case 7: return Math.hypot((d[2] || 0) - d[0], (d[3] || 0) - d[1]) * 6;
+         default: return Infinity;
+      }
+   }
+
+   // A stroke counts as visible at the click when its share of the on-screen
+   // colour (opacity x what the strokes above let through) is at least this
+   // fraction of the top stroke's share, and at least VISIBLE_MIN overall.
+   const VISIBLE_REL = 0.4, VISIBLE_MIN = 0.1;
+
+   // All drawn shapes under (x,y) (skipping background index 0). The visible
+   // ones come first, smallest first, so a small stroke seen through a big
+   // translucent shape painted over it wins over that big shape; strokes
+   // buried under opaque paint follow, most visible first. Shapes hidden by
+   // the slider are skipped.
    function shapesUnder(x, y) {
       const n = shapeLimit != null ? Math.min(shapeLimit, shapes.length) : shapes.length;
       const hits = [];
@@ -401,11 +419,13 @@
          else { ctx.lineWidth = Math.max(6, canvas.width / 80); inside = ctx.isPointInStroke(x, y); }
          if (inside) {
             const a = (shapes[i].color[3] == null ? 255 : shapes[i].color[3]) / 255;
-            hits.push({ i, share: a * through });
+            hits.push({ i, share: a * through, area: shapeArea(shapes[i]) });
             through *= 1 - a;
          }
       }
-      hits.sort((a, b) => b.share - a.share || b.i - a.i);
+      const top = hits.reduce((m, h) => Math.max(m, h.share), 0);
+      hits.forEach((h) => { h.visible = h.share >= VISIBLE_MIN && h.share >= VISIBLE_REL * top; });
+      hits.sort((a, b) => (b.visible - a.visible) || (a.visible ? a.area - b.area : b.share - a.share) || b.i - a.i);
       return hits.map((h) => h.i);
    }
 
