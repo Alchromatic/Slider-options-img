@@ -103,6 +103,10 @@
    // Color grouping ("compress similar colors"): maps a shape's own hex to the
    // representative hex of the group it was merged into. null = no merging.
    let colorRemap = null;
+   // Focus colour (from the Colors page strip): shapes of any other colour are
+   // drawn faded so only this colour stands out. null = show all.
+   let focusHex = null;
+   const FOCUS_MUTE = 0.15;
    function shapeHex(s) {
       const [r, g, b] = s.color;
       return ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
@@ -238,7 +242,9 @@
             const to = colorRemap[shapeHex(s)];
             if (to) [r, g, b] = hexToRgb(to);
          }
-         const col = `rgba(${r},${g},${b},${(a == null ? 255 : a) / 255})`;
+         let alpha = (a == null ? 255 : a) / 255;
+         if (focusHex && ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase() !== focusHex) alpha *= FOCUS_MUTE;
+         const col = `rgba(${r},${g},${b},${alpha})`;
          const mode = tracePath(s);
          if (mode === "fill") { ctx.fillStyle = col; ctx.fill(); }
          else { ctx.strokeStyle = col; ctx.lineWidth = 1; ctx.stroke(); }
@@ -462,13 +468,16 @@
       if (interactionLocked) return;
       if (!shapes.length || animating || selectiveMode) return;
       const rect = canvas.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;   // canvas not laid out (hidden): nothing to pick
       const x = (e.clientX - rect.left) * (canvas.width / rect.width);
       const y = (e.clientY - rect.top) * (canvas.height / rect.height);
-      // Read the on-screen colour from a clean render (no selection outline).
-      if (selectedIndex != null) { selectedIndex = null; render(); }
-      const seen = seenColorAt(x, y);
+      // Read the on-screen colour from a clean render (no selection outline, no focus fading).
+      const focus = focusHex;
+      let seen;
+      try { focusHex = null; selectedIndex = null; render(); seen = seenColorAt(x, y); }
+      finally { focusHex = focus; }
       let list = shapesUnder(x, y);
-      if (!list.length) { pickList = []; pickKey = ""; updateSelectionInfo(); return; }
+      if (!list.length) { pickList = []; pickKey = ""; render(); updateSelectionInfo(); return; }
       const key = list.slice().sort((a, b) => a - b).join(",");
       if (key === pickKey) { list = pickList; pickPos = (pickPos + 1) % list.length; } // same overlap stack → cycle
       else { pickKey = key; pickPos = 0; }                                           // new spot → most visible first
@@ -500,6 +509,7 @@
       if (!file) return;
       uploadedFile = file;
       shapes = [];
+      focusHex = null;
       selectedIndex = null;
       currentCount = 0;
       updateSelectionInfo();
@@ -910,11 +920,12 @@
       const prevLimit = shapeLimit;
       shapeLimit = shapes.length;
       selectedIndex = null;                // no selection outline in the sampled pixels
+      const prevFocus = focusHex; focusHex = null; // sample true colours, not the faded view
       render(shapes.length);               // ensure the full image is composited
       const W = canvas.width, H = canvas.height;
       let buf;
       try { buf = ctx.getImageData(0, 0, W, H).data; }
-      catch (e) { console.error("bakeOpaque: cannot read canvas", e); shapeLimit = prevLimit; return 0; }
+      catch (e) { console.error("bakeOpaque: cannot read canvas", e); shapeLimit = prevLimit; focusHex = prevFocus; return 0; }
       let n = 0;
       for (const s of shapes) {
          if (s.type === 0) continue;       // keep the background rectangle
@@ -932,6 +943,7 @@
       // edits above already apply to baseShapes — and its ORIGINAL order is kept,
       // so the "Original Order" button still works after baking.
       shapeLimit = prevLimit;
+      focusHex = prevFocus;
       selectedIndex = null;
       render();
       updateSelectionInfo();
@@ -1332,6 +1344,9 @@
       },
       // Color grouping: {HEX -> HEX} map applied at draw time (null clears).
       setColorRemap(map) { colorRemap = map && Object.keys(map).length ? map : null; render(); },
+      // Focus one colour ("#RRGGBB"): every other colour is drawn faded. null = show all.
+      setFocusColor(hex) { focusHex = hex ? String(hex).replace("#", "").toUpperCase() : null; render(); },
+      getFocusColor() { return focusHex; },
       getColorRemap() { return colorRemap; },
       // Frequency-ordered palette of the base shapes: [{hex, count}]
       getPalette() {

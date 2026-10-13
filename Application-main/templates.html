@@ -859,6 +859,16 @@
             var history = [];           // merge history (for +): [{a:{...}, b:{...}, index}]
             var selectedIndex = 0;
             var paletteSig = '';
+            var focusHex = null;        // colour shown alone on the canvas (others faded); null = all
+            var hintEl = document.getElementById('dragHint');
+            var hintDefault = hintEl ? hintEl.innerHTML : '';
+            function norm(h) { return String(h).replace('#', '').toUpperCase(); }
+            function applyFocus() {
+               if (window.DashGeo && DashGeo.setFocusColor) DashGeo.setFocusColor(focusHex);
+               if (hintEl) hintEl.innerHTML = focusHex
+                  ? 'Showing only <b>#' + focusHex + '</b> — other colors are faded • click it again to show all'
+                  : hintDefault;
+            }
 
             function pad2(n) { return n < 10 ? '0' + n : String(n); }
             function rgb(hex) { var h = hex.replace('#', ''); return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)]; }
@@ -951,9 +961,11 @@
                plus.disabled = !history.length;
                prev.disabled = selectedIndex <= 0;
                next.disabled = selectedIndex >= groups.length - 1;
+               // a focused colour that was merged away no longer exists -> show all again
+               if (focusHex && !groups.some(function (g) { return norm(g.rep) === focusHex; })) { focusHex = null; applyFocus(); }
                groups.forEach(function (g, i) {
                   var d = document.createElement('div');
-                  d.className = 'tpl-band' + (i === selectedIndex ? ' selected' : '');
+                  d.className = 'tpl-band' + (i === selectedIndex ? ' selected' : '') + (focusHex === norm(g.rep) ? ' focused' : '');
                   d.style.background = g.rep;
                   d.setAttribute('data-band', String(i));
                   d.setAttribute('data-hex', g.rep.toUpperCase());
@@ -962,7 +974,10 @@
                   d.innerHTML = '<span class="tpl-band-mult">' + (g.shown || 1) + 'x</span>';
                   d.draggable = true;
                   d.addEventListener('click', function () {
-                     selectedIndex = i; paint();
+                     selectedIndex = i;
+                     // show only this colour on the canvas; click it again to show all
+                     focusHex = (focusHex === norm(g.rep)) ? null : norm(g.rep);
+                     paint(); applyFocus();
                      // picking a band also fills the recipe target
                      var inp = document.getElementById('trycolorsInput'), pv = document.getElementById('trycolorsPreview');
                      if (inp) { inp.value = g.rep.replace('#',''); if (pv) pv.style.background = g.rep; var tb = document.getElementById('trycolorsBtn'); if (tb) tb.disabled = false; }
@@ -1008,6 +1023,9 @@
                if (sig === paletteSig) return;
                paletteSig = sig; palette = p;
                selectedIndex = 0;
+               // keep the focus if that colour still exists (e.g. a refresh right after loading);
+               // paint() below clears it if it is no longer one of the shown groups
+               if (focusHex && !p.some(function (c) { return norm(c.hex) === focusHex; })) { focusHex = null; applyFocus(); }
                if (!palette.length) { groups = []; history = []; paint(); return; }
                resetGroups(DEFAULT_BANDS);
                paint();
@@ -1643,6 +1661,9 @@
          .tpl-band[data-light="1"] .tpl-band-mult { color: #1a1d1f; text-shadow: 0 1px 2px rgba(255,255,255,.5); }
          .tpl-band.selected { outline-color: #FFC324; }
          .tpl-band.selected::after { color: #FFC324; }
+         /* focused = shown alone on the canvas (other colours faded) */
+         .tpl-band.focused { outline: 3px solid #2a85ff !important; outline-offset: -3px; }
+         .tpl-band.focused::before { content: 'ONLY'; position: absolute; top: 5px; left: 6px; font-size: 9px; font-weight: 800; letter-spacing: .06em; color: #fff; background: #2a85ff; padding: 1px 5px; border-radius: 6px; pointer-events: none; }
          .tpl-drag-hint b { color: #ffc324; font-weight: 700; }
 
          /* picked colour card inside the templates canvas card */
