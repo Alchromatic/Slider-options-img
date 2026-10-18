@@ -278,6 +278,11 @@
                      <div class="dv-ico"><i class="fa-regular fa-mobile-screen-button"></i></div>
                      <h6>Pair a phone or tablet <span>Android / iOS</span></h6>
                      <p>Log in inside the app with your usual email and password, or pair it in seconds with a code from this page.</p>
+                     <!-- App download buttons (filled from /api/devices/config; hidden until a build is published) -->
+                     <div id="dvAppDownload" style="display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap; margin: 14px 0 4px;" hidden>
+                        <a id="dvAppDownloadBtn" class="theme-btn-primary inline-flex! items-center gap-2" href="#" rel="noopener"><i class="fa-regular fa-download"></i> Download Android APK</a>
+                        <small id="dvAppDownloadMeta" style="color: #8c9097; font-size: 12px; font-weight: 600;"></small>
+                     </div>
                      <ol class="dv-steps">
                         <li><b>Install</b> the Alchroma app <span id="dvAppLinks"></span></li>
                         <li><b>Get a code</b> below, then in the app tap <em>Pair with code</em> — or scan the QR with the phone camera</li>

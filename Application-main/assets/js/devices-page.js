@@ -66,7 +66,16 @@
          if (i.requires) bits.push(i.requires);
          return bits.length ? ' <small style="color:#8c9097">(' + esc(bits.join(' · ')) + ')</small>' : '';
       };
-      if (apps.android) links.push('<a href="' + esc(abs(apps.android)) + '" rel="noopener">Download Android APK</a>' + detail('android'));
+      // Android gets the big button at the top of the card; other platforms stay inline in step 1.
+      var dl = $('dvAppDownload'), dlBtn = $('dvAppDownloadBtn'), dlMeta = $('dvAppDownloadMeta');
+      if (apps.android && dl && dlBtn) {
+         dlBtn.href = abs(apps.android);
+         if (dlMeta) dlMeta.textContent = detail('android').replace(/<[^>]+>/g, '').trim();
+         dl.hidden = false;
+         links.push('using the button above');
+      } else if (apps.android) {
+         links.push('<a href="' + esc(abs(apps.android)) + '" rel="noopener">Download Android APK</a>' + detail('android'));
+      }
       if (apps.ios) links.push('<a href="' + esc(abs(apps.ios)) + '" target="_blank" rel="noopener">iOS (TestFlight)</a>');
       if (apps.quest) links.push('<a href="' + esc(abs(apps.quest)) + '" rel="noopener">Download Quest APK</a>' + detail('quest'));
       $('dvAppLinks').innerHTML = links.length ? '— ' + links.join(' · ') : '<small style="color:#8c9097">(download links will appear here once published)</small>';
