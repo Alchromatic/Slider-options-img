@@ -148,6 +148,9 @@ app.include_router(m4_router)
 from auth_routes import router as auth_router
 from auth_db import init_auth_tables
 app.include_router(auth_router)
+# Profile photo (POST/DELETE /api/account/avatar) — see account_routes.py
+from account_routes import router as account_router
+app.include_router(account_router)
 
 # ==================== BILLING / PLANS (Stripe, test mode) ====================
 from billing import router as billing_router, init_billing_tables

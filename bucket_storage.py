@@ -30,6 +30,7 @@ except ImportError:
 
 THUMB_PREFIX = "_thumbs/"           # generated grid thumbnails (~420px)
 MEDIUM_PREFIX = "_medium/"          # generated lightbox/use size (~1600px)
+AVATAR_PREFIX = "avatars/"          # account profile photos (account_routes.py), not library art
 _THUMB_MAX = 420                    # px
 _MEDIUM_MAX = 1600                  # px
 _PRESIGN_TTL = 6 * 3600            # seconds (presigned URL lifetime)
@@ -75,7 +76,7 @@ def list_image_keys() -> Iterator[str]:
     for page in paginator.paginate(Bucket=bucket_name()):
         for obj in page.get("Contents", []):
             key = obj["Key"]
-            if key.startswith(THUMB_PREFIX):
+            if key.startswith((THUMB_PREFIX, AVATAR_PREFIX)):
                 continue
             if key.lower().endswith(_IMAGE_EXTS):
                 yield key
@@ -112,6 +113,10 @@ def put_bytes(key: str, data: bytes, content_type: str = "image/jpeg") -> None:
     client().put_object(Bucket=bucket_name(), Key=key, Body=data, ContentType=content_type)
 
 
+def delete_object(key: str) -> None:
+    client().delete_object(Bucket=bucket_name(), Key=key)
+
+
 def presigned_url(key: str, expires: int = _PRESIGN_TTL) -> str:
     """A short-lived GET URL the browser can load directly from storage."""
     return client().generate_presigned_url(
@@ -146,7 +151,7 @@ def make_medium(data: bytes) -> Optional[bytes]:
 
 __all__ = [
     "is_configured", "bucket_name", "client", "list_image_keys",
-    "thumb_key_for", "medium_key_for", "get_bytes", "object_exists", "put_bytes",
+    "thumb_key_for", "medium_key_for", "get_bytes", "object_exists", "put_bytes", "delete_object",
     "presigned_url", "make_thumbnail", "make_medium", "make_resized",
-    "THUMB_PREFIX", "MEDIUM_PREFIX",
+    "THUMB_PREFIX", "MEDIUM_PREFIX", "AVATAR_PREFIX",
 ]

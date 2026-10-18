@@ -79,6 +79,7 @@ def auth_register(req: AuthRegisterRequest):
                 "name": req.name,
                 "organization_name": req.organization_name,
                 "workspace_id": workspace_id,
+                "avatar_url": None,
             }
             return {
                 "access_token": token,
@@ -110,6 +111,7 @@ def auth_login(req: AuthLoginRequest):
                 "name": user["name"],
                 "organization_name": user["organization_name"],
                 "workspace_id": user["workspace_id"],
+                "avatar_url": user.get("avatar_url"),
             }
             return {
                 "access_token": token,
@@ -139,7 +141,7 @@ def auth_me(request: Request):
         with get_db() as conn:
             cursor = conn.cursor(cursor_factory=RealDictCursor)
             cursor.execute(
-                "SELECT id, email, name, organization_name, workspace_id FROM auth_users WHERE id = %s",
+                "SELECT id, email, name, organization_name, workspace_id, avatar_url FROM auth_users WHERE id = %s",
                 (payload["sub"],),
             )
             user = cursor.fetchone()
@@ -152,6 +154,7 @@ def auth_me(request: Request):
                     "name": user["name"],
                     "organization_name": user["organization_name"],
                     "workspace_id": user["workspace_id"],
+                    "avatar_url": user.get("avatar_url"),
                 }
             }
     except HTTPException:
@@ -180,6 +183,7 @@ def _oauth_upsert_user(email: str, name: Optional[str] = None) -> dict:
                     "name": user["name"],
                     "organization_name": user["organization_name"],
                     "workspace_id": user["workspace_id"],
+                    "avatar_url": user.get("avatar_url"),
                 },
             }
 
@@ -206,6 +210,7 @@ def _oauth_upsert_user(email: str, name: Optional[str] = None) -> dict:
                 "name": name,
                 "organization_name": None,
                 "workspace_id": workspace_id,
+                "avatar_url": None,
             },
         }
 

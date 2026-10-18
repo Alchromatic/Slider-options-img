@@ -539,6 +539,65 @@
    }
 
    // ---------------------------------------------------------------------
+   // Account avatar: every <img data-user-avatar> shows the signed-in user's
+   // avatar_url (POST /api/account/avatar), or their initials on a coloured
+   // circle when there is none or it fails to load. Re-renders on 'gm:user'
+   // (auth.js) and when another tab changes the saved user.
+   // ---------------------------------------------------------------------
+   var AVATAR_COLORS = ['#2A85FF', '#83BF6E', '#FF6A55', '#8E59FF', '#F2994A', '#3BA3B8', '#D9468F', '#5C6BC0'];
+   function savedUser() {
+      try { return JSON.parse(localStorage.getItem('gm_user') || 'null'); } catch (_) { return null; }
+   }
+   function initials(u) {
+      var name = String((u && u.name) || '').trim();
+      var words = name ? name.split(/\s+/) : [String((u && u.email) || '').split('@')[0]];
+      var first = words[0] || '', last = words.length > 1 ? words[words.length - 1] : '';
+      var out = (Array.from(first)[0] || '') + (Array.from(last)[0] || '');
+      return (out.replace(/[^\p{L}\p{N}]/gu, '') || '?').toUpperCase();
+   }
+   function initialsAvatar(u) {
+      var seed = String((u && (u.email || u.id || u.name)) || ''), h = 0;
+      for (var i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) | 0;
+      var text = initials(u);
+      var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">' +
+         '<circle cx="32" cy="32" r="32" fill="' + AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length] + '"/>' +
+         '<text x="32" y="32" dy=".35em" text-anchor="middle" fill="#fff" font-family="Inter, system-ui, sans-serif" ' +
+         'font-size="' + (text.length > 1 ? 24 : 28) + '" font-weight="600">' + text + '</text></svg>';
+      return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+   }
+   function renderAvatars() {
+      var u = savedUser();
+      var fallback = initialsAvatar(u);
+      var src = (u && u.avatar_url) || fallback;
+      var label = (u && (u.name || u.email)) || 'profile avatar';
+      document.querySelectorAll('img[data-user-avatar]').forEach(function (img) {
+         img.onerror = function () { img.onerror = null; img.src = fallback; };
+         if (img.getAttribute('src') !== src) img.src = src;
+         img.alt = label;
+      });
+   }
+   // a session saved before avatar_url existed (or changed on another device): refresh once per tab
+   function refreshUser() {
+      var tok = pfToken();
+      try { if (!tok || sessionStorage.getItem('gm_user_fresh')) return; } catch (_) { return; }
+      var base = (window.Auth && Auth.apiBase) || API_BASE;
+      fetch(base + '/api/auth/me', { headers: { Authorization: 'Bearer ' + tok } })
+         .then(function (r) { return r.ok ? r.json() : null; })
+         .then(function (d) {
+            if (!d || !d.user) return;
+            try { sessionStorage.setItem('gm_user_fresh', '1'); } catch (_) {}
+            var u = savedUser() || {};
+            if (u.id && u.id !== d.user.id) return;       // signed in as someone else meanwhile
+            localStorage.setItem('gm_user', JSON.stringify(Object.assign(u, d.user)));
+            window.dispatchEvent(new CustomEvent('gm:user'));
+         })
+         .catch(function () {});
+   }
+   renderAvatars();              // before first paint: the markup only has a blank placeholder
+   window.addEventListener('gm:user', renderAvatars);
+   window.addEventListener('storage', function (e) { if (e.key === 'gm_user' || e.key === null) renderAvatars(); });
+
+   // ---------------------------------------------------------------------
    // Boot
    // ---------------------------------------------------------------------
    function boot() {
@@ -546,6 +605,7 @@
       buildCollapseToggle();
       buildSearch();
       buildGuideLauncher();
+      refreshUser();
       // ?guide=<id> deep link works on every app page, not only color-guide.html
       var wanted = new URLSearchParams(location.search).get('guide');
       if (wanted && !(window.GM && window.GM.colorGuide)) openColorGuide(wanted);
@@ -560,4 +620,5 @@
    window.GM.apiBase = API_BASE;
    window.GM.setSidebarCollapsed = applyCollapsed;
    window.GM.openColorGuide = openColorGuide;
+   window.GM.renderAvatars = renderAvatars;
 })();

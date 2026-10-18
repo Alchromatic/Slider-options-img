@@ -182,6 +182,7 @@ def init_auth_tables():
                 ("status", "TEXT", "'active'"),
                 ("workflow_access", "BOOLEAN", "TRUE"),
                 ("is_admin", "BOOLEAN", "FALSE"),
+                ("avatar_url", "TEXT", "NULL"),        # profile photo, set via /api/account/avatar
             ]:
                 try:
                     cursor.execute(

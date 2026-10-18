@@ -19,7 +19,21 @@
          }
          if (data && data.user) {
             localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+            this.userChanged();
          }
+      },
+
+      /* Merge fields into the saved user (e.g. a new avatar_url) and tell the page. */
+      updateUser(fields) {
+         const user = Object.assign(this.getUser() || {}, fields);
+         localStorage.setItem(USER_KEY, JSON.stringify(user));
+         this.userChanged();
+         return user;
+      },
+
+      /* 'gm:user' on window: app-shell.js re-renders every avatar from it. */
+      userChanged() {
+         try { window.dispatchEvent(new CustomEvent('gm:user')); } catch (e) {}
       },
 
       getToken() {
@@ -121,6 +135,36 @@
          const data = await res.json().catch(() => ({}));
          if (!res.ok) throw new Error(data.detail || 'Invalid email or password');
          this.saveSession(data);
+         return data;
+      },
+
+      /* Profile photo: POST/DELETE /api/account/avatar (account_routes.py).
+         Resolves to the saved user with its new avatar_url. */
+      async uploadAvatar(file) {
+         const body = new FormData();
+         body.append('file', file);
+         return this.updateUser({ avatar_url: (await this._avatarCall('POST', body)).avatar_url || null });
+      },
+
+      async removeAvatar() {
+         await this._avatarCall('DELETE');
+         return this.updateUser({ avatar_url: null });
+      },
+
+      async _avatarCall(method, body) {
+         const token = this.getToken();
+         if (!token) throw new Error('Sign in to change your photo');
+         const res = await fetch(`${API_BASE}/api/account/avatar`, {
+            method,
+            headers: { Authorization: `Bearer ${token}` },
+            body,
+         });
+         const data = await res.json().catch(() => ({}));
+         if (!res.ok) {
+            const err = new Error(data.detail || (res.status === 413 ? 'Photos can be at most 5 MB' : 'Could not save the photo'));
+            err.status = res.status;
+            throw err;
+         }
          return data;
       },
 

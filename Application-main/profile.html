@@ -112,7 +112,7 @@
                   <span class="relative flex items-center justify-center w-6 h-6 after:w-2.5 after:h-2.5 after:bg-theme-primary-3 after:rounded-full dark:after:outline-2 dark:after:outline-neutral-7 after:absolute after:right-0 after:top-0"><img src="assets/img/icon/bell.svg" alt="bell" class="w-full aspect-square"></span>
                </button>
                <div>
-                  <img src="assets/img/icon/profile-avatar.jpg" alt="profile-avatar" class="w-12 aspect-square rounded-full object-cover">
+                  <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-user-avatar alt="profile-avatar" class="w-12 aspect-square rounded-full object-cover">
                </div>
             </div>
          </aside>
@@ -143,7 +143,7 @@
                      <span class="relative flex items-center justify-center w-6 h-6 after:w-2.5 after:h-2.5 after:bg-theme-primary-3 after:rounded-full dark:after:outline-2 dark:after:outline-neutral-7 after:absolute after:right-0 after:top-0"><img src="assets/img/icon/bell.svg" alt="bell" class="w-full aspect-square"></span>
                   </button>
                   <div>
-                     <img src="assets/img/icon/profile-avatar.jpg" alt="profile-avatar" class="w-12 aspect-square rounded-full object-cover">
+                     <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-user-avatar alt="profile-avatar" class="w-12 aspect-square rounded-full object-cover">
                   </div>
                </div>
 
@@ -206,15 +206,15 @@
                               </div>
                               <div class="flex items-center gap-4 lg:gap-8">
                                  <div class="w-20 lg:w-24 h-20 lg:h-24 relative">
-                                    <img src="assets/img/icon/profile-avatar.jpg" alt="profile avatar" class="w-full h-full rounded-full object-cover">
-                                    <button type="button" title="close" class="md:hidden flex items-center justify-center w-6 h-6 rounded-full bg-neutral-1 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.25)] absolute top-0 right-0 text-lg text-neutral-4"><i class="fa-solid fa-xmark"></i></button>
+                                    <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-user-avatar id="profileAvatar" alt="profile avatar" class="w-full h-full rounded-full object-cover transition-opacity duration-300">
+                                    <button type="button" title="Remove photo" data-avatar-remove class="md:hidden flex items-center justify-center w-6 h-6 rounded-full bg-neutral-1 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.25)] absolute top-0 right-0 text-lg text-neutral-4"><i class="fa-solid fa-xmark"></i></button>
                                  </div>
                                  <div class="flex gap-3">
                                     <label class="cursor-pointer">
-                                       <input type="file" class="sr-only">
+                                       <input type="file" id="avatarFile" class="sr-only" accept="image/jpeg,image/png,image/webp">
                                        <span class="theme-btn-primary inline-flex! items-center gap-2 transition-all duration-300"><span class="text-2xl leading-none flex items-center justify-center w-6 h-6"><i class="fa-regular fa-plus"></i></span> Upload new picture</span>
                                     </label>
-                                    <button type="button" class="theme-btn-white max-md:hidden!">Remove</button>
+                                    <button type="button" data-avatar-remove class="theme-btn-white max-md:hidden!">Remove</button>
                                  </div>
                               </div>
                               <div>
@@ -222,14 +222,14 @@
                                     <label for="display-name">Display name</label>
                                     <button type="button" title="info" class="flex items-center justify-center w-4 h-4 text-sm text-neutral-4 hover:text-white ml-1"><i class="fa-solid fa-circle-info"></i></button>
                                  </h6>
-                                 <input type="text" id="display-name" class="w-full text-neutral-5 dark:text-neutral-3 placeholder:text-neutral-5 dark:placeholder:text-neutral-3 text-sm leading-6 font-semibold -tracking-[0.14px] p-3 rounded-xl bg-[#F4F4F4] dark:bg-neutral-6" value="Tran Mau Tri Tam">
+                                 <input type="text" id="display-name" class="w-full text-neutral-5 dark:text-neutral-3 placeholder:text-neutral-5 dark:placeholder:text-neutral-3 text-sm leading-6 font-semibold -tracking-[0.14px] p-3 rounded-xl bg-[#F4F4F4] dark:bg-neutral-6" value="">
                               </div>
                               <div>
                                  <h6 class="flex items-center gap-1 text-neutral-5 dark:text-neutral-3 text-sm leading-6 font-semibold -tracking-[0.14px] py-0.5 mb-3">
                                     <label for="email">Email</label>
                                     <button type="button" title="info" class="flex items-center justify-center w-4 h-4 text-sm text-neutral-4 hover:text-white ml-1"><i class="fa-solid fa-circle-info"></i></button>
                                  </h6>
-                                 <input type="email" id="email" class="w-full text-neutral-5 dark:text-neutral-3 placeholder:text-neutral-5 dark:placeholder:text-neutral-3 text-sm leading-6 font-semibold -tracking-[0.14px] p-3 rounded-xl bg-[#F4F4F4] dark:bg-neutral-6" value="tam@ui8.net">
+                                 <input type="email" id="email" class="w-full text-neutral-5 dark:text-neutral-3 placeholder:text-neutral-5 dark:placeholder:text-neutral-3 text-sm leading-6 font-semibold -tracking-[0.14px] p-3 rounded-xl bg-[#F4F4F4] dark:bg-neutral-6" value="">
                               </div>
                               <div>
                                  <h6 class="flex items-center gap-1 text-neutral-5 dark:text-neutral-3 text-sm leading-6 font-semibold -tracking-[0.14px] py-0.5 mb-3">
@@ -364,7 +364,45 @@
 
       <!-- main js -->
       <script src="assets/js/main.js"></script>
+      <script src="assets/js/auth.js"></script>
       <script src="assets/js/app-shell.js"></script>
+      <script>
+         /* Profile photo: upload / remove through Auth (POST/DELETE /api/account/avatar).
+            app-shell.js renders every [data-user-avatar] from the saved user on 'gm:user'. */
+         (function () {
+            var MAX = 5 * 1024 * 1024, TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+            var img = document.getElementById('profileAvatar');
+            var input = document.getElementById('avatarFile');
+            var removers = document.querySelectorAll('[data-avatar-remove]');
+            function say(msg, warn) { if (window.GM && GM.toast) GM.toast(msg, warn ? { kind: 'warn', icon: 'fa-regular fa-triangle-exclamation' } : undefined); }
+            function fill() {
+               var u = Auth.getUser() || {};
+               document.getElementById('display-name').value = u.name || '';
+               document.getElementById('email').value = u.email || '';
+               removers.forEach(function (b) { b.disabled = !u.avatar_url; b.classList.toggle('opacity-50', !u.avatar_url); });
+            }
+            function busy(on) { img.style.opacity = on ? '0.5' : ''; input.disabled = on; }
+            function run(promise, done) {
+               busy(true);
+               promise.then(function () { say(done); }, function (err) { say(err.message, true); })
+                  .then(function () { busy(false); input.value = ''; });
+            }
+            input.addEventListener('change', function () {
+               var file = input.files && input.files[0];
+               if (!file) return;
+               if (TYPES.indexOf(file.type) < 0) { input.value = ''; return say('Use a JPEG, PNG or WebP image', true); }
+               if (file.size > MAX) { input.value = ''; return say('Photos can be at most 5 MB', true); }
+               run(Auth.uploadAvatar(file), 'Profile photo updated');
+            });
+            removers.forEach(function (b) {
+               b.addEventListener('click', function () {
+                  if ((Auth.getUser() || {}).avatar_url) run(Auth.removeAvatar(), 'Profile photo removed');
+               });
+            });
+            window.addEventListener('gm:user', fill);
+            fill();
+         })();
+      </script>
    </body>
 
 </html>
