@@ -452,16 +452,19 @@ def _new_code(cur, flow: str, generator) -> str:
 
 @router.get("/config")
 def devices_config():
-    """Public: deep-link scheme and app download links (set via env vars)."""
+    """Public: deep-link scheme and app download links.
+
+    Links come from APP_<PLATFORM>_URL env vars, or from builds uploaded to the
+    storage bucket (app_downloads_routes.py); bucket links are relative to this
+    backend ("/downloads/android"). `apps_info` carries version/size when known."""
+    from app_downloads_routes import download_links
+    links = download_links()
     return {
         "deep_link_scheme": DEEP_LINK_SCHEME,
         "pair_code_ttl": PAIR_CODE_TTL_SECONDS,
         "poll_interval": PAIR_POLL_INTERVAL_SECONDS,
-        "apps": {
-            "android": os.getenv("APP_ANDROID_URL", ""),
-            "ios": os.getenv("APP_IOS_URL", ""),
-            "quest": os.getenv("APP_QUEST_URL", ""),
-        },
+        "apps": {p: (links.get(p) or {}).get("url", "") for p in ("android", "ios", "quest")},
+        "apps_info": {p: v["info"] for p, v in links.items() if v.get("info")},
     }
 
 

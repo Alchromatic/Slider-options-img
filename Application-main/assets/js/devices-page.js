@@ -55,9 +55,20 @@
    async function loadConfig() {
       try { config = await api('GET', '/api/devices/config'); } catch (e) { /* defaults */ }
       var links = [];
-      if (config.apps && config.apps.android) links.push('<a href="' + esc(config.apps.android) + '" target="_blank" rel="noopener">Android APK</a>');
-      if (config.apps && config.apps.ios) links.push('<a href="' + esc(config.apps.ios) + '" target="_blank" rel="noopener">iOS (TestFlight)</a>');
-      if (config.apps && config.apps.quest) links.push('<a href="' + esc(config.apps.quest) + '" target="_blank" rel="noopener">Quest APK</a>');
+      var apps = config.apps || {}, infos = config.apps_info || {};
+      // Bucket-hosted builds come back as "/downloads/<platform>", relative to the backend.
+      var abs = function (u) { return u.charAt(0) === '/' ? (API || location.origin) + u : u; };
+      var detail = function (p) {
+         var i = infos[p]; if (!i) return '';
+         var bits = [];
+         if (i.version) bits.push('v' + i.version);
+         if (i.size_bytes) bits.push(Math.round(i.size_bytes / 1048576) + ' MB');
+         if (i.requires) bits.push(i.requires);
+         return bits.length ? ' <small style="color:#8c9097">(' + esc(bits.join(' · ')) + ')</small>' : '';
+      };
+      if (apps.android) links.push('<a href="' + esc(abs(apps.android)) + '" rel="noopener">Download Android APK</a>' + detail('android'));
+      if (apps.ios) links.push('<a href="' + esc(abs(apps.ios)) + '" target="_blank" rel="noopener">iOS (TestFlight)</a>');
+      if (apps.quest) links.push('<a href="' + esc(abs(apps.quest)) + '" rel="noopener">Download Quest APK</a>' + detail('quest'));
       $('dvAppLinks').innerHTML = links.length ? '— ' + links.join(' · ') : '<small style="color:#8c9097">(download links will appear here once published)</small>';
    }
 

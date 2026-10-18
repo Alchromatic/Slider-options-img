@@ -161,6 +161,9 @@ app.include_router(palettes_router)
 # Device <-> user pairing and the colors those apps capture. See devices_routes.py.
 from devices_routes import router as devices_router, init_devices_tables
 app.include_router(devices_router)
+# App downloads (APKs served from the storage bucket) — linked from the Devices page
+from app_downloads_routes import router as app_downloads_router
+app.include_router(app_downloads_router)
 
 # ==================== PORTFOLIO (saved compositions, shared by web + apps) ====================
 from portfolio_routes import router as portfolio_router, init_portfolio_tables
