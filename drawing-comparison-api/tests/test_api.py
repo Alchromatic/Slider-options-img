@@ -38,8 +38,7 @@ def test_errors_and_health(monkeypatch):
     assert client.get('/health').json()=={'status':'ok'}
     assert client.get('/').status_code==200
     assert client.post('/compare').status_code==422
-    assert request(data={'canvas_width_mm':'nan'}).status_code==422
-    assert request(data={'canvas_width_mm':1,'canvas_height_mm':10000}).status_code==422
+    assert request(data={'tolerance_mm':'nan'}).status_code==422
     monkeypatch.setenv('ALCHROMA_API_KEY','test-secret')
     assert request().status_code==401
     assert request(headers={'X-API-Key':'test-secret'}).status_code==200
@@ -68,3 +67,50 @@ def test_exif_and_reference_size():
     response=client.post('/compare',files={'original_image':('original.png',(samples/'reference.png').read_bytes()),'drawing_image':('drawing.jpg',jpeg.getvalue())})
     assert response.status_code==200
     assert Image.open(io.BytesIO(response.content)).size==(240,160)
+
+
+def test_canvas_fields_removed_and_legacy_values_cannot_change_output():
+    page=client.get('/').text
+    schema=client.get('/openapi.json').json()
+    import json
+    for field in ('canvas_width_mm', 'canvas_height_mm'):
+        assert field not in page
+        assert field not in json.dumps(schema)
+    baseline=request()
+    old_client=request(data={'canvas_width_mm':900, 'canvas_height_mm':200})
+    assert baseline.status_code == old_client.status_code == 200
+    assert baseline.content == old_client.content
+
+
+def test_structured_errors():
+    response=client.post('/compare')
+    body=response.json()
+    assert body['success'] is False
+    assert body['error']['code']=='INVALID_INPUT'
+    assert {item['field'] for item in body['error']['fields']} == {'body.original_image', 'body.drawing_image'}
+    assert client.get('/missing').json()['error']['code']=='NOT_FOUND'
+    assert client.get('/compare').json()['error']['code']=='METHOD_NOT_ALLOWED'
+    slot.acquire()
+    try:
+        response=request()
+        assert response.json()['error']['code']=='SERVER_BUSY'
+        assert response.headers['retry-after']=='2'
+    finally:
+        slot.release()
+
+
+def test_internal_failure_is_safe_and_recovers(monkeypatch):
+    import api
+    original=api.compare
+    def broken(*args, **kwargs):
+        raise RuntimeError('private implementation detail')
+    monkeypatch.setattr(api, 'compare', broken)
+    with TestClient(app, raise_server_exceptions=False) as safe_client:
+        response=safe_client.post('/compare', files={
+            'original_image':('ref.png',(samples/'reference.png').read_bytes()),
+            'drawing_image':('draw.png',(samples/'drawing_identical.png').read_bytes())})
+    assert response.status_code==500
+    assert response.json()['error']['code']=='INTERNAL_ERROR'
+    assert 'private implementation detail' not in response.text
+    monkeypatch.setattr(api, 'compare', original)
+    assert request().status_code==200
