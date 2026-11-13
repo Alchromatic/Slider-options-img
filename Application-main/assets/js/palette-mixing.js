@@ -1088,6 +1088,28 @@ function _proposalToRecipeData(data, p) {
     };
 }
 
+// Observed = this exact mix was really captured (measured data / TryColors);
+// Predicted = the model estimated the colour. Uses the API's is_observed /
+// prediction_kind when sent (M7.1), else falls back to the confidence tier
+// (M7, custom palettes). KM-fallback rows are always predicted.
+const _OBSERVED_TIERS = new Set(['pair_exact_observed', 'nary_exact_observed_anchor']);
+const _PURE_TIERS = new Set(['single_anchor', 'pair_endpoint_only', 'pair_endpoint_anchor']);
+function _observedInfo(p) {
+    const tier = p.confidence_tier || '';
+    if (p.prediction_kind === 'palette_endpoint' || _PURE_TIERS.has(tier)) {
+        return { key: 'pure', label: 'Pure color', note: 'unmixed palette color',
+                 tip: 'A single color straight from the palette, no mixing' };
+    }
+    const observed = typeof p.is_observed === 'boolean'
+        ? p.is_observed
+        : (p.mix_source !== 'physical_km' && _OBSERVED_TIERS.has(tier));
+    return observed
+        ? { key: 'observed', label: 'Observed', note: 'real captured mix',
+            tip: 'This exact mix was measured, so the color is a real capture' }
+        : { key: 'predicted', label: 'Predicted', note: 'model estimate',
+            tip: 'The model estimated this color from nearby measured mixes' };
+}
+
 // Render proposals from /version/unmix into the SAME UI as the KM unmix
 // (dot matrix / concentric / treemap), ranked by highest match on top, with a
 // clickable list to inspect each ranked recipe.
@@ -1141,13 +1163,15 @@ function renderVersionedUnmix(data) {
         <div class="versioned-chips-row">`;
     proposals.forEach((p, i) => {
         const active = i === sel;
-        const tierTip = (p.confidence_tier || '') + (p.anchor_trycolors_name ? ' · ' + p.anchor_trycolors_name : '');
+        const kind = _observedInfo(p);
+        const tierTip = kind.label + ' · ' + (p.confidence_tier || '') + (p.anchor_trycolors_name ? ' · ' + p.anchor_trycolors_name : '');
         chips += `
             <button type="button" class="versioned-rank-chip${active ? ' active' : ''}" data-idx="${i}" title="${tierTip}">
                 <span class="chip-rank">#${i + 1}</span>
                 <span class="chip-swatch" style="background:${p.predicted_hex}"></span>
                 <span class="chip-match">${Number(p.match_percentage).toFixed(1)}%</span>
                 <span class="chip-delta">ΔE ${Number(p.delta_e).toFixed(2)}</span>
+                <span class="chip-kind chip-kind-${kind.key}">${kind.label}</span>
             </button>`;
     });
     chips += '</div>';
@@ -1158,8 +1182,9 @@ function renderVersionedUnmix(data) {
 
     // Small confidence line for the selected recipe.
     const selP = proposals[sel];
+    const selKind = _observedInfo(selP);
     const conf = `<div class="versioned-confidence">
-        Selected #${sel + 1} · confidence: ${selP.confidence_tier || 'n/a'}${selP.anchor_trycolors_name ? ' · anchor "' + selP.anchor_trycolors_name + '"' : ''} · model risk +${selP.risk_penalty}</div>`;
+        Selected #${sel + 1} · <span class="chip-kind chip-kind-${selKind.key}" title="${selKind.tip}">${selKind.label}</span> ${selKind.note} · confidence: ${selP.confidence_tier || 'n/a'}${selP.anchor_trycolors_name ? ' · anchor "' + selP.anchor_trycolors_name + '"' : ''} · model risk +${selP.risk_penalty}</div>`;
 
     // Side panel (next to the Generate button): sort toggle + ranked candidates.
     // Falls back to the results area when the panel isn't on the page.

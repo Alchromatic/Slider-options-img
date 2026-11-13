@@ -599,7 +599,7 @@
       </script>
       <!-- embedded palette presets (so they work under file:// where fetch() is blocked) -->
       <script src="assets/js/colors-data.js"></script>
-      <script src="assets/js/palette-mixing.js?v=4"></script>
+      <script src="assets/js/palette-mixing.js?v=5"></script>
       <!-- editable named-color library that feeds the unmixer palette -->
       <script src="assets/js/color-library.js?v=5"></script>
       <script>
@@ -1720,6 +1720,11 @@
          #pmCandidates .chip-swatch { width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(255,255,255,.2); display: inline-block; }
          #pmCandidates .chip-delta { color: #6f767e; font-weight: 600; }
          #pmCandidates .versioned-confidence { margin-top: 8px; font-size: 10px; color: #6f767e; }
+         /* Observed (real captured mix) vs Predicted (model estimate) tag on ranked recipes */
+         .chip-kind { display: inline-block; padding: 1px 6px; border-radius: 5px; font-size: 9px; font-weight: 700; letter-spacing: .3px; text-transform: uppercase; line-height: 1.5; }
+         .chip-kind-observed { background: rgba(52,168,83,.16); color: #5cd17e; border: 1px solid rgba(52,168,83,.45); }
+         .chip-kind-predicted { background: rgba(154,160,166,.12); color: #9aa0a6; border: 1px solid rgba(154,160,166,.35); }
+         .chip-kind-pure { background: rgba(42,133,255,.14); color: #6aa8ff; border: 1px solid rgba(42,133,255,.4); }
          .pm-run-row { display: flex; gap: 8px; margin-top: 12px; align-items: stretch; }
          .pm-run-row .trycolors-btn { margin-top: 0 !important; flex: 1; }
          .pm-rerun { width: 46px; border-radius: 10px; background: #1f2226; border: 1px solid #2c2f34; color: #c9ced3; cursor: pointer; font-size: 15px; transition: color .15s, border-color .15s, transform .25s; }

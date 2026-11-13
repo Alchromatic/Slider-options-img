@@ -271,6 +271,9 @@ def _proposal_row(m71, names, parts, pred_hex, target_hex, meta, score, penalty)
         "risk_penalty": round(penalty, 2),
         "confidence_tier": meta.get("confidence_tier"),
         "anchor_trycolors_name": meta.get("anchor_trycolors_name", ""),
+        # None when the model predates these fields; the UI then falls back to the tier.
+        "prediction_kind": meta.get("prediction_kind", ""),
+        "is_observed": meta.get("is_observed"),
     }
 
 
@@ -322,6 +325,9 @@ def unmix(target_hex: str, version: str = "m7_1", max_colors: int = 4,
                 "risk_penalty": round(float(r["risk_penalty"]), 2),
                 "confidence_tier": r["confidence_tier"],
                 "anchor_trycolors_name": r.get("anchor_trycolors_name", ""),
+                # True when this colour is a real captured mix, not a model estimate.
+                "prediction_kind": r.get("prediction_kind", ""),
+                "is_observed": bool(r.get("is_observed", False)),
             })
     elif version == "m7":
         mpm, model = _m7_model()

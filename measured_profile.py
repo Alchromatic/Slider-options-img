@@ -31,8 +31,10 @@ import hashlib
 import importlib.util
 import itertools
 import json
+import math
 import sys
 import time
+from fractions import Fraction
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Tuple
 
@@ -269,14 +271,105 @@ def recompute_completeness(profile: Dict,
 
 
 # ---------------------------------------------------------------------------
+# Prediction-side recipe handling (ported from M7.1 maintenance release r3)
+# ---------------------------------------------------------------------------
+# _canon / comparison_key above are the *storage* identity of a measured
+# comparison (incremental updates depend on them), so they stay unchanged.
+# Prediction uses the r3 rules instead: duplicate ids merge, zero parts drop
+# out, and recipes match measured data by ratio, so 2:6 hits a 1:3 capture.
+
+def _part_value(value) -> float:
+    if isinstance(value, (bool, np.bool_)):
+        raise ValueError("Parts must be numbers, not booleans")
+    try:
+        v = float(value)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError("Parts must be finite numbers") from exc
+    if not math.isfinite(v) or v < 0:
+        raise ValueError("Parts must be finite and nonnegative")
+    return v
+
+
+def canon_recipe(ids: Sequence[str], parts: Sequence[float]) -> Tuple[List[str], List[float]]:
+    """Merge duplicate ids, drop zero parts, and sort by id (parts keep their scale)."""
+    ids, parts = list(ids), list(parts)
+    if len(ids) != len(parts):
+        raise ValueError("ids and parts must have the same length")
+    merged: Dict[str, Fraction] = {}
+    for i, p in zip(ids, parts):
+        v = _part_value(p)
+        if v > 0:
+            merged[str(i)] = merged.get(str(i), Fraction(0)) + Fraction(str(v))
+    if not merged:
+        raise ValueError("A recipe needs at least one positive part")
+    items = sorted(merged.items(), key=lambda kv: kv[0])
+    try:
+        cparts = [float(f) for _, f in items]
+    except OverflowError as exc:
+        raise ValueError("Parts exceed the supported numeric range") from exc
+    return [k for k, _ in items], [int(p) if p.is_integer() else p for p in cparts]
+
+
+def _ratio(parts: Sequence[float]) -> Tuple[float, ...]:
+    """Normalized weights via exact fractions, so 1:3, 2:6 and 0.1:0.3 agree."""
+    fr = [Fraction(str(p)) for p in parts]
+    total = sum(fr, Fraction(0))
+    return tuple(float(f / total) for f in fr)
+
+
+def _close(a: float, b: float) -> bool:
+    """Equal within floating-point roundoff (not an interpolation neighborhood)."""
+    return abs(a - b) <= 4 * max(math.ulp(a), math.ulp(b))
+
+
+def _same_ratio(a: Sequence[float], b: Sequence[float]) -> bool:
+    return len(a) == len(b) and all(_close(x, y) for x, y in zip(a, b))
+
+
+class ProfileCurve:
+    """Measured pair curve for a custom palette (color ids c1..cN).
+
+    Same behavior as the r3 ``m7_1_unified.PairCurve`` -- OKLab interpolation
+    between measured points, and the captured HEX returned unchanged at a
+    measured ratio -- without r3's restriction to the 8 fixed pigments.
+    """
+
+    def __init__(self, first: str, second: str, t: Sequence[float],
+                 hexes: Sequence[str], source_ids: Sequence[str]):
+        self.first, self.second = first, second
+        self.t = np.asarray(t, dtype=float)
+        self.hexes = list(hexes)
+        self.source_ids = list(source_ids)
+        self.oklab = np.vstack([_m71().hex_to_oklab(h) for h in self.hexes])
+
+    def exact_index(self, x: float) -> Optional[int]:
+        hits = [(abs(float(v) - x), i) for i, v in enumerate(self.t) if _close(float(v), x)]
+        return min(hits)[1] if hits else None
+
+    def predict(self, x: float) -> str:
+        i = self.exact_index(x)
+        if i is not None:
+            return self.hexes[i]
+        vals = [float(np.interp(x, self.t, self.oklab[:, d])) for d in range(3)]
+        return _m71().oklab_to_hex(np.array(vals, dtype=float))
+
+    def nearest_spacing(self, x: float) -> float:
+        idx = int(np.searchsorted(self.t, x))
+        left, right = max(0, idx - 1), min(len(self.t) - 1, idx)
+        return 0.0 if left == right else float(self.t[right] - self.t[left])
+
+
+# ---------------------------------------------------------------------------
 # MeasuredProfileModel -- the profile-driven (M7.2) predictor (R1)
 # ---------------------------------------------------------------------------
 
 class MeasuredProfileModel:
     """Predict mixed colors from a measured palette profile (custom palette).
 
-    Mirrors m7_1_unified.MeasuredPairwiseModel, but keyed on the profile's color
-    ids and built from the profile's measured comparisons.
+    Mirrors m7_1_unified.MeasuredPairwiseModel (maintenance release r3), but
+    keyed on the profile's color ids and built from the profile's measured
+    comparisons.  Malformed stored comparisons are skipped, never fatal, so one
+    bad row cannot drop a whole palette back to the KM model.
     """
 
     def __init__(self, profile: Dict):
@@ -285,14 +378,14 @@ class MeasuredProfileModel:
         self.id_to_hex: Dict[str, str] = {c["id"]: normalize_hex(c["hex"]) for c in profile["colors"]}
         self.id_to_name: Dict[str, str] = {c["id"]: c.get("name", c["id"]) for c in profile["colors"]}
         self.hex_to_id: Dict[str, str] = {h: i for i, h in self.id_to_hex.items()}
-        self._anchors: Dict[str, Dict] = {}
-        self._curves: Dict[Tuple[str, str], object] = {}
+        self._anchors: Dict[Tuple[str, ...], List[Dict]] = {}
+        self._curves: Dict[Tuple[str, str], ProfileCurve] = {}
         self._curve_observed: Dict[Tuple[str, str], bool] = {}
+        self.skipped_comparisons = 0
         self._build()
 
     # -- construction -------------------------------------------------------
     def _build(self) -> None:
-        m71 = self.m71
         ids = list(self.id_to_hex.keys())
         points: Dict[Tuple[str, str], List[dict]] = {}
         observed: Dict[Tuple[str, str], bool] = {}
@@ -307,86 +400,99 @@ class MeasuredProfileModel:
             observed[key] = False
 
         for comp in self.profile.get("comparisons", []):
-            pigs = [str(p) for p in comp["pigments"]]
-            parts = [float(p) for p in comp["parts"]]
-            hexv = normalize_hex(comp["trycolors_result_hex"])
-            if len(pigs) >= 3:
-                cids, cparts = _canon(pigs, parts)
-                self._anchors[comparison_key(cids, cparts)] = {
-                    "hex": hexv,
-                    "trycolors_name": comp.get("trycolors_name", ""),
-                    "source": comp.get("source", ""),
-                }
+            try:
+                cids, cparts = canon_recipe(comp["pigments"], comp["parts"])
+                hexv = normalize_hex(comp["trycolors_result_hex"])
+            except (KeyError, TypeError, ValueError):
+                self.skipped_comparisons += 1
                 continue
-            if len(pigs) != 2:
+            if any(i not in self.id_to_hex for i in cids):
+                self.skipped_comparisons += 1
                 continue
-            a, b = pigs
-            if a not in self.id_to_hex or b not in self.id_to_hex:
+            if len(cids) >= 3:
+                weights = _ratio(cparts)
+                group = self._anchors.setdefault(tuple(cids), [])
+                if not any(_same_ratio(weights, a["weights"]) for a in group):  # first capture wins
+                    group.append({"weights": weights, "hex": hexv,
+                                  "trycolors_name": comp.get("trycolors_name") or "",
+                                  "source": comp.get("source") or ""})
                 continue
-            first, second = tuple(sorted((a, b)))
-            w = m71.normalize(parts)
-            wa = {a: w[0], b: w[1]}
-            share_second = wa[second]
-            points.setdefault((first, second), [])
-            points[(first, second)].append({"t": float(share_second), "hex": hexv, "sid": comp.get("source", "obs")})
-            observed[(first, second)] = True
+            if len(cids) != 2:
+                continue  # a pure swatch adds nothing beyond the palette hex
+            key = (cids[0], cids[1])  # canon_recipe already sorted by id
+            points[key].append({"t": _ratio(cparts)[1], "hex": hexv, "sid": comp.get("source") or "obs"})
+            observed[key] = True
 
-        PairCurve = m71.PairCurve
         for key, pts in points.items():
-            by_t: Dict[float, Tuple[int, dict]] = {}
+            kept: List[Tuple[int, dict]] = []  # (priority, point); observed beats endpoint
             for p in pts:
-                t = round(float(p["t"]), 12)
-                priority = 1 if p["sid"] == "endpoint" else 0  # observed beats endpoint
-                if t not in by_t or priority < by_t[t][0]:
-                    by_t[t] = (priority, p)
-            pts2 = [v[1] for _, v in sorted(by_t.items(), key=lambda kv: kv[0])]
-            t_arr = np.array([p["t"] for p in pts2], dtype=float)
-            hexes = [p["hex"] for p in pts2]
-            oks = np.vstack([m71.hex_to_oklab(h) for h in hexes])
-            self._curves[key] = PairCurve(first=key[0], second=key[1], t=t_arr, hexes=hexes,
-                                          oklab=oks, source_ids=[p["sid"] for p in pts2])
+                priority = 1 if p["sid"] == "endpoint" else 0
+                same = [n for n, (_, q) in enumerate(kept) if _close(q["t"], p["t"])]
+                if not same:
+                    kept.append((priority, p))
+                elif priority < kept[same[0]][0]:
+                    kept[same[0]] = (priority, p)
+            pts2 = sorted((p for _, p in kept), key=lambda p: p["t"])
+            self._curves[key] = ProfileCurve(key[0], key[1], [p["t"] for p in pts2],
+                                             [p["hex"] for p in pts2], [p["sid"] for p in pts2])
             self._curve_observed[key] = observed.get(key, False)
+
+    def _find_anchor(self, cids: Sequence[str], cparts: Sequence[float]) -> Optional[Dict]:
+        weights = _ratio(cparts)
+        for a in self._anchors.get(tuple(cids), []):
+            if _same_ratio(weights, a["weights"]):
+                return a
+        return None
 
     # -- coverage (R7 gate) -------------------------------------------------
     def covers(self, ids: Sequence[str], parts: Sequence[float]) -> bool:
-        """True only when this exact recipe is backed by *measured* data.
+        """True only when this recipe is backed by *measured* data.
 
-        A single color is its own swatch; an exact n-ary anchor counts; otherwise
-        every pair in the recipe must have at least one observed (non-endpoint)
-        mix.  Endpoint-only curves do not count, so a recipe with no measured
-        comparisons falls through to the KM physical model (rule R7).
+        A single color is its own swatch; a measured n-ary anchor at the same
+        ratio counts; otherwise every pair in the recipe must have at least one
+        observed (non-endpoint) mix.  Endpoint-only curves do not count, so a
+        recipe with no measured comparisons falls through to the KM physical
+        model (rule R7).  Zero parts are ignored and duplicate ids merged.
         """
-        ids = [str(i) for i in ids]
-        if any(i not in self.id_to_hex for i in ids):
+        try:
+            cids, cparts = canon_recipe(ids, parts)
+        except ValueError:
             return False
-        if len(ids) == 1:
+        if any(i not in self.id_to_hex for i in cids):
+            return False
+        if len(cids) == 1:
             return True
-        if self.has_anchor(ids, parts):
+        if len(cids) >= 3 and self._find_anchor(cids, cparts) is not None:
             return True
-        for a, b in itertools.combinations(sorted(ids), 2):
-            if not self._curve_observed.get(tuple(sorted((a, b))), False):
-                return False
-        return True
+        return all(self._curve_observed.get(pair, False) for pair in itertools.combinations(cids, 2))
 
     def has_anchor(self, ids: Sequence[str], parts: Sequence[float]) -> bool:
-        cids, cparts = _canon(ids, parts)
-        return comparison_key(cids, cparts) in self._anchors
+        try:
+            cids, cparts = canon_recipe(ids, parts)
+        except ValueError:
+            return False
+        return len(cids) >= 3 and self._find_anchor(cids, cparts) is not None
 
-    # -- prediction (mirrors M7.1 predict_recipe) --------------------------
+    # -- prediction (mirrors M7.1 r3 predict_recipe) ------------------------
     def predict_pair(self, a: str, b: str, wa: float, wb: float) -> Tuple[str, dict]:
-        first, second = tuple(sorted((a, b)))
+        cids, cparts = canon_recipe([a, b], [wa, wb])
+        if any(i not in self.id_to_hex for i in cids):
+            raise ValueError("Pair contains a color outside this palette profile")
+        if len(cids) == 1:
+            return self.id_to_hex[cids[0]], {"share_second": None, "curve_points": 1,
+                                             "nearest_spacing": 0.0, "pair_confidence": "pair_endpoint_anchor"}
+        first, second = cids
         curve = self._curves[(first, second)]
-        weights = {a: float(wa), b: float(wb)}
-        wf = weights[first]
-        ws = weights[second]
-        share_second = ws / (wf + ws) if (wf + ws) > 0 else 0.5
+        share_second = _ratio(cparts)[1]
         hx = curve.predict(share_second)
         spacing = curve.nearest_spacing(share_second)
-        exact = curve.has_exact_ratio(share_second)
+        exact = curve.exact_index(share_second)
         observed = self._curve_observed.get((first, second), False)
         if not observed:
             tier = "pair_endpoint_only"
-        elif exact:
+        elif exact in (0, len(curve.t) - 1):
+            tier = "pair_endpoint_anchor"
+        elif exact is not None:
             tier = "pair_exact_observed"
         elif spacing <= 0.25:
             tier = "pair_dense_interpolation"
@@ -399,25 +505,29 @@ class MeasuredProfileModel:
 
     def predict_recipe(self, ids: Sequence[str], parts: Sequence[float]) -> Tuple[str, dict]:
         m71 = self.m71
-        cids, cparts = _canon(ids, parts)
-        akey = comparison_key(cids, cparts)
-        if akey in self._anchors:
-            return self._anchors[akey]["hex"], {
+        cids, cparts = canon_recipe(ids, parts)
+        missing = [i for i in cids if i not in self.id_to_hex]
+        if missing:
+            raise ValueError(f"Colors outside this palette profile: {', '.join(missing)}")
+        anchor = self._find_anchor(cids, cparts) if len(cids) >= 3 else None
+        if anchor is not None:
+            return anchor["hex"], {
                 "confidence_tier": "nary_exact_observed_anchor",
-                "anchor_trycolors_name": self._anchors[akey].get("trycolors_name", ""),
+                "anchor_trycolors_name": anchor.get("trycolors_name", ""),
             }
-        weights = m71.normalize(cparts)
         if len(cids) == 1:
             return self.id_to_hex[cids[0]], {"confidence_tier": "single_anchor"}
         pair_oklabs = []
-        pair_weights = []
+        pair_logweights = []
         pair_meta = []
         for i, j in itertools.combinations(range(len(cids)), 2):
-            hx, meta = self.predict_pair(cids[i], cids[j], weights[i], weights[j])
+            hx, meta = self.predict_pair(cids[i], cids[j], cparts[i], cparts[j])
             pair_oklabs.append(m71.hex_to_oklab(hx))
-            pair_weights.append(max(1e-12, weights[i] * weights[j]))
+            # log-space product weights: tiny parts can no longer be floored up
+            pair_logweights.append(math.log(cparts[i]) + math.log(cparts[j]))
             pair_meta.append(meta)
-        pw = np.array(pair_weights, dtype=float)
+        logs = np.asarray(pair_logweights, dtype=float)
+        pw = np.exp(logs - np.max(logs))
         pw /= pw.sum()
         ok = np.sum(np.vstack(pair_oklabs) * pw[:, None], axis=0)
         pred = m71.oklab_to_hex(ok)
@@ -437,7 +547,7 @@ class MeasuredProfileModel:
 def risk_penalty(tier: str) -> float:
     """Risk penalty by confidence tier (mirrors m7_1_unified.m7_risk_penalty)."""
     if tier in ("single_anchor", "nary_exact_observed_anchor", "pair_exact_observed",
-                "pair_dense_interpolation"):
+                "pair_endpoint_anchor", "pair_dense_interpolation"):
         return 0.0
     if tier == "pair_medium_interpolation":
         return 1.0
@@ -458,5 +568,5 @@ __all__ = [
     "new_profile", "profile_path", "load_profile", "save_profile", "bump_version",
     "merge_colors", "update_profile_colors",
     "expected_pairwise_comparisons", "diff_missing", "add_results",
-    "recompute_completeness", "MeasuredProfileModel", "risk_penalty",
+    "recompute_completeness", "MeasuredProfileModel", "ProfileCurve", "canon_recipe", "risk_penalty",
 ]
